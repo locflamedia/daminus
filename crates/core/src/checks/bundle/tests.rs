@@ -227,7 +227,7 @@ fn shipped_bundle_runs_to_end_with_valid_lines() {
     )
     .unwrap();
     assert_eq!(bundle.text.lines().next(), Some("exec 2>/dev/null"));
-    assert!(bundle.text.ends_with("\nmain </dev/null\n"));
+    assert!(bundle.text.ends_with("else main </dev/null; fi; exit 0\n"));
     assert_eq!(bundle.checks, ["sys.load", "disk.fs"]);
     let out = run(&bundle.text);
     assert_eq!(out.dropped, 0);
@@ -464,4 +464,102 @@ fn check_ids_must_make_unique_function_names() {
     );
     let groups = BTreeMap::from([(CheckGroup::System, vec![part("x;rm", "true")])]);
     assert!(assemble(PRELUDE, groups, &BundleVars::new()).is_err());
+}
+
+/// Runs a hang-up bundle whose only check sleeps, in its own process group
+/// (like an SSH session), with stdin held open. Returns the child and group.
+#[cfg(unix)]
+fn spawn_hangup(shell: &str, sleep_s: u32) -> (std::process::Child, i32) {
+    use std::os::unix::process::CommandExt as _;
+    let mut groups = BTreeMap::new();
+    groups.insert(
+        CheckGroup::System,
+        vec![part(
+            "t.sleep",
+            &format!("sleep {sleep_s}\nemit t.sleep \"\""),
+        )],
+    );
+    let mut vars = BundleVars::new();
+    vars.set(HANGUP_VAR, "1").unwrap();
+    let bundle = assemble(PRELUDE, groups, &vars).unwrap();
+    let mut child = Command::new(shell)
+        .arg("-s")
+        .process_group(0)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let stdin = child.stdin.as_mut().unwrap();
+    stdin.write_all(bundle.text.as_bytes()).unwrap();
+    stdin.flush().unwrap();
+    let pgid = i32::try_from(child.id()).unwrap();
+    (child, pgid)
+}
+
+#[cfg(unix)]
+fn group_alive(pgid: i32) -> bool {
+    nix::sys::signal::killpg(nix::unistd::Pid::from_raw(pgid), None).is_ok()
+}
+
+#[cfg(unix)]
+fn wait_gone(pgid: i32, limit: std::time::Duration) -> bool {
+    let t0 = std::time::Instant::now();
+    while t0.elapsed() < limit {
+        if !group_alive(pgid) {
+            return true;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+    false
+}
+
+#[cfg(unix)]
+#[test]
+fn hangup_bundle_stops_its_group_when_stdin_closes() {
+    let shells: Vec<&str> = ["sh", "/bin/dash", "/bin/bash"]
+        .into_iter()
+        .filter(|s| *s == "sh" || std::path::Path::new(s).exists())
+        .collect();
+    for shell in shells {
+        let (mut child, pgid) = spawn_hangup(shell, 30);
+        std::thread::sleep(std::time::Duration::from_millis(400));
+        assert!(group_alive(pgid), "{shell}: bundle still running");
+        // The client goes away: stdin reaches end of file.
+        drop(child.stdin.take());
+        let gone = wait_gone(pgid, std::time::Duration::from_secs(5));
+        let _ = nix::sys::signal::killpg(
+            nix::unistd::Pid::from_raw(pgid),
+            nix::sys::signal::Signal::SIGKILL,
+        );
+        let _ = child.wait();
+        assert!(gone, "{shell}: the sleeping check must be stopped");
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn hangup_bundle_exits_by_itself_with_stdin_open() {
+    let (mut child, pgid) = spawn_hangup("sh", 0);
+    let t0 = std::time::Instant::now();
+    let status = loop {
+        if let Some(s) = child.try_wait().unwrap() {
+            break Some(s);
+        }
+        if t0.elapsed() > std::time::Duration::from_secs(5) {
+            break None;
+        }
+        std::thread::sleep(std::time::Duration::from_millis(20));
+    };
+    let _ = nix::sys::signal::killpg(
+        nix::unistd::Pid::from_raw(pgid),
+        nix::sys::signal::Signal::SIGKILL,
+    );
+    let status = status.expect("the shell must not wait for more input");
+    assert!(status.success());
+    let mut stdout = Vec::new();
+    std::io::Read::read_to_end(child.stdout.as_mut().unwrap(), &mut stdout).unwrap();
+    let out = ndjson::parse(&stdout);
+    assert!(out.ended);
+    assert!(!group_alive(pgid) || wait_gone(pgid, std::time::Duration::from_secs(2)));
 }

@@ -31,6 +31,20 @@ pub enum BundleError {
     BadCheckId(String),
 }
 
+/// Set to `1` by a caller that keeps stdin open after the bundle (the SSH
+/// transport). The bundle then watches stdin: end of file means the client
+/// went away (Ctrl-C, app quit, lost connection), and the bundle stops its
+/// whole process group instead of running on unattended until the
+/// server-side `timeout`. Without it the bundle just runs `main`.
+pub const HANGUP_VAR: &str = "DAMINUS_HANGUP";
+
+/// The last line. It is one line so the shell has read all of it before the
+/// watcher starts reading stdin; it ends with `exit` so the shell never
+/// waits for more input. With the watcher, `main` runs in a subshell: bash
+/// 3.2 (macOS `sh`) aborts when a function call redirects stdin while a
+/// background job reads a copy of it.
+const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then exec 3<&0; { read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; kill \"$w\"; else main </dev/null; fi; exit 0\n";
+
 /// Name of the variable holding the bundle hash, set by [`build`].
 pub const BUNDLE_VAR: &str = "DAMINUS_BUNDLE";
 
@@ -176,7 +190,8 @@ fn assemble(
         }
         let _ = writeln!(main, "\td_step {group_name}");
     }
-    main.push_str("\td_end\n}\nmain </dev/null\n");
+    main.push_str("\td_end\n}\n");
+    main.push_str(TAIL);
 
     let code = format!("{functions}{main}");
     let hash = fnv1a64(format!("{prelude}\0{code}").as_bytes());
