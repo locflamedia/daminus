@@ -1,0 +1,2 @@
+# Check scripts run on user servers; changes need a maintainer review for read-only safety.
+/crates/core/checks/ @locflamedia
