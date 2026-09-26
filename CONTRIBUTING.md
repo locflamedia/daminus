@@ -12,7 +12,7 @@ Thanks for your interest! Daminus is in early development, so the codebase and t
 
 You will need:
 
-- [Rust](https://rustup.rs) (stable, 1.88 or newer)
+- [Rust](https://rustup.rs) (stable, 1.89 or newer)
 - Node.js 20.19+ and [pnpm](https://pnpm.io) 10
 - [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your OS
 - `shellcheck` for check scripts
