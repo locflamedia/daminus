@@ -7,6 +7,10 @@
     "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "paths": { "@/*": ["./src/*"], "@checks/*": ["./crates/core/checks/*"] }
-  }
+    "paths": {
+      "@/*": ["./src/*"],
+      "@checks/*": ["./crates/core/checks/*"]
+    }
+  },
+  "exclude": ["src/**/*.test.ts"]
 }
