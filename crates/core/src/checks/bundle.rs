@@ -43,7 +43,41 @@ pub const HANGUP_VAR: &str = "DAMINUS_HANGUP";
 /// waits for more input. With the watcher, `main` runs in a subshell: bash
 /// 3.2 (macOS `sh`) aborts when a function call redirects stdin while a
 /// background job reads a copy of it.
-const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then exec 3<&0; { read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; kill \"$w\"; else main </dev/null; fi; exit 0\n";
+///
+/// `trap 'wait' TERM` runs first and is inherited by every subshell `main`
+/// forks (each check, and `main` itself). `kill -TERM 0` on hangup reaches
+/// every process in the bundle's group at once, including a check's own
+/// external commands (a plain `sleep`, say, which has no trap and simply
+/// dies) and every shell level above it. Without the trap, those shells die
+/// from the same signal before they can reap the child they were blocked on,
+/// which orphans it: the kernel hands it to the target's init to clean up,
+/// and a bare container or minimal image run as its own PID 1 may never
+/// call `wait()` on a process it did not start, leaving a zombie behind.
+/// With the trap, a shell that was blocked on a now-dead child instead wakes
+/// up, reaps it, and exits on its own, so the group tears itself down
+/// bottom-up without depending on the host to collect anything.
+///
+/// The watcher itself resets the trap before it reads: it has no children of
+/// its own to reap, and once `main` finishes on its own (stdin still open),
+/// the tail's plain `kill "$w"` must end it immediately, the way a signal
+/// with no trap normally would. With the trap still active there, that kill
+/// would just interrupt its `read`, which fails and falls through to a
+/// second, unwanted `kill -TERM 0` of the whole group.
+///
+/// `wait "$w"` after `kill "$w"` reaps the watcher itself: it is the shell's
+/// own background job, not a check run through a subshell that another
+/// `wait` in the cascade above would ever collect, so without this the
+/// watcher would be the one process the trap chain always leaves behind.
+///
+/// This guarantees every process is killed. It does not guarantee every
+/// process is reaped: bare `wait` only reaps the calling shell's *background*
+/// jobs, so a check's own foreground external command (the plain `sleep`, or
+/// whatever it runs) is reaped by the shell that forked it only if that shell
+/// is still alive when the command dies — a race the same broadcast signal
+/// can lose. A leaf orphaned this way is already dead and cannot run again;
+/// it is just an unreaped process-table entry, cleaned up the moment the
+/// target's own init gets to it, same as any other orphan on that host.
+const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then trap 'wait' TERM; exec 3<&0; { trap - TERM; read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; kill \"$w\"; wait \"$w\"; else main </dev/null; fi; exit 0\n";
 
 /// Name of the variable holding the bundle hash, set by [`build`].
 pub const BUNDLE_VAR: &str = "DAMINUS_BUNDLE";
