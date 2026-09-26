@@ -1,0 +1,3 @@
+{"Name":"shop-app-1","MemUsage":"211.4MiB / 512MiB","MemPerc":"41.29%"}
+{"Name":"shop-worker-1","MemUsage":"96.2MiB / 256MiB","MemPerc":"37.58%"}
+{"Name":"shop-db-1","MemUsage":"402.9MiB / 1GiB","MemPerc":"39.35%"}

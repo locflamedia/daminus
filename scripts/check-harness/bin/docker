@@ -1,0 +1,13 @@
+#!/bin/sh
+# Harness shim: prints recorded `docker` output and never talks to a daemon.
+# `docker inspect` output carries canary secrets in Config.Env, as a real one would.
+out=/opt/daminus-harness/out/docker
+case "${1-}" in
+system) [ "${2-}" = df ] && cat "$out/system-df.txt" ;;
+ps) cat "$out/ps.txt" ;;
+inspect) cat "$out/inspect.json" ;;
+stats) cat "$out/stats.txt" ;;
+version) cat "$out/version.txt" ;;
+compose) cat "$out/compose-config.yml" ;;
+*) exit 1 ;;
+esac

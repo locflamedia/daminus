@@ -40,22 +40,35 @@ cargo test --workspace --all-features
 ./scripts/check-core-boundaries.sh # domain/ must not import I/O modules
 ./scripts/test-check-core-boundaries.sh # fixture test for the boundary check
 pnpm typecheck && pnpm lint && pnpm format:check && pnpm test && pnpm build
-shellcheck scripts/*.sh
+git ls-files '*.sh' 'scripts/check-harness/bin/*' | xargs shellcheck
+./scripts/check-harness/deny-list.sh  # quick grep for write commands in checks
+./scripts/check-harness/run.sh        # checks in read-only containers (needs docker, jq)
 cargo deny check
 ```
 
 See [docs/code-standards.md](docs/code-standards.md) and [docs/system-architecture.md](docs/system-architecture.md).
 
-## Writing a check
+## Adding a check
 
-Checks are the easiest way to contribute. They live in `crates/core/checks/`. A step-by-step guide lands together with the check runtime; the rules below already apply:
+Checks are the easiest way to contribute. They live in `crates/core/checks/`, and a new one is four pieces:
 
-- POSIX `sh` only (no bash-isms), because servers can be Debian, Ubuntu, and so on.
-- **Read-only.** A check must never write, delete, restart, or install anything, and never uses `sudo`. CI rejects write commands.
-- Report numbers and facts only, one JSON object per line. The app decides severity from thresholds in the check manifest.
-- Never print secrets. Read `.env` on the server only to reach a database, and emit only the resulting numbers.
+1. **Script** `crates/core/checks/<id with _>.sh`, e.g. `sys_mem.sh` for `sys.mem`. It is the body of a function: the bundle wraps it in a subshell after `prelude.sh`, so `exit 0` ends only this check. Use the prelude helpers:
+   - `emit CHECK TARGET [VALUE UNIT [DATA [FP]]]` prints one fact (DATA is a JSON object you build from validated numbers; strings go through `json_str`).
+   - `emit_unknown CHECK TARGET REASON` when the check cannot answer (`missing`, `unsupported`, `timeout`); `perm_missing CHECK TARGET` when the SSH user lacks a permission.
+   - `has CMD`, `is_num S`, and `run_light CMD…` for heavy reads (low CPU/IO priority, 20 s limit, exit 124 on timeout).
+   - Limits from Settings arrive as variables: `DAMINUS_SKIP_PATHS` (one path per line) and `DAMINUS_LARGE_FILE_MB`.
+2. **One manifest entry** in `crates/core/checks/manifest.json`: `id`, `group`, `runs: "remote"`, `script`, `needs` (every external command the script runs), `facts` (what target, value, unit and data mean), `fp` if the check has evidence, and the severity `rule`. Add the file to `SCRIPTS` in `crates/core/src/checks/mod.rs`.
+3. **Strings** `checks.<id>.name` and `checks.<id>.desc` in `src/i18n/en.json` and `src/i18n/vi.json` (the id's dots are nesting levels).
+4. **Golden output**: `scripts/check-harness/run.sh --bless` writes `fixtures/ndjson/<distro>/<script>.ndjson` from a real run in `ubuntu:24.04` and `debian:12`. Commit it. Add a severity case table for the rule next to the other rule tests.
+
+The rules, all checked in CI (job `shell`):
+
+- POSIX `sh` only (no bash-isms): servers run Debian, Ubuntu and so on, where `sh` is dash.
+- **Read-only.** Never write, delete, restart, install, or use `sudo`. Every command must be a safe builtin, a prelude helper or listed in `needs` (allowlist test in `crates/core/tests/check_scripts.rs`); output redirection only to `/dev/null` or a numeric descriptor (`>&2`); no quotes inside `${…}` or `$((…))`; `sed` only `s///`; `awk` only with an inline program (no `-f`) that never pipes, writes or calls `system` (write comparisons with `<`); `find` never `-delete` or `-exec`; no here-documents. The bundle then runs in a container with a read-only root, as a normal user, and `$HOME` and `/tmp` must hash the same before and after.
+- **Numbers and facts only.** The app decides severity from the manifest rule; scripts never compare against thresholds.
+- **Never print secrets.** Read `.env` only to reach a database, and emit only the resulting numbers. The harness seeds `CANARY_*` values in the environment, a project `.env` and the docker/pm2 shims, and fails if one reaches stdout.
 - Degrade gracefully when a tool is missing or a permission is lacking, instead of failing.
-- Must pass `shellcheck`.
+- Must pass `shellcheck` (`crates/core/checks/.shellcheckrc` sets `shell=sh`).
 
 ## Pull requests
 

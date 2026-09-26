@@ -1,0 +1,6 @@
+#!/bin/sh
+# Harness shim: prints a recorded `pm2 jlist`, whose env holds canary secrets.
+case "${1-}" in
+jlist) cat /opt/daminus-harness/out/pm2/jlist.json ;;
+*) exit 1 ;;
+esac

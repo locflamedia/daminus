@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"d19375135a359221"}
+{"check":"disk.fs","target":"/data","data":{"pct":68,"ipct":8,"size":76887154688,"used":52018274304,"avail":24852103168,"fs":"ext4"}}
+{"_":"step","group":"disk","ms":9}
+{"_":"end"}

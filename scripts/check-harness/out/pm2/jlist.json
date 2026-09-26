@@ -1,0 +1,1 @@
+[{"name":"api","pm_id":0,"pm2_env":{"status":"online","restart_time":2,"pm_uptime":1790380000000,"env":{"JWT_SECRET":"CANARY_pm2_env_jwt_secret_3b5c","NODE_ENV":"production"}},"monit":{"memory":123456789,"cpu":1.5}}]
