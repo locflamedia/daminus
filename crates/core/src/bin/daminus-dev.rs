@@ -2,11 +2,20 @@ use std::collections::BTreeSet;
 use std::io::Write as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::sync::Arc;
 
 use clap::{Parser, Subcommand};
 use daminus_core::checks::bundle::{self, BundleVars, Selection};
 use daminus_core::checks::{manifest, ndjson};
+use daminus_core::domain::datetime::Timestamp;
+use daminus_core::domain::evaluate::{Config, Delta, Disposition, Report, evaluate};
+use daminus_core::domain::host::HostAlias;
+use daminus_core::domain::snapshot::HostOutcome;
+use daminus_core::probe::HttpProbe;
+use daminus_core::scan::{ScanEvent, ScanEventBody, ScanScope, ScanService};
+use daminus_core::ssh::{SshTransport, outcome_error};
 use daminus_core::store::FsStore;
+use tokio::sync::mpsc;
 
 #[derive(Parser)]
 #[command(name = "daminus-dev", version = daminus_core::VERSION, about = "Daminus core dev CLI")]
@@ -14,6 +23,9 @@ struct Cli {
     /// Config folder. Defaults to `~/.daminus-dev`, never the app's own folder.
     #[arg(long, value_name = "PATH")]
     config_dir: Option<PathBuf>,
+    /// ssh config file to use instead of `~/.ssh/config` (test hosts).
+    #[arg(long, value_name = "PATH")]
+    ssh_config: Option<PathBuf>,
     #[command(subcommand)]
     command: Option<Command>,
 }
@@ -32,6 +44,20 @@ enum Command {
         /// Output file to read.
         file: PathBuf,
     },
+    /// Scan hosts and URLs from `projects.json`, save the snapshot and print
+    /// what changed. Progress goes to stderr; Ctrl-C cancels without saving.
+    Scan {
+        /// Only this project's hosts and URLs (repeatable).
+        #[arg(long, value_name = "ID")]
+        project: Vec<String>,
+        /// Only this host (repeatable), even if excluded in Settings › Hosts.
+        #[arg(long, value_name = "ALIAS")]
+        host: Vec<String>,
+    },
+    /// List saved snapshots, newest last.
+    Snapshots,
+    /// Print `evaluate` over the saved snapshots as JSON.
+    Report,
 }
 
 fn default_config_dir() -> PathBuf {
@@ -43,12 +69,271 @@ fn default_config_dir() -> PathBuf {
 
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn")),
+        )
+        .with_writer(std::io::stderr)
+        .init();
     let dir = cli.config_dir.unwrap_or_else(default_config_dir);
     let store = FsStore::new(&dir);
     match cli.command {
         None => config_summary(&store, &dir),
         Some(Command::Bundle { only }) => print_bundle(&store, only),
         Some(Command::Ndjson { file }) => validate_ndjson(&file),
+        Some(Command::Scan { project, host }) => scan(store, cli.ssh_config, project, host),
+        Some(Command::Snapshots) => list_snapshots(&store),
+        Some(Command::Report) => print_report(&store),
+    }
+}
+
+fn now() -> Timestamp {
+    Timestamp::new(time::OffsetDateTime::now_utc())
+}
+
+fn scan(
+    store: FsStore,
+    ssh_config: Option<PathBuf>,
+    projects: Vec<String>,
+    hosts: Vec<String>,
+) -> ExitCode {
+    let mut aliases = Vec::new();
+    for h in hosts {
+        match HostAlias::parse(&h) {
+            Ok(a) => aliases.push(a),
+            Err(e) => {
+                eprintln!("--host {h:?}: {e}");
+                return ExitCode::FAILURE;
+            }
+        }
+    }
+    let scope = ScanScope {
+        projects,
+        hosts: aliases,
+    };
+    let runtime = match tokio::runtime::Runtime::new() {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("runtime: {e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    runtime.block_on(async move {
+        let mut transport = SshTransport::new();
+        if let Some(cfg) = ssh_config {
+            transport = transport.with_config(cfg);
+        }
+        let (tx, mut rx) = mpsc::channel(1024);
+        let service = ScanService::new(
+            Arc::new(transport),
+            Arc::new(HttpProbe::new()),
+            store.clone(),
+            tx,
+        );
+        let started = match service.start(&scope) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("scan: {e:?}");
+                return ExitCode::FAILURE;
+            }
+        };
+        eprintln!("scan {} started", started.scan_id);
+        let mut interrupted = false;
+        loop {
+            let event = tokio::select! {
+                e = rx.recv() => e,
+                _ = tokio::signal::ctrl_c(), if !interrupted => {
+                    interrupted = true;
+                    eprintln!("cancelling…");
+                    service.shutdown();
+                    continue;
+                }
+            };
+            let Some(event) = event else {
+                return ExitCode::FAILURE;
+            };
+            match print_event(&event) {
+                Some(ScanEnd::Saved) => return print_changes(&store),
+                Some(ScanEnd::Cancelled) => return ExitCode::from(130),
+                Some(ScanEnd::Failed) => return ExitCode::FAILURE,
+                None => {}
+            }
+        }
+    })
+}
+
+enum ScanEnd {
+    Saved,
+    Cancelled,
+    Failed,
+}
+
+fn print_event(e: &ScanEvent) -> Option<ScanEnd> {
+    match &e.body {
+        ScanEventBody::HostStarted { host } => eprintln!("{host:<24} connecting"),
+        ScanEventBody::HostRunning { host } => eprintln!("{host:<24} running"),
+        ScanEventBody::AgentWait { host } => {
+            eprintln!("{host:<24} waiting for SSH agent approval")
+        }
+        ScanEventBody::Step { host, group, ms } => {
+            eprintln!("{host:<24} {group:?} done in {ms} ms")
+        }
+        ScanEventBody::Fact { .. } => {}
+        ScanEventBody::HostFinished {
+            host,
+            outcome,
+            ms,
+            facts,
+            dropped,
+        } => {
+            let error = outcome_error(outcome)
+                .map(|c| format!(" [{c:?}]"))
+                .unwrap_or_default();
+            let fp = match outcome {
+                HostOutcome::HostKeyUnknown { fp } | HostOutcome::HostKeyChanged { fp } => {
+                    format!(" key {fp}")
+                }
+                _ => String::new(),
+            };
+            eprintln!(
+                "{host:<24} {} in {:.1} s, {facts} fact(s), {dropped} dropped{error}{fp}",
+                outcome_name(outcome),
+                *ms as f64 / 1000.0
+            );
+        }
+        ScanEventBody::Done { snapshot_seq } => {
+            eprintln!("saved snapshot {snapshot_seq}");
+            return Some(ScanEnd::Saved);
+        }
+        ScanEventBody::Cancelled => {
+            eprintln!("cancelled, nothing saved");
+            return Some(ScanEnd::Cancelled);
+        }
+        ScanEventBody::Failed { error } => {
+            eprintln!("scan failed: {error:?}");
+            return Some(ScanEnd::Failed);
+        }
+    }
+    None
+}
+
+fn outcome_name(o: &HostOutcome) -> String {
+    serde_json::to_value(o)
+        .ok()
+        .and_then(|v| v["state"].as_str().map(str::to_owned))
+        .unwrap_or_default()
+}
+
+fn load_report(store: &FsStore) -> Result<Report, String> {
+    let projects = store.load_projects().map_err(|e| format!("{e:?}"))?.value;
+    let settings = store.load_settings().map_err(|e| format!("{e:?}"))?.value;
+    let m = manifest().map_err(|e| format!("manifest: {e}"))?;
+    let history = store
+        .load_history(settings.data.keep_scans.map(|k| k as usize))
+        .map_err(|e| format!("{e:?}"))?;
+    Ok(evaluate(
+        &history,
+        Config {
+            projects: &projects,
+            settings: &settings,
+        },
+        &m,
+        now(),
+    ))
+}
+
+/// One line per issue and per change since the previous scan.
+fn print_changes(store: &FsStore) -> ExitCode {
+    let report = match load_report(store) {
+        Ok(r) => r,
+        Err(e) => {
+            eprintln!("{e}");
+            return ExitCode::FAILURE;
+        }
+    };
+    let c = &report.counts;
+    println!(
+        "scan {}: {} crit, {} warn, {} stale, {} unknown, {} needs permission",
+        report.seq.unwrap_or(0),
+        c.crit,
+        c.warn,
+        c.stale,
+        c.unknown,
+        c.needs_perm
+    );
+    for item in &report.items {
+        let delta = match &item.delta {
+            Some(Delta::New) => "new".to_owned(),
+            Some(Delta::Fixed) => "fixed".to_owned(),
+            Some(Delta::Still { scans_open }) => format!("still ({scans_open} scans)"),
+            Some(Delta::Changed { from, to }) => format!("changed {from:?} -> {to:?}"),
+            None if item.severity.is_issue() => "open".to_owned(),
+            None => continue,
+        };
+        let stale = match &item.disposition {
+            Disposition::Stale { since_seq } => format!(" (not re-checked since scan {since_seq})"),
+            _ => String::new(),
+        };
+        let value = item
+            .fact
+            .as_ref()
+            .and_then(|f| {
+                f.value
+                    .map(|v| format!(" {v}{}", f.unit.as_deref().unwrap_or("")))
+            })
+            .unwrap_or_default();
+        println!(
+            "  {:?} {} {} {}{value}: {delta}{stale}",
+            item.severity, item.key.host, item.key.check, item.key.target
+        );
+    }
+    ExitCode::SUCCESS
+}
+
+fn list_snapshots(store: &FsStore) -> ExitCode {
+    let seqs = match store.snapshot_seqs() {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("{e:?}");
+            return ExitCode::FAILURE;
+        }
+    };
+    for seq in seqs {
+        let Some(s) = store.load_snapshot(seq) else {
+            println!("{seq:6}  (unreadable)");
+            continue;
+        };
+        let hosts: Vec<String> = s
+            .hosts
+            .iter()
+            .map(|(h, o)| format!("{h}={}", outcome_name(o)))
+            .collect();
+        let facts: usize = s.facts.values().map(Vec::len).sum();
+        println!(
+            "{seq:6}  {}  {facts} fact(s)  {}",
+            serde_json::to_value(s.finished_at)
+                .ok()
+                .and_then(|v| v.as_str().map(str::to_owned))
+                .unwrap_or_default(),
+            hosts.join(" ")
+        );
+    }
+    ExitCode::SUCCESS
+}
+
+fn print_report(store: &FsStore) -> ExitCode {
+    match load_report(store)
+        .and_then(|r| serde_json::to_string_pretty(&r).map_err(|e| e.to_string()))
+    {
+        Ok(json) => {
+            println!("{json}");
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::FAILURE
+        }
     }
 }
 

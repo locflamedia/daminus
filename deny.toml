@@ -23,6 +23,9 @@ allow = [
   "CC0-1.0",
   "BSL-1.0",
   "0BSD",
+  # Mozilla root certificate data (webpki-root-certs, via reqwest's rustls
+  # platform verifier).
+  "CDLA-Permissive-2.0",
 ]
 
 [licenses.private]
