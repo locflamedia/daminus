@@ -1,0 +1,104 @@
+{
+  "checks": {
+    "sys": {
+      "load": {
+        "name": "Load",
+        "desc": "Load average against the number of CPU cores."
+      },
+      "mem": {
+        "name": "Memory",
+        "desc": "Memory still available to programs."
+      },
+      "swap": {
+        "name": "Swap",
+        "desc": "Share of swap space in use."
+      },
+      "psi": {
+        "name": "Pressure",
+        "desc": "Time tasks waited for CPU, memory or disk over the last minute (PSI)."
+      },
+      "oom": {
+        "name": "Out-of-memory kills",
+        "desc": "Processes the kernel killed for lack of memory in the last 24 hours."
+      }
+    },
+    "disk": {
+      "fs": {
+        "name": "Disk space",
+        "desc": "Space and inodes used on each local filesystem."
+      },
+      "path": {
+        "name": "Folder size",
+        "desc": "Size of a project folder and its largest subfolders."
+      }
+    },
+    "logs": {
+      "big": {
+        "name": "Large logs",
+        "desc": "Log files over the size floor in /var/log, Docker and project log folders."
+      }
+    },
+    "docker": {
+      "df": {
+        "name": "Docker storage",
+        "desc": "Space used by Docker images, containers, volumes and build cache."
+      },
+      "compose": {
+        "name": "Compose containers",
+        "desc": "State, restarts and memory of a Compose project's containers."
+      }
+    },
+    "pm2": {
+      "app": {
+        "name": "pm2 app",
+        "desc": "Status and restarts of a pm2 process."
+      }
+    },
+    "db": {
+      "size": {
+        "name": "Database size",
+        "desc": "Size of a database and its largest tables."
+      }
+    },
+    "sec": {
+      "miner": {
+        "name": "Crypto miner",
+        "desc": "Known miner processes and programs running from deleted files."
+      },
+      "upload_php": {
+        "name": "PHP in uploads",
+        "desc": "PHP files inside upload or public storage folders."
+      },
+      "tmp_exec": {
+        "name": "Executables in temp",
+        "desc": "Executable files in /tmp, /var/tmp and /dev/shm."
+      },
+      "preload": {
+        "name": "ld.so.preload",
+        "desc": "Whether /etc/ld.so.preload has content, a common rootkit trick."
+      },
+      "ports": {
+        "name": "Open database ports",
+        "desc": "Database and Docker ports listening on all interfaces."
+      },
+      "recent_change": {
+        "name": "Recent code changes",
+        "desc": "Code files changed in the last 3 days, outside vendor folders."
+      }
+    },
+    "url": {
+      "http": {
+        "name": "HTTP",
+        "desc": "Status code, response time and final address of the site."
+      },
+      "tls": {
+        "name": "Certificate",
+        "desc": "Days until the TLS certificate expires, and whether it is trusted."
+      },
+      "exposed": {
+        "name": "Exposed files",
+        "desc": "Whether /.env or /.git/HEAD can be downloaded from the site."
+      }
+    }
+  }
+}
