@@ -100,5 +100,18 @@
         "desc": "/.env hoặc /.git/HEAD có tải được từ trang hay không."
       }
     }
+  },
+  "tray": {
+    "crit": "{n} nghiêm trọng",
+    "warn": "{n} cảnh báo",
+    "clear": "Không có vấn đề",
+    "never": "Chưa quét lần nào",
+    "unreadable": "Không đọc được kết quả",
+    "scan": "Lần quét #{seq} · {time}",
+    "scanning": "Đang quét…",
+    "needs": "{project} cần xem",
+    "scanNow": "Quét ngay",
+    "open": "Mở Daminus",
+    "quit": "Thoát"
   }
 }

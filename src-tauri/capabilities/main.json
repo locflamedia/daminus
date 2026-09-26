@@ -1,0 +1,20 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "The main window: the app's own commands, scan events, https links and writing to the clipboard. No shell, file system or HTTP plugin.",
+  "windows": ["main"],
+  "permissions": [
+    "allow-scan-start",
+    "allow-scan-stop",
+    "allow-scan-status",
+    "allow-report-latest",
+    "allow-reveal-config-dir",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }]
+    },
+    "clipboard-manager:allow-write-text"
+  ]
+}

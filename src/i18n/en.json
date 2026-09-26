@@ -100,5 +100,18 @@
         "desc": "Whether /.env or /.git/HEAD can be downloaded from the site."
       }
     }
+  },
+  "tray": {
+    "crit": "{n} critical",
+    "warn": "{n} warning | {n} warnings",
+    "clear": "No issues",
+    "never": "No scans yet",
+    "unreadable": "Results could not be read",
+    "scan": "Scan #{seq} · {time}",
+    "scanning": "Scanning…",
+    "needs": "{project} needs you",
+    "scanNow": "Scan now",
+    "open": "Open Daminus",
+    "quit": "Quit"
   }
 }

@@ -41,6 +41,18 @@ jobs:
       - name: Domain does not import I/O modules
         run: ./scripts/check-core-boundaries.sh
 
+  app:
+    name: app layer e2e (commands and events on a fake transport, no webview)
+    # macOS ships WebKit, so nothing is installed; no window or webview is opened.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo test -p daminus
+
   web:
     name: web (typecheck, lint, test, build)
     runs-on: ubuntu-latest

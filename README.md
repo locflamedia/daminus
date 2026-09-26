@@ -60,6 +60,8 @@ Most monitoring tools want an agent on every server and a dashboard running 24/7
 Not available yet. The first release will be published on the [Releases](https://github.com/locflamedia/daminus/releases) page.
 
 > Builds are not notarized by Apple. On first launch, right-click the app and choose **Open**, or run `xattr -d com.apple.quarantine /Applications/Daminus.app`.
+>
+> Builds are signed ad hoc, so every new version is a new identity to macOS: after an update, macOS asks again before Daminus can read the AI key it stored in your Keychain. Choose **Always Allow**; if you deny it, re-enter the key in Settings › AI.
 
 ## Tech stack
 
