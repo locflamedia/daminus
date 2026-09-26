@@ -1,0 +1,30 @@
+[package]
+name = "daminus-core"
+description = "Daminus core: domain, checks, transport, scan, store. Knows nothing about Tauri."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+name = "daminus_core"
+
+[[bin]]
+name = "daminus-dev"
+path = "src/bin/daminus-dev.rs"
+required-features = ["cli"]
+
+[features]
+# `cli` keeps clap (and the dev binary) out of the app build.
+cli = ["dep:clap"]
+# `ts` derives TypeScript bindings with ts-rs; exported by `cargo test --features ts`.
+ts = ["dep:ts-rs"]
+
+[dependencies]
+clap = { version = "4.6", features = ["derive"], optional = true }
+ts-rs = { version = "12", optional = true }
+
+[lints]
+workspace = true
