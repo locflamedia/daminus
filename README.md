@@ -41,7 +41,7 @@ Most monitoring tools want an agent on every server and a dashboard running 24/7
              project cards + diff vs. last scan ──► (optional) AI summary
 ```
 
-- Checks live in `checks/*.sh`. Each one is a small POSIX shell script that prints JSON. Adding a check means adding a shell file, no Rust required.
+- Checks live in `crates/core/checks/`. Each one is a small POSIX shell script that prints JSON. Adding a check means adding a shell file, no Rust required.
 - Config is a hand-editable `projects.json` that references SSH host aliases. It holds **no secrets**.
 - Database credentials are read from the `.env` file **on the server** and never leave it.
 - AI API keys are stored in the OS keychain and redaction runs before anything is sent.
