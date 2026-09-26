@@ -92,6 +92,7 @@ fn projects() -> ProjectsFile {
                         "vps-sg-1",
                         ComponentKind::Pm2 {
                             app: "tiemtra-cron".into(),
+                            pm2_home: None,
                         },
                     ),
                     component(
@@ -124,6 +125,7 @@ fn projects() -> ProjectsFile {
                         "vps-sg-2",
                         ComponentKind::Pm2 {
                             app: "booking-queue".into(),
+                            pm2_home: None,
                         },
                     ),
                     component(

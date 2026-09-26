@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"0edc46c2a83f9255"}
-{"check":"disk.fs","target":"/data","data":{"pct":68,"ipct":8,"size":76887154688,"used":52018274304,"avail":24852103168,"fs":"ext4"}}
-{"_":"step","group":"disk","ms":9}
+{"_":"begin","v":1,"bundle":"41e6dbdb3d987f45"}
+{"check":"disk.fs","target":"/data","data":{"pct":38,"ipct":20,"size":41955852288,"used":14771228672,"avail":25020416000,"fs":"ext4"}}
+{"_":"step","group":"disk","ms":13}
 {"_":"end"}

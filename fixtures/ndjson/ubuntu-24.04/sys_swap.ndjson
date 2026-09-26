@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"3140eec265d1bc75"}
+{"check":"sys.swap","target":"","value":0.0,"unit":"%","data":{"total":1073737728,"used":0}}
+{"_":"step","group":"system","ms":4}
+{"_":"end"}

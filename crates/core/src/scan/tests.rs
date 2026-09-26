@@ -183,9 +183,10 @@ async fn healthy_scan_saves_snapshot_with_coverage_timing_and_ordered_events() {
 
 #[tokio::test(start_paused = true)]
 async fn slow_host_does_not_hold_back_a_fast_one() {
+    // Every fixture line 2 s apart: slow, yet inside the 90 s budget.
     let slow = FakeHost::slow(
         &fixture_run("ubuntu-24.04").unwrap(),
-        Duration::from_secs(10),
+        Duration::from_secs(2),
     );
     let mut r = rig(
         FakeTransport::new()
@@ -652,4 +653,31 @@ async fn evaluate_keeps_old_crit_when_host_times_out() {
         .find(|i| i.key.check == "sys.load")
         .unwrap();
     assert_ne!(load.severity, Severity::Unknown(UnknownReason::Unreachable));
+}
+
+#[tokio::test(start_paused = true)]
+async fn each_host_is_sent_its_own_components_under_one_hash() {
+    let mut r = rig(
+        FakeTransport::new()
+            .host("vps-a", healthy())
+            .host("vps-b", healthy()),
+        FakeProbe::new(),
+        projects(&["vps-a", "vps-b"], &[]),
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    drain(&mut r.rx).await;
+    let scripts = r.transport.scripts();
+    assert_eq!(scripts.len(), 2);
+    let for_host = |h: &str| {
+        scripts
+            .iter()
+            .find(|s| s.contains(&format!("DAMINUS_PATHS='/srv/{h}'")))
+            .unwrap_or_else(|| panic!("no bundle names /srv/{h}"))
+    };
+    let (a, b) = (for_host("vps-a"), for_host("vps-b"));
+    assert!(!a.contains("/srv/vps-b") && !b.contains("/srv/vps-a"));
+    assert_eq!(
+        crate::ssh::fake::bundle_hash(a),
+        crate::ssh::fake::bundle_hash(b)
+    );
 }

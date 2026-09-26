@@ -56,7 +56,8 @@ Checks are the easiest way to contribute. They live in `crates/core/checks/`, an
    - `emit CHECK TARGET [VALUE UNIT [DATA [FP]]]` prints one fact (DATA is a JSON object you build from validated numbers; strings go through `json_str`).
    - `emit_unknown CHECK TARGET REASON` when the check cannot answer (`missing`, `unsupported`, `timeout`); `perm_missing CHECK TARGET` when the SSH user lacks a permission.
    - `has CMD`, `is_num S`, and `run_light CMD…` for heavy reads (low CPU/IO priority, 20 s limit, exit 124 on timeout).
-   - Limits from Settings arrive as variables: `DAMINUS_SKIP_PATHS` (one path per line) and `DAMINUS_LARGE_FILE_MB`.
+   - Limits from Settings arrive as variables: `DAMINUS_SKIP_PATHS` (one path per line) and `DAMINUS_LARGE_FILE_MB`. The host's components too: `DAMINUS_PATHS`, `DAMINUS_COMPOSE` and `DAMINUS_PM2` (one per line; split them with `IFS=$NL` and `set -f`, and put `IFS` back before calling `run_light`). `TAB` and `NL` hold a tab and a newline.
+   - `docker_ok` (daemon answers / not there / no permission) and `pm2_state HOME` + `pm2_rows` for pm2: never call `pm2` or read `docker inspect` output any other way, since both carry process environments.
 2. **One manifest entry** in `crates/core/checks/manifest.json`: `id`, `group`, `runs: "remote"`, `script`, `needs` (every external command the script runs), `facts` (what target, value, unit and data mean), `fp` if the check has evidence, and the severity `rule`. Add the file to `SCRIPTS` in `crates/core/src/checks/mod.rs`.
 3. **Strings** `checks.<id>.name` and `checks.<id>.desc` in `src/i18n/en.json` and `src/i18n/vi.json` (the id's dots are nesting levels).
 4. **Golden output**: `scripts/check-harness/run.sh --bless` writes `fixtures/ndjson/<distro>/<script>.ndjson` from a real run in `ubuntu:24.04` and `debian:12`. Commit it. Add a severity case table for the rule next to the other rule tests.

@@ -121,6 +121,7 @@ fn projects() -> ProjectsFile {
                         "vps-b",
                         ComponentKind::Pm2 {
                             app: "shop-queue".into(),
+                            pm2_home: None,
                         },
                     ),
                 ],

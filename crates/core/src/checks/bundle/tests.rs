@@ -4,21 +4,46 @@ use std::process::{Command, Stdio};
 use super::*;
 use crate::checks::manifest;
 use crate::checks::ndjson::{self, HostOutput};
+use crate::domain::host::HostAlias;
+use crate::domain::project::ProjectsFile;
 
 /// Runs `text` the way a server does (`sh -s`, bundle on stdin) and parses
 /// stdout. Where `dash` (Debian and Ubuntu's `sh`) is installed too, the bundle
-/// must give the same facts under it.
+/// must give the same facts under it: the same keys, fields and unknown
+/// reasons (live numbers such as free memory move between two runs).
 fn run(text: &str) -> HostOutput {
     let out = run_with("sh", text);
     if std::path::Path::new("/bin/dash").exists() {
         let dash = run_with("/bin/dash", text);
         assert_eq!(
-            (&dash.facts, dash.ended, dash.dropped),
-            (&out.facts, out.ended, out.dropped),
+            (shape(&dash), dash.ended, dash.dropped),
+            (shape(&out), out.ended, out.dropped),
             "dash and sh disagree"
         );
     }
     out
+}
+
+/// What must not differ between two runs of the same bundle.
+fn shape(out: &HostOutput) -> Vec<String> {
+    out.facts
+        .iter()
+        .map(|f| {
+            let keys: Vec<&String> = f
+                .data
+                .as_object()
+                .map(|o| o.keys().collect())
+                .unwrap_or_default();
+            format!(
+                "{} {} {:?} {} {:?} {keys:?}",
+                f.check,
+                f.target,
+                f.unknown,
+                f.value.is_some(),
+                f.unit
+            )
+        })
+        .collect()
 }
 
 fn run_with(shell: &str, text: &str) -> HostOutput {
@@ -228,15 +253,22 @@ fn shipped_bundle_runs_to_end_with_valid_lines() {
     .unwrap();
     assert_eq!(bundle.text.lines().next(), Some("exec 2>/dev/null"));
     assert!(bundle.text.ends_with("else main </dev/null; fi; exit 0\n"));
-    assert_eq!(bundle.checks, ["sys.load", "disk.fs"]);
+    let scripted: Vec<&str> = m
+        .checks
+        .iter()
+        .filter(|c| c.script.is_some())
+        .map(|c| c.id.as_str())
+        .collect();
+    let mut got: Vec<&str> = bundle.checks.iter().map(String::as_str).collect();
+    got.sort_unstable();
+    let mut want = scripted.clone();
+    want.sort_unstable();
+    assert_eq!(got, want, "every scripted check of the enabled groups");
     let out = run(&bundle.text);
     assert_eq!(out.dropped, 0);
     assert!(out.ended);
     assert_eq!(out.bundle.as_deref(), Some(bundle.hash.as_str()));
-    assert_eq!(
-        out.coverage,
-        BTreeSet::from([CheckGroup::System, CheckGroup::Disk])
-    );
+    assert_eq!(out.coverage, bundle.groups.iter().copied().collect());
     // On Linux both checks answer for real; elsewhere sys.load says unsupported.
     let load = out.facts.iter().find(|f| f.check == "sys.load").unwrap();
     if cfg!(target_os = "linux") {
@@ -353,11 +385,19 @@ fn selection_filters_groups_and_ids() {
     let m = manifest().unwrap();
     let vars = BundleVars::new();
     let no_disk = Selection {
-        disabled_groups: BTreeSet::from([CheckGroup::Disk, CheckGroup::System]),
+        disabled_groups: BTreeSet::from([
+            CheckGroup::Disk,
+            CheckGroup::Containers,
+            CheckGroup::System,
+        ]),
         only: None,
     };
     let b = build(&m, &no_disk, &vars).unwrap();
-    assert_eq!(b.checks, ["sys.load"], "system cannot be switched off");
+    assert_eq!(
+        b.checks,
+        ["sys.load", "sys.mem", "sys.swap", "sys.psi", "sys.oom"],
+        "system cannot be switched off"
+    );
     assert_eq!(b.groups, [CheckGroup::System]);
 
     let only = Selection {
@@ -368,7 +408,7 @@ fn selection_filters_groups_and_ids() {
     assert_eq!(b.checks, ["disk.fs"]);
     assert!(!b.text.contains("c_sys_load"));
 
-    for id in ["nope", "url.http", "sys.mem"] {
+    for id in ["nope", "url.http", "db.size"] {
         let bad = Selection {
             only: Some(BTreeSet::from([id.to_owned()])),
             ..Selection::default()
@@ -502,10 +542,13 @@ fn group_alive(pgid: i32) -> bool {
     nix::sys::signal::killpg(nix::unistd::Pid::from_raw(pgid), None).is_ok()
 }
 
+/// Waits for the group to be gone. The shell is reaped on the way: on Linux
+/// a zombie still counts as a member of its process group.
 #[cfg(unix)]
-fn wait_gone(pgid: i32, limit: std::time::Duration) -> bool {
+fn wait_gone(child: &mut std::process::Child, pgid: i32, limit: std::time::Duration) -> bool {
     let t0 = std::time::Instant::now();
     while t0.elapsed() < limit {
+        let _ = child.try_wait();
         if !group_alive(pgid) {
             return true;
         }
@@ -527,7 +570,7 @@ fn hangup_bundle_stops_its_group_when_stdin_closes() {
         assert!(group_alive(pgid), "{shell}: bundle still running");
         // The client goes away: stdin reaches end of file.
         drop(child.stdin.take());
-        let gone = wait_gone(pgid, std::time::Duration::from_secs(5));
+        let gone = wait_gone(&mut child, pgid, std::time::Duration::from_secs(5));
         let _ = nix::sys::signal::killpg(
             nix::unistd::Pid::from_raw(pgid),
             nix::sys::signal::Signal::SIGKILL,
@@ -561,5 +604,94 @@ fn hangup_bundle_exits_by_itself_with_stdin_open() {
     std::io::Read::read_to_end(child.stdout.as_mut().unwrap(), &mut stdout).unwrap();
     let out = ndjson::parse(&stdout);
     assert!(out.ended);
-    assert!(!group_alive(pgid) || wait_gone(pgid, std::time::Duration::from_secs(2)));
+    assert!(!group_alive(pgid) || wait_gone(&mut child, pgid, std::time::Duration::from_secs(2)));
+}
+
+#[test]
+fn components_of_the_host_travel_as_lists() {
+    let projects: ProjectsFile = serde_json::from_value(serde_json::json!({
+        "version": 1,
+        "projects": [
+            {"id": "a", "name": "A", "components": [
+                {"role": "fe", "host": "vps-a", "kind": "path", "path": "/srv/shop/"},
+                {"role": "be", "host": "vps-a", "kind": "compose", "project": "shop"},
+                {"role": "worker", "host": "vps-a", "kind": "pm2", "app": "queue"},
+                {"role": "worker", "host": "vps-a", "kind": "pm2", "app": "admin",
+                 "pm2_home": "/home/www/.pm2/"},
+                {"role": "db", "host": "vps-a", "kind": "db", "engine": "mysql",
+                 "database": "shop", "env_file": "/srv/shop/.env"},
+                {"role": "fe", "host": "vps-b", "kind": "path", "path": "/srv/other"}
+            ]},
+            {"id": "b", "name": "B", "components": [
+                {"role": "fe", "host": "vps-a", "kind": "path", "path": "/srv/shop"},
+                {"role": "fe", "host": "vps-a", "kind": "path", "path": "/"}
+            ]}
+        ]
+    }))
+    .unwrap();
+    let host = HostAlias::parse("vps-a").unwrap();
+    let mut vars = BundleVars::new();
+    vars.add_components(&projects, &host).unwrap();
+    assert_eq!(vars.0[PATHS_VAR], "/srv/shop\n/");
+    assert_eq!(vars.0[COMPOSE_VAR], "shop");
+    assert_eq!(vars.0[PM2_VAR], "queue\nadmin\t/home/www/.pm2");
+
+    // A host without components still gets the variables, empty.
+    let mut none = BundleVars::new();
+    none.add_components(&projects, &HostAlias::parse("vps-c").unwrap())
+        .unwrap();
+    assert_eq!(none.0[PATHS_VAR], "");
+
+    // Components change the text, never the hash.
+    let m = manifest().unwrap();
+    let with = build(&m, &Selection::default(), &vars).unwrap();
+    let without = build(&m, &Selection::default(), &BundleVars::new()).unwrap();
+    assert_eq!(with.hash, without.hash);
+    assert!(
+        with.text
+            .contains("DAMINUS_PM2='queue\nadmin\t/home/www/.pm2'")
+    );
+}
+
+/// bash 3.2 (macOS `sh`) used to abort `main` depending on where the bundle's
+/// bytes fell in its input buffer. Shifting the bundle by a padding variable
+/// must never lose the run, in every shell here.
+#[cfg(unix)]
+#[test]
+fn hangup_bundle_finishes_at_any_bundle_size() {
+    let shells: Vec<&str> = ["sh", "/bin/dash", "/bin/bash"]
+        .into_iter()
+        .filter(|s| *s == "sh" || std::path::Path::new(s).exists())
+        .collect();
+    let m = manifest().unwrap();
+    let only = Selection {
+        only: Some(BTreeSet::from(["sys.load".to_owned()])),
+        ..Selection::default()
+    };
+    for shell in shells {
+        for pad in (0..4200).step_by(233) {
+            let mut vars = BundleVars::new();
+            vars.set(HANGUP_VAR, "1").unwrap();
+            vars.set("DAMINUS_PAD", "x".repeat(pad)).unwrap();
+            let bundle = build(&m, &only, &vars).unwrap();
+            let mut child = Command::new(shell)
+                .arg("-s")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::null())
+                .spawn()
+                .unwrap();
+            // stdin stays open, as over SSH, until the bundle has exited.
+            let mut stdin = child.stdin.take().unwrap();
+            stdin.write_all(bundle.text.as_bytes()).unwrap();
+            stdin.flush().unwrap();
+            let mut stdout = child.stdout.take().unwrap();
+            let mut buf = Vec::new();
+            std::io::Read::read_to_end(&mut stdout, &mut buf).unwrap();
+            drop(stdin);
+            let _ = child.wait();
+            let out = ndjson::parse(&buf);
+            assert!(out.ended, "{shell}, pad {pad}: the run was lost");
+        }
+    }
 }

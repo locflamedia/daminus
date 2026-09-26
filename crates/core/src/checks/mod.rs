@@ -20,6 +20,18 @@ pub const MANIFEST_JSON: &str = include_str!("../../checks/manifest.json");
 pub const SCRIPTS: &[(&str, &str)] = &[
     ("sys_load.sh", include_str!("../../checks/sys_load.sh")),
     ("disk_fs.sh", include_str!("../../checks/disk_fs.sh")),
+    ("sys_mem.sh", include_str!("../../checks/sys_mem.sh")),
+    ("sys_swap.sh", include_str!("../../checks/sys_swap.sh")),
+    ("sys_psi.sh", include_str!("../../checks/sys_psi.sh")),
+    ("sys_oom.sh", include_str!("../../checks/sys_oom.sh")),
+    ("logs_big.sh", include_str!("../../checks/logs_big.sh")),
+    ("disk_path.sh", include_str!("../../checks/disk_path.sh")),
+    ("docker_df.sh", include_str!("../../checks/docker_df.sh")),
+    (
+        "docker_compose.sh",
+        include_str!("../../checks/docker_compose.sh"),
+    ),
+    ("pm2_app.sh", include_str!("../../checks/pm2_app.sh")),
 ];
 
 /// The source of a check script by its manifest file name.

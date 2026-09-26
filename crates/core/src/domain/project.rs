@@ -52,10 +52,18 @@ pub enum ComponentKind {
         #[serde(deserialize_with = "plain_name")]
         project: String,
     },
-    /// A pm2 app.
+    /// A pm2 app. `pm2_home` is the daemon's `PM2_HOME` when pm2 runs under
+    /// another user than the SSH one; otherwise `$PM2_HOME` or `~/.pm2` of
+    /// the SSH user.
     Pm2 {
         #[serde(deserialize_with = "plain_name")]
         app: String,
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "opt_abs_path"
+        )]
+        pm2_home: Option<String>,
     },
     /// A database reached with credentials read on the server from `env_file`,
     /// optionally through `docker exec` into `container`.
@@ -112,6 +120,16 @@ fn abs_path<'de, D: Deserializer<'de>>(d: D) -> Result<String, D::Error> {
     checked(d, is_abs_path, "path (absolute, no control characters)")
 }
 
+fn opt_abs_path<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
+    match Option::<String>::deserialize(d)? {
+        None => Ok(None),
+        Some(raw) if is_abs_path(&raw) => Ok(Some(raw)),
+        Some(raw) => Err(serde::de::Error::custom(format!(
+            "invalid pm2_home: {raw:?}"
+        ))),
+    }
+}
+
 fn opt_plain_name<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Error> {
     match Option::<String>::deserialize(d)? {
         None => Ok(None),
@@ -139,7 +157,7 @@ impl Component {
         match &self.kind {
             ComponentKind::Path { path } => path.trim_end_matches('/'),
             ComponentKind::Compose { project } => project,
-            ComponentKind::Pm2 { app } => app,
+            ComponentKind::Pm2 { app, .. } => app,
             ComponentKind::Db { database, .. } => database,
         }
     }
@@ -247,6 +265,7 @@ mod tests {
             json!({"kind": "path", "path": "/var/www/shop"}),
             json!({"kind": "compose", "project": "shop"}),
             json!({"kind": "pm2", "app": "shop-queue"}),
+            json!({"kind": "pm2", "app": "shop-queue", "pm2_home": "/home/www/.pm2"}),
             json!({"kind": "db", "engine": "mysql", "database": "shop_1",
                    "env_file": "/srv/shop/.env", "container": "shop-db-1"}),
             json!({"kind": "db", "engine": "postgres", "database": "shop",
@@ -266,6 +285,8 @@ mod tests {
             json!({"kind": "compose", "project": ""}),
             json!({"kind": "pm2", "app": "app;reboot"}),
             json!({"kind": "pm2", "app": "a b"}),
+            json!({"kind": "pm2", "app": "api", "pm2_home": "~/.pm2"}),
+            json!({"kind": "pm2", "app": "api", "pm2_home": "/home/a\tb"}),
             json!({"kind": "db", "engine": "mysql", "database": "--all",
                    "env_file": "/srv/.env"}),
             json!({"kind": "db", "engine": "mysql", "database": "shop",

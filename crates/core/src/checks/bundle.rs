@@ -11,7 +11,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
 
+use crate::domain::host::HostAlias;
 use crate::domain::manifest::{CheckGroup, Manifest, Runs};
+use crate::domain::project::{ComponentKind, ProjectsFile};
 use crate::domain::settings::ScanSettings;
 
 use super::{PRELUDE, script};
@@ -40,10 +42,16 @@ pub const HANGUP_VAR: &str = "DAMINUS_HANGUP";
 
 /// The last line. It is one line so the shell has read all of it before the
 /// watcher starts reading stdin; it ends with `exit` so the shell never
-/// waits for more input. With the watcher, `main` runs in a subshell: bash
-/// 3.2 (macOS `sh`) aborts when a function call redirects stdin while a
-/// background job reads a copy of it.
-const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then exec 3<&0; { read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; kill \"$w\"; else main </dev/null; fi; exit 0\n";
+/// waits for more input. How stdin is handed to the watcher and taken from
+/// `main` depends on the shell, as measured over many bundle sizes:
+/// - bash (any version): the watcher takes stdin with an explicit `<&0`
+///   and the shell then switches its own stdin to `/dev/null`. bash 3.2
+///   (macOS `sh`) aborts, depending on where the bundle's bytes fall in its
+///   input buffer, once `exec 3<&0` copies the stdin it reads the script from.
+/// - dash, ash and other POSIX shells: a background job's stdin is
+///   `/dev/null` before its own redirections, so the watcher reads a copy
+///   made first on fd 3, and `main` runs in a subshell with `/dev/null`.
+const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then if [ -n \"${BASH_VERSION-}\" ]; then { read -r _ || kill -TERM 0; } <&0 & w=$!; exec </dev/null; main; else exec 3<&0; { read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; fi; kill \"$w\"; else main </dev/null; fi; exit 0\n";
 
 /// Name of the variable holding the bundle hash, set by [`build`].
 pub const BUNDLE_VAR: &str = "DAMINUS_BUNDLE";
@@ -88,7 +96,62 @@ impl BundleVars {
         vars.set("DAMINUS_LARGE_FILE_MB", scan.large_file_mb.to_string())?;
         Ok(vars)
     }
+
+    /// Adds what `host` carries in `projects.json`: code folders
+    /// ([`PATHS_VAR`]), compose projects ([`COMPOSE_VAR`]) and pm2 apps
+    /// ([`PM2_VAR`]), one per line, each once, in project order. Component
+    /// names and paths were validated on load (no control characters), so a
+    /// line or a tab never splits one.
+    pub fn add_components(
+        &mut self,
+        projects: &ProjectsFile,
+        host: &HostAlias,
+    ) -> Result<(), BundleError> {
+        let mut paths: Vec<String> = Vec::new();
+        let mut compose: Vec<String> = Vec::new();
+        let mut pm2: Vec<String> = Vec::new();
+        let push = |list: &mut Vec<String>, item: String| {
+            if !list.contains(&item) {
+                list.push(item);
+            }
+        };
+        let on_host = projects
+            .projects
+            .iter()
+            .flat_map(|p| &p.components)
+            .filter(|c| &c.host == host);
+        for c in on_host {
+            match &c.kind {
+                ComponentKind::Path { path } => {
+                    let trimmed = path.trim_end_matches('/');
+                    let path = if trimmed.is_empty() { "/" } else { trimmed };
+                    push(&mut paths, path.to_owned());
+                }
+                ComponentKind::Compose { project } => push(&mut compose, project.clone()),
+                ComponentKind::Pm2 { app, pm2_home } => {
+                    let line = match pm2_home {
+                        Some(home) => format!("{app}\t{}", home.trim_end_matches('/')),
+                        None => app.clone(),
+                    };
+                    push(&mut pm2, line);
+                }
+                ComponentKind::Db { .. } => {}
+            }
+        }
+        self.set(PATHS_VAR, paths.join("\n"))?;
+        self.set(COMPOSE_VAR, compose.join("\n"))?;
+        self.set(PM2_VAR, pm2.join("\n"))?;
+        Ok(())
+    }
 }
+
+/// Code folders on the host (`disk.path`, `logs.big`), one absolute path per line.
+pub const PATHS_VAR: &str = "DAMINUS_PATHS";
+/// Compose project names on the host (`docker.compose`), one per line.
+pub const COMPOSE_VAR: &str = "DAMINUS_COMPOSE";
+/// pm2 apps on the host (`pm2.app`), one per line: the app name, then a tab
+/// and the daemon's `PM2_HOME` when the component names one.
+pub const PM2_VAR: &str = "DAMINUS_PM2";
 
 /// Which checks go in the bundle.
 #[derive(Clone, Debug, Default)]

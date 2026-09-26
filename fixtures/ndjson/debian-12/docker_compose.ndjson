@@ -1,0 +1,5 @@
+{"_":"begin","v":1,"bundle":"58fd6d559e1b9881"}
+{"check":"docker.compose","target":"shop","data":{"containers":3,"running":2,"not_running":1,"restarts":3,"mem_pct":41.29,"services":[{"name":"shop-app-1","svc":"app","state":"running","restarts":0,"mem":221668966,"limit":536870912,"cpu":3.21,"oom":false,"exit":0,"started":"2026-09-23T09:12:03.412Z","image":"shop-app:1.4.2"},{"name":"shop-worker-1","svc":"worker","state":"running","restarts":3,"mem":100873011,"limit":268435456,"cpu":0.80,"oom":false,"exit":0,"started":"2026-09-26T11:40:51.007Z","image":"shop-app:1.4.2"},{"name":"shop-db-1","svc":"db","state":"exited","restarts":0,"mem":0,"limit":1073741824,"cpu":0,"oom":true,"exit":137,"started":"2026-09-20T08:00:00.000Z","image":"mysql:8.4"}]}}
+{"check":"docker.compose","target":"gone","unknown":"missing"}
+{"_":"step","group":"containers","ms":76}
+{"_":"end"}

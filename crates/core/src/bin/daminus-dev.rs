@@ -12,7 +12,9 @@ use daminus_core::domain::evaluate::{Delta, Disposition, Report};
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::snapshot::HostOutcome;
 use daminus_core::probe::HttpProbe;
-use daminus_core::scan::{ScanEvent, ScanEventBody, ScanScope, ScanService, latest_report};
+use daminus_core::scan::{
+    ScanEvent, ScanEventBody, ScanScope, ScanService, build_bundles, latest_report, resolve,
+};
 use daminus_core::ssh::{SshTransport, outcome_error};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
@@ -23,8 +25,9 @@ struct Cli {
     /// Config folder. Defaults to `~/.daminus-dev`, never the app's own folder.
     #[arg(long, value_name = "PATH")]
     config_dir: Option<PathBuf>,
-    /// ssh config file to use instead of `~/.ssh/config` (test hosts).
-    #[arg(long, value_name = "PATH")]
+    /// ssh config file to use instead of `~/.ssh/config` (test hosts),
+    /// passed to ssh as `-F`.
+    #[arg(short = 'F', long, value_name = "PATH", global = true)]
     ssh_config: Option<PathBuf>,
     #[command(subcommand)]
     command: Option<Command>,
@@ -37,6 +40,10 @@ enum Command {
         /// Only this check (repeatable). Default: every enabled check.
         #[arg(long, value_name = "ID")]
         only: Vec<String>,
+        /// Include this host's components from `projects.json` (code folders,
+        /// compose projects, pm2 apps), as a scan of that host does.
+        #[arg(long, value_name = "ALIAS")]
+        host: Option<String>,
     },
     /// Validate a bundle's NDJSON output: every line v1, `begin` and `end`
     /// present, every check id in the manifest. Exits 1 otherwise.
@@ -53,6 +60,11 @@ enum Command {
         /// Only this host (repeatable), even if excluded in Settings › Hosts.
         #[arg(long, value_name = "ALIAS")]
         host: Vec<String>,
+        /// Connect to nothing: print the exact bundle each host would be
+        /// sent (stdout; a `==> alias <==` header per host and the URLs on
+        /// stderr) and exit.
+        #[arg(long)]
+        print_bundle: bool,
     },
     /// List saved snapshots, newest last.
     Snapshots,
@@ -80,9 +92,19 @@ fn main() -> ExitCode {
     let store = FsStore::new(&dir);
     match cli.command {
         None => config_summary(&store, &dir),
-        Some(Command::Bundle { only }) => print_bundle(&store, only),
+        Some(Command::Bundle { only, host }) => print_bundle(&store, only, host),
         Some(Command::Ndjson { file }) => validate_ndjson(&file),
-        Some(Command::Scan { project, host }) => scan(store, cli.ssh_config, project, host),
+        Some(Command::Scan {
+            project,
+            host,
+            print_bundle,
+        }) => {
+            if print_bundle {
+                print_scan_bundles(&store, project, host)
+            } else {
+                scan(store, cli.ssh_config, project, host)
+            }
+        }
         Some(Command::Snapshots) => list_snapshots(&store),
         Some(Command::Report) => print_report(&store),
     }
@@ -92,25 +114,68 @@ fn now() -> Timestamp {
     Timestamp::new(time::OffsetDateTime::now_utc())
 }
 
+fn scope_of(projects: Vec<String>, hosts: Vec<String>) -> Result<ScanScope, String> {
+    let mut aliases = Vec::new();
+    for h in hosts {
+        aliases.push(HostAlias::parse(&h).map_err(|e| format!("--host {h:?}: {e}"))?);
+    }
+    Ok(ScanScope {
+        projects,
+        hosts: aliases,
+    })
+}
+
+/// What `scan` would send, without connecting anywhere.
+fn print_scan_bundles(store: &FsStore, projects: Vec<String>, hosts: Vec<String>) -> ExitCode {
+    let run = || -> Result<(), String> {
+        let scope = scope_of(projects, hosts)?;
+        let files = store
+            .load_projects()
+            .map_err(|e| format!("projects: {e:?}"))?
+            .value;
+        let settings = store
+            .load_settings()
+            .map_err(|e| format!("settings: {e:?}"))?
+            .value;
+        let targets = resolve(&files, &scope).map_err(|e| format!("{e:?}"))?;
+        let (bundle, scripts) =
+            build_bundles(&settings, &files, &targets.hosts).map_err(|e| format!("{e:?}"))?;
+        eprintln!("bundle {} checks: {}", bundle.hash, bundle.checks.join(" "));
+        let mut stdout = std::io::stdout().lock();
+        for host in &targets.hosts {
+            eprintln!("==> {host} <==");
+            let text = scripts.get(host).ok_or("host without a bundle")?;
+            stdout
+                .write_all(text.as_bytes())
+                .and_then(|()| stdout.flush())
+                .map_err(|e| e.to_string())?;
+        }
+        for url in &targets.urls {
+            eprintln!("url {url}");
+        }
+        Ok(())
+    };
+    match run() {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
 fn scan(
     store: FsStore,
     ssh_config: Option<PathBuf>,
     projects: Vec<String>,
     hosts: Vec<String>,
 ) -> ExitCode {
-    let mut aliases = Vec::new();
-    for h in hosts {
-        match HostAlias::parse(&h) {
-            Ok(a) => aliases.push(a),
-            Err(e) => {
-                eprintln!("--host {h:?}: {e}");
-                return ExitCode::FAILURE;
-            }
+    let scope = match scope_of(projects, hosts) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("{e}");
+            return ExitCode::FAILURE;
         }
-    }
-    let scope = ScanScope {
-        projects,
-        hosts: aliases,
     };
     let runtime = match tokio::runtime::Runtime::new() {
         Ok(r) => r,
@@ -345,7 +410,7 @@ fn config_summary(store: &FsStore, dir: &std::path::Path) -> ExitCode {
     }
 }
 
-fn print_bundle(store: &FsStore, only: Vec<String>) -> ExitCode {
+fn print_bundle(store: &FsStore, only: Vec<String>, host: Option<String>) -> ExitCode {
     let settings = match store.load_settings() {
         Ok(s) => s.value,
         Err(e) => {
@@ -356,7 +421,16 @@ fn print_bundle(store: &FsStore, only: Vec<String>) -> ExitCode {
     let built = manifest()
         .map_err(|e| format!("manifest: {e}"))
         .and_then(|m| {
-            let vars = BundleVars::from_scan(&settings.scan).map_err(|e| e.to_string())?;
+            let mut vars = BundleVars::from_scan(&settings.scan).map_err(|e| e.to_string())?;
+            if let Some(h) = &host {
+                let alias = HostAlias::parse(h).map_err(|e| format!("--host {h:?}: {e}"))?;
+                let files = store
+                    .load_projects()
+                    .map_err(|e| format!("projects: {e:?}"))?
+                    .value;
+                vars.add_components(&files, &alias)
+                    .map_err(|e| e.to_string())?;
+            }
             let selection = Selection {
                 disabled_groups: settings.scan.disabled_groups.clone(),
                 only: (!only.is_empty()).then(|| only.into_iter().collect::<BTreeSet<_>>()),

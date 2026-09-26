@@ -35,7 +35,7 @@
     "logs": {
       "big": {
         "name": "Large logs",
-        "desc": "Log files over the size floor in /var/log, Docker and project log folders."
+        "desc": "Log files over 500 MB in /var/log, Docker container logs and project storage/logs folders."
       }
     },
     "docker": {

@@ -24,6 +24,24 @@ bless=0
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT INT TERM
 mkdir -p "$work/config"
+# The harness host's components, as projects.json names them: the project
+# folder, the compose project the docker shim knows and one it does not, pm2
+# apps the pm2 shim lists, one it does not, and one under another user's
+# PM2_HOME. The large-files floor drops to 1 MB for the 2 MiB upload.
+cat >"$work/config/projects.json" <<'EOF'
+{"version": 1, "projects": [{"id": "shop", "name": "shop", "components": [
+  {"role": "fe", "host": "harness", "kind": "path", "path": "/home/daminus/app"},
+  {"role": "be", "host": "harness", "kind": "compose", "project": "shop"},
+  {"role": "be", "host": "harness", "kind": "compose", "project": "gone"},
+  {"role": "worker", "host": "harness", "kind": "pm2", "app": "api"},
+  {"role": "worker", "host": "harness", "kind": "pm2", "app": "queue"},
+  {"role": "worker", "host": "harness", "kind": "pm2", "app": "deleted"},
+  {"role": "worker", "host": "harness", "kind": "pm2", "app": "admin", "pm2_home": "/root/.pm2"}
+]}]}
+EOF
+printf '%s\n' '{"version": 1, "scan": {"large_file_mb": 1}}' >"$work/config/settings.json"
+# Longest the whole bundle may take in the container (server budget).
+budget_s=60
 
 cargo build -q -p daminus-core --features cli --bin daminus-dev
 dev="$root/target/debug/daminus-dev"
@@ -32,23 +50,39 @@ dev="$root/target/debug/daminus-dev"
 # (names, sizes, modes, mtimes and contents) before and after `sh -s`, and
 # prints both hashes on stderr, which goes to $3.hash. The bundle's own stderr
 # is merged into stdout ($3), so anything it printed there fails validation.
+# ~/.pm2 gets a stand-in daemon: a process titled as pm2 titles its daemon.
 # shellcheck disable=SC2016 # expanded inside the container, not here
-probe='snap() {
+probe='truncate -s 600M "$HOME/app/storage/logs/laravel.log"
+sh -c "sleep 600; :" "PM2 v5.4.2: God Daemon ($HOME/.pm2)" </dev/null &
+daemon=$!
+printf %s "$daemon" >"$HOME/.pm2/pm2.pid"
+: >"$HOME/.pm2/rpc.sock"
+: >"$HOME/.pm2/pub.sock"
+snap() {
 	find "$HOME" /tmp -xdev -exec stat -c "%n %s %a %Y" {} + 2>/dev/null | sort
 	find "$HOME" /tmp -xdev -type f -exec sha256sum {} + 2>/dev/null | sort
 }
 before=$(snap | sha256sum)
 sh -s 2>&1
 after=$(snap | sha256sum)
+kill "$daemon"
 printf "%s\n%s\n" "$before" "$after" >&2'
 # The named volume is a device-backed directory mount (like a real data disk),
 # so disk.fs has a filesystem to report besides the overlay root and the
 # single-file bind mounts docker adds (/etc/hosts…), which it skips.
+# storage/logs is a tmpfs holding a sparse 600 MiB laravel.log (made by the
+# probe before the first hash, no real disk used) for logs.big to find.
+# ~/.pm2 is a tmpfs that looks like a running daemon's home: pm2.pid names
+# PID 1 (the container's shell) and the socket files are the user's and
+# writable (on the read-only root they could not be), so pm2.app reaches
+# the pm2 shim. Both mounts are other filesystems, left out of the hashes.
 run_bundle() {
 	docker run --rm -i \
 		--read-only \
 		--volume daminus-harness-data:/data:ro \
 		--tmpfs /tmp:rw,nosuid,nodev,size=16m \
+		--tmpfs /home/daminus/app/storage/logs:rw,nosuid,nodev,size=1m,uid=1500,gid=1500 \
+		--tmpfs /home/daminus/.pm2:rw,nosuid,nodev,size=1m,uid=1500,gid=1500 \
 		--ipc none \
 		--network none \
 		--cap-drop ALL \
@@ -93,15 +127,21 @@ for distro in ubuntu:24.04 debian:12; do
 	echo "== $distro"
 	docker build -q --build-arg "BASE=$distro" -t "$image" "$here" >/dev/null
 
-	"$dev" --config-dir "$work/config" bundle >"$work/all.sh"
+	"$dev" --config-dir "$work/config" bundle --host harness >"$work/all.sh"
+	t0=$(date +%s)
 	run_bundle "$image" "$work/all.sh" "$work/all.ndjson"
+	took=$(($(date +%s) - t0))
 	verify "$distro all checks" "$work/all.ndjson"
+	echo "$distro: whole bundle in ${took} s (budget ${budget_s} s)"
+	if [ "$took" -ge "$budget_s" ]; then
+		problem "$distro: the whole bundle took ${took} s, over the ${budget_s} s budget"
+	fi
 
 	mkdir -p "$fixtures/$tag"
 	echo "$ids" | while read -r id script; do
 		name=${script%.sh}
 		out="$work/$tag-$name.ndjson"
-		"$dev" --config-dir "$work/config" bundle --only "$id" >"$work/$name.sh"
+		"$dev" --config-dir "$work/config" bundle --host harness --only "$id" >"$work/$name.sh"
 		run_bundle "$image" "$work/$name.sh" "$out"
 		verify "$distro $id" "$out"
 		golden="$fixtures/$tag/$name.ndjson"

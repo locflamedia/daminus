@@ -29,6 +29,17 @@
       "id": "sys.mem",
       "group": "system",
       "runs": "remote",
+      "script": "sys_mem.sh",
+      "needs": ["awk"],
+      "facts": {
+        "target": "empty: one result per host",
+        "value": "memory available to programs, % of total (MemAvailable)",
+        "unit": "%",
+        "data": {
+          "total": "MemTotal in bytes",
+          "available": "MemAvailable in bytes (MemFree + Buffers + Cached on kernels before 3.14)"
+        }
+      },
       "rule": {
         "type": "threshold",
         "field": "value",
@@ -41,6 +52,17 @@
       "id": "sys.swap",
       "group": "system",
       "runs": "remote",
+      "script": "sys_swap.sh",
+      "needs": ["awk"],
+      "facts": {
+        "target": "empty: one result per host",
+        "value": "swap in use, % of total; 0 without swap",
+        "unit": "%",
+        "data": {
+          "total": "SwapTotal in bytes (0: no swap)",
+          "used": "swap used in bytes"
+        }
+      },
       "rule": {
         "type": "threshold",
         "field": "value",
@@ -53,6 +75,16 @@
       "id": "sys.psi",
       "group": "system",
       "runs": "remote",
+      "script": "sys_psi.sh",
+      "needs": ["awk"],
+      "facts": {
+        "target": "empty: one result per host",
+        "data": {
+          "cpu": "% of the last minute some tasks waited for CPU (some avg60)",
+          "memory": "same for memory",
+          "io": "same for IO"
+        }
+      },
       "rule": {
         "type": "max_of",
         "rules": [
@@ -84,6 +116,16 @@
       "id": "sys.oom",
       "group": "system",
       "runs": "remote",
+      "script": "sys_oom.sh",
+      "needs": ["id", "journalctl", "dmesg", "awk"],
+      "facts": {
+        "target": "empty: one result per host",
+        "value": "processes the kernel killed for lack of memory in the last 24 hours",
+        "unit": "count",
+        "data": {
+          "procs": "names of the killed processes, at most 10 distinct"
+        }
+      },
       "rule": {
         "type": "threshold",
         "field": "value",
@@ -133,6 +175,16 @@
       "id": "logs.big",
       "group": "disk",
       "runs": "remote",
+      "script": "logs_big.sh",
+      "needs": ["find"],
+      "facts": {
+        "target": "path of a log file over 500 MiB in /var/log, /var/lib/docker/containers or <project folder>/storage/logs; empty with value 0 when none; a folder the SSH user cannot enter (needs_perm)",
+        "value": "file size",
+        "unit": "bytes",
+        "data": {
+          "mtime": "last change, unix seconds"
+        }
+      },
       "rule": {
         "type": "present",
         "severity": "warn"
@@ -142,6 +194,19 @@
       "id": "disk.path",
       "group": "disk",
       "runs": "remote",
+      "script": "disk_path.sh",
+      "needs": ["du", "find", "awk"],
+      "facts": {
+        "target": "a project folder on this host (path component)",
+        "value": "disk usage of the folder without skip paths (du -x)",
+        "unit": "bytes",
+        "data": {
+          "top": "five largest subfolders, [name, bytes]",
+          "other": "bytes outside the five",
+          "files": "largest files over the Settings floor (DAMINUS_LARGE_FILE_MB), [relative path, bytes], at most 10",
+          "partial": "true when du could not read every subfolder"
+        }
+      },
       "rule": {
         "type": "info"
       }
@@ -150,6 +215,19 @@
       "id": "docker.df",
       "group": "containers",
       "runs": "remote",
+      "script": "docker_df.sh",
+      "needs": ["docker", "awk"],
+      "facts": {
+        "target": "empty: one result per host; no result without docker",
+        "value": "total size of images, containers, volumes and build cache",
+        "unit": "bytes",
+        "data": {
+          "images": "{count, active, size, reclaimable} (bytes)",
+          "containers": "same",
+          "volumes": "same (local volumes)",
+          "build_cache": "same"
+        }
+      },
       "rule": {
         "type": "info"
       }
@@ -158,6 +236,19 @@
       "id": "docker.compose",
       "group": "containers",
       "runs": "remote",
+      "script": "docker_compose.sh",
+      "needs": ["docker", "awk"],
+      "facts": {
+        "target": "compose project name (label com.docker.compose.project)",
+        "data": {
+          "containers": "containers of the project, one-off runs excluded",
+          "running": "containers running",
+          "not_running": "containers not running, except ones that exited 0 with restart policy 'no'",
+          "restarts": "restart count, summed",
+          "mem_pct": "highest container memory use, % of its limit, or of host memory for a container without a limit (docker stats MemPerc)",
+          "services": "per container {name, svc (compose service), state, restarts, mem (bytes), limit (bytes, 0: none), cpu (%), oom, exit, started, image}"
+        }
+      },
       "rule": {
         "type": "max_of",
         "rules": [
@@ -187,6 +278,20 @@
       "id": "pm2.app",
       "group": "containers",
       "runs": "remote",
+      "script": "pm2_app.sh",
+      "needs": ["pm2", "awk"],
+      "facts": {
+        "target": "pm2 app name",
+        "data": {
+          "status": "worst instance status (online, stopped, errored…); 'stopped' when the daemon does not run",
+          "daemon": "whether the pm2 daemon of this PM2_HOME runs",
+          "instances": "processes with this name (cluster mode)",
+          "restarts": "restart_time, summed",
+          "mem_mb": "memory of all instances, MB",
+          "started": "latest instance start, unix seconds",
+          "ids": "pm_id of each instance"
+        }
+      },
       "rule": {
         "type": "max_of",
         "rules": [

@@ -3,4 +3,4 @@ import type { DbEngine } from "./DbEngine";
 import type { HostAlias } from "./HostAlias";
 import type { Role } from "./Role";
 
-export type Component = { role: Role, host: HostAlias, } & ({ "kind": "path", path: string, } | { "kind": "compose", project: string, } | { "kind": "pm2", app: string, } | { "kind": "db", engine: DbEngine, database: string, env_file: string, container?: string | null, });
+export type Component = { role: Role, host: HostAlias, } & ({ "kind": "path", path: string, } | { "kind": "compose", project: string, } | { "kind": "pm2", app: string, pm2_home?: string | null, } | { "kind": "db", engine: DbEngine, database: string, env_file: string, container?: string | null, });

@@ -1,6 +1,8 @@
 #!/bin/sh
 # Harness shim: prints a recorded `pm2 jlist`, whose env holds canary secrets.
+# HARNESS_OUT points the shims at the recorded output outside the image
+# (crates/core/tests/check_behaviour.rs).
 case "${1-}" in
-jlist) cat /opt/daminus-harness/out/pm2/jlist.json ;;
+jlist) cat "${HARNESS_OUT:-/opt/daminus-harness/out}/pm2/jlist.json" ;;
 *) exit 1 ;;
 esac

@@ -35,7 +35,7 @@
     "logs": {
       "big": {
         "name": "Log lớn",
-        "desc": "File log vượt ngưỡng kích thước trong /var/log, Docker và thư mục log của dự án."
+        "desc": "File log lớn hơn 500 MB trong /var/log, log container Docker và thư mục storage/logs của dự án."
       }
     },
     "docker": {

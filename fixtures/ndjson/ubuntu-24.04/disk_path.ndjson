@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"6fefeb5136815488"}
+{"check":"disk.path","target":"/home/daminus/app","value":4177920,"unit":"bytes","data":{"top":[["public",2105344],["src",2060288],["storage",4096]],"other":8192,"files":[["public/uploads/banner.bin",2097152]],"partial":false}}
+{"_":"step","group":"disk","ms":226}
+{"_":"end"}

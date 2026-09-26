@@ -7,6 +7,7 @@
 //! cancelled scan is never saved, so the next delta compares against the last
 //! complete one.
 
+use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -28,6 +29,7 @@ use crate::domain::error::{AppError, ErrorCode};
 use crate::domain::fact::CheckFact;
 use crate::domain::host::{HostAlias, HostRef};
 use crate::domain::manifest::CheckGroup;
+use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::snapshot::{HostOutcome, HostTiming, NetCause, Snapshot};
 use crate::probe::UrlProbe;
@@ -140,7 +142,7 @@ impl ScanService {
         if targets.is_empty() {
             return Err(ErrorCode::NothingToScan.into());
         }
-        let bundle = build_bundle(&settings)?;
+        let (bundle, scripts) = build_bundles(&settings, &projects, &targets.hosts)?;
 
         let now = OffsetDateTime::now_utc();
         let n = sh.started.fetch_add(1, Ordering::Relaxed);
@@ -169,6 +171,7 @@ impl ScanService {
             started_at,
             targets,
             bundle: Arc::new(bundle),
+            scripts,
             settings,
         };
         tokio::spawn(
@@ -206,7 +209,14 @@ impl ScanService {
     }
 }
 
-fn build_bundle(settings: &Settings) -> Result<Bundle, AppError> {
+/// The bundle every host runs, and its text per host: the checks and the
+/// hash are the same everywhere, only the variables naming that host's
+/// components differ.
+pub fn build_bundles(
+    settings: &Settings,
+    projects: &ProjectsFile,
+    hosts: &[HostAlias],
+) -> Result<(Bundle, HashMap<HostAlias, String>), AppError> {
     let invalid =
         |what: String| AppError::from(ErrorCode::SchemaInvalid).with_param("detail", what);
     let m = manifest().map_err(|e| invalid(format!("manifest: {e}")))?;
@@ -218,7 +228,17 @@ fn build_bundle(settings: &Settings) -> Result<Bundle, AppError> {
         disabled_groups: settings.scan.disabled_groups.clone(),
         only: None,
     };
-    bundle::build(&m, &selection, &vars).map_err(|e| invalid(e.to_string()))
+    let base = bundle::build(&m, &selection, &vars).map_err(|e| invalid(e.to_string()))?;
+    let mut scripts = HashMap::new();
+    for host in hosts {
+        let mut host_vars = vars.clone();
+        host_vars
+            .add_components(projects, host)
+            .map_err(|e| invalid(e.to_string()))?;
+        let b = bundle::build(&m, &selection, &host_vars).map_err(|e| invalid(e.to_string()))?;
+        scripts.insert(host.clone(), b.text);
+    }
+    Ok((base, scripts))
 }
 
 /// Stamps events with the scan id and a rising `seq`, keeps the status in step.
@@ -280,6 +300,8 @@ struct Job {
     started_at: Timestamp,
     targets: ScanTargets,
     bundle: Arc<Bundle>,
+    /// The bundle text per host (see [`build_bundles`]).
+    scripts: HashMap<HostAlias, String>,
     settings: Settings,
 }
 
@@ -310,7 +332,11 @@ impl Job {
                 bundle: Arc::clone(&self.bundle),
                 req: RunRequest {
                     host: host.clone(),
-                    script: self.bundle.text.clone(),
+                    script: self
+                        .scripts
+                        .get(host)
+                        .cloned()
+                        .unwrap_or_else(|| self.bundle.text.clone()),
                     connect_timeout: connect,
                     budget: self.shared.options.host_budget,
                 },
