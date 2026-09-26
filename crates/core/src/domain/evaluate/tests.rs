@@ -29,6 +29,10 @@ fn manifest() -> Manifest {
         id: id.into(),
         group,
         runs,
+        script: None,
+        needs: vec![],
+        facts: Default::default(),
+        fp: None,
         rule,
     };
     Manifest {

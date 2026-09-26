@@ -21,13 +21,14 @@
 ## Shell (check scripts)
 
 - POSIX `sh`, read-only, no `sudo`, must pass `shellcheck`.
+- A check script is a function body in `crates/core/checks/`, named after its id (`sys.load` → `sys_load.sh`), run in a subshell after `prelude.sh`. It runs only builtins, prelude helpers and the commands in its manifest `needs` (allowlist test), and prints facts with `emit`. The full recipe is in `CONTRIBUTING.md` › Adding a check.
 
 ## Naming
 
 - Rust files: `snake_case.rs`.
 - TypeScript files: `kebab-case.ts`.
 - Vue single-file components: `PascalCase.vue`.
-- Shell scripts: `kebab-case.sh`.
+- Shell scripts: `kebab-case.sh`; check scripts follow their check id (`disk_fs.sh`).
 
 ## Commits
 

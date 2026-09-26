@@ -359,7 +359,7 @@ fn files_under(dir: &Path) -> Vec<PathBuf> {
     for entry in fs::read_dir(dir).expect("read dir").flatten() {
         let p = entry.path();
         let name = entry.file_name().to_string_lossy().into_owned();
-        if name.starts_with('.') || name == "manifest.json" {
+        if name.starts_with('.') {
             continue;
         }
         if p.is_dir() {
@@ -422,9 +422,8 @@ fn load() -> (ProjectsFile, Settings, Manifest, Vec<Snapshot>) {
     let tmp = tempfile::tempdir().expect("tmp");
     copy_dir(&fixture_dir(), tmp.path());
     let store = FsStore::new(tmp.path());
-    let manifest: Manifest =
-        serde_json::from_slice(&fs::read(fixture_dir().join("manifest.json")).expect("manifest"))
-            .expect("parse");
+    // The shipped manifest, so the timeline always grades with today's rules.
+    let manifest: Manifest = daminus_core::checks::manifest().expect("manifest");
     let projects = store.load_projects().expect("projects").value;
     let settings = store.load_settings().expect("settings").value;
     let history = store.load_history(None).expect("history");
