@@ -1,0 +1,27 @@
+name: Stale issues
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v11
+        with:
+          # Only issues waiting on the reporter; PRs and confirmed bugs are never auto-closed
+          only-issue-labels: needs-info
+          days-before-issue-stale: 14
+          days-before-issue-close: 7
+          days-before-pr-stale: -1
+          days-before-pr-close: -1
+          stale-issue-message: >
+            This issue is waiting for more information and has had no activity for 14 days.
+            It will be closed in 7 days unless there is a new comment.
+          close-issue-message: >
+            Closed due to inactivity. Feel free to reopen with the requested details.

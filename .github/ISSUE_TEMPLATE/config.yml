@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions and ideas
+    url: https://github.com/locflamedia/daminus/discussions
+    about: Ask and answer questions here.
+  - name: 🔒 Security vulnerability
+    url: https://github.com/locflamedia/daminus/security/advisories/new
+    about: Report vulnerabilities privately. Please don't open a public issue.
