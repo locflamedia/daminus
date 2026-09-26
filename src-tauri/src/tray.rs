@@ -86,10 +86,8 @@ impl Mark {
     fn with_dot(&self, dot: [u8; 3], dark: bool) -> Image<'static> {
         let mut px = self.rgba.clone();
         let ink = if dark { 255 } else { 0 };
-        for p in px.chunks_exact_mut(4) {
-            p[0] = ink;
-            p[1] = ink;
-            p[2] = ink;
+        for p in px.as_chunks_mut::<4>().0 {
+            p[..3].fill(ink);
         }
         // 18 pt icon at 2×: a 12 px dot centred 3 pt in from the top right corner.
         let (cx, cy, r) = (self.width as f32 - 6.0, 6.0, 6.0);

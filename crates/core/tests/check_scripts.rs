@@ -28,7 +28,9 @@ const BANNED: &[&str] = &[
     ".", "source", "eval", "exec", "trap", "kill", "sudo", "su", "doas",
 ];
 /// External commands the prelude itself uses.
-const PRELUDE_NEEDS: &[&str] = &["tr", "sed", "awk", "date", "nice", "ionice", "timeout"];
+const PRELUDE_NEEDS: &[&str] = &[
+    "tr", "sed", "awk", "date", "nice", "ionice", "timeout", "docker", "ps",
+];
 /// Distros the harness runs, as directory names under `fixtures/ndjson/`.
 const DISTROS: &[&str] = &["ubuntu-24.04", "debian-12"];
 
@@ -563,11 +565,10 @@ fn sed_problems(args: &[String]) -> Vec<String> {
                 && n == args
                     .iter()
                     .position(|x| !x.starts_with('-'))
-                    .unwrap_or(usize::MAX) =>
+                    .unwrap_or(usize::MAX)
+                && !is_substitution(a) =>
             {
-                if !is_substitution(a) {
-                    bad.push(format!("program `{a}` is not a plain s/// substitution"));
-                }
+                bad.push(format!("program `{a}` is not a plain s/// substitution"));
             }
             _ => {}
         }
