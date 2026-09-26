@@ -115,6 +115,9 @@ impl HostProgress {
 pub struct ScanRun {
     pub scan_id: String,
     pub started_at: Timestamp,
+    /// `seq` of the next event: every event before it is folded in here, so
+    /// a listener that reads the status mid-scan skips events below it.
+    pub next_seq: u32,
     pub hosts: BTreeMap<HostRef, HostProgress>,
 }
 
@@ -127,6 +130,7 @@ impl ScanRun {
         Self {
             scan_id,
             started_at,
+            next_seq: 0,
             hosts: hosts
                 .into_iter()
                 .map(|h| (h, HostProgress::queued()))
@@ -134,8 +138,9 @@ impl ScanRun {
         }
     }
 
-    /// Folds an event into the status.
-    pub(crate) fn apply(&mut self, body: &ScanEventBody) {
+    /// Folds event `seq` into the status.
+    pub(crate) fn apply(&mut self, seq: u32, body: &ScanEventBody) {
+        self.next_seq = seq.saturating_add(1);
         let host = match body {
             ScanEventBody::HostStarted { host }
             | ScanEventBody::AgentWait { host }

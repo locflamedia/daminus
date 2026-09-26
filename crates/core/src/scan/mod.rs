@@ -3,11 +3,13 @@
 //! what the user sees.
 
 pub mod event;
+mod report;
 mod service;
 pub mod targets;
 #[cfg(test)]
 mod tests;
 
 pub use event::{HostProgress, HostState, ScanEvent, ScanEventBody, ScanRun};
+pub use report::latest_report;
 pub use service::{HOST_BUDGET, MAX_HOSTS_AT_ONCE, ScanService, ServiceOptions, Started};
 pub use targets::{ScanScope, ScanTargets};

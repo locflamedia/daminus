@@ -1,11 +1,15 @@
 //! Which hosts and URLs a scan covers.
 
+use serde::{Deserialize, Serialize};
+
 use crate::domain::error::{AppError, ErrorCode};
 use crate::domain::host::HostAlias;
 use crate::domain::project::ProjectsFile;
 
 /// What the user asked to scan. Empty = everything.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub struct ScanScope {
     /// Project ids: their hosts and URLs.
     pub projects: Vec<String>,

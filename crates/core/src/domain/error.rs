@@ -48,6 +48,8 @@ pub enum ErrorCode {
     ProviderUnavailable,
     /// A reply (AI, or a file) did not match its schema.
     SchemaInvalid,
+    /// A bug: the work panicked. Logged; trying again will not help.
+    Internal,
 }
 
 impl ErrorCode {

@@ -510,10 +510,15 @@ fn host_running_event_moves_the_status_out_of_agent_wait() {
         crate::domain::datetime::Timestamp::new(time::OffsetDateTime::UNIX_EPOCH),
         [host.clone()],
     );
-    run.apply(&ScanEventBody::AgentWait { host: host.clone() });
+    assert_eq!(run.next_seq, 0);
+    run.apply(0, &ScanEventBody::AgentWait { host: host.clone() });
     assert_eq!(run.hosts[&host].state, HostState::AgentWait);
-    run.apply(&ScanEventBody::HostRunning { host: host.clone() });
+    run.apply(1, &ScanEventBody::HostRunning { host: host.clone() });
     assert_eq!(run.hosts[&host].state, HostState::Running);
+    assert_eq!(
+        run.next_seq, 2,
+        "a listener hydrating now skips seq 0 and 1"
+    );
 }
 
 #[tokio::test(start_paused = true)]

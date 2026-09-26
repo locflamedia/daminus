@@ -8,11 +8,11 @@ use clap::{Parser, Subcommand};
 use daminus_core::checks::bundle::{self, BundleVars, Selection};
 use daminus_core::checks::{manifest, ndjson};
 use daminus_core::domain::datetime::Timestamp;
-use daminus_core::domain::evaluate::{Config, Delta, Disposition, Report, evaluate};
+use daminus_core::domain::evaluate::{Delta, Disposition, Report};
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::snapshot::HostOutcome;
 use daminus_core::probe::HttpProbe;
-use daminus_core::scan::{ScanEvent, ScanEventBody, ScanScope, ScanService};
+use daminus_core::scan::{ScanEvent, ScanEventBody, ScanScope, ScanService, latest_report};
 use daminus_core::ssh::{SshTransport, outcome_error};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
@@ -226,21 +226,7 @@ fn outcome_name(o: &HostOutcome) -> String {
 }
 
 fn load_report(store: &FsStore) -> Result<Report, String> {
-    let projects = store.load_projects().map_err(|e| format!("{e:?}"))?.value;
-    let settings = store.load_settings().map_err(|e| format!("{e:?}"))?.value;
-    let m = manifest().map_err(|e| format!("manifest: {e}"))?;
-    let history = store
-        .load_history(settings.data.keep_scans.map(|k| k as usize))
-        .map_err(|e| format!("{e:?}"))?;
-    Ok(evaluate(
-        &history,
-        Config {
-            projects: &projects,
-            settings: &settings,
-        },
-        &m,
-        now(),
-    ))
+    latest_report(store, now()).map_err(|e| format!("{e:?}"))
 }
 
 /// One line per issue and per change since the previous scan.

@@ -57,7 +57,8 @@ impl Default for ServiceOptions {
 }
 
 /// What `start` did.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export, rename = "ScanStarted"))]
 pub struct Started {
     pub scan_id: String,
     /// A scan was already running; this is its id and nothing new started.
@@ -239,7 +240,7 @@ impl Emitter {
         if let Ok(mut c) = self.shared.current.lock()
             && let Some(a) = c.as_mut()
         {
-            a.run.apply(&body);
+            a.run.apply(*seq, &body);
         }
         let event = ScanEvent {
             scan_id: self.scan_id.clone(),

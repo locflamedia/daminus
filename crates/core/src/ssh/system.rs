@@ -66,6 +66,9 @@ pub struct SshTransport {
     keygen: PathBuf,
     /// `ssh -F`; `None` reads the user's normal config.
     config: Option<PathBuf>,
+    /// Variables set on every `ssh` and `ssh-keygen` (a GUI app's login-shell
+    /// `PATH`, `SSH_AUTH_SOCK`, `HOME`); the rest is inherited.
+    env: Vec<(OsString, OsString)>,
     /// Process groups of runs still going.
     groups: Arc<Mutex<HashSet<i32>>>,
 }
@@ -83,6 +86,7 @@ impl SshTransport {
             program: PathBuf::from("ssh"),
             keygen: PathBuf::from("ssh-keygen"),
             config: None,
+            env: Vec::new(),
             groups: Arc::new(Mutex::new(HashSet::new())),
         }
     }
@@ -90,6 +94,20 @@ impl SshTransport {
     /// Reads this config file instead of `~/.ssh/config` (dev CLI, tests).
     pub fn with_config(mut self, path: impl Into<PathBuf>) -> Self {
         self.config = Some(path.into());
+        self
+    }
+
+    /// Sets these variables on every process this transport starts. A `PATH`
+    /// here is also where `ssh` and `ssh-keygen` are looked up.
+    pub fn with_env<K, V>(mut self, vars: impl IntoIterator<Item = (K, V)>) -> Self
+    where
+        K: Into<OsString>,
+        V: Into<OsString>,
+    {
+        self.env = vars
+            .into_iter()
+            .map(|(k, v)| (k.into(), v.into()))
+            .collect();
         self
     }
 
@@ -147,7 +165,8 @@ impl SshTransport {
 
     fn command(&self, args: &[OsString]) -> Command {
         let mut cmd = Command::new(&self.program);
-        cmd.args(args)
+        cmd.envs(self.env.iter().map(|(k, v)| (k, v)))
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -325,13 +344,18 @@ impl SshTransport {
         let limit = req.connect_timeout + Duration::from_secs(10);
         let _ = tokio::time::timeout(limit, child.wait()).await;
         drop(_guard);
-        fingerprint_of(&self.keygen, file.path()).await
+        fingerprint_of(&self.keygen, &self.env, file.path()).await
     }
 }
 
 /// `ssh-keygen -lf <file>` → `ED25519 SHA256:…` for the first key in it.
-async fn fingerprint_of(keygen: &Path, file: &Path) -> Option<String> {
+async fn fingerprint_of(
+    keygen: &Path,
+    env: &[(OsString, OsString)],
+    file: &Path,
+) -> Option<String> {
     let out = Command::new(keygen)
+        .envs(env.iter().map(|(k, v)| (k, v)))
         .arg("-lf")
         .arg(file)
         .stdin(Stdio::null())
@@ -584,6 +608,30 @@ mod tests {
             signals.push(s);
         }
         (end, signals)
+    }
+
+    #[tokio::test]
+    async fn env_is_passed_and_ssh_found_on_its_path() {
+        let dir = tempfile::tempdir().unwrap();
+        script(
+            dir.path(),
+            "ssh",
+            "cat >/dev/null & printf '%s|%s\\n' \"$SSH_AUTH_SOCK\" \"$HOME\"; exit 0",
+        );
+        let path = format!("{}:/usr/bin:/bin", dir.path().display());
+        let t = SshTransport::new().with_env([
+            ("PATH", path.as_str()),
+            ("SSH_AUTH_SOCK", "/tmp/agent.sock"),
+            ("HOME", "/Users/someone"),
+        ]);
+        let (end, signals) = run(&t).await;
+        assert_eq!(end.exit, Some(0));
+        assert_eq!(
+            signals,
+            vec![RunSignal::Stdout(
+                b"/tmp/agent.sock|/Users/someone\n".to_vec()
+            )]
+        );
     }
 
     #[tokio::test]

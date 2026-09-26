@@ -6,4 +6,9 @@ import type { Timestamp } from "./Timestamp";
 /**
  * The scan in progress, as `ScanService::status` returns it.
  */
-export type ScanRun = { scan_id: string, started_at: Timestamp, hosts: { [key in HostRef]?: HostProgress }, };
+export type ScanRun = { scan_id: string, started_at: Timestamp, 
+/**
+ * `seq` of the next event: every event before it is folded in here, so
+ * a listener that reads the status mid-scan skips events below it.
+ */
+next_seq: number, hosts: { [key in HostRef]?: HostProgress }, };
