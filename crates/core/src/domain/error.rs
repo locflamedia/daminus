@@ -16,6 +16,9 @@ pub enum ErrorCode {
     SshUnreachable,
     Timeout,
     ScanInProgress,
+    /// The scan scope names no host and no URL (unknown project or host, or
+    /// every host excluded in Settings › Hosts).
+    NothingToScan,
     /// No host and no URL could be reached for network reasons: the Mac is offline.
     LocalNetworkDown,
     /// A config file could not be parsed; it was moved aside to `*.corrupt-<ts>`.

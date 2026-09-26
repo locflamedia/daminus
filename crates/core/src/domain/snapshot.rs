@@ -90,6 +90,19 @@ pub struct Snapshot {
     pub coverage: BTreeMap<HostRef, BTreeSet<CheckGroup>>,
     #[serde(default)]
     pub facts: BTreeMap<HostRef, Vec<CheckFact>>,
+    /// How long each host took, in total and per finished group.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub timing: BTreeMap<HostRef, HostTiming>,
+}
+
+/// Time one host took in a scan, measured on this Mac (`ms`) and on the
+/// server for each group that finished (`steps`, from the `step` lines).
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct HostTiming {
+    pub ms: u32,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub steps: BTreeMap<CheckGroup, u32>,
 }
 
 fn v1() -> u32 {
@@ -107,6 +120,7 @@ impl Snapshot {
             hosts: BTreeMap::new(),
             coverage: BTreeMap::new(),
             facts: BTreeMap::new(),
+            timing: BTreeMap::new(),
         }
     }
 

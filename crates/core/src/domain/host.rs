@@ -50,7 +50,7 @@ impl HostAlias {
 
 impl fmt::Display for HostAlias {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.0)
+        f.pad(&self.0)
     }
 }
 
@@ -110,7 +110,7 @@ impl From<HostAlias> for HostRef {
 
 impl fmt::Display for HostRef {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
+        f.pad(self.as_str())
     }
 }
 

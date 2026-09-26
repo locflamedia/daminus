@@ -3,6 +3,7 @@ import type { CheckFact } from "./CheckFact";
 import type { CheckGroup } from "./CheckGroup";
 import type { HostOutcome } from "./HostOutcome";
 import type { HostRef } from "./HostRef";
+import type { HostTiming } from "./HostTiming";
 import type { Timestamp } from "./Timestamp";
 
 export type Snapshot = { v: number, 
@@ -17,4 +18,8 @@ bundle_hash: string, hosts: { [key in HostRef]?: HostOutcome },
 /**
  * Check groups each host finished (`step` lines). `@local` covers `uptime`.
  */
-coverage: { [key in HostRef]?: Array<CheckGroup> }, facts: { [key in HostRef]?: Array<CheckFact> }, };
+coverage: { [key in HostRef]?: Array<CheckGroup> }, facts: { [key in HostRef]?: Array<CheckFact> }, 
+/**
+ * How long each host took, in total and per finished group.
+ */
+timing?: { [key in HostRef]?: HostTiming }, };

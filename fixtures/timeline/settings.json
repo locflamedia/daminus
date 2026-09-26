@@ -27,8 +27,8 @@
       "/var/lib/docker/overlay2"
     ],
     "large_file_mb": 50,
-    "host_wait_s": 10,
-    "hosts_at_once": 2,
+    "connect_timeout_s": 10,
+    "hosts_at_once": null,
     "thresholds": []
   },
   "ai": {

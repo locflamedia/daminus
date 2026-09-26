@@ -118,10 +118,12 @@ pub struct ScanSettings {
     pub skip_paths: Vec<String>,
     /// Floor for the large-files list, in MB.
     pub large_file_mb: u32,
-    /// Seconds to wait for a host before it is marked unreachable.
-    pub host_wait_s: u32,
-    /// Hosts scanned at once; `None` = the engine default. Written as `null`
-    /// (not omitted) because the default is not `None`.
+    /// SSH connect timeout in seconds (Settings › Scan offers 5 / 10 / 30).
+    /// Only the TCP connect and handshake; each reachable host then has a
+    /// fixed 90 s budget for its bundle.
+    pub connect_timeout_s: u32,
+    /// Hosts scanned at once (1 / 2 / 4); `None` = Auto, the number of hosts
+    /// capped at 8.
     pub hosts_at_once: Option<u32>,
     /// Threshold overrides on top of the manifest (disk, container memory, certificate, restarts).
     pub thresholds: Vec<ThresholdOverride>,
@@ -142,8 +144,8 @@ impl Default for ScanSettings {
             .map(String::from)
             .to_vec(),
             large_file_mb: 50,
-            host_wait_s: 10,
-            hosts_at_once: Some(2),
+            connect_timeout_s: 10,
+            hosts_at_once: None,
             thresholds: Vec::new(),
         }
     }

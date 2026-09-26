@@ -67,7 +67,7 @@ fn settings_v1_fixture_loads_with_defaults_for_missing_fields() {
         s.appearance.clear_sky,
         "missing field takes the board default"
     );
-    assert_eq!(s.scan.host_wait_s, 30);
+    assert_eq!(s.scan.connect_timeout_s, 30);
     assert_eq!(s.scan.skip_paths.len(), 6);
     assert_eq!(s.data.keep_scans, Some(50));
     assert_eq!(s.data.forget_ai_after_days, None);
@@ -86,16 +86,16 @@ fn missing_files_give_defaults() {
 }
 
 #[test]
-fn settings_null_choices_survive_a_round_trip() {
+fn settings_choices_and_nulls_survive_a_round_trip() {
     let (_dir, store) = store();
     let mut s = store.load_settings().unwrap();
-    s.value.scan.hosts_at_once = None;
+    s.value.scan.hosts_at_once = Some(4);
     s.value.data.keep_scans = None;
     store.save_settings(&s.value, s.stamp).unwrap();
     let back = store.load_settings().unwrap().value;
     assert_eq!(
         (back.scan.hosts_at_once, back.data.keep_scans),
-        (None, None)
+        (Some(4), None)
     );
 }
 

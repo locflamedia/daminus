@@ -16,12 +16,14 @@ skip_paths: Array<string>,
  */
 large_file_mb: number, 
 /**
- * Seconds to wait for a host before it is marked unreachable.
+ * SSH connect timeout in seconds (Settings › Scan offers 5 / 10 / 30).
+ * Only the TCP connect and handshake; each reachable host then has a
+ * fixed 90 s budget for its bundle.
  */
-host_wait_s: number, 
+connect_timeout_s: number, 
 /**
- * Hosts scanned at once; `None` = the engine default. Written as `null`
- * (not omitted) because the default is not `None`.
+ * Hosts scanned at once (1 / 2 / 4); `None` = Auto, the number of hosts
+ * capped at 8.
  */
 hosts_at_once: number | null, 
 /**
