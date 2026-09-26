@@ -1,0 +1,175 @@
+{
+  "checks": [
+    {
+      "id": "sys.load",
+      "group": "system",
+      "runs": "remote",
+      "rule": {
+        "type": "threshold",
+        "field": "value",
+        "warn": 1.0,
+        "crit": 2.0,
+        "cmp": "gt",
+        "scale": "cores"
+      }
+    },
+    {
+      "id": "sys.mem",
+      "group": "system",
+      "runs": "remote",
+      "rule": { "type": "threshold", "field": "value", "warn": 15.0, "crit": 5.0, "cmp": "lt" }
+    },
+    {
+      "id": "sys.swap",
+      "group": "system",
+      "runs": "remote",
+      "rule": { "type": "threshold", "field": "value", "warn": 50.0, "crit": 80.0, "cmp": "gt" }
+    },
+    {
+      "id": "sys.psi",
+      "group": "system",
+      "runs": "remote",
+      "rule": {
+        "type": "max_of",
+        "rules": [
+          { "type": "threshold", "field": "data.cpu", "warn": 10.0, "crit": 25.0, "cmp": "gt" },
+          { "type": "threshold", "field": "data.memory", "warn": 10.0, "crit": 25.0, "cmp": "gt" },
+          { "type": "threshold", "field": "data.io", "warn": 10.0, "crit": 25.0, "cmp": "gt" }
+        ]
+      }
+    },
+    {
+      "id": "sys.oom",
+      "group": "system",
+      "runs": "remote",
+      "rule": { "type": "threshold", "field": "value", "warn": 1.0, "crit": 5.0, "cmp": "gte" }
+    },
+    {
+      "id": "disk.fs",
+      "group": "disk",
+      "runs": "remote",
+      "rule": {
+        "type": "max_of",
+        "rules": [
+          { "type": "threshold", "field": "data.pct", "warn": 80.0, "crit": 90.0, "cmp": "gte" },
+          { "type": "threshold", "field": "data.ipct", "warn": 80.0, "crit": 90.0, "cmp": "gte" }
+        ]
+      }
+    },
+    {
+      "id": "logs.big",
+      "group": "disk",
+      "runs": "remote",
+      "rule": { "type": "present", "severity": "warn" }
+    },
+    { "id": "disk.path", "group": "disk", "runs": "remote", "rule": { "type": "info" } },
+    { "id": "docker.df", "group": "containers", "runs": "remote", "rule": { "type": "info" } },
+    {
+      "id": "docker.compose",
+      "group": "containers",
+      "runs": "remote",
+      "rule": {
+        "type": "max_of",
+        "rules": [
+          {
+            "type": "threshold",
+            "field": "data.not_running",
+            "warn": 0.0,
+            "crit": 0.0,
+            "cmp": "gt"
+          },
+          { "type": "threshold", "field": "data.restarts", "warn": 0.0, "cmp": "gt" },
+          { "type": "threshold", "field": "data.mem_pct", "warn": 90.0, "cmp": "gte" }
+        ]
+      }
+    },
+    {
+      "id": "pm2.app",
+      "group": "containers",
+      "runs": "remote",
+      "rule": {
+        "type": "max_of",
+        "rules": [
+          {
+            "type": "state_map",
+            "field": "data.status",
+            "map": { "online": "ok", "stopped": "crit", "errored": "crit" },
+            "default": "warn"
+          },
+          { "type": "increase", "field": "data.restarts", "severity": "warn", "min": 2.0 }
+        ]
+      }
+    },
+    { "id": "db.size", "group": "databases", "runs": "remote", "rule": { "type": "info" } },
+    {
+      "id": "sec.miner",
+      "group": "security",
+      "runs": "remote",
+      "rule": { "type": "present", "severity": "crit" }
+    },
+    {
+      "id": "sec.upload_php",
+      "group": "security",
+      "runs": "remote",
+      "rule": { "type": "present", "severity": "crit" }
+    },
+    {
+      "id": "sec.tmp_exec",
+      "group": "security",
+      "runs": "remote",
+      "rule": { "type": "present", "severity": "warn" }
+    },
+    {
+      "id": "sec.preload",
+      "group": "security",
+      "runs": "remote",
+      "rule": { "type": "present", "severity": "crit" }
+    },
+    {
+      "id": "sec.ports",
+      "group": "security",
+      "runs": "remote",
+      "rule": { "type": "present", "severity": "warn" }
+    },
+    {
+      "id": "sec.recent_change",
+      "group": "code_changes",
+      "runs": "remote",
+      "rule": { "type": "info" }
+    },
+    {
+      "id": "url.http",
+      "group": "uptime",
+      "runs": "local",
+      "rule": {
+        "type": "max_of",
+        "rules": [
+          {
+            "type": "state_map",
+            "field": "data.class",
+            "map": { "2xx": "ok", "3xx": "ok" },
+            "default": "crit"
+          },
+          { "type": "threshold", "field": "value", "warn": 2000.0, "cmp": "gt" }
+        ]
+      }
+    },
+    {
+      "id": "url.tls",
+      "group": "uptime",
+      "runs": "local",
+      "rule": {
+        "type": "days_left",
+        "warn": 14.0,
+        "crit": 3.0,
+        "flags": ["expired", "untrusted", "mismatch"]
+      }
+    },
+    {
+      "id": "url.exposed",
+      "group": "security",
+      "runs": "local",
+      "rule": { "type": "present", "severity": "crit" }
+    }
+  ]
+}

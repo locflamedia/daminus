@@ -8,3 +8,6 @@ src-tauri/icons/
 src/api/bindings/
 assets/
 *.md
+fixtures/timeline/projects.json
+fixtures/timeline/settings.json
+fixtures/timeline/snapshots/

@@ -6,3 +6,6 @@
 
 /// Crate version, shared by the app shell and the dev CLI.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+pub mod domain;
+pub mod store;

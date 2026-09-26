@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "general": { "language": "vi", "scan_on_open": false, "intro": "always" },
+  "appearance": { "theme": "dark" },
+  "scan": {
+    "disabled_groups": ["code_changes", "databases"],
+    "host_wait_s": 30,
+    "thresholds": [{ "check": "url.tls", "warn": 30 }]
+  },
+  "ai": { "provider": "anthropic", "model": "claude-sonnet-5" },
+  "data": { "keep_scans": 50, "forget_ai_after_days": null }
+}

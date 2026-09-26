@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": "kho-hang",
+      "name": "kho-hang",
+      "color": "#4F6BED",
+      "urls": [
+        "https://khohang.vn"
+      ],
+      "components": [
+        {
+          "role": "fe",
+          "host": "vps-hn-3",
+          "kind": "path",
+          "path": "/var/www/khohang/public"
+        },
+        {
+          "role": "be",
+          "host": "vps-hn-3",
+          "kind": "path",
+          "path": "/var/www/khohang"
+        }
+      ]
+    },
+    {
+      "id": "tiemtra",
+      "name": "tiemtra",
+      "color": "#9F86E6",
+      "urls": [
+        "https://tiemtra.vn",
+        "https://api.tiemtra.vn"
+      ],
+      "components": [
+        {
+          "role": "fe",
+          "host": "vps-sg-1",
+          "kind": "path",
+          "path": "/srv/tiemtra-web"
+        },
+        {
+          "role": "worker",
+          "host": "vps-sg-1",
+          "kind": "pm2",
+          "app": "tiemtra-cron"
+        },
+        {
+          "role": "be",
+          "host": "vps-sg-2",
+          "kind": "compose",
+          "project": "tiemtra"
+        },
+        {
+          "role": "db",
+          "host": "vps-sg-2",
+          "kind": "db",
+          "engine": "postgres",
+          "database": "tiemtra",
+          "env_file": "/srv/tiemtra-api/.env",
+          "container": "tiemtra-api-db-1"
+        }
+      ]
+    },
+    {
+      "id": "booking",
+      "name": "booking",
+      "color": "#E58FB2",
+      "urls": [
+        "https://booking.vn"
+      ],
+      "components": [
+        {
+          "role": "be",
+          "host": "vps-sg-2",
+          "kind": "path",
+          "path": "/srv/booking"
+        },
+        {
+          "role": "worker",
+          "host": "vps-sg-2",
+          "kind": "pm2",
+          "app": "booking-queue"
+        },
+        {
+          "role": "db",
+          "host": "db-main",
+          "kind": "db",
+          "engine": "mysql",
+          "database": "booking",
+          "env_file": "/srv/booking/.env"
+        }
+      ]
+    }
+  ],
+  "hosts": {
+    "legacy-shop": {
+      "include": true
+    }
+  },
+  "rules": [
+    {
+      "id": "exp-booking-silence-php",
+      "host": "vps-sg-2",
+      "check": "sec.upload_php",
+      "target": "/srv/booking/storage/app/public/uploads/index.php",
+      "fp": "52:1710400000:9f3a1c",
+      "reason": "intended",
+      "until": "2026-10-26",
+      "note": "Laravel silence file, blocks dir listing."
+    },
+    {
+      "id": "exp-booking-redis",
+      "host": "db-main",
+      "check": "sec.ports",
+      "target": "0.0.0.0:6379",
+      "reason": "accepted_risk",
+      "until": "2026-12-25",
+      "note": "Behind the provider firewall."
+    }
+  ]
+}

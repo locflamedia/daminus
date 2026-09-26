@@ -1,0 +1,511 @@
+{
+  "v": 1,
+  "seq": 6,
+  "started_at": "2026-09-19T06:41:00Z",
+  "finished_at": "2026-09-19T06:41:54Z",
+  "bundle_hash": "b1f0c3d2",
+  "hosts": {
+    "@local": {
+      "state": "reached"
+    },
+    "db-main": {
+      "state": "reached"
+    },
+    "legacy-shop": {
+      "state": "reached"
+    },
+    "vps-hn-3": {
+      "state": "reached"
+    },
+    "vps-sg-1": {
+      "state": "reached"
+    },
+    "vps-sg-2": {
+      "state": "reached"
+    }
+  },
+  "coverage": {
+    "@local": [
+      "security",
+      "uptime"
+    ],
+    "db-main": [
+      "system",
+      "disk",
+      "containers",
+      "databases",
+      "security"
+    ],
+    "legacy-shop": [
+      "system",
+      "disk",
+      "containers",
+      "databases",
+      "security"
+    ],
+    "vps-hn-3": [
+      "system",
+      "disk",
+      "containers",
+      "databases",
+      "security"
+    ],
+    "vps-sg-1": [
+      "system",
+      "disk",
+      "containers",
+      "databases",
+      "security"
+    ],
+    "vps-sg-2": [
+      "system",
+      "disk",
+      "containers",
+      "databases",
+      "security"
+    ]
+  },
+  "facts": {
+    "@local": [
+      {
+        "check": "url.http",
+        "target": "https://khohang.vn",
+        "value": 212.0,
+        "unit": "ms",
+        "data": {
+          "class": "2xx",
+          "status": 200
+        }
+      },
+      {
+        "check": "url.tls",
+        "target": "https://khohang.vn",
+        "value": 55.0,
+        "unit": "days"
+      },
+      {
+        "check": "url.exposed",
+        "target": "https://khohang.vn",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "url.http",
+        "target": "https://tiemtra.vn",
+        "value": 142.0,
+        "unit": "ms",
+        "data": {
+          "class": "2xx",
+          "status": 200
+        }
+      },
+      {
+        "check": "url.tls",
+        "target": "https://tiemtra.vn",
+        "value": 74.0,
+        "unit": "days"
+      },
+      {
+        "check": "url.http",
+        "target": "https://api.tiemtra.vn",
+        "value": 188.0,
+        "unit": "ms",
+        "data": {
+          "class": "2xx",
+          "status": 200
+        }
+      },
+      {
+        "check": "url.tls",
+        "target": "https://api.tiemtra.vn",
+        "value": 80.0,
+        "unit": "days"
+      },
+      {
+        "check": "url.http",
+        "target": "https://booking.vn",
+        "value": 180.0,
+        "unit": "ms",
+        "data": {
+          "class": "2xx",
+          "status": 200
+        }
+      },
+      {
+        "check": "url.tls",
+        "target": "https://booking.vn",
+        "value": 17.0,
+        "unit": "days"
+      }
+    ],
+    "db-main": [
+      {
+        "check": "sys.load",
+        "target": "",
+        "value": 0.2,
+        "unit": "load",
+        "data": {
+          "cores": 2
+        }
+      },
+      {
+        "check": "sys.mem",
+        "target": "",
+        "value": 42.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.swap",
+        "target": "",
+        "value": 3.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.oom",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.fs",
+        "target": "/",
+        "data": {
+          "ipct": 12,
+          "pct": 41
+        }
+      },
+      {
+        "check": "sec.miner",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "sec.preload",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "db.size",
+        "target": "booking",
+        "value": 2521145803.0,
+        "unit": "bytes",
+        "data": {
+          "engine": "mysql",
+          "tables": 57
+        }
+      },
+      {
+        "check": "sec.ports",
+        "target": "0.0.0.0:6379",
+        "value": 1.0,
+        "unit": "count",
+        "data": {
+          "service": "redis"
+        }
+      }
+    ],
+    "legacy-shop": [
+      {
+        "check": "sys.load",
+        "target": "",
+        "value": 0.3,
+        "unit": "load",
+        "data": {
+          "cores": 1
+        }
+      },
+      {
+        "check": "sys.mem",
+        "target": "",
+        "value": 30.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.swap",
+        "target": "",
+        "value": 3.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.oom",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.fs",
+        "target": "/",
+        "data": {
+          "ipct": 12,
+          "pct": 58
+        }
+      },
+      {
+        "check": "sec.miner",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "sec.preload",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      }
+    ],
+    "vps-hn-3": [
+      {
+        "check": "sys.load",
+        "target": "",
+        "value": 0.9,
+        "unit": "load",
+        "data": {
+          "cores": 2
+        }
+      },
+      {
+        "check": "sys.mem",
+        "target": "",
+        "value": 37.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.swap",
+        "target": "",
+        "value": 3.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.oom",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.fs",
+        "target": "/",
+        "data": {
+          "ipct": 12,
+          "pct": 52
+        }
+      },
+      {
+        "check": "sec.miner",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "sec.preload",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.path",
+        "target": "/var/www/khohang",
+        "value": 3231962890.0,
+        "unit": "bytes"
+      },
+      {
+        "check": "sec.ports",
+        "target": "0.0.0.0:3306",
+        "value": 1.0,
+        "unit": "count",
+        "data": {
+          "service": "mysql"
+        }
+      },
+      {
+        "check": "sec.upload_php",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      }
+    ],
+    "vps-sg-1": [
+      {
+        "check": "sys.load",
+        "target": "",
+        "value": 0.4,
+        "unit": "load",
+        "data": {
+          "cores": 2
+        }
+      },
+      {
+        "check": "sys.mem",
+        "target": "",
+        "value": 49.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.swap",
+        "target": "",
+        "value": 3.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.oom",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.fs",
+        "target": "/",
+        "data": {
+          "ipct": 12,
+          "pct": 64
+        }
+      },
+      {
+        "check": "sec.miner",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "sec.preload",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.path",
+        "target": "/srv/tiemtra-web",
+        "value": 5798205850.0,
+        "unit": "bytes"
+      },
+      {
+        "check": "pm2.app",
+        "target": "tiemtra-cron",
+        "data": {
+          "mem_mb": 62,
+          "restarts": 0,
+          "status": "online"
+        }
+      },
+      {
+        "check": "sec.ports",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      }
+    ],
+    "vps-sg-2": [
+      {
+        "check": "sys.load",
+        "target": "",
+        "value": 1.4,
+        "unit": "load",
+        "data": {
+          "cores": 4
+        }
+      },
+      {
+        "check": "sys.mem",
+        "target": "",
+        "value": 24.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.swap",
+        "target": "",
+        "value": 3.0,
+        "unit": "%"
+      },
+      {
+        "check": "sys.oom",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "disk.fs",
+        "target": "/",
+        "data": {
+          "ipct": 12,
+          "pct": 77
+        }
+      },
+      {
+        "check": "sec.miner",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "sec.preload",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      },
+      {
+        "check": "docker.compose",
+        "target": "tiemtra",
+        "data": {
+          "containers": 3,
+          "mem_pct": 61,
+          "not_running": 0,
+          "restarts": 0,
+          "running": 3
+        }
+      },
+      {
+        "check": "db.size",
+        "target": "tiemtra",
+        "value": 1720134402.0,
+        "unit": "bytes",
+        "data": {
+          "engine": "postgres",
+          "tables": 42,
+          "top": [
+            [
+              "orders",
+              966367642.0
+            ],
+            [
+              "order_items",
+              429496730.0
+            ]
+          ]
+        }
+      },
+      {
+        "check": "disk.path",
+        "target": "/srv/booking",
+        "value": 6506875453.0,
+        "unit": "bytes"
+      },
+      {
+        "check": "pm2.app",
+        "target": "booking-queue",
+        "data": {
+          "mem_mb": 84,
+          "restarts": 1,
+          "status": "online"
+        }
+      },
+      {
+        "check": "sec.upload_php",
+        "target": "/srv/booking/storage/app/public/uploads/index.php",
+        "value": 1.0,
+        "unit": "count",
+        "data": {
+          "owner": "www-data",
+          "size": 52
+        },
+        "fp": "52:1710400000:9f3a1c"
+      },
+      {
+        "check": "sec.ports",
+        "target": "",
+        "value": 0.0,
+        "unit": "count"
+      }
+    ]
+  }
+}
