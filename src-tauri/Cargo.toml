@@ -1,0 +1,24 @@
+[package]
+name = "daminus"
+description = "Daminus desktop app (Tauri shell over daminus-core)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+# Binary name is what macOS shows in the Dock during `tauri dev` (unbundled).
+[[bin]]
+name = "Daminus"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.6", features = [] }
+
+[dependencies]
+daminus-core = { path = "../crates/core" }
+tauri = { version = "2.11", features = [] }
+
+[lints]
+workspace = true

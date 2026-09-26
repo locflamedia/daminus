@@ -1,0 +1,10 @@
+dist/
+target/
+coverage/
+plans/
+pnpm-lock.yaml
+src-tauri/gen/
+src-tauri/icons/
+src/api/bindings/
+assets/
+*.md
