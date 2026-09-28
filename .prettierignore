@@ -1,0 +1,16 @@
+dist/
+target/
+coverage/
+plans/
+pnpm-lock.yaml
+src-tauri/gen/
+src-tauri/icons/
+src/api/bindings/
+assets/
+*.md
+fixtures/timeline/projects.json
+fixtures/timeline/settings.json
+fixtures/timeline/snapshots/
+
+# Recorded tool output served by the check harness shims, kept as the tools print it
+scripts/check-harness/out/

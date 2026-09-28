@@ -1,0 +1,42 @@
+name: App smoke
+
+# Slow and macOS-only, so it lives outside the main CI workflow: it runs for
+# published releases and for PRs carrying the `app` label. Adding other labels
+# does not start or cancel anything.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  app:
+    name: app (tauri build smoke, macOS)
+    if: >-
+      github.event_name == 'release' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'app') ||
+      (github.event.action != 'labeled' && contains(github.event.pull_request.labels.*.name, 'app'))
+    # Job-level so a skipped run (another label added) never cancels a build.
+    concurrency:
+      group: app-smoke-${{ github.ref }}
+      cancel-in-progress: true
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # stable
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tauri build --bundles app

@@ -1,0 +1,3 @@
+# unwrap/expect are denied in production code but fine inside tests.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

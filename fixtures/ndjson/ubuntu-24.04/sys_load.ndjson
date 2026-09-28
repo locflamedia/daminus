@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"28c3ebdf5dc11cbd"}
+{"check":"sys.load","target":"","value":0.62,"unit":"load","data":{"cores":4,"load1":0.45,"load15":0.73}}
+{"_":"step","group":"system","ms":2}
+{"_":"end"}

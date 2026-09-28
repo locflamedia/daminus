@@ -1,0 +1,4 @@
+services:
+  app:
+    environment:
+      APP_KEY: CANARY_compose_config_app_key_77aa

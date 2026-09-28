@@ -1,0 +1,159 @@
+# System architecture
+
+Daminus is an on-demand health check for small fleets of servers: you open the app, press Scan, read the results, and close it. Nothing runs in the background and nothing is installed on the servers.
+
+## Shape
+
+One core crate plus a thin Tauri shell and a Vue front end (a modular monolith).
+
+```
+┌──────────────────────── macOS app ────────────────────────┐
+│  src (Vue 3 + TS)                                          │
+│    api/        the only code that imports @tauri-apps/*    │
+│    stores/ features/* ui/ layout/ i18n tokens              │
+│                     ▲  typed IPC (commands + one event     │
+│                     │  per domain, e.g. scan://event)      │
+│  src-tauri (thin shell)                                    │
+│    commands · events · scan run state · keychain · tray    │
+│    GUI env · logging · capabilities / CSP                  │
+│                     ▲  plain Rust calls                    │
+│  crates/core (daminus_core, no Tauri)                      │
+│    domain (pure) · contracts · checks (scripts, manifest)  │
+│    ssh transport · url probe · scan service + evaluate     │
+│    discover · ai · store (FsStore) · redact                │
+│    bin/daminus-dev (feature `cli`)                         │
+└─────────────┬──────────────────────────────┬──────────────┘
+              │ system `ssh` (user's config,  │ HTTPS from the Mac
+              │ agent, ProxyJump)             │
+              ▼                               ▼
+     servers: one read-only           project URLs (status,
+     bundle per host, NDJSON out      latency, TLS, domain)
+```
+
+### Boundaries
+
+- **`crates/core`** is pure Rust and knows nothing about Tauri. `domain/` must not import `ssh`, `probe`, `ai` or `store`, including aliased and grouped imports (`scripts/check-core-boundaries.sh` in CI, with a fixture test).
+- **`src-tauri`** wires core into commands, events, the tray and the keychain. It holds no business rules.
+- **`src/api/`** is the only front-end code allowed to import `@tauri-apps/*` (ESLint bans static and dynamic imports and the `__TAURI__` / `__TAURI_INTERNALS__` globals elsewhere). Everything else goes through its typed wrappers.
+- **Bindings:** Rust types are exported to TypeScript with `ts-rs` into `src/api/bindings/`, committed, and checked for drift in CI.
+
+### Check runtime
+
+`crates/core/checks/` holds `manifest.json` (every check: group, where it runs, script, allowed commands, fact meaning and severity rule), `prelude.sh` and one script per remote check. They are embedded with `include_str!`. `checks::bundle::build` concatenates the prelude, a block of single-quoted variables (limits from Settings › Scan, and the host's components from `projects.json`: `DAMINUS_PATHS`, `DAMINUS_COMPOSE`, `DAMINUS_PM2`), one subshell function per enabled check, and `main`, called with stdin from `/dev/null` on the one-line tail: the shell has read the whole bundle before any check runs, and a check that reads stdin gets EOF instead of the rest of the bundle. When the caller sets `DAMINUS_HANGUP=1` (the SSH transport does, and keeps stdin open), the tail also starts a watcher that reads stdin: end of file means the client went away (Ctrl-C, app quit, lost connection) and the bundle stops its own process group, instead of running on until the server-side `timeout`. The tail ends with `exit 0`, so the shell never waits for more input. `checks::ndjson::Parser` reads the output incrementally (see ADR 0002). The UI imports the same manifest through the `@checks` Vite alias; labels are `checks.<id>.name|desc` in `src/i18n/`.
+
+In CI (job `shell`), `scripts/check-harness/run.sh` runs the bundle in `ubuntu:24.04` and `debian:12` containers with a read-only root, as a normal user, with only `/tmp` writable, no network and no capabilities. `docker`, `pm2`, `dmesg`, `mysql` and `psql` are shims on `PATH` that print recorded output (`docker inspect` without a `--format`, or one reading `Env`, prints the canary environment). The project folder holds 50,000 files and the whole bundle must finish in under 60 s; `~/.pm2` and `storage/logs` are small tmpfs mounts that look like a running pm2 daemon's home and hold a sparse 600 MiB log. It fails if any line is not NDJSON v1, if a `CANARY_*` value (process env, project `.env`, shim output) reaches stdout, or if `$HOME` or `/tmp` hash differently afterwards. Each check's output is kept as golden NDJSON in `fixtures/ndjson/<distro>/`, shared by the parser tests and the fake transport, and compared by shape on every run.
+
+### Scan flow
+
+`scan_start` (single flight) → `ScanService` → in parallel { `Transport.run(bundle)` per host, `UrlProbe` } → NDJSON lines (size-limited, control characters filtered) → `CheckFact` → event `scan://event` (with `scan_id`, `seq`) → on completion, save a raw snapshot (discarded if the scan was cancelled) → UI and tray call `evaluate`.
+
+**Transport.** `ssh::SshTransport` spawns the system `ssh` with one argv entry per argument (no local shell): `ssh -T [-F cfg] -o BatchMode=yes -o StrictHostKeyChecking=yes -o UpdateHostKeys=no -o ForwardAgent=no -o ForwardX11=no -o ClearAllForwardings=yes -o PermitLocalCommand=no -o RemoteCommand=none -o LogLevel=VERBOSE -o ConnectTimeout=<5|10|30> -- <alias> "sh -c 'if command -v timeout …; then exec timeout -k 5 90 sh -s; else exec sh -s; fi'"`, the bundle on stdin. Each run is its own process group, killed when the run ends, is dropped (cancel, budget) or on `shutdown` (app quit, Ctrl-C). `StrictHostKeyChecking=yes` and `UpdateHostKeys=no` override the user's config (`-o` wins over the file), so an unknown host is always reported and `known_hosts` is never written, not even by ssh's own key rotation. Stderr (which also carries the server's pre-auth banner) is read as raw bytes, split into lines of at most 1 KiB (the rest of a longer line is skipped), decoded lossily and fed to a classifier (auth, host key unknown/changed, DNS, refused, no route, timeout); only the last 4 KiB is held, in memory, and it never reaches a snapshot, event, log or the AI. For an unknown or changed host key, a second `ssh` through the same config (ProxyJump applies) with an empty temporary `UserKnownHostsFile`, `StrictHostKeyChecking=accept-new` (extra options come before the forced ones on the command line, and ssh keeps the first value) and `PreferredAuthentications=none` records the offered key without offering any user key; `ssh-keygen -lf` reads its fingerprint and the file is deleted. The real `known_hosts` is never written. `LogLevel=VERBOSE` prints `Authenticating to`/`Authenticated to` per hop: two seconds between them without output is reported as an SSH agent waiting for approval (`agent_wait`).
+
+**Budget.** Each host has 90 s from its first byte of output (fixed, also enforced by `timeout` on the server when present). Before any output (connect, jump hosts, agent approval) it has as long again. `ConnectTimeout` covers only the TCP connect and handshake. Hosts run at once up to Settings › Scan `hosts_at_once` (Auto = number of hosts, at most 8); URL probes run alongside.
+
+**Outcome of a host.** `end` line → Reached. Otherwise: budget spent or remote exit 124/137 → Timeout (lines already received are kept; groups whose `step` line arrived before the timeout count as covered, later groups do not); a classified ssh failure before `begin` → AuthFailed / HostKeyUnknown{fp} / HostKeyChanged{fp} / Unreachable{cause}; anything else → Partial. If every host failed with DNS/no route, every URL failed the same way and at least two targets failed in total, the scan ends with `LocalNetworkDown` and nothing is saved. A lone failing target (one host with a mistyped `HostName`, a VPN that is down) is saved with its own outcome.
+
+**Events.** `ScanEvent{scan_id, seq, kind…}`: `host_started`, `agent_wait`, `host_running` (the bundle's `begin` arrived), `step{group, ms}`, `fact`, `host_finished{outcome, ms, facts, dropped}`, then one of `done{snapshot_seq}`, `cancelled`, `failed{error}`. `seq` rises by one per event. `ScanService::status()` returns the live `ScanRun{scan_id, started_at, next_seq, hosts}` (`next_seq`: every event below it is already folded in, so a webview that hydrates mid-scan skips those and re-reads the status on a gap); a second `start` while one runs returns the running `scan_id` (`joined`). The event receiver must be drained continuously; once a scan is cancelled, an event that cannot be queued is dropped rather than waited on, so a stuck listener never blocks cancel.
+
+Snapshots store raw facts only. Delta, expected, stale, rollup and severity are computed at read time by one pure function, `evaluate(history, config, manifest, now)`, shared by the CLI, commands, menu bar and AI payload. Severity thresholds live in the check manifest (plus user settings), so changing a threshold takes effect without rescanning.
+
+### App shell
+
+`src-tauri` is a library (`daminus_app`) plus a two-line `main`. `app::AppCore` holds the `FsStore` (the Tauri `app_config_dir`, `~/Library/Application Support/dev.daminus.app`) and the `ScanService`, and exposes each command as a plain function; `commands.rs` only adapts them to Tauri, so `src-tauri/tests/ipc_e2e.rs` drives the same code with `FakeTransport` and no webview.
+
+- **Commands:** `scan_start(scope?)`, `scan_stop` (answers once the scan has ended, at most 5 s, so the store re-hydrates right after), `scan_status`, `report_latest`, `reveal_config_dir`. Errors are `AppError`. The same list appears in `generate_handler!`, in `build.rs` (which makes Tauri generate one permission per command) and in `src/api/commands.ts`; a Vitest test compares all three with the capability.
+- **Events:** one channel, `scan://event`, fed by a pump task that drains the service's receiver. The Vue store `useScanStore` hydrates from `scan_status()` on mount or reload, drops events of ended scans and those already folded in (`seq < next_seq`), and re-hydrates on a gap.
+- **Capabilities:** `capabilities/main.json` grants the main window the app's five commands, `core:event` listen/unlisten, `opener:allow-open-url` for `https://*` only and `clipboard-manager:allow-write-text`. No shell, fs or http plugin; Finder is opened by the Rust command `reveal_config_dir`.
+- **GUI environment:** an app opened from Finder has launchd's environment. At launch (in parallel with startup) `$SHELL -ilc` prints `env -0` after a marker, with a 3 s limit after which its whole process group is killed; the output is read on a thread with the same deadline (plus 200 ms), since a process that left the group may keep the pipe open; only `PATH`, `SSH_AUTH_SOCK` and `HOME` are kept and set on the `ssh`/`ssh-keygen` processes (`SshTransport::with_env`). The app's own environment is not changed.
+- **Tray:** the template mark from `assets/brand/` (idle), the mark at 0.3–0.7 opacity breathing in 16 frames of 150 ms (scanning), the mark with an amber or pink 6 pt dot (warn, crit). Menu: headline counts, scan number, time and the project that needs you, Scan now ⌘R, Open Daminus ⌘O, Quit ⌘Q, worded from `src/i18n/*.json` (`tray.*`). It re-reads the report when a scan ends and after `scan_stop` (the final event can be dropped when the event channel is full); a failed read keeps the last good report, and with none it says "Results could not be read" rather than "No scans yet". Icon changes are serialized with the breathing loop through a counter under the tray lock. Closing the window hides it; the Dock icon reopens it; a second launch focuses the first (`tauri-plugin-single-instance`). Quit (and any exit) calls `ScanService::shutdown()`.
+- **Log:** `tauri-plugin-log` writes `~/Library/Logs/dev.daminus.app/daminus.log`, rotated at 1 MB, five files in all. Core `tracing` events reach it through `tracing`'s `log` feature; every line passes `redact_secrets` and is kept on one line.
+
+## Threat model
+
+**Assets to protect**
+
+- Database credentials and other secrets that live in `.env` files, pm2 env and compose files on the servers.
+- AI provider API keys stored in the macOS keychain.
+- The user's SSH agent and keys: Daminus borrows their access and must never widen it.
+
+**Adversaries and untrusted inputs**
+
+- **A server may be compromised and lie.** Script output is data, never code: lines are parsed as NDJSON with size limits and character filtering, unknown fields are ignored, and nothing from a server is rendered as HTML (`vue/no-v-html` is an error) or executed on the Mac.
+- **Config files may be hand-edited wrongly.** `projects.json`, settings and snapshots are parsed leniently where safe and rejected with a typed error where not; a bad file never crashes the app or silently widens what runs remotely.
+- **AI output is untrusted.** It is shown as text, never executed. Suggested commands are copy-only.
+
+**Controls**
+
+- **Read-only on servers.** Check scripts only read. They never write, restart, install or call `sudo`. This is enforced by a command allowlist and by running the bundle in a `--read-only` container as a normal user in CI, comparing hashes before and after.
+- **Secrets never leave the server.** Scripts read `.env` locally to reach the database and emit only numbers and facts. A canary secret seeded in `.env`, pm2 env and compose must never appear in stdout, stderr, snapshots, events, logs or AI payloads (end-to-end test). Server stderr is not sent back to the Mac.
+- **API keys never reach the webview.** Keys stay in the keychain and in Rust; the front end only sees whether a key is set.
+- **Webview hardening.** Strict CSP, no remote content, capabilities limited to the app's own commands.
+- **Logs are redacted** at the logging layer; secret types do not implement a revealing `Debug`.
+
+## Decision Log
+
+| Decision | Chosen | Rejected |
+|---|---|---|
+| Shape | One core crate + Tauri shell (modular monolith) | Many hexagonal crates |
+| `projects.json` v1 | Components carry an explicit `kind`; `rules` at top level with `host`; `hosts` for server-level settings | serde untagged; rules nested inside projects |
+| NDJSON v1 | Meta lines `begin{v,bundle}` / `step{group,ms}` / `end`; optional `fp`; missing `end` = Partial | Completion judged by exit code |
+| Snapshot v1 | Raw facts + coverage only; file name `000123.json` by `seq`; lenient reads, no history migration | Storing delta/rollup; names by time |
+| Severity | Computed in Rust from manifest thresholds ⊕ settings | Scripts decide severity |
+| IPC | `AppError{code, params, retryable}`; one event per domain (`scan://event`, tagged); bindings committed | English error strings; many channel names |
+| Cancelled scan | Not saved | Save partial |
+| Rust → TS bindings | `ts-rs` 12 behind core feature `ts`, exported to `src/api/bindings/`, committed and drift-checked in CI; command wrappers written by hand in `src/api/` with a test that compares command names against the Rust handler list | `tauri-specta` (still `2.0.0-rc.25` at decision time; an RC in the IPC path is a risk we do not need) |
+| Toolchain | Rust edition 2024, MSRV 1.89 (patched `time` needs 1.88; `std::fs::File::try_lock` for the store lock needs 1.89); Tauri 2.11; Vue 3.5 + Vite 8 + TypeScript 6.0 (typescript-eslint does not support TS 7 yet); pnpm 10 with committed lockfile | TypeScript 7 native compiler |
+| App identity | Bundle id `dev.daminus.app`, macOS 13+, window min 900 × 640 | – |
+| App icons | Built from the hand-made sizes in `assets/brand/` by `scripts/build-app-icons.sh` (small sizes drop the painting) | `tauri icon` downscaling the 1024 px master |
+| App version | One source: `[workspace.package] version` in `Cargo.toml`; `tauri.conf.json` and `package.json` carry none, so Tauri reads it from `src-tauri/Cargo.toml` | Hand-synced copies in three files |
+| CI | Main CI on pushes to `main` and on PRs; the macOS `tauri build` smoke is its own workflow (`app-smoke.yml`) for releases and PRs labelled `app`, so other labels never restart or cancel CI | `labeled` trigger on the main CI |
+| Supply chain | `cargo deny` (advisories, licenses, bans, sources); GitHub Actions pinned by SHA with minimal `permissions` | Unpinned tags |
+| Core dependencies | `serde`/`serde_json`, `thiserror` 2, `time` 0.3 (UTC instants as RFC 3339, days as `YYYY-MM-DD`), `regex` (redaction), `tracing`; `tempfile` for store tests. The store lock is `std::fs::File::try_lock` (Rust 1.89) on `<root>/.lock` | `chrono`; an `fs4`/`fd-lock` crate for locking |
+| Domain module names | Severity rules in `domain/rule/`, "mark as expected" rules in `domain/expected.rs`, both under `domain/` | `rules/` and `rules.rs` side by side (one Rust module name cannot be both) |
+| Severity rules | Closed set: `threshold` (`crit` optional, `scale: cores`), `max_of`, `present` (`value` 0 = looked, found none), `state_map` (with `default`), `increase` (`min`), `days_left` (+ `flags` forcing crit), `info`. Overrides are `{check, field?, warn?, crit?, min?}` lists in settings and per project | Free-form expressions |
+| Stale and fixed | A key missing from the latest scan is only "gone" when its host was `Reached` and its group finished; otherwise it stays `Stale{since_seq}` with its last severity, however many scans it misses. `Fixed` needs the same condition | Treating a missing key as fixed |
+| Issue ownership | Each result has one owner so it counts once: URL → the project listing it; result under a component (path, compose project, pm2 app, database) → that project; host-level result → the project when one project uses the host, otherwise the server | Counting a host issue on every project of the host |
+| Config edit safety | Loads return a content stamp (length + hash); a save refuses with `ConfigChangedOnDisk` if the file differs. Unparseable files are moved to `*.corrupt-<unix>` and reported as `ConfigInvalid{path, line}`; files from a newer version load read-only | Comparing mtime only (coarse resolution can hide a quick edit) |
+| Shared test data | `fixtures/config/*.v1.json` (one per format version) and `fixtures/timeline/` (12 scans, kho-hang/tiemtra/booking) generated through `FsStore` by `crates/core/tests/timeline_fixture.rs` (`DAMINUS_BLESS=1` regenerates; CI diffs) | Hand-written snapshot JSON |
+| Component arguments | Component strings are checked on load, like host aliases: compose project, pm2 app, database and container names match `[A-Za-z0-9][A-Za-z0-9._-]*`; `path` and `env_file` are absolute with no control characters. Phase 3 still passes them as separate argv entries, never through a shell string | Validating only at scan time |
+| Expected and stale | An expected issue on a host that missed the latest scan is `Expected{rule, stale_since}`: it stays out of issue counts but still counts as stale | Letting the rule hide that the result was not re-checked |
+| Secret redaction | Known formats (PEM/PGP private key blocks, `sk-`, GitHub, AWS, Slack) plus high-entropy tokens of 20+ chars: upper+lower+digits at 3.5 bits/char, single-case letters+digits at 4.0 with scattered digits. Slash tokens count as paths only when absolute or every segment reads like a name; hex-only tokens (git hashes, digests) stay | Treating any token with short slash segments as a path |
+| Check bundle | Prelude + single-quoted variable block + one subshell function per check + a one-line tail running `main` with stdin from `/dev/null` (with the stdin hang-up watcher when `DAMINUS_HANGUP=1`) and ending in `exit 0`; bundle hash is FNV-1a 64 of everything but the variables | Checks inlined at top level (one `exit` or `cat` could end or eat the rest) |
+| NDJSON trust | Real scans parse with `ndjson::Parser::for_bundle(&Bundle)`: a `begin` with another hash is dropped (whole run Partial), facts for checks not in the bundle (local checks included) and `step` lines for groups not in it are dropped and counted. `Parser::new()` checks the v1 shape only (fixtures, dev CLI) | Trusting any well-formed id or group from the server |
+| Bundle variables | `BundleVars::set` accepts only `DAMINUS_[A-Z0-9_]+` (not `DAMINUS_BUNDLE`) | Any upper-case name (`PATH`, `IFS`, `LC_ALL` could be overridden after the prelude) |
+| NDJSON meta lines | `"_"` key: `begin{v,bundle}`, `step{group,ms}` at the **end** of a group, `end`; facts are lines without `"_"`, with an optional `unknown` reason | A `type` field on every line; `step` at group start |
+| Check manifest | `crates/core/checks/manifest.json` is the one source for Rust (embedded), the UI (`@checks` alias) and the timeline fixture. Entries carry `script`, `needs` (the external-command allowlist), `facts` (documentation) and `fp` beside the rule | A separate fixture copy; allowlist kept outside the manifest |
+| Check script safety in CI | Three layers: a Rust tokenizer allowlist (`crates/core/tests/check_scripts.rs`: commands ⊆ builtins ∪ prelude ∪ `needs`, redirects only to `/dev/null`/numeric fds, substitutions inside `${…}`/`$((…))` lexed too and quotes there rejected, `sed` only `s///`, `awk` inline program only (`-v`/`-F` skipped, `-f` rejected) with no pipes/writes/`system`, `find` no `-delete`/`-exec`), a grep deny-list, and the read-only container run with canaries and before/after hashes | Grep deny-list alone |
+| Golden NDJSON | `fixtures/ndjson/<distro>/<script>.ndjson` written by `run.sh --bless`; CI compares by shape (line kinds, ids, field names and types) because load and disk numbers differ per machine | Exact diff (would fail on every machine); shimming `df`/`/proc` to make numbers fixed |
+| `sys.load` value | 5-minute load average; 1- and 15-minute in `data`, CPUs from `nproc` (or `getconf`) | 1-minute average (noisier, and raised by the SSH login itself) |
+| `disk.fs` scope | `df -P -T -l` (and `-i`): device-backed or ZFS filesystems only, pseudo/memory/image types skipped, each device once at its shortest mount point (the real mount root, not a bind mount), mount points that are not directories skipped, nothing under `/proc`, `/sys`, `/dev`; `ipct` 0 where there is no inode table; no filesystem at all → `unknown: unsupported` | Every `df` line (tmpfs, overlay and bind mounts would flood results); network mounts (a dead NFS server would hang `df`) |
+| Locale files | `src/i18n/en.json`, `vi.json`; check strings nested by id (`checks.sys.load.name`) so vue-i18n key paths work | Flat keys with dots (vue-i18n reads dots as nesting) |
+| Scan runtime | `tokio` 1.53 (process, time, sync), `tokio-util` `CancellationToken`; process groups killed with `nix::sys::signal::killpg` (the workspace forbids `unsafe`, so no direct `libc`) | `async-trait` (boxed futures by hand keep `dyn Transport`); `libc` |
+| URL probe | `reqwest` 0.13 with `rustls` + `rustls-platform-verifier` (macOS trust store decides), no system proxy, connect 5 s / total 10 s / 5 redirects, body never read; `url.http` fact = ms to headers, `data{status, class, final?}` (final URL without query, fragment or credentials); failures `data{class:"error", error}` | `native-tls`; following the system proxy (the probe measures the site, not the proxy) |
+| SSH stderr | Classified line by line against OpenSSH message substrings, strongest verdict wins (host key changed > unknown > auth > DNS > no route > refused > timeout > other), so a jump host's real cause beats the outer "Connection closed"; 4 KiB tail in memory only | Exit codes alone (255 for every ssh error) |
+| Host key fingerprint | Second `ssh` with a temporary known-hosts file, `accept-new`, `PreferredAuthentications=none`, then `ssh-keygen -lf`; shown as `ED25519 SHA256:…` | `ssh-keyscan` (ignores ProxyJump and the user's config) |
+| Client gone (Ctrl-C, quit) | Local: kill the run's process group. Server: stdin stays open and the bundle's watcher (`DAMINUS_HANGUP=1`) sees end of file and stops its process group; how stdin is split between the watcher and `main` depends on the shell (see "Bundle tail per shell"). Verified against a local sshd: no `sh`/`sleep` left 1.5 s after Ctrl-C | Relying on `timeout` alone (a silent check would run up to 95 s after the user left); a pty (`-tt`) for SIGHUP (would echo and mangle the bundle) |
+| Host budget | 90 s from first output, same again before output; not a setting | Counting connect and agent approval inside the 90 s |
+| Settings › Scan limits | `connect_timeout_s` 5/10/30, default 10 (was `host_wait_s`); `hosts_at_once` `null` = Auto (host count, max 8) or 1/2/4 | Board's original "wait per host" as a total timeout |
+| Scan events | One `scan://event` stream of `ScanEvent{scan_id, seq, kind}`; milliseconds are `u32` so TypeScript gets `number`, not `bigint` | `u64` durations |
+| Snapshot timing | `timing{host: {ms, steps{group: ms}}}`, optional, so older snapshots still read | A separate timing file |
+| Offline Mac | `LocalNetworkDown` only when every host failed with DNS/no route, every URL with DNS/no route, and at least two targets failed; no snapshot | Pinging an outside host to test connectivity; declaring the Mac offline from one failing target |
+| Host key policy | `StrictHostKeyChecking=yes` and `UpdateHostKeys=no` forced on every scan run; a host the user set to `accept-new`/`no` is reported as HostKeyUnknown/HostKeyChanged | Letting `~/.ssh/config` decide (it could write `known_hosts` or scan an impersonated server) |
+| `url.http` target | The configured URL exactly as in `projects.json` (user config, stays on this Mac). It may hold a query token or `user:pass@`, so the AI payload (phase 8) must send it with query, fragment and credentials removed, as `data.final` already is | Rewriting the target (would no longer match the project's URL) |
+| Dev CLI config | `daminus-dev --config-dir <PATH>`, default `~/.daminus-dev`, never the app's own config folder; `scan [--project ID] [--host ALIAS]`, `snapshots`, `report` (evaluate as JSON), `--ssh-config <PATH>` for test hosts; logs via `RUST_LOG` to stderr | Sharing the app's config folder |
+| App shell tests | Command logic in `app::AppCore` (plain functions), commands generic over `Runtime`. `src-tauri/tests/ipc_e2e.rs` calls `AppCore` directly and also drives the real `#[tauri::command]` functions through `tauri::test` (feature `test`, dev-dependency only): `daminus_app::handler()`, `forward_events()` and a mock webview, so argument names (`{scope: null}`), the `AppError` rejection shape and the `scan://event` emit are covered. Runs in the `ubuntu` core job and a `macos-latest` job that installs nothing | Testing only `AppCore` (a renamed argument or a broken emit would pass); a WebDriver run |
+| Command panics | A panic inside a command's blocking work is logged (`tracing::error!`) and returned as `ErrorCode::Internal` (not retryable) | Reporting it as `StoreBusy` (reads as a retryable busy state) |
+| Command permissions | `tauri_build::AppManifest::commands` in `build.rs`, so each app command needs `allow-<name>` in a capability | Tauri's default of allowing every registered app command |
+| GUI `PATH`/agent | Own reader: `$SHELL -ilc` → marker + `env -0`, 3 s, process group killed, three variables passed to ssh only | `fix-path-env` (git-only crate, sets the whole process environment, which needs `unsafe` `set_var` under edition 2024) |
+| App log | `tauri-plugin-log` 2.9 (`LogDir`, 1 MB × 5, redacting formatter) fed by `tracing`'s `log` feature | `tracing-appender` (rotates by time only, not size) |
+| Tray states | Idle and scanning are template images (macOS tints them); warn/crit are plain images with the mark in the window's current appearance plus the dot, since a template cannot hold a colour | One template image for every state (no coloured dot) |
+| Hydrate | `ScanRun.next_seq` lets a reloaded webview skip events already folded into the status and spot gaps | Replaying events from the start; ignoring the race between `listen` and `scan_status()` |
+| Front-end state | Pinia 4 (`useScanStore`, setup store); Vitest with `happy-dom` and `@tauri-apps/api/mocks` behind `src/api/testing.ts` | Hand-rolled reactive singleton |
+| Components on the host | The bundle text is built per host: the same checks and hash, plus `DAMINUS_PATHS` / `DAMINUS_COMPOSE` / `DAMINUS_PM2` (one per line; pm2 lines are `app` or `app<TAB>PM2_HOME`) from that host's components | One bundle for every host with all components (leaks other hosts' layout, runs checks for folders that are not there) |
+| Bundle tail per shell | bash (any version): watcher takes stdin with `<&0`, the shell switches to `/dev/null`, `main` runs in place; dash/ash: copy on fd 3, `(main) </dev/null`. bash 3.2 aborted `main` at some bundle sizes once `exec 3<&0` copied its script input; dash gives a background job `/dev/null` before `<&0` applies | One tail for all shells (fails on one side either way) |
+| `pm2.app` | `pm2 jlist` only when `PM2_HOME/pm2.pid` names a live process whose command line is pm2's daemon title `God Daemon (PM2_HOME)` (a stale pid reused by another process counts as no daemon) and the sockets are writable by the SSH user (else pm2 would start a daemon and write `PM2_HOME`); a pid hidden by `/proc` `hidepid` under another user's `PM2_HOME` → `Unknown(needs_perm)`; one `pm2 jlist` per `PM2_HOME`, with `PM2_HOME` set only in that call's subshell; `pm2_rows` (prelude, shared with discover) reads the first `name`, `pm_id`, `pm2_env.status/restart_time/pm_uptime` and `monit.memory` by JSON position, never the env; a status outside pm2's own states → `unknown`; no daemon → `status: stopped` (crit); unknown app → `Unknown(missing)`; another user's closed `PM2_HOME` → `Unknown(needs_perm)`; component field `pm2_home` optional | `pm2 prettylist`, regex over the raw JSON, calling pm2 unconditionally |
+| `docker.compose` | `docker ps -aq --filter label=com.docker.compose.project=X`, `docker inspect --format` with named fields (name, service label, one-off label, state, restarts, memory limit, OOM, exit code, start, restart policy, image), `docker stats --no-stream`; one-off runs skipped; exited 0 with restart policy `no` counts as done; no container left → a fact with `containers: 0`, graded critical (the project is down; design §4.3); `mem_pct` is % of the limit, or of host memory without a limit | `docker compose ps` (needs the compose file on the host), inspect without `--format` |
+| Server checks | `sys.mem` = MemAvailable % (MemFree+Buffers+Cached before 3.14); `sys.swap` used %, 0 without swap; `sys.psi` some avg60 per resource in `data`; `sys.oom` "Killed process" lines in the last 24 h from `journalctl -k` (or `dmesg` by uptime), `Unknown(needs_perm)` when the user is not root/adm/systemd-journal/wheel and sees nothing; `logs.big` files over 500 MiB by `find -size` (floor lives in the script, the rule only says found = warn); `disk.path` `du -x -d1 --exclude` + `find -prune` for skip paths, top 5 folders + largest files over `large_file_mb`; the disk group (`disk.fs`, `logs.big`, `disk.path`) shares a 40 s allowance from the group start (`group_left`, `run_for`): each walk gets at most what is left, folders reached after it is spent are `Unknown(timeout)`, so the containers group still runs inside the 90 s host budget | Reading log files; `sudo` |
+| Dev CLI bundle | `daminus-dev bundle --host ALIAS [--only ID]` and `scan --print-bundle` print the exact per-host text without connecting; `-F` is the short form of `--ssh-config` | Printing only the generic bundle |
+
+Architecture decision records with more context live in [`docs/decisions/`](decisions/).

@@ -1,0 +1,2 @@
+# Check scripts are POSIX sh bodies, concatenated into one bundle by bundle.rs.
+shell=sh

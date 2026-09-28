@@ -1,0 +1,3 @@
+#!/bin/sh
+# Harness shim: prints recorded rows for any query.
+cat /opt/daminus-harness/out/db/psql.tsv

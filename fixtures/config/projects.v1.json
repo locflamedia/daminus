@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": "shop-x",
+      "name": "shop-x",
+      "color": "#4F6BED",
+      "urls": ["https://shop-x.com"],
+      "components": [
+        { "role": "fe", "host": "vps-a", "kind": "path", "path": "/var/www/shop" },
+        { "role": "be", "host": "vps-b", "kind": "compose", "project": "shop" },
+        { "role": "worker", "host": "vps-b", "kind": "pm2", "app": "shop-queue" },
+        {
+          "role": "db",
+          "host": "vps-b",
+          "kind": "db",
+          "engine": "mysql",
+          "database": "shop",
+          "env_file": "/srv/shop/.env",
+          "container": "shop-db-1"
+        }
+      ],
+      "overrides": [{ "check": "disk.fs", "warn": 85.0, "crit": 95.0 }]
+    }
+  ],
+  "hosts": {
+    "vps-a": { "include": true },
+    "legacy": { "include": false }
+  },
+  "rules": [
+    {
+      "id": "r-1",
+      "host": "vps-a",
+      "check": "sec.upload_php",
+      "target": "/var/www/shop/storage/app/public/uploads/index.php",
+      "fp": "52:1710400000:9f3a1c",
+      "reason": "intended",
+      "until": "2026-10-26",
+      "note": "Laravel silence file, blocks dir listing."
+    }
+  ]
+}

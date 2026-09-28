@@ -1,0 +1,117 @@
+{
+  "checks": {
+    "sys": {
+      "load": {
+        "name": "Tải CPU",
+        "desc": "Tải trung bình so với số nhân CPU."
+      },
+      "mem": {
+        "name": "Bộ nhớ",
+        "desc": "Bộ nhớ còn trống cho chương trình."
+      },
+      "swap": {
+        "name": "Swap",
+        "desc": "Tỷ lệ swap đang dùng."
+      },
+      "psi": {
+        "name": "Áp lực",
+        "desc": "Thời gian tác vụ phải chờ CPU, bộ nhớ hoặc đĩa trong phút vừa qua (PSI)."
+      },
+      "oom": {
+        "name": "Bị tắt do hết bộ nhớ",
+        "desc": "Tiến trình bị kernel tắt vì thiếu bộ nhớ trong 24 giờ qua."
+      }
+    },
+    "disk": {
+      "fs": {
+        "name": "Dung lượng đĩa",
+        "desc": "Dung lượng và inode đã dùng trên từng phân vùng cục bộ."
+      },
+      "path": {
+        "name": "Dung lượng thư mục",
+        "desc": "Dung lượng thư mục dự án và các thư mục con lớn nhất."
+      }
+    },
+    "logs": {
+      "big": {
+        "name": "Log lớn",
+        "desc": "File log lớn hơn 500 MB trong /var/log, log container Docker và thư mục storage/logs của dự án."
+      }
+    },
+    "docker": {
+      "df": {
+        "name": "Lưu trữ Docker",
+        "desc": "Dung lượng image, container, volume và build cache của Docker."
+      },
+      "compose": {
+        "name": "Container Compose",
+        "desc": "Trạng thái, số lần khởi động lại và bộ nhớ của các container trong một project Compose."
+      }
+    },
+    "pm2": {
+      "app": {
+        "name": "Ứng dụng pm2",
+        "desc": "Trạng thái và số lần khởi động lại của một tiến trình pm2."
+      }
+    },
+    "db": {
+      "size": {
+        "name": "Dung lượng database",
+        "desc": "Dung lượng database và các bảng lớn nhất."
+      }
+    },
+    "sec": {
+      "miner": {
+        "name": "Đào coin",
+        "desc": "Tiến trình đào coin đã biết và chương trình chạy từ file đã bị xoá."
+      },
+      "upload_php": {
+        "name": "PHP trong uploads",
+        "desc": "File PHP trong thư mục upload hoặc storage công khai."
+      },
+      "tmp_exec": {
+        "name": "File thực thi trong temp",
+        "desc": "File thực thi trong /tmp, /var/tmp và /dev/shm."
+      },
+      "preload": {
+        "name": "ld.so.preload",
+        "desc": "/etc/ld.so.preload có nội dung hay không, một thủ thuật rootkit phổ biến."
+      },
+      "ports": {
+        "name": "Cổng database mở",
+        "desc": "Cổng database và Docker đang nghe trên mọi địa chỉ."
+      },
+      "recent_change": {
+        "name": "Code mới đổi",
+        "desc": "File code đổi trong 3 ngày qua, không tính thư mục vendor."
+      }
+    },
+    "url": {
+      "http": {
+        "name": "HTTP",
+        "desc": "Mã trạng thái, thời gian phản hồi và địa chỉ cuối cùng của trang."
+      },
+      "tls": {
+        "name": "Chứng chỉ",
+        "desc": "Số ngày đến khi chứng chỉ TLS hết hạn, và chứng chỉ có được tin cậy không."
+      },
+      "exposed": {
+        "name": "File bị lộ",
+        "desc": "/.env hoặc /.git/HEAD có tải được từ trang hay không."
+      }
+    }
+  },
+  "tray": {
+    "crit": "{n} nghiêm trọng",
+    "warn": "{n} cảnh báo",
+    "clear": "Không có vấn đề",
+    "never": "Chưa quét lần nào",
+    "unreadable": "Không đọc được kết quả",
+    "scan": "Lần quét #{seq} · {time}",
+    "scanning": "Đang quét…",
+    "needs": "{project} cần xem",
+    "scanNow": "Quét ngay",
+    "open": "Mở Daminus",
+    "quit": "Thoát"
+  }
+}

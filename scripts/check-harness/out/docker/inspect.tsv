@@ -1,0 +1,4 @@
+3f2aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	/shop-app-1	app	False	running	0	536870912	false	0	2026-09-23T09:12:03.412Z	unless-stopped	shop-app:1.4.2
+8c1dbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb	/shop-worker-1	worker	False	running	3	268435456	false	0	2026-09-26T11:40:51.007Z	unless-stopped	shop-app:1.4.2
+a91ecccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc	/shop-db-1	db	False	exited	0	1073741824	true	137	2026-09-20T08:00:00.000Z	always	mysql:8.4
+d04edddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd	/shop-app-run-4f1c	app	True	exited	0	0	false	1	2026-09-25T10:00:00.000Z	no	shop-app:1.4.2

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "general": {
+    "language": "en",
+    "scan_on_open": false,
+    "intro": "first_launch"
+  },
+  "appearance": {
+    "theme": "system",
+    "reduce_transparency": false,
+    "animate_charts": true,
+    "clear_sky": true,
+    "streak_badge": true,
+    "completion_chime": false,
+    "easter_eggs": true
+  },
+  "scan": {
+    "disabled_groups": [
+      "code_changes"
+    ],
+    "skip_paths": [
+      "node_modules",
+      "vendor",
+      "storage/framework/cache",
+      ".next/cache",
+      "/proc",
+      "/var/lib/docker/overlay2"
+    ],
+    "large_file_mb": 50,
+    "connect_timeout_s": 10,
+    "hosts_at_once": null,
+    "thresholds": []
+  },
+  "ai": {
+    "claude_code_acknowledged": false
+  },
+  "data": {
+    "keep_scans": 20,
+    "forget_ai_after_days": 30
+  }
+}

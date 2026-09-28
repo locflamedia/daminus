@@ -1,0 +1,5 @@
+#!/bin/sh
+# Harness shim: prints recorded rows for any query. Reads (and drops) stdin,
+# where the real client gets its --defaults-extra-file with the password.
+cat >/dev/null
+cat /opt/daminus-harness/out/db/mysql.tsv

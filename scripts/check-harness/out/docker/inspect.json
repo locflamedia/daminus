@@ -1,0 +1,2 @@
+[{"Name":"/shop-app-1","RestartCount":0,"State":{"Status":"running"},"HostConfig":{"Memory":536870912},"Config":{"Env":["APP_KEY=CANARY_compose_app_key_2d9b","DB_PASSWORD=CANARY_compose_db_password_6a1e","PATH=/usr/local/bin:/usr/bin"]}},
+{"Name":"/shop-worker-1","RestartCount":3,"State":{"Status":"running"},"HostConfig":{"Memory":268435456},"Config":{"Env":["QUEUE_TOKEN=CANARY_compose_queue_token_e4f0"]}}]
