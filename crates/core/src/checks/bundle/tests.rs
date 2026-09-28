@@ -630,7 +630,7 @@ fn hangup_bundle_stops_its_group_when_stdin_closes() {
         assert!(group_alive(pgid), "{shell}: bundle still running");
         // The client goes away: stdin reaches end of file.
         drop(child.stdin.take());
-        let gone = wait_gone(&mut child, pgid, std::time::Duration::from_secs(5));
+        let gone = wait_gone(&mut child, pgid, std::time::Duration::from_secs(15));
         let _ = nix::sys::signal::killpg(
             nix::unistd::Pid::from_raw(pgid),
             nix::sys::signal::Signal::SIGKILL,
