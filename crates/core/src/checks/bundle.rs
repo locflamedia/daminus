@@ -44,14 +44,53 @@ pub const HANGUP_VAR: &str = "DAMINUS_HANGUP";
 /// watcher starts reading stdin; it ends with `exit` so the shell never
 /// waits for more input. How stdin is handed to the watcher and taken from
 /// `main` depends on the shell, as measured over many bundle sizes:
-/// - bash (any version): the watcher takes stdin with an explicit `<&0`
-///   and the shell then switches its own stdin to `/dev/null`. bash 3.2
-///   (macOS `sh`) aborts, depending on where the bundle's bytes fall in its
-///   input buffer, once `exec 3<&0` copies the stdin it reads the script from.
+/// - bash (any version): the watcher takes stdin with an explicit `<&0` and
+///   the shell then switches its own stdin to `/dev/null`, running `main`
+///   directly (not in a subshell). bash 3.2 (macOS `sh`) aborts, depending
+///   on where the bundle's bytes fall in its input buffer, once `exec 3<&0`
+///   copies the stdin it reads the script from, so this branch never makes
+///   that copy.
 /// - dash, ash and other POSIX shells: a background job's stdin is
 ///   `/dev/null` before its own redirections, so the watcher reads a copy
 ///   made first on fd 3, and `main` runs in a subshell with `/dev/null`.
-const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then if [ -n \"${BASH_VERSION-}\" ]; then { read -r _ || kill -TERM 0; } <&0 & w=$!; exec </dev/null; main; else exec 3<&0; { read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; fi; kill \"$w\"; else main </dev/null; fi; exit 0\n";
+///
+/// `trap 'wait' TERM`, set before either branch, is inherited by every
+/// subshell forked afterwards (each check, and `main` itself when it runs in
+/// one). `kill -TERM 0` on hangup reaches every process in the bundle's
+/// group at once, including a check's own external commands (a plain
+/// `sleep`, say, which has no trap and simply dies) and every shell level
+/// above it. Without the trap, those shells die from the same signal before
+/// they can reap the child they were blocked on, which orphans it: the
+/// kernel hands it to the target's init to clean up, and a bare container or
+/// minimal image run as its own PID 1 may never call `wait()` on a process
+/// it did not start, leaving a zombie behind. With the trap, a shell that
+/// was blocked on a now-dead child instead wakes up, reaps it, and exits on
+/// its own, so the group tears itself down bottom-up without depending on
+/// the host to collect anything.
+///
+/// The watcher itself resets the trap before it reads: it has no children of
+/// its own to reap, and once `main` finishes on its own (stdin still open),
+/// the tail's plain `kill "$w"` must end it immediately, the way a signal
+/// with no trap normally would. With the trap still active there, that kill
+/// would just interrupt its `read`, which fails and falls through to a
+/// second, unwanted `kill -TERM 0` of the whole group.
+///
+/// `wait "$w"` after `kill "$w"` reaps the watcher itself: it is this
+/// shell's own background job in either branch, not a check run through a
+/// subshell that another `wait` in the cascade above would ever collect, so
+/// without this the watcher would be the one process the trap chain always
+/// leaves behind.
+///
+/// This guarantees every process is killed. It does not guarantee every
+/// process is reaped: bare `wait` only reaps the calling shell's own
+/// children still running, so a check's own foreground external command (the
+/// plain `sleep`, or whatever it runs) is reaped by the shell that forked it
+/// only if that shell is still alive when the command dies — a race the same
+/// broadcast signal can lose. A leaf orphaned this way is already dead and
+/// cannot run again; it is just an unreaped process-table entry, cleaned up
+/// the moment the target's own init gets to it, same as any other orphan on
+/// that host.
+const TAIL: &str = "if [ \"${DAMINUS_HANGUP-}\" = 1 ]; then trap 'wait' TERM; if [ -n \"${BASH_VERSION-}\" ]; then { trap - TERM; read -r _ || kill -TERM 0; } <&0 & w=$!; exec </dev/null; main; else exec 3<&0; { trap - TERM; read -r _ <&3 || kill -TERM 0; } & w=$!; exec 3<&-; (main) </dev/null; fi; kill \"$w\"; wait \"$w\"; else main </dev/null; fi; exit 0\n";
 
 /// Name of the variable holding the bundle hash, set by [`build`].
 pub const BUNDLE_VAR: &str = "DAMINUS_BUNDLE";

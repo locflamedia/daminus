@@ -1,49 +1,57 @@
 use std::io::Write as _;
 use std::process::{Command, Stdio};
 
+use serde_json::Value;
+
 use super::*;
 use crate::checks::manifest;
 use crate::checks::ndjson::{self, HostOutput};
+use crate::domain::fact::CheckFact;
 use crate::domain::host::HostAlias;
 use crate::domain::project::ProjectsFile;
 
+/// Data keys and top-level `value`s that read live host state (disk use,
+/// load average) and so can drift by a small amount between two subprocess
+/// runs a few milliseconds apart, even on the same host. Pinning them before
+/// comparison keeps the check on the *shape* of the output — check ids,
+/// targets, `unit`, data keys, and stable fields such as filesystem `size`
+/// and `fs` or core count — without flaking on live values.
+const VOLATILE_DATA_KEYS: &[&str] = &["used", "avail", "pct", "ipct", "load1", "load15"];
+
+fn stabilize(facts: &[CheckFact]) -> Vec<CheckFact> {
+    facts
+        .iter()
+        .cloned()
+        .map(|mut f| {
+            if f.value.is_some() {
+                f.value = Some(0.0);
+            }
+            if let Value::Object(map) = &mut f.data {
+                for key in VOLATILE_DATA_KEYS {
+                    if map.contains_key(*key) {
+                        map.insert((*key).to_owned(), Value::from(0));
+                    }
+                }
+            }
+            f
+        })
+        .collect()
+}
+
 /// Runs `text` the way a server does (`sh -s`, bundle on stdin) and parses
-/// stdout. Where `dash` (Debian and Ubuntu's `sh`) is installed too, the bundle
-/// must give the same facts under it: the same keys, fields and unknown
-/// reasons (live numbers such as free memory move between two runs).
+/// stdout. Where `dash` (Debian and Ubuntu's `sh`) is installed too, the
+/// bundle must give facts of the same shape under it (see [`stabilize`]).
 fn run(text: &str) -> HostOutput {
     let out = run_with("sh", text);
     if std::path::Path::new("/bin/dash").exists() {
         let dash = run_with("/bin/dash", text);
         assert_eq!(
-            (shape(&dash), dash.ended, dash.dropped),
-            (shape(&out), out.ended, out.dropped),
+            (stabilize(&dash.facts), dash.ended, dash.dropped),
+            (stabilize(&out.facts), out.ended, out.dropped),
             "dash and sh disagree"
         );
     }
     out
-}
-
-/// What must not differ between two runs of the same bundle.
-fn shape(out: &HostOutput) -> Vec<String> {
-    out.facts
-        .iter()
-        .map(|f| {
-            let keys: Vec<&String> = f
-                .data
-                .as_object()
-                .map(|o| o.keys().collect())
-                .unwrap_or_default();
-            format!(
-                "{} {} {:?} {} {:?} {keys:?}",
-                f.check,
-                f.target,
-                f.unknown,
-                f.value.is_some(),
-                f.unit
-            )
-        })
-        .collect()
 }
 
 fn run_with(shell: &str, text: &str) -> HostOutput {
@@ -537,13 +545,54 @@ fn spawn_hangup(shell: &str, sleep_s: u32) -> (std::process::Child, i32) {
     (child, pgid)
 }
 
-#[cfg(unix)]
+/// Whether anything in `pgid` could still run. A zombie cannot: it is a
+/// process that has already exited and is merely waiting for its parent to
+/// collect its exit status. The bundle's own wrapper (the watcher, `main`'s
+/// dispatch) reaps everything it directly owns, but a check's own external
+/// command is arbitrary and may die from the same broadcast signal as the
+/// shell running it, too fast for that shell to collect it before dying in
+/// turn; the orphan then falls to the target's init to reap, which every
+/// normal server does promptly but a bare container run as PID 1 (this test,
+/// under `docker run` with no init) never does. Since a plain `kill(pid, 0)`
+/// succeeds for a zombie too, checking the group's exit this way on Linux
+/// (`/proc`) keeps the test about the property that matters — nothing left
+/// running — instead of the host's unrelated init behavior.
+#[cfg(target_os = "linux")]
+fn group_alive(pgid: i32) -> bool {
+    let Ok(entries) = std::fs::read_dir("/proc") else {
+        return false;
+    };
+    entries.flatten().any(|entry| {
+        let Some(pid) = entry
+            .file_name()
+            .to_str()
+            .and_then(|s| s.parse::<i32>().ok())
+        else {
+            return false;
+        };
+        let Ok(stat) = std::fs::read_to_string(format!("/proc/{pid}/stat")) else {
+            return false;
+        };
+        let Some((_, rest)) = stat.rsplit_once(") ") else {
+            return false;
+        };
+        let mut fields = rest.split(' ');
+        let state = fields.next();
+        let this_pgid = fields.nth(1); // ppid, then pgrp
+        state != Some("Z") && this_pgid == Some(pgid.to_string().as_str())
+    })
+}
+
+#[cfg(all(unix, not(target_os = "linux")))]
 fn group_alive(pgid: i32) -> bool {
     nix::sys::signal::killpg(nix::unistd::Pid::from_raw(pgid), None).is_ok()
 }
 
-/// Waits for the group to be gone. The shell is reaped on the way: on Linux
-/// a zombie still counts as a member of its process group.
+/// Polls until every process in `pgid` is gone, reaping `child` (the test's
+/// own direct child, the top of the bundle) along the way: a zombie still
+/// belongs to its process group until its parent collects it, so leaving
+/// `child` unreaped would make the group look alive forever regardless of
+/// how well the bundle itself cleans up.
 #[cfg(unix)]
 fn wait_gone(child: &mut std::process::Child, pgid: i32, limit: std::time::Duration) -> bool {
     let t0 = std::time::Instant::now();

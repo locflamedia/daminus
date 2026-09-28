@@ -25,7 +25,7 @@ fi
 found=$(find "$domain" -type f -name '*.rs' -exec perl -0777 -ne '
   my $src = $_;
   $src =~ s{/\*.*?\*/}{ my $c = $&; $c =~ tr/\n//cd; $c }gse;
-  $src =~ s{//[^\n]*}{}g;
+  $src =~ s#//[^\n]*##g;
   $src =~ s{"(?:\\.|[^"\\])*"}{""}gs;
   my $mods = qr/(?:ssh|probe|ai|store)/;
   my @hits;
