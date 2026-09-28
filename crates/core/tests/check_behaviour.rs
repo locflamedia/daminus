@@ -93,25 +93,50 @@ fn is_root(tmp: &Path) -> bool {
 }
 
 /// A stand-in for a pm2 daemon: a process whose command line carries the
-/// title pm2 gives its daemon, `PM2 vX: God Daemon (PM2_HOME)`. Killed on drop.
+/// title pm2 gives its daemon, `PM2 vX: God Daemon (PM2_HOME)`. Runs in its
+/// own process group so `sh -c "sleep 600; :"` and the `sleep` it forks die
+/// together on drop: killing only the wrapping `sh` (its `Child::id`) leaves
+/// `sleep` running, reparented to init but still in the *caller's* process
+/// group and still holding this test binary's stdout open, which is what
+/// hung `cargo test` for the rest of the 600 s once every test had already
+/// reported green. Killed on drop.
 struct Daemon(std::process::Child);
 
 impl Daemon {
     fn start(home: &Path) -> Self {
+        use std::os::unix::process::CommandExt as _;
         let child = Command::new("sh")
             .args(["-c", "sleep 600; :"])
             .arg(format!("PM2 v5.4.2: God Daemon ({})", home.display()))
             .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .process_group(0)
             .spawn()
             .unwrap();
         Self(child)
+    }
+
+    fn pgid(&self) -> nix::unistd::Pid {
+        nix::unistd::Pid::from_raw(i32::try_from(self.0.id()).unwrap())
     }
 }
 
 impl Drop for Daemon {
     fn drop(&mut self) {
-        let _ = self.0.kill();
+        let pgid = self.pgid();
+        let _ = nix::sys::signal::killpg(pgid, nix::sys::signal::Signal::SIGKILL);
         let _ = self.0.wait();
+        // Regression check for the leak above: poll until the whole group
+        // (the `sh` and its `sleep`) is actually gone rather than trusting
+        // that killing the group leader was enough.
+        for _ in 0..50 {
+            if nix::sys::signal::killpg(pgid, None).is_err() {
+                return;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(20));
+        }
+        panic!("fake pm2 daemon (pgid {pgid}) outlived its test");
     }
 }
 
