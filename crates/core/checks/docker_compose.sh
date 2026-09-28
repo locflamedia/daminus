@@ -36,8 +36,14 @@ for project in $DAMINUS_COMPOSE; do
 		continue
 	fi
 	case $ids in
-	'' | *[!0-9a-f"$NL"]*)
-		# No container at all: the project is gone or never started here.
+	'')
+		# No container at all: the project was removed or never started
+		# here. A result, not an unknown: the manifest rates it critical.
+		emit docker.compose "$project" "" "" '{"containers":0,"running":0,"not_running":0,"restarts":0,"mem_pct":0,"services":[]}'
+		continue
+		;;
+	*[!0-9a-f"$NL"]*)
+		# Output that is not container ids: docker answered something else.
 		emit_unknown docker.compose "$project" missing
 		continue
 		;;

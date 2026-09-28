@@ -143,6 +143,19 @@ fn compose_down_is_crit_restarts_and_memory_warn() {
     ]);
 }
 
+#[test]
+fn compose_with_no_container_left_is_crit_finished_jobs_are_ok() {
+    let gone = json!({"containers": 0, "running": 0, "not_running": 0,
+                      "restarts": 0, "mem_pct": 0, "services": []});
+    // One-shot services that exited 0 with restart policy "no" are done, not down.
+    let jobs_done = json!({"containers": 2, "running": 0, "not_running": 0,
+                           "restarts": 0, "mem_pct": 0, "services": []});
+    table(vec![
+        (fact("docker.compose", None, gone), Crit),
+        (fact("docker.compose", None, jobs_done), Ok),
+    ]);
+}
+
 fn pm2(status: &str, restarts: u32) -> CheckFact {
     fact(
         "pm2.app",

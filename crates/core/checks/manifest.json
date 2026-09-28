@@ -241,7 +241,7 @@
       "facts": {
         "target": "compose project name (label com.docker.compose.project)",
         "data": {
-          "containers": "containers of the project, one-off runs excluded",
+          "containers": "containers of the project, one-off runs excluded (0: none left, the project is down)",
           "running": "containers running",
           "not_running": "containers not running, except ones that exited 0 with restart policy 'no'",
           "restarts": "restart count, summed",
@@ -252,6 +252,13 @@
       "rule": {
         "type": "max_of",
         "rules": [
+          {
+            "type": "threshold",
+            "field": "data.containers",
+            "warn": 0.0,
+            "crit": 0.0,
+            "cmp": "lte"
+          },
           {
             "type": "threshold",
             "field": "data.not_running",

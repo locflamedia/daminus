@@ -310,10 +310,12 @@ fn compose_reads_named_fields_and_counts_states() {
     assert_eq!(db["oom"], true);
     assert_eq!(db["exit"], 137);
     assert_eq!(shop.data["services"][0]["mem"], 221_668_966);
-    assert_eq!(
-        by_target(&facts, "gone").unknown,
-        Some(UnknownReason::Missing)
-    );
+    // A project with no container left is a result (containers 0), which
+    // the manifest rates critical, not an unknown.
+    let gone = by_target(&facts, "gone");
+    assert_eq!(gone.unknown, None);
+    assert_eq!(gone.data["containers"], 0);
+    assert_eq!(gone.data["services"], serde_json::json!([]));
 }
 
 #[test]
