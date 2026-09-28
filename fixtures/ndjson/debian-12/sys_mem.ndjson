@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"41f0369b419d4a36"}
-{"check":"sys.mem","target":"","value":61.8,"unit":"%","data":{"total":6213808128,"available":3840221184}}
-{"_":"step","group":"system","ms":2}
+{"_":"begin","v":1,"bundle":"83817e2cb605417d"}
+{"check":"sys.mem","target":"","value":77.4,"unit":"%","data":{"total":6213808128,"available":4807413760}}
+{"_":"step","group":"system","ms":3}
 {"_":"end"}

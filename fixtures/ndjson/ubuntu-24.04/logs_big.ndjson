@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"0df98bb2edae3c3f"}
-{"check":"logs.big","target":"/home/daminus/app/storage/logs/laravel.log","value":629145600,"unit":"bytes","data":{"mtime":1790439628}}
-{"_":"step","group":"disk","ms":3}
+{"_":"begin","v":1,"bundle":"11c36cde6b23e8fa"}
+{"check":"logs.big","target":"/home/daminus/app/storage/logs/laravel.log","value":629145600,"unit":"bytes","data":{"mtime":1790591206}}
+{"_":"step","group":"disk","ms":6}
 {"_":"end"}

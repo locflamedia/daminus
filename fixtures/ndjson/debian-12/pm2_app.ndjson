@@ -1,7 +1,7 @@
-{"_":"begin","v":1,"bundle":"e066675334e8ebd2"}
+{"_":"begin","v":1,"bundle":"e167c3c91a00d85f"}
 {"check":"pm2.app","target":"api","data":{"status":"online","daemon":true,"instances":2,"restarts":3,"mem_mb":212,"started":1790380500,"ids":[0,1]}}
 {"check":"pm2.app","target":"queue","data":{"status":"errored","daemon":true,"instances":1,"restarts":15,"mem_mb":0,"started":1790381000,"ids":[2]}}
 {"check":"pm2.app","target":"deleted","unknown":"missing"}
 {"check":"pm2.app","target":"admin","unknown":"needs_perm"}
-{"_":"step","group":"containers","ms":54}
+{"_":"step","group":"containers","ms":11}
 {"_":"end"}

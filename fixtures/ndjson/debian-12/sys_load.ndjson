@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"4d0af4034eef3379"}
-{"check":"sys.load","target":"","value":2.82,"unit":"load","data":{"cores":4,"load1":2.73,"load15":2.10}}
-{"_":"step","group":"system","ms":342}
+{"_":"begin","v":1,"bundle":"28c3ebdf5dc11cbd"}
+{"check":"sys.load","target":"","value":0.96,"unit":"load","data":{"cores":4,"load1":1.92,"load15":0.84}}
+{"_":"step","group":"system","ms":2}
 {"_":"end"}

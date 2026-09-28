@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"253a4cc9c833ddcb"}
-{"check":"sys.psi","target":"","data":{"cpu":9.44,"memory":0.12,"io":0.95}}
-{"_":"step","group":"system","ms":12}
+{"_":"begin","v":1,"bundle":"f7c69d156e301d2a"}
+{"check":"sys.psi","target":"","data":{"cpu":1.41,"memory":0.00,"io":0.22}}
+{"_":"step","group":"system","ms":3}
 {"_":"end"}
