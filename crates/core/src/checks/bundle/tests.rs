@@ -11,12 +11,23 @@ use crate::domain::host::HostAlias;
 use crate::domain::project::ProjectsFile;
 
 /// Data keys and top-level `value`s that read live host state (disk use,
-/// load average) and so can drift by a small amount between two subprocess
-/// runs a few milliseconds apart, even on the same host. Pinning them before
-/// comparison keeps the check on the *shape* of the output — check ids,
+/// load average, memory, PSI) and so can drift by a small amount between two
+/// subprocess runs a few milliseconds apart, even on the same host. Pinning
+/// them before comparison keeps the check on the *shape* of the output — check ids,
 /// targets, `unit`, data keys, and stable fields such as filesystem `size`
 /// and `fs` or core count — without flaking on live values.
-const VOLATILE_DATA_KEYS: &[&str] = &["used", "avail", "pct", "ipct", "load1", "load15"];
+const VOLATILE_DATA_KEYS: &[&str] = &[
+    "used",
+    "avail",
+    "available",
+    "pct",
+    "ipct",
+    "load1",
+    "load15",
+    "cpu",
+    "io",
+    "memory",
+];
 
 fn stabilize(facts: &[CheckFact]) -> Vec<CheckFact> {
     facts
