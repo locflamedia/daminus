@@ -68,6 +68,9 @@ pub enum IssueCode {
     ComponentDuplicate,
     /// The component's host is not in `~/.ssh/config`.
     UnknownHost,
+    /// `projects.json` already has a project with this id; saving replaces its
+    /// name, URLs and components (its color and threshold overrides stay).
+    ReplacesExisting,
 }
 
 impl IssueCode {
@@ -80,7 +83,8 @@ impl IssueCode {
             IssueCode::UrlLocalOnly { .. }
             | IssueCode::UrlDuplicate
             | IssueCode::ComponentDuplicate
-            | IssueCode::UnknownHost => IssueLevel::Warning,
+            | IssueCode::UnknownHost
+            | IssueCode::ReplacesExisting => IssueLevel::Warning,
         }
     }
 }
@@ -118,8 +122,12 @@ pub fn is_probeable_url(url: &str) -> bool {
 
 /// Everything wrong or doubtful about `projects`, in project order. `known`
 /// is the hosts of `~/.ssh/config`; `None` skips the host check (there is no
-/// config to compare with).
-pub fn validate(projects: &[Project], known: Option<&[HostAlias]>) -> Vec<ProjectIssue> {
+/// config to compare with). `saved` is the ids already in `projects.json`.
+pub fn validate(
+    projects: &[Project],
+    known: Option<&[HostAlias]>,
+    saved: &[String],
+) -> Vec<ProjectIssue> {
     let mut out = Vec::new();
     let mut ids = BTreeSet::new();
     for p in projects {
@@ -130,6 +138,8 @@ pub fn validate(projects: &[Project], known: Option<&[HostAlias]>) -> Vec<Projec
             out.push(issue(id, IssueField::Id, IssueCode::BadId));
         } else if !ids.insert(id.to_owned()) {
             out.push(issue(id, IssueField::Id, IssueCode::DuplicateId));
+        } else if saved.iter().any(|s| s == id) {
+            out.push(issue(id, IssueField::Id, IssueCode::ReplacesExisting));
         }
         if p.name.trim().is_empty() {
             out.push(issue(id, IssueField::Name, IssueCode::Empty));

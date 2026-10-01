@@ -27,8 +27,8 @@ fn good() -> Project {
 
 #[test]
 fn a_good_project_has_no_issues() {
-    assert!(validate(&[good()], None).is_empty());
-    assert!(validate(&[good()], Some(&[alias("vps-a")])).is_empty());
+    assert!(validate(&[good()], None, &[]).is_empty());
+    assert!(validate(&[good()], Some(&[alias("vps-a")]), &[]).is_empty());
     assert!(!has_errors(&[]));
 }
 
@@ -42,7 +42,7 @@ fn ids_names_and_emptiness() {
     blank_name.name = "  ".into();
     let nothing =
         project(json!({"id": "nothing", "name": "Nothing", "urls": [" "], "components": []}));
-    let issues = validate(&[empty_id, bad_id, blank_name, nothing], None);
+    let issues = validate(&[empty_id, bad_id, blank_name, nothing], None, &[]);
     assert_eq!(
         codes(&issues),
         [
@@ -58,7 +58,7 @@ fn ids_names_and_emptiness() {
 
 #[test]
 fn a_taken_id_is_an_error() {
-    let issues = validate(&[good(), good()], None);
+    let issues = validate(&[good(), good()], None, &[]);
     assert_eq!(
         codes(&issues),
         [("shop".into(), IssueField::Id, IssueCode::DuplicateId)]
@@ -76,7 +76,7 @@ fn urls_that_are_not_http_are_errors() {
         "https://".into(),
         "https://ok.example.com".into(),
     ];
-    let issues = validate(&[p], None);
+    let issues = validate(&[p], None, &[]);
     assert_eq!(
         codes(&issues)
             .iter()
@@ -106,7 +106,7 @@ fn urls_only_this_mac_can_reach_are_warned_about_not_refused() {
         "http://app.internal".into(),
         "https://shop-x.com".into(),
     ];
-    let issues = validate(&[p], None);
+    let issues = validate(&[p], None, &[]);
     let got: Vec<(IssueField, IssueCode)> = issues.iter().map(|i| (i.field, i.code)).collect();
     assert_eq!(
         got,
@@ -165,7 +165,7 @@ fn repeated_urls_and_components_and_unknown_hosts_are_warnings() {
         )
         .unwrap(),
     );
-    let issues = validate(&[p], Some(&[alias("vps-a")]));
+    let issues = validate(&[p], Some(&[alias("vps-a")]), &[]);
     let got: Vec<(IssueField, IssueCode)> = issues.iter().map(|i| (i.field, i.code)).collect();
     assert_eq!(
         got,
@@ -200,7 +200,7 @@ fn normalizing_trims_and_drops_empty_and_repeated_urls() {
 fn issues_survive_json_for_the_ui() {
     let mut p = good();
     p.urls = vec!["http://localhost:3000".into()];
-    let issues = validate(&[p], None);
+    let issues = validate(&[p], None, &[]);
     let json = serde_json::to_value(&issues).unwrap();
     assert_eq!(
         json,
@@ -215,4 +215,19 @@ fn issues_survive_json_for_the_ui() {
         serde_json::from_value::<Vec<ProjectIssue>>(json).unwrap(),
         issues
     );
+}
+
+#[test]
+fn an_id_already_saved_is_a_warning_not_an_error() {
+    let saved = ["shop".to_owned()];
+    let issues = validate(&[good()], None, &saved);
+    assert_eq!(
+        codes(&issues),
+        [("shop".into(), IssueField::Id, IssueCode::ReplacesExisting)]
+    );
+    assert_eq!(issues[0].level, IssueLevel::Warning);
+    assert!(!has_errors(&issues));
+    let mut other = good();
+    other.id = "blog".into();
+    assert!(validate(&[other], None, &saved).is_empty());
 }

@@ -94,13 +94,30 @@ fn rig(transport: FakeTransport, hosts: &[&str]) -> Rig {
 }
 
 fn rig_with(transport: FakeTransport, hosts: &[&str], options: SetupOptions) -> Rig {
+    rig_built(transport, hosts, options, None)
+}
+
+/// `keyscan_body`: a shell body to run in place of `ssh-keyscan`.
+fn rig_built(
+    transport: FakeTransport,
+    hosts: &[&str],
+    options: SetupOptions,
+    keyscan_body: Option<&str>,
+) -> Rig {
     let dir = TempDir::new().unwrap();
     let cfg = write_config(&dir, hosts);
     let home = dir.path().join("home");
     std::fs::create_dir_all(home.join(".ssh")).unwrap();
-    let tools = SshTools::new()
+    let mut tools = SshTools::new()
         .with_config(cfg)
         .with_env([("HOME", home.as_os_str())]);
+    if let Some(body) = keyscan_body {
+        use std::os::unix::fs::PermissionsExt as _;
+        let scan = dir.path().join("fake-keyscan");
+        std::fs::write(&scan, format!("#!/bin/sh\n{body}\n")).unwrap();
+        std::fs::set_permissions(&scan, std::fs::Permissions::from_mode(0o755)).unwrap();
+        tools = tools.with_programs("ssh", "ssh-keygen", scan);
+    }
     let store = FsStore::new(dir.path().join("config"));
     let (tx, rx) = mpsc::channel(4096);
     let transport = Arc::new(transport);
@@ -385,6 +402,56 @@ async fn an_unknown_host_key_shows_its_fingerprint_and_does_not_stick() {
 }
 
 #[tokio::test]
+async fn a_cancel_does_not_wait_for_the_host_key_lookup() {
+    // `ssh-keyscan` hangs for a minute; the lookup alone may take 12 s.
+    let mut r = rig_built(
+        FakeTransport::new().host(
+            "vps-a",
+            FakeHost::fail(Failure::HostKeyUnknown { fp: None }),
+        ),
+        &["vps-a"],
+        SetupOptions::default(),
+        Some("sleep 60"),
+    );
+    r.service.start(Step::Test, &[alias("vps-a")], &[]).unwrap();
+    // Let the run reach the lookup: the host answered at once.
+    tokio::time::sleep(Duration::from_millis(1500)).await;
+    let t = std::time::Instant::now();
+    assert!(r.service.cancel());
+    let events = tokio::time::timeout(Duration::from_secs(5), drain(&mut r.rx))
+        .await
+        .expect("the cancel waited for the lookup");
+    assert!(t.elapsed() < Duration::from_secs(5));
+    assert!(matches!(
+        events.last().unwrap().body,
+        SetupEventBody::Cancelled
+    ));
+    assert!(r.service.status().is_none());
+}
+
+#[tokio::test]
+async fn a_host_task_that_dies_ends_the_run_as_failed_and_keeps_the_others() {
+    let mut r = rig(
+        FakeTransport::new()
+            .host("vps-a", FakeHost::output(web_output()))
+            .host("vps-b", FakeHost::Reply(|_| panic!("broken host task"))),
+        &["vps-a", "vps-b"],
+    );
+    r.service
+        .start(Step::Discover, &[alias("vps-a"), alias("vps-b")], &[])
+        .unwrap();
+    let events = drain(&mut r.rx).await;
+    assert_eq!(finished(&events, "vps-a"), HostOutcome::Reached);
+    let SetupEventBody::Failed { error } = &events.last().unwrap().body else {
+        panic!("the run did not fail: {:?}", events.last());
+    };
+    assert_eq!(error.code, ErrorCode::Internal);
+    // The run is over, and what vps-a found is still suggested.
+    assert!(r.service.status().is_none());
+    assert!(r.service.result().proposal.is_some());
+}
+
+#[tokio::test]
 async fn a_changed_host_key_is_reported_as_changed() {
     let mut r = rig(
         FakeTransport::new().host(
@@ -628,14 +695,14 @@ async fn saving_writes_projects_json_and_keeps_everything_else() {
             &[alias("vps-b"), alias("vps-a")],
         )
         .unwrap();
-    // The repeated URL is only a warning; it is saved once.
+    // The repeated URL and the replaced project are only warnings; the URL is saved once.
     let Saved::Saved { issues, projects } = saved else {
         panic!("not saved: {saved:?}");
     };
     assert_eq!(projects, 2);
     assert_eq!(
         issues.iter().map(|i| i.code).collect::<Vec<_>>(),
-        [IssueCode::UrlDuplicate]
+        [IssueCode::UrlDuplicate, IssueCode::ReplacesExisting]
     );
     let file = r.store.load_projects().unwrap().value;
     let ids: Vec<&str> = file.projects.iter().map(|p| p.id.as_str()).collect();
@@ -647,6 +714,40 @@ async fn saving_writes_projects_json_and_keeps_everything_else() {
     assert_eq!(file.rules.len(), 1);
     assert!(!file.hosts[&alias("vps-b")].include);
     assert!(file.hosts[&alias("vps-a")].include);
+}
+
+#[tokio::test]
+async fn saving_over_a_project_says_so_and_keeps_its_color_and_overrides() {
+    let r = rig(FakeTransport::new(), &["vps-a"]);
+    let mut old = proj("shop", &["https://old.example.com"], "vps-a");
+    old.color = Some("#336699".into());
+    old.overrides = serde_json::from_value(json!([{"check": "disk.root", "warn": 70.0}])).unwrap();
+    let mut existing = ProjectsFile::default();
+    existing.projects.push(old);
+    r.store.save_projects(&existing, None).unwrap();
+
+    let fresh = proj("shop", &["https://shop-x.com"], "vps-a");
+    let issues = r.service.validate(std::slice::from_ref(&fresh));
+    assert_eq!(
+        issues.iter().map(|i| (i.field, i.code)).collect::<Vec<_>>(),
+        [(IssueField::Id, IssueCode::ReplacesExisting)]
+    );
+    let saved = r.service.save(vec![fresh], &[]).unwrap();
+    assert!(matches!(saved, Saved::Saved { projects: 1, .. }));
+
+    let file = r.store.load_projects().unwrap().value;
+    let shop = &file.projects[0];
+    assert_eq!(shop.urls, ["https://shop-x.com"]);
+    assert_eq!(shop.color.as_deref(), Some("#336699"));
+    assert_eq!(shop.overrides.len(), 1);
+
+    // A color the new project sets wins.
+    let mut recolored = proj("shop", &["https://shop-x.com"], "vps-a");
+    recolored.color = Some("#aa0000".into());
+    r.service.save(vec![recolored], &[]).unwrap();
+    let file = r.store.load_projects().unwrap().value;
+    assert_eq!(file.projects[0].color.as_deref(), Some("#aa0000"));
+    assert_eq!(file.projects[0].overrides.len(), 1);
 }
 
 #[tokio::test]

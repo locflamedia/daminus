@@ -52,29 +52,17 @@ pub struct SetupEvent {
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
 pub enum SetupEventBody {
     /// A host left the queue.
-    HostStarted {
-        host: HostAlias,
-    },
+    HostStarted { host: HostAlias },
     /// Authentication is waiting, most likely on an SSH agent approval
     /// (1Password, Secretive). Not counted in the host's time budget.
-    AgentWait {
-        host: HostAlias,
-    },
+    AgentWait { host: HostAlias },
     /// The host's shell started the script (its `begin` line arrived).
-    HostRunning {
-        host: HostAlias,
-    },
+    HostRunning { host: HostAlias },
     /// One thing the script found or reported.
-    Item {
-        host: HostAlias,
-        item: SetupRecord,
-    },
+    Item { host: HostAlias, item: SetupRecord },
     /// The host's key is not one the user has accepted (or changed): what
     /// is recorded, and the key it offers.
-    HostKey {
-        host: HostAlias,
-        info: HostKeyInfo,
-    },
+    HostKey { host: HostAlias, info: HostKeyInfo },
     HostFinished {
         host: HostAlias,
         outcome: HostOutcome,
@@ -88,9 +76,8 @@ pub enum SetupEventBody {
     Done,
     /// Stopped by the user or app quit.
     Cancelled,
-    Failed {
-        error: AppError,
-    },
+    /// The run broke (a host task died): the other hosts' results are kept.
+    Failed { error: AppError },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

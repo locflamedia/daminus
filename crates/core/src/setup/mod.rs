@@ -307,19 +307,28 @@ impl SetupService {
 
     // ---------------------------------------------------------------- saving
 
-    /// What is wrong or doubtful about `projects`.
+    /// What is wrong or doubtful about `projects`, including the ones that
+    /// would replace a project already in `projects.json`.
     pub fn validate(&self, projects: &[Project]) -> Vec<ProjectIssue> {
         let known: Option<Vec<HostAlias>> = self
             .list_hosts()
             .ok()
             .filter(|l| l.config_found)
             .map(|l| l.hosts.into_iter().map(|h| h.alias).collect());
-        validate(projects, known.as_deref())
+        let saved: Vec<String> = self
+            .shared
+            .store
+            .load_projects()
+            .map(|s| s.value.projects.into_iter().map(|p| p.id).collect())
+            .unwrap_or_default();
+        validate(projects, known.as_deref(), &saved)
     }
 
     /// Saves `projects` into `projects.json`: a project with the id of one in
-    /// the file replaces it, the others are added, and everything else (the
-    /// other projects, the "mark as expected" rules, the hosts' settings) stays.
+    /// the file replaces its name, URLs and components (the color and the
+    /// threshold overrides it had stay, unless the new one sets its own), the
+    /// others are added, and everything else (the other projects, the "mark
+    /// as expected" rules, the hosts' settings) stays.
     /// `hosts` are the servers the user picked in setup; they are listed in
     /// Settings › Hosts (included in scans) with the hosts the projects use.
     /// Nothing is written when [`SetupService::validate`] finds an error.
@@ -342,7 +351,19 @@ impl SetupService {
                 file.hosts.entry(c.host.clone()).or_default();
             }
             match file.projects.iter_mut().find(|p| p.id == project.id) {
-                Some(existing) => *existing = project,
+                Some(existing) => {
+                    let color = project.color.or_else(|| existing.color.take());
+                    let overrides = if project.overrides.is_empty() {
+                        std::mem::take(&mut existing.overrides)
+                    } else {
+                        project.overrides
+                    };
+                    *existing = Project {
+                        color,
+                        overrides,
+                        ..project
+                    };
+                }
                 None => file.projects.push(project),
             }
         }
@@ -481,16 +502,27 @@ impl Job {
                 .instrument(span),
             );
         }
+        let mut broken = false;
         while let Some(joined) = tasks.join_next().await {
             if let Err(e) = joined {
                 tracing::error!(error = %e, "setup host task failed");
+                broken = true;
             }
         }
         let body = if self.cancel.is_cancelled() {
             SetupEventBody::Cancelled
         } else {
+            // What the other hosts found is still kept and suggested from.
             self.shared.regroup();
-            SetupEventBody::Done
+            if broken {
+                // A host that never reports `host_finished` must not leave
+                // a listener waiting: the run ends with an error instead.
+                SetupEventBody::Failed {
+                    error: ErrorCode::Internal.into(),
+                }
+            } else {
+                SetupEventBody::Done
+            }
         };
         // Cleared first, so a listener reacting to the last event can start the next run.
         if let Ok(mut c) = self.shared.current.lock() {
@@ -523,14 +555,15 @@ impl HostTask {
         self.emitter
             .emit(SetupEventBody::HostStarted { host: host.clone() })
             .await;
-        let t0 = Instant::now();
+        let started = Instant::now();
         let tools = &self.shared.tools;
         let resolved = tokio::select! {
             biased;
             _ = self.cancel.cancelled() => return None,
             r = resolve(tools, &host) => r,
         };
-        let ran = self.drive(&host, t0).await?;
+        // The budget counts from here: `ssh -G` is not the server's time.
+        let ran = self.drive(&host, Instant::now()).await?;
 
         let mut outcome = ran.outcome;
         let mut host_key = None;
@@ -541,7 +574,12 @@ impl HostTask {
             _ => None,
         };
         if let Some(fp) = key_fp {
-            let (info, merged) = self.host_key_info(&outcome, &fp, resolved.as_ref()).await;
+            // Up to a dozen seconds per lookup; a cancel does not wait for them.
+            let (info, merged) = tokio::select! {
+                biased;
+                _ = self.cancel.cancelled() => return None,
+                r = self.host_key_info(&outcome, &fp, resolved.as_ref()) => r,
+            };
             outcome = match outcome {
                 HostOutcome::HostKeyChanged { .. } => HostOutcome::HostKeyChanged { fp: merged },
                 _ => HostOutcome::HostKeyUnknown { fp: merged },
@@ -570,7 +608,7 @@ impl HostTask {
                 }
             }
         });
-        let ms = u32::try_from(t0.elapsed().as_millis()).unwrap_or(u32::MAX);
+        let ms = u32::try_from(started.elapsed().as_millis()).unwrap_or(u32::MAX);
         tracing::info!(
             ?outcome,
             ms,
