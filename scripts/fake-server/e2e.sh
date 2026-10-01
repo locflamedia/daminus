@@ -66,6 +66,11 @@ docker build -q -f "$here/Dockerfile" -t daminus-fake-server "$root/scripts" >/d
 
 # The app's own home: no ~/.ssh, no agent. Anything it reads or writes is
 # here. (Only the app gets it: docker and cargo keep the real one.)
+# HOME only moves what the app expands itself. OpenSSH takes `~` and its default
+# IdentityFile and UserKnownHostsFile from the passwd entry, not from $HOME, so
+# the test cannot lean on HOME to keep the real ~/.ssh out of it: every host of
+# the config below names its own key, known_hosts file and no system one, and
+# `isolated` checks that with `ssh -G` before anything connects.
 mkdir -p "$work/home"
 app() {
 	env -u SSH_AUTH_SOCK HOME="$work/home" "$dev" "$@"
@@ -146,7 +151,9 @@ Host fake-down
     Port 1
     User daminus
     IdentityFile $work/id_good
+    IdentitiesOnly yes
     UserKnownHostsFile $work/known_hosts
+    GlobalKnownHostsFile /dev/null
 
 Host *.internal
     User nobody
@@ -158,6 +165,20 @@ Match host somewhere exec "false"
     User other
 EOF
 cfg="$work/ssh_config"
+# What ssh would use for each host, worked out without connecting: only the
+# keys and known_hosts files of this test, and no agent identity.
+isolated() {
+	ssh -F "$cfg" -G "$1" | awk -v w="$work" '
+		$1 == "identitiesonly" && $2 == "yes" { only = 1 }
+		$1 == "globalknownhostsfile" && $2 != "/dev/null" { bad = 1 }
+		$1 == "identityfile" || $1 == "userknownhostsfile" {
+			for (i = 2; i <= NF; i++) if (index($i, w "/") != 1) bad = 1
+		}
+		END { exit !(only && !bad) }'
+}
+for h in fake-a fake-new fake-wrongkey fake-jump fake-down; do
+	ok "$h reads only this test's keys and known_hosts files" isolated "$h"
+done
 known_before=$(cksum <"$work/known_hosts")
 empty_before=$(cksum <"$work/known_hosts.empty")
 
@@ -183,7 +204,7 @@ ok "an unknown host key ends the run, it is not stuck (${took} s)" test "$rc" -n
 ok "it shows the server's real fingerprint" has "$out" "host key not accepted yet: $want_fp"
 ok "it says how to accept it" has "$out" "ssh -F $cfg fake-new"
 ok "the app wrote no known_hosts (the empty file is unchanged)" same_sum "$work/known_hosts.empty" "$empty_before"
-ok "the app created no ~/.ssh in its HOME" test ! -e "$work/home/.ssh"
+ok "the app created no .ssh under its HOME variable" test ! -e "$work/home/.ssh"
 
 rc=0
 out=$(app -F "$cfg" --config-dir "$work/cfg-wrong" discover --host fake-wrongkey 2>&1) || rc=$?
