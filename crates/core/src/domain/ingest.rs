@@ -13,6 +13,86 @@ pub const MAX_HOST_FACTS: usize = 2_000;
 /// Longest array kept anywhere inside a fact's `data`.
 pub const MAX_DATA_ARRAY: usize = 20;
 
+/// What [`LineBuffer`] hands back for one chunk.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Lines {
+    /// Complete lines, without their newline.
+    pub lines: Vec<Vec<u8>>,
+    /// Lines that passed [`MAX_LINE_BYTES`] and were dropped.
+    pub overlong: u32,
+}
+
+/// Cuts a stream of server output into lines under the limits above: a line
+/// over [`MAX_LINE_BYTES`] is dropped (and counted) instead of growing
+/// memory, and bytes past [`MAX_HOST_BYTES`] are ignored.
+#[derive(Debug, Default)]
+pub struct LineBuffer {
+    /// Bytes of the current, unfinished line.
+    pending: Vec<u8>,
+    /// The current line already passed [`MAX_LINE_BYTES`]; skip to its end.
+    overlong: bool,
+    bytes: usize,
+    truncated: bool,
+}
+
+impl LineBuffer {
+    /// Output passed [`MAX_HOST_BYTES`] and the rest is ignored.
+    pub fn truncated(&self) -> bool {
+        self.truncated
+    }
+
+    /// Takes the next chunk and returns the lines it completed.
+    pub fn push(&mut self, chunk: &[u8]) -> Lines {
+        let mut out = Lines::default();
+        if self.truncated {
+            return out;
+        }
+        let room = MAX_HOST_BYTES.saturating_sub(self.bytes);
+        let chunk = if chunk.len() > room {
+            self.truncated = true;
+            &chunk[..room]
+        } else {
+            chunk
+        };
+        self.bytes += chunk.len();
+        for part in chunk.split_inclusive(|b| *b == b'\n') {
+            let (body, complete) = match part.strip_suffix(b"\n") {
+                Some(body) => (body, true),
+                None => (part, false),
+            };
+            if !self.overlong {
+                if self.pending.len() + body.len() > MAX_LINE_BYTES {
+                    self.overlong = true;
+                    self.pending.clear();
+                } else {
+                    self.pending.extend_from_slice(body);
+                }
+            }
+            if complete {
+                if self.overlong {
+                    self.overlong = false;
+                    out.overlong += 1;
+                } else {
+                    out.lines.push(std::mem::take(&mut self.pending));
+                }
+            }
+        }
+        out
+    }
+
+    /// Ends the stream: a last line without a newline still counts.
+    pub fn finish(&mut self) -> Lines {
+        let mut out = Lines::default();
+        if self.overlong {
+            out.overlong += 1;
+        } else if !self.pending.is_empty() {
+            out.lines.push(std::mem::take(&mut self.pending));
+        }
+        self.overlong = false;
+        out
+    }
+}
+
 /// Decodes a line as UTF-8 (invalid bytes become U+FFFD) and removes ANSI
 /// escape sequences, C0/C1 control characters (tab and newline included, as
 /// a line holds neither) and bidirectional overrides.

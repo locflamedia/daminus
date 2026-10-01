@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"9142c7752c0bfdf2"}
+{"_":"begin","v":1,"bundle":"7ce5976ceae4d613"}
 {"check":"docker.df","target":"","value":5922400000,"unit":"bytes","data":{"images":{"count":7,"active":3,"size":3100000000,"reclaimable":1200000000},"containers":{"count":3,"active":3,"size":12400000,"reclaimable":0},"volumes":{"count":2,"active":2,"size":2400000000,"reclaimable":0},"build_cache":{"count":18,"active":0,"size":410000000,"reclaimable":410000000}}}
 {"_":"step","group":"containers","ms":5}
 {"_":"end"}

@@ -1,0 +1,3 @@
+# Canary .env for a Postgres database reached by URL.
+APP_NAME=analytics
+DATABASE_URL=postgresql://analytics:CANARY_dotenv_pg_url_3d7e@10.0.0.5:5432/analytics

@@ -1,0 +1,17 @@
+# The harness image plus the real MySQL and Postgres clients, for the run
+# against real servers (scripts/check-harness/db-real.sh). The clients are
+# behind wrappers that record each call's argument list. /argv-log is a
+# tmpfs mounted at run time, so the root stays read-only.
+ARG BASE_IMAGE
+ARG MYSQL_CLIENT=mysql-client
+FROM ${BASE_IMAGE}
+ARG MYSQL_CLIENT
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends "${MYSQL_CLIENT}" postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+COPY db-bin/ /opt/daminus-harness/db-bin/
+RUN chmod 0755 /opt/daminus-harness/db-bin/*
+# The shims for mysql and psql are not on the path here: the real ones are.
+ENV PATH=/opt/daminus-harness/db-bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+USER daminus

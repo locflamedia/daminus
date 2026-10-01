@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"14a898f8cd8dd512"}
+{"check":"sec.upload_php","target":"/home/daminus/clean","value":0,"unit":"count"}
+{"_":"step","group":"security","ms":9}
+{"_":"end"}

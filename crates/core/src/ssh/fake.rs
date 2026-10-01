@@ -32,6 +32,9 @@ pub enum FakeHost {
     AgentHang,
     /// Waits `wait` for an agent approval, then sends `text` and exits 0.
     AgentThen { wait: Duration, text: String },
+    /// Answers with what the function makes of the script that was sent, so
+    /// one host can answer different scripts (login test, then discover).
+    Reply(fn(&str) -> String),
 }
 
 impl FakeHost {
@@ -163,6 +166,14 @@ impl FakeTransport {
                 let _ = out.send(RunSignal::AgentWait).await;
                 std::future::pending::<()>().await;
                 RunEnd::default()
+            }
+            Some(FakeHost::Reply(reply)) => {
+                let bytes = reply(&req.script).replace(HASH, &hash).into_bytes();
+                let _ = out.send(RunSignal::Stdout(bytes)).await;
+                RunEnd {
+                    exit: Some(0),
+                    failure: None,
+                }
             }
             Some(FakeHost::AgentThen { wait, text }) => {
                 let _ = out.send(RunSignal::AgentWait).await;

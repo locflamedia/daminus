@@ -19,6 +19,9 @@ use daminus_core::ssh::{SshTransport, outcome_error};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
 
+#[path = "daminus_dev/setup.rs"]
+mod setup;
+
 #[derive(Parser)]
 #[command(name = "daminus-dev", version = daminus_core::VERSION, about = "Daminus core dev CLI")]
 struct Cli {
@@ -45,11 +48,26 @@ enum Command {
         #[arg(long, value_name = "ALIAS")]
         host: Option<String>,
     },
+    /// Print the setup script a host would run (`login` or `discover`), as a
+    /// bundle, without connecting anywhere.
+    SetupBundle {
+        /// Which script.
+        #[arg(value_enum)]
+        script: SetupScript,
+        /// A project folder for the login test to ask about (repeatable, absolute).
+        #[arg(long = "path", value_name = "ABS_PATH")]
+        paths: Vec<String>,
+    },
     /// Validate a bundle's NDJSON output: every line v1, `begin` and `end`
-    /// present, every check id in the manifest. Exits 1 otherwise.
+    /// present, every check id in the manifest. Exits 1 otherwise. With
+    /// `--records` the file is the output of a setup script (login or
+    /// discover) and its records are checked instead.
     Ndjson {
         /// Output file to read.
         file: PathBuf,
+        /// The file is the output of a setup script.
+        #[arg(long)]
+        records: bool,
     },
     /// Scan hosts and URLs from `projects.json`, save the snapshot and print
     /// what changed. Progress goes to stderr; Ctrl-C cancels without saving.
@@ -66,10 +84,40 @@ enum Command {
         #[arg(long)]
         print_bundle: bool,
     },
+    /// List the hosts of the ssh config (`-F`, else `~/.ssh/config`) with what
+    /// ssh resolves for each, and the entries left out with the reason.
+    Hosts,
+    /// Set up projects from the ssh config: test the hosts (login, groups,
+    /// docker access), discover what runs on the ones that answer (nginx,
+    /// compose, pm2, databases, `.env` paths, ports), print the suggested
+    /// projects and save them to `projects.json`. A host key that is not
+    /// accepted yet shows its fingerprint and the command to accept it.
+    Discover {
+        /// Only this host (repeatable). Default: every host of the ssh config.
+        #[arg(long, value_name = "ALIAS")]
+        host: Vec<String>,
+        /// The database name for a project's database components, as
+        /// PROJECT=DATABASE (repeatable). Discover never reads a `.env`, so it
+        /// cannot know the name; without it those components are not saved.
+        #[arg(long, value_name = "PROJECT=DATABASE")]
+        database: Vec<String>,
+        /// A project folder the login test asks about (repeatable, absolute).
+        #[arg(long = "path", value_name = "ABS_PATH")]
+        paths: Vec<String>,
+        /// Print the suggestions and issues, save nothing.
+        #[arg(long)]
+        dry_run: bool,
+    },
     /// List saved snapshots, newest last.
     Snapshots,
     /// Print `evaluate` over the saved snapshots as JSON.
     Report,
+}
+
+#[derive(Clone, Copy, clap::ValueEnum)]
+enum SetupScript {
+    Login,
+    Discover,
 }
 
 fn default_config_dir() -> PathBuf {
@@ -93,7 +141,14 @@ fn main() -> ExitCode {
     match cli.command {
         None => config_summary(&store, &dir),
         Some(Command::Bundle { only, host }) => print_bundle(&store, only, host),
-        Some(Command::Ndjson { file }) => validate_ndjson(&file),
+        Some(Command::SetupBundle { script, paths }) => print_setup_bundle(&store, script, &paths),
+        Some(Command::Ndjson { file, records }) => {
+            if records {
+                validate_records(&file)
+            } else {
+                validate_ndjson(&file)
+            }
+        }
         Some(Command::Scan {
             project,
             host,
@@ -105,6 +160,22 @@ fn main() -> ExitCode {
                 scan(store, cli.ssh_config, project, host)
             }
         }
+        Some(Command::Hosts) => setup::hosts(&store, cli.ssh_config),
+        Some(Command::Discover {
+            host,
+            database,
+            paths,
+            dry_run,
+        }) => setup::discover(
+            store,
+            cli.ssh_config,
+            setup::DiscoverArgs {
+                hosts: host,
+                databases: database,
+                paths,
+                dry_run,
+            },
+        ),
         Some(Command::Snapshots) => list_snapshots(&store),
         Some(Command::Report) => print_report(&store),
     }
@@ -492,6 +563,81 @@ fn validate_ndjson(file: &std::path::Path) -> ExitCode {
         file.display(),
         out.facts.len(),
         groups.join(", "),
+        if problems.is_empty() { "ok" } else { "INVALID" }
+    );
+    for p in &problems {
+        eprintln!("  {p}");
+    }
+    if problems.is_empty() {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::FAILURE
+    }
+}
+
+fn print_setup_bundle(store: &FsStore, script: SetupScript, paths: &[String]) -> ExitCode {
+    let built = match script {
+        SetupScript::Login => daminus_core::discover::login_bundle(paths, false),
+        SetupScript::Discover => store
+            .load_settings()
+            .map_err(|e| {
+                eprintln!("settings: {e:?}");
+            })
+            .map_or_else(
+                |()| Err(bundle::BundleError::BadPath(String::new())),
+                |s| daminus_core::discover::discover_bundle(&s.value.scan, false),
+            ),
+    };
+    match built {
+        Ok(b) => {
+            let mut stdout = std::io::stdout().lock();
+            if stdout.write_all(b.text.as_bytes()).is_err() {
+                return ExitCode::FAILURE;
+            }
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+/// Checks the output of a setup script: v1 `begin`/`end`, every record valid.
+fn validate_records(file: &std::path::Path) -> ExitCode {
+    let bytes = match std::fs::read(file) {
+        Ok(b) => b,
+        Err(e) => {
+            eprintln!("{}: {e}", file.display());
+            return ExitCode::FAILURE;
+        }
+    };
+    let mut parser = daminus_core::discover::RecordParser::any();
+    parser.feed(&bytes);
+    let out = parser.finish();
+    let mut problems = Vec::new();
+    if out.bundle.is_none() {
+        problems.push("no v1 `begin` line".to_owned());
+    }
+    if !out.ended {
+        problems.push("no `end` line".to_owned());
+    }
+    if out.dropped > 0 {
+        problems.push(format!("{} line(s) are not valid records", out.dropped));
+    }
+    if out.truncated {
+        problems.push("output over the per-host limit".to_owned());
+    }
+    let mut kinds = std::collections::BTreeMap::<&str, usize>::new();
+    for r in &out.records {
+        *kinds.entry(r.kind()).or_default() += 1;
+    }
+    let kinds: Vec<String> = kinds.iter().map(|(k, n)| format!("{k}={n}")).collect();
+    println!(
+        "{}: {} record(s) [{}], {}",
+        file.display(),
+        out.records.len(),
+        kinds.join(" "),
         if problems.is_empty() { "ok" } else { "INVALID" }
     );
     for p in &problems {

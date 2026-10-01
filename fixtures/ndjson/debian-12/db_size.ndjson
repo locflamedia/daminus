@@ -1,0 +1,6 @@
+{"_":"begin","v":1,"bundle":"ce3d2f2750cd68c6"}
+{"check":"db.size","target":"shop","value":3650722202,"unit":"bytes","data":{"engine":"mysql","tables":14,"top":[["orders",2576980378],["order_items",732954624],["sessions",188743680],["users",98304000],["jobs",49152000]],"other":4587520}}
+{"check":"db.size","target":"analytics","value":1288490188,"unit":"bytes","data":{"engine":"postgres","tables":9,"top":[["events",858993459],["sessions",214748364],["users",104857600]],"other":109890765}}
+{"check":"db.size","target":"billing","value":900000000,"unit":"bytes","data":{"engine":"mysql","tables":5,"top":[["invoices",700000000],["payments",150000000],["customers",30000000],["items",10000000],["notes",5000000]],"other":5000000}}
+{"_":"step","group":"databases","ms":34}
+{"_":"end"}

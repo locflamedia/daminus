@@ -325,6 +325,19 @@
       "id": "db.size",
       "group": "databases",
       "runs": "remote",
+      "script": "db_size.sh",
+      "needs": ["mysql", "psql", "docker", "awk", "sed", "tr"],
+      "facts": {
+        "target": "database name (database component)",
+        "value": "size of the database (MySQL: data + index length from information_schema, cached by the server for up to 24 h; Postgres: pg_database_size). With a container set on the component the server inside it is asked, whatever host and port the .env holds",
+        "unit": "bytes",
+        "data": {
+          "engine": "mysql or postgres",
+          "tables": "number of tables",
+          "top": "five largest tables, [name, bytes]",
+          "other": "bytes outside the five"
+        }
+      },
       "rule": {
         "type": "info"
       }
@@ -333,6 +346,20 @@
       "id": "sec.miner",
       "group": "security",
       "runs": "remote",
+      "script": "sec_miner.sh",
+      "needs": ["find", "awk", "tr"],
+      "facts": {
+        "target": "name of a running process that is a known miner, or runs from a deleted file in a temp-type folder; empty with value 0 when none and every process was seen",
+        "data": {
+          "seen": "processes whose executable could be read (kernel threads and zombies are not counted)",
+          "total": "processes that could be inspected at all; seen < total means another user's processes were out of reach (Unknown needs_perm when nothing was found)",
+          "count": "processes with this name",
+          "exe": "path of the executable, with \" (deleted)\" when its file is gone",
+          "deleted": "whether the executable file was deleted",
+          "why": "name (a known miner name) or deleted (runs from a deleted file in /tmp, /var/tmp, /dev/shm, /run, /dev or memfd)"
+        }
+      },
+      "fp": "name|executable path",
       "rule": {
         "type": "present",
         "severity": "crit"
@@ -342,6 +369,17 @@
       "id": "sec.upload_php",
       "group": "security",
       "runs": "remote",
+      "script": "sec_upload_php.sh",
+      "needs": ["find", "awk", "sed", "tr"],
+      "facts": {
+        "target": "path of a PHP file inside an uploads or storage/app/public folder of a project folder; the project folder itself with value 0 when it has none",
+        "data": {
+          "size": "bytes",
+          "mtime": "last change, unix seconds",
+          "total": "files found in the project folder (at most the 50 newest are listed)"
+        }
+      },
+      "fp": "size:mtime:sha12, the SHA-256 of the first MiB",
       "rule": {
         "type": "present",
         "severity": "crit"
@@ -351,6 +389,17 @@
       "id": "sec.tmp_exec",
       "group": "security",
       "runs": "remote",
+      "script": "sec_tmp_exec.sh",
+      "needs": ["find", "awk", "tr"],
+      "facts": {
+        "target": "path of an executable file in /tmp, /var/tmp or /dev/shm (depth 4); empty with value 0 when none",
+        "data": {
+          "size": "bytes",
+          "mtime": "last change, unix seconds",
+          "total": "files found (at most the 50 newest are listed)"
+        }
+      },
+      "fp": "size:mtime:sha12, the SHA-256 of the first MiB",
       "rule": {
         "type": "present",
         "severity": "warn"
@@ -360,6 +409,17 @@
       "id": "sec.preload",
       "group": "security",
       "runs": "remote",
+      "script": "sec_preload.sh",
+      "needs": ["find"],
+      "facts": {
+        "target": "/etc/ld.so.preload when it lists libraries; empty with value 0 when the file is absent or empty",
+        "data": {
+          "entries": "libraries listed",
+          "libs": "the first five",
+          "size": "file size in bytes"
+        }
+      },
+      "fp": "size:mtime:sha12, the SHA-256 of the file",
       "rule": {
         "type": "present",
         "severity": "crit"
@@ -369,6 +429,16 @@
       "id": "sec.ports",
       "group": "security",
       "runs": "remote",
+      "script": "sec_ports.sh",
+      "needs": ["find", "awk"],
+      "facts": {
+        "target": "port number (3306, 5432, 6379, 27017 or 2375) listening on 0.0.0.0 or ::; empty with value 0 when none",
+        "data": {
+          "port": "the port",
+          "proc": "name of the process holding it, empty when it is not the SSH user's"
+        }
+      },
+      "fp": "port/process name",
       "rule": {
         "type": "present",
         "severity": "warn"
@@ -378,6 +448,18 @@
       "id": "sec.recent_change",
       "group": "code_changes",
       "runs": "remote",
+      "script": "sec_recent_change.sh",
+      "needs": ["find", "awk", "sort", "tr"],
+      "facts": {
+        "target": "a project folder on this host (path component)",
+        "value": "code files changed in the last 3 days, without vendor, node_modules, storage, .git and the skip paths",
+        "unit": "files",
+        "data": {
+          "newest": "change time of the newest, unix seconds",
+          "files": "the 10 newest, [path relative to the folder, mtime]"
+        }
+      },
+      "fp": "SHA-256 of the sorted file names",
       "rule": {
         "type": "info"
       }
@@ -386,6 +468,17 @@
       "id": "url.http",
       "group": "uptime",
       "runs": "local",
+      "facts": {
+        "target": "the project URL as configured",
+        "value": "milliseconds until the response headers; none on a network failure",
+        "unit": "ms",
+        "data": {
+          "status": "HTTP status code",
+          "class": "2xx … 5xx, other, or error when no response came",
+          "final": "last URL after redirects, without query, fragment or credentials; only when it differs",
+          "error": "dns, no_route, refused, timeout, tls, redirects, invalid_url or other; only when class is error"
+        }
+      },
       "rule": {
         "type": "max_of",
         "rules": [
@@ -411,6 +504,18 @@
       "id": "url.tls",
       "group": "uptime",
       "runs": "local",
+      "facts": {
+        "target": "the project URL as configured (https only)",
+        "value": "days until the certificate's notAfter, to two decimals; negative once expired. Read even when the certificate is expired, self-signed or for another name",
+        "unit": "days",
+        "data": {
+          "not_after": "notAfter, unix seconds",
+          "expired": "today is outside the validity period",
+          "untrusted": "the operating system's trust store refuses the chain for a reason other than the date or the name",
+          "mismatch": "the certificate is not valid for the host name",
+          "error": "only on an unknown result: dns, no_route, refused, timeout, tls or certificate"
+        }
+      },
       "rule": {
         "type": "days_left",
         "warn": 14.0,
@@ -422,6 +527,16 @@
       "id": "url.exposed",
       "group": "security",
       "runs": "local",
+      "facts": {
+        "target": "the project URL as configured; /.env and /.git/HEAD are asked for at the root of its site",
+        "value": "how many of the two files can be downloaded (0: looked, found none)",
+        "unit": "count",
+        "data": {
+          "exposed": "at least one file is served",
+          "matched_keys": "what showed the file to be one: key names like /.env:DB_PASSWORD, or /.git/HEAD:ref; never a value or any of the body",
+          "error": "only on an unknown result: timeout, or why no answer came"
+        }
+      },
       "rule": {
         "type": "present",
         "severity": "crit"

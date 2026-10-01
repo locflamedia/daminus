@@ -1,0 +1,3 @@
+# The setup scripts are POSIX sh bodies, concatenated with prelude.sh into one
+# bundle by checks/bundle.rs, like the check scripts.
+shell=sh

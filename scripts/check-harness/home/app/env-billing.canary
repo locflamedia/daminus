@@ -1,0 +1,4 @@
+# Canary .env of the compose database (CRLF, export, bare values).
+export MYSQL_USER=billing
+MYSQL_PASSWORD=CANARY_dotenv_billing_pw_2b6d
+MYSQL_DATABASE=billing

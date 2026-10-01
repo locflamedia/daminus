@@ -2,6 +2,8 @@
 //! saving the raw snapshot. `evaluate` (in `domain`) turns snapshots into
 //! what the user sees.
 
+#[cfg(test)]
+mod canary_tests;
 pub mod event;
 mod report;
 mod service;
@@ -14,4 +16,5 @@ pub use report::latest_report;
 pub use service::{
     HOST_BUDGET, MAX_HOSTS_AT_ONCE, ScanService, ServiceOptions, Started, build_bundles,
 };
+pub(crate) use service::{MAX_CONNECT_TIMEOUT_S, concurrency};
 pub use targets::{ScanScope, ScanTargets, resolve};

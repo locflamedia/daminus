@@ -1,0 +1,10 @@
+server {
+	listen 80;
+	listen [::]:80;
+	server_name shop-x.example.com www.shop-x.example.com;
+	root /home/daminus/app/public;
+	index index.php;
+	location ~ \.php$ {
+		fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+	}
+}

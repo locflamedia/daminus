@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"6679c94bf3f4fa7b"}
+{"check":"sec.miner","target":"","value":0,"unit":"count","data":{"seen":8,"total":8}}
+{"_":"step","group":"security","ms":7}
+{"_":"end"}

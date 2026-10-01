@@ -32,6 +32,25 @@ pub const SCRIPTS: &[(&str, &str)] = &[
         include_str!("../../checks/docker_compose.sh"),
     ),
     ("pm2_app.sh", include_str!("../../checks/pm2_app.sh")),
+    ("db_size.sh", include_str!("../../checks/db_size.sh")),
+    ("sec_miner.sh", include_str!("../../checks/sec_miner.sh")),
+    (
+        "sec_upload_php.sh",
+        include_str!("../../checks/sec_upload_php.sh"),
+    ),
+    (
+        "sec_tmp_exec.sh",
+        include_str!("../../checks/sec_tmp_exec.sh"),
+    ),
+    (
+        "sec_preload.sh",
+        include_str!("../../checks/sec_preload.sh"),
+    ),
+    ("sec_ports.sh", include_str!("../../checks/sec_ports.sh")),
+    (
+        "sec_recent_change.sh",
+        include_str!("../../checks/sec_recent_change.sh"),
+    ),
 ];
 
 /// The source of a check script by its manifest file name.

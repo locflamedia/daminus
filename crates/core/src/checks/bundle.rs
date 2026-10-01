@@ -13,7 +13,7 @@ use std::fmt::Write as _;
 
 use crate::domain::host::HostAlias;
 use crate::domain::manifest::{CheckGroup, Manifest, Runs};
-use crate::domain::project::{ComponentKind, ProjectsFile};
+use crate::domain::project::{ComponentKind, DbEngine, ProjectsFile};
 use crate::domain::settings::ScanSettings;
 
 use super::{PRELUDE, script};
@@ -31,6 +31,8 @@ pub enum BundleError {
     MissingScript(String),
     #[error("check id {0:?} does not map to a unique shell function name")]
     BadCheckId(String),
+    #[error("folder {0:?} is not an absolute path without control characters")]
+    BadPath(String),
 }
 
 /// Set to `1` by a caller that keeps stdin open after the bundle (the SSH
@@ -138,7 +140,8 @@ impl BundleVars {
 
     /// Adds what `host` carries in `projects.json`: code folders
     /// ([`PATHS_VAR`]), compose projects ([`COMPOSE_VAR`]) and pm2 apps
-    /// ([`PM2_VAR`]), one per line, each once, in project order. Component
+    /// ([`PM2_VAR`]) and databases ([`DB_VAR`]), one per line, each once, in
+    /// project order. Component
     /// names and paths were validated on load (no control characters), so a
     /// line or a tab never splits one.
     pub fn add_components(
@@ -149,6 +152,7 @@ impl BundleVars {
         let mut paths: Vec<String> = Vec::new();
         let mut compose: Vec<String> = Vec::new();
         let mut pm2: Vec<String> = Vec::new();
+        let mut db: Vec<String> = Vec::new();
         let push = |list: &mut Vec<String>, item: String| {
             if !list.contains(&item) {
                 list.push(item);
@@ -174,12 +178,28 @@ impl BundleVars {
                     };
                     push(&mut pm2, line);
                 }
-                ComponentKind::Db { .. } => {}
+                ComponentKind::Db {
+                    engine,
+                    database,
+                    env_file,
+                    container,
+                } => {
+                    let engine = match engine {
+                        DbEngine::Mysql => "mysql",
+                        DbEngine::Postgres => "postgres",
+                    };
+                    let container = container.as_deref().unwrap_or_default();
+                    push(
+                        &mut db,
+                        format!("{engine}\t{database}\t{env_file}\t{container}"),
+                    );
+                }
             }
         }
         self.set(PATHS_VAR, paths.join("\n"))?;
         self.set(COMPOSE_VAR, compose.join("\n"))?;
         self.set(PM2_VAR, pm2.join("\n"))?;
+        self.set(DB_VAR, db.join("\n"))?;
         Ok(())
     }
 }
@@ -191,6 +211,10 @@ pub const COMPOSE_VAR: &str = "DAMINUS_COMPOSE";
 /// pm2 apps on the host (`pm2.app`), one per line: the app name, then a tab
 /// and the daemon's `PM2_HOME` when the component names one.
 pub const PM2_VAR: &str = "DAMINUS_PM2";
+/// Databases on the host (`db.size`), one per line: engine, database name,
+/// `.env` path and container name (empty when the client runs on the host),
+/// tab-separated. Only paths and names: the credentials stay in the `.env`.
+pub const DB_VAR: &str = "DAMINUS_DB";
 
 /// Which checks go in the bundle.
 #[derive(Clone, Debug, Default)]
@@ -251,6 +275,26 @@ pub fn build(
     assemble(PRELUDE, groups, vars)
 }
 
+/// Builds a bundle around one script that is not a check (the setup login
+/// test and discover): the prelude, `vars`, the body as function `c_<name>`,
+/// and a `main` that runs it between `begin` and `end` with one `step` line
+/// named `name`. Everything else, tail included, is as for a check bundle, so
+/// the script is just as read-only and just as easy to stop.
+pub fn build_script(name: &str, body: &str, vars: &BundleVars) -> Result<Bundle, BundleError> {
+    let function = function_name(name)?;
+    let code = format!(
+        "{function}() (\n{}\n)\nmain() {{\n\td_begin\n\td_group\n\t{function}\n\td_step {name}\n\td_end\n}}\n{TAIL}",
+        body.trim_end()
+    );
+    Ok(finish(
+        PRELUDE,
+        code,
+        vars,
+        vec![name.to_owned()],
+        Vec::new(),
+    ))
+}
+
 /// One check in the bundle: its id and script body.
 #[derive(Clone, Debug)]
 struct Part {
@@ -296,8 +340,24 @@ fn assemble(
     main.push_str(TAIL);
 
     let code = format!("{functions}{main}");
-    let hash = fnv1a64(format!("{prelude}\0{code}").as_bytes());
+    Ok(finish(
+        prelude,
+        code,
+        vars,
+        checks,
+        groups.keys().copied().collect(),
+    ))
+}
 
+/// Puts the prelude, the hash, the variables and the code together.
+fn finish(
+    prelude: &str,
+    code: String,
+    vars: &BundleVars,
+    checks: Vec<String>,
+    groups: Vec<CheckGroup>,
+) -> Bundle {
+    let hash = fnv1a64(format!("{prelude}\0{code}").as_bytes());
     let mut text = String::with_capacity(prelude.len() + code.len() + 256);
     text.push_str(prelude.trim_end());
     text.push('\n');
@@ -306,12 +366,12 @@ fn assemble(
         let _ = writeln!(text, "{name}={}", quote(value));
     }
     text.push_str(&code);
-    Ok(Bundle {
+    Bundle {
         text,
         hash,
         checks,
-        groups: groups.keys().copied().collect(),
-    })
+        groups,
+    }
 }
 
 /// The wire name of a group, as in the manifest and `step` lines.

@@ -1,0 +1,7 @@
+{"_":"begin","v":1,"bundle":"ca91c6a22a379014"}
+{"rec":"login","os":"Linux","kernel":"6.10.14-linuxkit","arch":"aarch64","distro":"Ubuntu 24.04.5 LTS","user":"daminus","uid":1500,"root":false,"docker_group":false,"adm_group":false,"journal_group":false,"docker":"ok","gnu_find":true}
+{"rec":"path","path":"/home/daminus/app","state":"readable"}
+{"rec":"path","path":"/root","state":"denied"}
+{"rec":"path","path":"/nope/x","state":"missing"}
+{"_":"step","group":"login","ms":11}
+{"_":"end"}

@@ -1,0 +1,6 @@
+shop	/home/daminus/app	app	False	shop-app-1	shop-app:latest	running	0.0.0.0:3000->3000/tcp, :::3000->3000/tcp
+shop	/home/daminus/app	db	False	shop-db-1	mysql:8.0	running	3306/tcp, 33060/tcp
+shop	/home/daminus/app	migrate	True	shop-migrate-run-1	shop-app:latest	exited	
+blog	/srv/blog	web	False	blog-web-1	nginx:1.27	running	0.0.0.0:8080->80/tcp
+				legacy-redis	redis:7	running	6379/tcp
+				legacy-pg	bitnami/postgresql:16	running	5432/tcp

@@ -1,0 +1,5 @@
+{"_":"begin","v":1,"bundle":"43ade5092e2e2c2b"}
+{"check":"sec.tmp_exec","target":"/dev/shm/kinsing","data":{"size":133608,"mtime":1790848372,"total":2},"fp":"133608:1790848372:c883d9c27228"}
+{"check":"sec.tmp_exec","target":"/tmp/xmrig","data":{"size":133608,"mtime":1790848371,"total":2},"fp":"133608:1790848371:c883d9c27228"}
+{"_":"step","group":"security","ms":38}
+{"_":"end"}

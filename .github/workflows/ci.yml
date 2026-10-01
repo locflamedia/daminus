@@ -75,9 +75,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: shellcheck every shell script in the repo (and the harness shims)
+      - name: shellcheck every shell script in the repo (and the harness shims and wrappers)
         run: |
-          { git ls-files -z '*.sh'; git ls-files -z 'scripts/check-harness/bin/*'; } |
+          { git ls-files -z '*.sh'; git ls-files -z 'scripts/check-harness/bin/*' 'scripts/check-harness/db-bin/*'; } |
             xargs -0 --no-run-if-empty shellcheck
       - name: Deny-list over the check scripts
         run: ./scripts/check-harness/deny-list.sh
@@ -89,6 +89,10 @@ jobs:
         run: cargo test -p daminus-core --test check_scripts
       - name: Bundle in read-only containers (ubuntu 24.04, debian 12), canary, hashes, golden diff
         run: ./scripts/check-harness/run.sh
+      - name: db.size against real MySQL 8 and Postgres 16 (read-only container and docker exec), canary logins, data checksums
+        run: ./scripts/check-harness/db-real.sh
+      - name: Setup flow against a fake server (real sshd in Docker), unknown and wrong keys, ProxyJump, discover then scan, canaries
+        run: ./scripts/fake-server/e2e.sh
 
   supply:
     name: supply chain (cargo deny)

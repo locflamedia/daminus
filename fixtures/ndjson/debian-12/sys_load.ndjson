@@ -1,4 +1,4 @@
-{"_":"begin","v":1,"bundle":"28c3ebdf5dc11cbd"}
-{"check":"sys.load","target":"","value":0.96,"unit":"load","data":{"cores":4,"load1":1.92,"load15":0.84}}
+{"_":"begin","v":1,"bundle":"dce5ea9151ca632e"}
+{"check":"sys.load","target":"","value":0.51,"unit":"load","data":{"cores":4,"load1":1.50,"load15":0.18}}
 {"_":"step","group":"system","ms":2}
 {"_":"end"}
