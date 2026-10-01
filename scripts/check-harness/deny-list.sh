@@ -7,7 +7,7 @@ set -eu
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
 if [ "$#" -eq 0 ]; then
-	set -- "$root"/crates/core/checks/*.sh
+	set -- "$root"/crates/core/checks/*.sh "$root"/crates/core/discover/*.sh
 fi
 
 words='rm|mv|cp|tee|dd|truncate|shred|chmod|chown|chgrp|ln|mkdir|rmdir|touch|install|sudo|su|doas|kill|pkill|killall|reboot|shutdown|halt|systemctl|service|crontab|mount|umount|apt|apt-get|yum|dnf|apk|pip|npm|curl|wget|nc|ncat|scp|rsync|ssh|eval|source|exec'

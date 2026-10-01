@@ -52,6 +52,9 @@ system) cat "$out/system-df.tsv" ;;
 ps)
 	case $filter in
 	*label=com.docker.compose.project=shop*) cat "$out/ps-shop.txt" ;;
+	# `docker ps -a --format …` (discover): every container, the compose
+	# labels, name, image, state and ports as tab-separated fields.
+	'') [ -n "$format" ] && cat "$out/ps-all.tsv" ;;
 	esac
 	;;
 inspect)

@@ -17,6 +17,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use daminus_core::checks::{PRELUDE, SCRIPTS, manifest, ndjson};
+use daminus_core::discover::{
+    DISCOVER_NEEDS, DISCOVER_SCRIPT, LOGIN_NEEDS, LOGIN_SCRIPT, RecordParser, SetupRecord,
+};
 
 /// Builtins a check may use. Nothing here writes, execs or loads code.
 const SAFE_BUILTINS: &[&str] = &[
@@ -42,6 +45,12 @@ const PRELUDE_NEEDS: &[&str] = &[
     "head",
     "sha256sum",
     "shasum",
+];
+/// The setup scripts (`crates/core/discover/`), held to the same rules as
+/// the check scripts: file name, source, external commands they may run.
+const SETUP_SCRIPTS: &[(&str, &str, &[&str])] = &[
+    ("login.sh", LOGIN_SCRIPT, LOGIN_NEEDS),
+    ("discover.sh", DISCOVER_SCRIPT, DISCOVER_NEEDS),
 ];
 /// Distros the harness runs, as directory names under `fixtures/ndjson/`.
 const DISTROS: &[&str] = &["ubuntu-24.04", "debian-12"];
@@ -1007,7 +1016,33 @@ fn every_script_runs_only_allowed_commands() {
             .expect("script in manifest");
         bad.extend(violations(file, src, &spec.needs, &prelude_fns));
     }
+    for (file, src, needs) in SETUP_SCRIPTS {
+        let needs: Vec<String> = needs.iter().map(|s| (*s).to_owned()).collect();
+        bad.extend(violations(file, src, &needs, &prelude_fns));
+    }
     assert!(bad.is_empty(), "allowlist violations:\n{}", bad.join("\n"));
+}
+
+/// discover never opens a `.env`: a line that names one only tests it, with
+/// `-r`, or matches it by name in a `find` expression, and a script that
+/// feeds a file to `read`, `cat`, `head`, `sed` or `awk` names no `.env`.
+#[test]
+fn discover_only_tests_env_files_and_never_opens_them() {
+    for line in DISCOVER_SCRIPT.lines().map(str::trim) {
+        if line.starts_with('#') || !line.contains(".env") {
+            continue;
+        }
+        for opener in [
+            "<", "cat ", "head ", "sed ", "grep ", " read ", "source ", "eval ",
+        ] {
+            assert!(
+                !line.contains(opener),
+                "discover.sh opens a .env? `{opener}` in: {line}"
+            );
+        }
+    }
+    // What it does with a found file is a `-r` test.
+    assert!(DISCOVER_SCRIPT.contains("[ -r \"$_f\" ] && _r=true"));
 }
 
 #[test]
@@ -1353,6 +1388,38 @@ fn every_scripted_check_has_golden_ndjson_per_distro() {
                 path.display(),
                 c.group
             );
+        }
+    }
+}
+
+/// The recorded output of the setup scripts, per distro, from the harness
+/// (`scripts/check-harness/run.sh --bless`).
+#[test]
+fn setup_scripts_have_golden_output_per_distro() {
+    let dir = repo().join("fixtures/discover");
+    for distro in DISTROS {
+        for (file, _, _) in SETUP_SCRIPTS {
+            let stem = file.trim_end_matches(".sh");
+            let path = dir.join(distro).join(format!("{stem}.ndjson"));
+            let bytes = fs::read(&path).unwrap_or_else(|_| panic!("missing {}", path.display()));
+            let mut parser = RecordParser::any();
+            parser.feed(&bytes);
+            let out = parser.finish();
+            assert!(
+                out.ended && out.dropped == 0 && out.bundle.is_some(),
+                "{}: not clean v1 records ({} dropped)",
+                path.display(),
+                out.dropped
+            );
+            let kinds: BTreeSet<&str> = out.records.iter().map(SetupRecord::kind).collect();
+            let want: &[&str] = if stem == "login" {
+                &["login"]
+            } else {
+                &["vhost", "compose", "pm2", "db", "env", "port"]
+            };
+            for kind in want {
+                assert!(kinds.contains(kind), "{}: no {kind} record", path.display());
+            }
         }
     }
 }

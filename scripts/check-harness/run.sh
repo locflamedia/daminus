@@ -11,6 +11,8 @@
 # Each check's output is then compared with its golden fixture
 # fixtures/ndjson/<distro>/<script>.ndjson by shape (line kinds, check ids,
 # field names and types), since load and disk numbers differ per machine.
+# The setup scripts (login, discover) run the same way, in the planted
+# container, and their records are compared with fixtures/discover/<distro>/.
 #
 # Usage: scripts/check-harness/run.sh [--bless]   (--bless rewrites the fixtures)
 set -eu
@@ -18,6 +20,7 @@ set -eu
 root=$(cd "$(dirname "$0")/../.." && pwd)
 here="$root/scripts/check-harness"
 fixtures="$root/fixtures/ndjson"
+setup_fixtures="$root/fixtures/discover"
 bless=0
 [ "${1-}" = "--bless" ] && bless=1
 
@@ -119,22 +122,30 @@ shape() {
 		end' "$1" | sort -u
 }
 
-# golden_check LABEL OUTPUT GOLDEN: the output has the golden's shape (or
-# becomes the golden with --bless).
+# The shape of a file of setup records: one line per distinct kind of record
+# and the names and types of its fields.
+shape_records() {
+	jq -c 'if has("_") then {_: ._}
+		else {rec, fields: (to_entries | map(.key + ":" + (.value | type)) | sort)}
+		end' "$1" | sort -u
+}
+
+# golden_check LABEL OUTPUT GOLDEN [SHAPE-FUNCTION]: the output has the
+# golden's shape (or becomes the golden with --bless).
 golden_check() {
 	if [ "$bless" -eq 1 ]; then
 		cp "$2" "$3"
 		echo "blessed $3"
 	elif [ ! -f "$3" ]; then
 		problem "$1: no golden fixture (run with --bless)"
-	elif ! shape "$2" >"$2.shape" || ! shape "$3" >"$2.golden" ||
+	elif ! "${4:-shape}" "$2" >"$2.shape" || ! "${4:-shape}" "$3" >"$2.golden" ||
 		! diff -u "$2.golden" "$2.shape"; then
 		problem "$1: output shape differs from $3 (run with --bless if intended)"
 	fi
 }
 
-verify() { # label output-file
-	if ! "$dev" --config-dir "$work/config" ndjson "$2"; then
+verify() { # label output-file [--records]
+	if ! "$dev" --config-dir "$work/config" ndjson ${3:+"$3"} "$2"; then
 		problem "$1: output is not valid NDJSON v1"
 	fi
 	if grep -q 'CANARY_' "$2"; then
@@ -177,10 +188,15 @@ check_infected() { # distro file libc
 		[.[] | select(.check == "sec.preload")]
 		| length == 1 and .[0].target == "/etc/ld.so.preload" and .[0].data.entries == 1
 		and .[0].data.libs == [$lib] and (.[0].fp | test($re))' --arg lib "$3" --arg re "$re"
-	expect "$d sec.ports: 6379 and 3306 (not 8080), held by perl" "$f" '
+	# 3306 is held by a server named mariadbd on all addresses; 6379 by perl,
+	# also on all addresses. 8080 is open to everyone too, but is not a
+	# database port, and 5432 is a database port that only 127.0.0.1 can reach:
+	# neither is reported.
+	expect "$d sec.ports: mariadbd on 0.0.0.0:3306 and perl on 6379, not 8080 or loopback 5432" "$f" '
 		[.[] | select(.check == "sec.ports")] as $p
 		| ($p | map(.target) | sort) == ["3306", "6379"]
-		and ($p | all(.data.proc == "perl" and .fp == (.target + "/perl")))'
+		and ($p | map(select(.target == "3306")) | all(.data.proc == "mariadbd" and .data.port == 3306 and .fp == "3306/mariadbd"))
+		and ($p | map(select(.target == "6379")) | all(.data.proc == "perl" and .fp == "6379/perl"))'
 	expect "$d sec.recent_change: counts the project folder" "$f" '
 		[.[] | select(.check == "sec.recent_change" and .target == "/home/daminus/app")]
 		| length == 1 and (.[0].value | type) == "number" and (.[0].data.files | length) <= 10'
@@ -195,6 +211,82 @@ check_clean() { # distro file
 		[.[] | select((.check // "" | startswith("sec.")) and .check != "sec.recent_change")] as $s
 		| ($s | length) == 5 and ($s | all(.value == 0 and (.unknown | not)))
 		and ($s | map(select(.check == "sec.miner")) | all(.data.seen == .data.total))'
+}
+
+# What the login test must say about the container: who the user is, that it
+# has no docker group but the (shimmed) docker answers, GNU find, and the three
+# folders it was asked about.
+# shellcheck disable=SC2016 # the filters are jq programs, not shell
+check_login() { # distro file
+	expect "$1 login: the user, its access and the folders asked about" "$2" '
+		([.[] | select(.rec == "login")] | length) == 1
+		and ([.[] | select(.rec == "login")][0]
+			| .os == "Linux" and .user == "daminus" and .uid == 1500 and .root == false
+			and .docker_group == false and .adm_group == false and .docker == "ok"
+			and .gnu_find == true and (.distro | length) > 0 and (.kernel | length) > 0)
+		and ([.[] | select(.rec == "path") | {(.path): .state}] | add)
+			== {"/home/daminus/app": "readable", "/root": "denied", "/nope/x": "missing"}'
+}
+
+# What discover must find in the planted container (see Dockerfile, probe.sh
+# and the docker and pm2 shims): the nginx blocks with an upstream resolved and
+# commented-out config ignored, compose projects with their published ports and
+# database containers (the one-off container left out), pm2 apps with their
+# folder (the first pm_cwd wins over the one in the app's env), the pm2 daemon
+# of another user it may not ask, a database process, the .env files by path
+# (the example and sample files excluded; names with a quote or a backslash
+# must still come out as valid JSON), and listening ports with their holder.
+# shellcheck disable=SC2016 # the filters are jq programs, not shell
+check_discover() { # distro file
+	d=$1 f=$2
+	expect "$d discover: nginx server blocks" "$f" '
+		[.[] | select(.rec == "vhost")] as $v
+		| ($v | map(select(.names | index("shop-x.example.com"))) | length) == 1
+		and ($v | map(select(.names | index("shop-x.example.com")))[0]
+			| .root == "/home/daminus/app/public" and .php == true and .ssl == false
+			and .names == ["shop-x.example.com", "www.shop-x.example.com"])
+		and ($v | map(select(.names == ["api.shop-x.example.com"]))[0]
+			| .proxy == "127.0.0.1:3000" and .ssl == true and (has("root") | not))
+		and ($v | map(select(.names == ["_"])) | length) == 1
+		and ($v | map(select(.names == ["blog.example.org"]))[0] | .root == "/home/daminus/clean")
+		and ($v | map(.names[]) | index("commented.example.com") | not)'
+	expect "$d discover: compose projects and database containers" "$f" '
+		[.[] | select(.rec == "compose")] as $c
+		| ($c | map(.project) | sort) == ["blog", "shop"]
+		and ($c | map(select(.project == "shop"))[0]
+			| .dir == "/home/daminus/app" and .services == ["app", "db"]
+			and .running == 2 and .total == 2 and .ports == [3000])
+		and ([.[] | select(.rec == "db" and .origin == "container")] | map(.name) | sort)
+			== ["legacy-pg", "shop-db-1"]
+		and ([.[] | select(.rec == "db" and .name == "shop-db-1")][0]
+			| .engine == "mysql" and .project == "shop")
+		and ([.[] | select(.rec == "db" and .name == "legacy-pg")][0]
+			| .engine == "postgres" and (has("project") | not))'
+	expect "$d discover: pm2 apps, and the daemon of another user" "$f" '
+		[.[] | select(.rec == "pm2")] as $p
+		| ($p | map(.app) | sort) == ["api", "queue"]
+		and ($p | map(select(.app == "api"))[0]
+			| .instances == 2 and .cwd == "/home/daminus/app" and .default == true
+			and .status == "online" and .home == "/home/daminus/.pm2")
+		and ($p | map(select(.app == "queue"))[0]
+			| .cwd == "/home/daminus/app/worker" and .status == "errored")
+		and ([.[] | select(.rec == "pm2_home")] | map(.home) == ["/root/.pm2"])'
+	expect "$d discover: the database server running as a process" "$f" '
+		[.[] | select(.rec == "db" and .origin == "process")]
+		== [{"rec": "db", "engine": "mysql", "origin": "process", "name": "mariadbd"}]'
+	expect "$d discover: .env files by path, never by content" "$f" '
+		([.[] | select(.rec == "env")] | map(.path) | sort)
+			== ["/home/daminus/app/.env", "/home/daminus/app/.env.back\\slash", "/home/daminus/app/.env.billing",
+				"/home/daminus/app/.env.pg", "/home/daminus/app/.env.q\"uote"]
+		and ([.[] | select(.rec == "env")] | all(.readable == true and (keys | sort) == ["path", "readable", "rec"]))'
+	expect "$d discover: listening ports and who holds them" "$f" '
+		[.[] | select(.rec == "port")] as $p
+		| ($p | map(select(.port == 3306))[0] | .bind == "any" and .proc == "mariadbd")
+		and ($p | map(select(.port == 5432))[0] | .bind == "loopback" and .proc == "perl")
+		and ($p | map(select(.port == 3000))[0]
+			| .bind == "loopback" and .proc == "perl" and .cwd == "/home/daminus/app")
+		and ($p | map(select(.port == 6379))[0] | .bind == "any")
+		and ($p | map(select(.port == 8080))[0] | .bind == "any")'
 }
 
 ids=$(jq -r '.checks[] | select(.script != null) | .id + " " + .script' "$root/crates/core/checks/manifest.json")
@@ -232,6 +324,27 @@ for distro in ubuntu:24.04 debian:12; do
 	run_bundle "$image" "$work/clean.sh" "$work/clean.ndjson"
 	verify "$distro clean server" "$work/clean.ndjson"
 	check_clean "$distro" "$work/clean.ndjson"
+
+	# The setup scripts, in the planted container (listeners, a database
+	# process): the login test asks about three folders (readable, denied,
+	# missing), and discover reads the host. Both records files are checked
+	# like a check's output (read-only: $HOME and /tmp hash the same, no
+	# canary), then compared with the golden by shape.
+	mkdir -p "$setup_fixtures/$tag"
+	"$dev" --config-dir "$work/config" setup-bundle login \
+		--path /home/daminus/app --path /root --path /nope/x >"$work/login.sh"
+	"$dev" --config-dir "$work/config" setup-bundle discover >"$work/discover.sh"
+	for script in login discover; do
+		out="$work/$tag-$script.ndjson"
+		t0=$(date +%s)
+		run_bundle "$image" "$work/$script.sh" "$out" infected
+		took=$(($(date +%s) - t0))
+		verify "$distro $script" "$out" --records
+		echo "$distro: $script in ${took} s"
+		golden_check "$distro $script" "$out" "$setup_fixtures/$tag/$script.ndjson" shape_records
+	done
+	check_login "$distro" "$work/$tag-login.ndjson"
+	check_discover "$distro" "$work/$tag-discover.ndjson"
 
 	mkdir -p "$fixtures/$tag/infected"
 	echo "$ids" | while read -r id script; do
