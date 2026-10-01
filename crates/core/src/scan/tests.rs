@@ -582,8 +582,10 @@ async fn hosts_at_once_limits_concurrency() {
 
 #[tokio::test(start_paused = true)]
 async fn disabled_uptime_group_skips_urls() {
+    // Exposed-file probes belong to `security`: with both groups off, no URL.
     let mut settings = Settings::default();
     settings.scan.disabled_groups.insert(CheckGroup::Uptime);
+    settings.scan.disabled_groups.insert(CheckGroup::Security);
     let mut r = rig_with(
         FakeTransport::new().host("vps", healthy()),
         FakeProbe::new(),
@@ -594,6 +596,120 @@ async fn disabled_uptime_group_skips_urls() {
     drain(&mut r.rx).await;
     let snap = r.store.load_history(None).unwrap().remove(0);
     assert!(!snap.hosts.contains_key(&HostRef::Local));
+}
+
+/// The URL checks follow their groups: status and certificate are `uptime`,
+/// exposed files are `security`, and the Mac is covered for the groups whose
+/// probes ran.
+#[tokio::test(start_paused = true)]
+async fn url_checks_follow_their_groups_and_so_does_coverage() {
+    let url = "https://shop.example";
+    let probe = || {
+        FakeProbe::new()
+            .tls(url, 41.0, false, false, false)
+            .exposed(url, &["/.env:DB_PASSWORD"])
+    };
+    let checks_of = |snap: &crate::domain::snapshot::Snapshot| -> Vec<String> {
+        snap.facts[&HostRef::Local]
+            .iter()
+            .map(|f| f.check.clone())
+            .collect()
+    };
+    for (off, want_checks, want_groups) in [
+        (
+            None,
+            vec!["url.http", "url.tls", "url.exposed"],
+            vec![CheckGroup::Uptime, CheckGroup::Security],
+        ),
+        (
+            Some(CheckGroup::Security),
+            vec!["url.http", "url.tls"],
+            vec![CheckGroup::Uptime],
+        ),
+        (
+            Some(CheckGroup::Uptime),
+            vec!["url.exposed"],
+            vec![CheckGroup::Security],
+        ),
+    ] {
+        let mut settings = Settings::default();
+        settings.scan.disabled_groups.extend(off);
+        let mut r = rig_with(
+            FakeTransport::new().host("vps", healthy()),
+            probe(),
+            projects(&["vps"], &[url]),
+            settings,
+        );
+        r.service.start(&ScanScope::default()).unwrap();
+        drain(&mut r.rx).await;
+        let snap = r.store.load_history(None).unwrap().remove(0);
+        assert_eq!(checks_of(&snap), want_checks, "off: {off:?}");
+        for group in [CheckGroup::Uptime, CheckGroup::Security] {
+            assert_eq!(
+                snap.covered(&HostRef::Local, group),
+                want_groups.contains(&group),
+                "off: {off:?}, {group:?}"
+            );
+        }
+    }
+}
+
+/// An exposed `.env` is critical while it is served, and "fixed" once a scan
+/// that probed for it finds it gone.
+#[tokio::test(start_paused = true)]
+async fn an_exposed_file_is_reported_and_then_fixed() {
+    let url = "https://shop.example";
+    let pf = projects(&["vps"], &[url]);
+    let settings = Settings::default();
+    let first = rig_with(
+        FakeTransport::new().host("vps", healthy()),
+        FakeProbe::new().exposed(url, &["/.env:APP_KEY"]),
+        pf.clone(),
+        settings.clone(),
+    );
+    let mut r = first;
+    r.service.start(&ScanScope::default()).unwrap();
+    drain(&mut r.rx).await;
+    // Same store, the site fixed.
+    let (tx, mut rx) = mpsc::channel(4096);
+    let service = ScanService::new(
+        r.transport.clone(),
+        Arc::new(FakeProbe::new().exposed(url, &[])),
+        r.store.clone(),
+        tx,
+    );
+    let m = crate::checks::manifest().unwrap();
+    let report = |r: &Rig| {
+        let history = r.store.load_history(None).unwrap();
+        evaluate(
+            &history,
+            Config {
+                projects: &pf,
+                settings: &settings,
+            },
+            &m,
+            history[0].finished_at,
+        )
+    };
+    let item = |rep: &crate::domain::evaluate::Report| {
+        rep.items
+            .iter()
+            .find(|i| i.key.check == "url.exposed")
+            .cloned()
+            .unwrap()
+    };
+    let rep = report(&r);
+    assert_eq!(item(&rep).severity, Severity::Crit);
+    assert_eq!(item(&rep).delta, Some(Delta::New));
+    // The fixture host has criticals of its own; the exposed file is one more.
+    let before = rep.projects[0].counts.crit;
+
+    service.start(&ScanScope::default()).unwrap();
+    drain(&mut rx).await;
+    let rep = report(&r);
+    assert_eq!(item(&rep).severity, Severity::Ok);
+    assert_eq!(item(&rep).delta, Some(Delta::Fixed));
+    assert_eq!(rep.projects[0].counts.crit, before - 1);
 }
 
 /// A crit from the last complete scan stays red (stale) when the host times

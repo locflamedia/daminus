@@ -32,7 +32,7 @@ use crate::domain::manifest::CheckGroup;
 use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::snapshot::{HostOutcome, HostTiming, NetCause, Snapshot};
-use crate::probe::UrlProbe;
+use crate::probe::{ProbeChecks, UrlProbe};
 use crate::ssh::{RunEnd, RunRequest, RunSignal, Transport, is_remote_timeout, outcome_error};
 use crate::store::FsStore;
 
@@ -136,7 +136,15 @@ impl ScanService {
         let projects = sh.store.load_projects()?.value;
         let settings = sh.store.load_settings()?.value;
         let mut targets = resolve(&projects, scope)?;
-        if !settings.scan.group_enabled(CheckGroup::Uptime) {
+        // Status and certificate are the `uptime` group, exposed files the
+        // `security` group; with both off, no URL is probed.
+        let uptime = settings.scan.group_enabled(CheckGroup::Uptime);
+        let probe_checks = ProbeChecks {
+            http: uptime,
+            tls: uptime,
+            exposed: settings.scan.group_enabled(CheckGroup::Security),
+        };
+        if !probe_checks.any() {
             targets.urls.clear();
         }
         if targets.is_empty() {
@@ -170,6 +178,7 @@ impl ScanService {
             cancel,
             started_at,
             targets,
+            probe_checks,
             bundle: Arc::new(bundle),
             scripts,
             settings,
@@ -299,6 +308,8 @@ struct Job {
     cancel: CancellationToken,
     started_at: Timestamp,
     targets: ScanTargets,
+    /// Which URL checks run (by group enabled in Settings).
+    probe_checks: ProbeChecks,
     bundle: Arc<Bundle>,
     /// The bundle text per host (see [`build_bundles`]).
     scripts: HashMap<HostAlias, String>,
@@ -360,6 +371,7 @@ impl Job {
                 Arc::clone(&self.emitter),
                 self.cancel.clone(),
                 self.targets.urls.clone(),
+                self.probe_checks,
             ))
         });
 
@@ -436,8 +448,19 @@ impl Job {
         }
         if let Some(l) = local {
             snap.hosts.insert(HostRef::Local, HostOutcome::Reached);
-            snap.coverage
-                .insert(HostRef::Local, [CheckGroup::Uptime].into_iter().collect());
+            // A group is covered on this Mac when its probes ran: `uptime`
+            // for status and certificate, `security` for exposed files.
+            let covered = [
+                (
+                    self.probe_checks.http || self.probe_checks.tls,
+                    CheckGroup::Uptime,
+                ),
+                (self.probe_checks.exposed, CheckGroup::Security),
+            ]
+            .into_iter()
+            .filter_map(|(ran, group)| ran.then_some(group))
+            .collect();
+            snap.coverage.insert(HostRef::Local, covered);
             snap.timing.insert(
                 HostRef::Local,
                 HostTiming {
@@ -603,6 +626,7 @@ async fn probe_urls(
     emitter: Arc<Emitter>,
     cancel: CancellationToken,
     urls: Vec<String>,
+    checks: ProbeChecks,
 ) -> Option<LocalResult> {
     let host = HostRef::Local;
     emitter
@@ -612,7 +636,7 @@ async fn probe_urls(
     let mut set = JoinSet::new();
     for url in urls {
         let probe = Arc::clone(&shared.probe);
-        set.spawn(async move { probe.probe(&url).await });
+        set.spawn(async move { probe.probe(&url, checks).await });
     }
     let mut facts = Vec::new();
     let mut all_network = true;
