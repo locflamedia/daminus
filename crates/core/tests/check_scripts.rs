@@ -760,10 +760,12 @@ fn sql_constant_problems(name: &str, sql: &str) -> Vec<String> {
 }
 
 /// The tool a command line runs, with the arguments left for it: looks
-/// through `run_light` and `docker exec [-i] [-e NAME]… CONTAINER`.
+/// through `run_light`, `run_for SECONDS` and `docker exec [-i] [-e NAME]…
+/// CONTAINER`.
 fn db_tool<'a>(cmd: &'a Cmd, bad: &mut Vec<String>, file: &str) -> Option<(&'a str, &'a [String])> {
     let (name, args): (&str, &[String]) = match cmd.name.as_str() {
         "run_light" => (args_first(&cmd.args)?, &cmd.args[1..]),
+        "run_for" => (cmd.args.get(1).map(String::as_str)?, &cmd.args[2..]),
         other => (other, &cmd.args[..]),
     };
     match name {
@@ -1203,6 +1205,10 @@ fn the_database_rules_catch_writes_logins_on_argv_and_variable_queries() {
         ("psql -f x.sql -d \"$database\"\n", "psql argument `-f`"),
         ("psql -d \"$database\" -c \"$Q_B\"\n", "psql argument `-c`"),
         ("run_light psql -d x -c \"$Q_A\"\n", "psql argument `-d`"),
+        (
+            "run_for \"$_gl\" psql -U root -d \"$database\" -c \"$Q_A\"\n",
+            "psql argument `-U`",
+        ),
         (
             "docker exec -e PGPASSWORD=x \"$container\" psql\n",
             "docker exec -e PGPASSWORD=x",

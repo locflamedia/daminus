@@ -329,7 +329,7 @@
       "needs": ["mysql", "psql", "docker", "awk", "sed", "tr"],
       "facts": {
         "target": "database name (database component)",
-        "value": "size of the database (MySQL: data + index length from information_schema, cached by the server for up to 24 h; Postgres: pg_database_size)",
+        "value": "size of the database (MySQL: data + index length from information_schema, cached by the server for up to 24 h; Postgres: pg_database_size). With a container set on the component the server inside it is asked, whatever host and port the .env holds",
         "unit": "bytes",
         "data": {
           "engine": "mysql or postgres",

@@ -46,7 +46,12 @@ env_get() {
 				*\\*) _st=2 ;;
 				*\"*)
 					_v=${_v%%\"*}
-					_st=0
+					# `${NAME}` is expanded by most dotenv readers inside double
+					# quotes, so the text here may not be the password.
+					case $_v in
+					*\$\{*) _st=2 ;;
+					*) _st=0 ;;
+					esac
 					;;
 				*) _st=2 ;;
 				esac
@@ -169,17 +174,25 @@ find_creds() {
 		_user=$_val
 		read_key "${_p}_PASSWORD"
 		_pass=$_val
-	elif [ "$1" = mysql ]; then
-		read_key MYSQL_ROOT_PASSWORD
+	else
+		# The images' own default login when only a password is set.
+		case $1 in
+		mysql)
+			_fb=MYSQL_ROOT_PASSWORD
+			_fu=root
+			;;
+		*)
+			_fb=POSTGRES_PASSWORD
+			_fu=postgres
+			;;
+		esac
+		read_key "$_fb"
 		if [ "$_got" = 0 ]; then
 			[ "$_bad" = 0 ] || return 2
 			return 1
 		fi
-		_user=root
+		_user=$_fu
 		_pass=$_val
-	else
-		[ "$_bad" = 0 ] || return 2
-		return 1
 	fi
 	read_key "${_p}_HOST"
 	_host=$_val
@@ -195,6 +208,16 @@ esc() {
 }
 
 # db_one ENGINE DATABASE ENV_FILE CONTAINER: one fact for one database.
+# budget: sets _gl to the seconds left of the group's allowance, which bound
+# the next call. When none is left, ends the database as a timeout.
+budget() {
+	_gl=$(group_left 40)
+	if [ "$_gl" -le 0 ]; then
+		emit_unknown db.size "$database" timeout
+		exit 0
+	fi
+}
+
 db_one() (
 	engine=$1
 	database=$2
@@ -251,11 +274,14 @@ db_one() (
 	esac
 
 	if [ -n "$container" ]; then
-		docker_ok
-		case $? in
+		case $dk in
 		0) ;;
 		2)
 			perm_missing db.size "$database"
+			exit 0
+			;;
+		124)
+			emit_unknown db.size "$database" timeout
 			exit 0
 			;;
 		*)
@@ -263,12 +289,18 @@ db_one() (
 			exit 0
 			;;
 		esac
-		running=$(run_light docker inspect --format '{{.State.Running}}' "$container" 2>/dev/null)
+		budget
+		running=$(run_for "$_gl" docker inspect --format '{{.State.Running}}' "$container" 2>/dev/null)
+		case $? in
+		124 | 137)
+			emit_unknown db.size "$database" timeout
+			exit 0
+			;;
+		esac
 		if [ "$running" != true ]; then
 			emit_unknown db.size "$database" missing
 			exit 0
 		fi
-		# Inside the container the client talks to its own server.
 		_host=""
 		_port=""
 	else
@@ -278,6 +310,7 @@ db_one() (
 			exit 0
 		fi
 	fi
+	budget
 
 	case $engine in
 	mysql)
@@ -287,9 +320,9 @@ db_one() (
 		[ -z "$_host" ] || _extra="host=$_host$NL"
 		[ -z "$_port" ] || _extra="${_extra}port=$_port$NL"
 		if [ -n "$container" ]; then
-			out=$(printf '[client]\nuser="%s"\npassword="%s"\n%s' "$_cu" "$_cp" "$_extra" | run_light docker exec -i "$container" mysql --defaults-extra-file=/dev/stdin --connect-timeout=10 -N -B -e "$Q_MYSQL" "$database" 2>/dev/null)
+			out=$(printf '[client]\nuser="%s"\npassword="%s"\n%s' "$_cu" "$_cp" "$_extra" | run_for "$_gl" docker exec -i "$container" mysql --defaults-extra-file=/dev/stdin --connect-timeout=10 -N -B -e "$Q_MYSQL" "$database" 2>/dev/null)
 		else
-			out=$(printf '[client]\nuser="%s"\npassword="%s"\n%s' "$_cu" "$_cp" "$_extra" | run_light mysql --defaults-extra-file=/dev/stdin --connect-timeout=10 -N -B -e "$Q_MYSQL" "$database" 2>/dev/null)
+			out=$(printf '[client]\nuser="%s"\npassword="%s"\n%s' "$_cu" "$_cp" "$_extra" | run_for "$_gl" mysql --defaults-extra-file=/dev/stdin --connect-timeout=10 -N -B -e "$Q_MYSQL" "$database" 2>/dev/null)
 		fi
 		rc=$?
 		;;
@@ -299,7 +332,7 @@ db_one() (
 		PGCONNECT_TIMEOUT=10
 		export PGUSER PGPASSWORD PGCONNECT_TIMEOUT
 		if [ -n "$container" ]; then
-			out=$(run_light docker exec -e PGUSER -e PGPASSWORD -e PGCONNECT_TIMEOUT "$container" psql -X -w -A -t -F "$TAB" -d "$database" -c "$Q_PG" 2>/dev/null)
+			out=$(run_for "$_gl" docker exec -e PGUSER -e PGPASSWORD -e PGCONNECT_TIMEOUT "$container" psql -X -w -A -t -F "$TAB" -d "$database" -c "$Q_PG" 2>/dev/null)
 		else
 			if [ -n "$_host" ]; then
 				PGHOST=$_host
@@ -309,7 +342,7 @@ db_one() (
 				PGPORT=$_port
 				export PGPORT
 			fi
-			out=$(run_light psql -X -w -A -t -F "$TAB" -d "$database" -c "$Q_PG" 2>/dev/null)
+			out=$(run_for "$_gl" psql -X -w -A -t -F "$TAB" -d "$database" -c "$Q_PG" 2>/dev/null)
 		fi
 		rc=$?
 		;;
@@ -373,10 +406,16 @@ for entry in $DAMINUS_DB; do
 		container=${rest#*$TAB}
 	}
 	# The group shares one allowance: a few unreachable servers must not eat
-	# the host's budget.
-	if [ "$(group_left 40)" -le 0 ]; then
-		emit_unknown db.size "$database" timeout
-		continue
+	# the host's budget. Every call below is bounded by what is left of it, and
+	# whether the docker daemon answers is asked once, for the first container.
+	if [ -n "$container" ] && [ -z "${dk-}" ]; then
+		_gl=$(group_left 40)
+		if [ "$_gl" -le 0 ]; then
+			dk=124
+		else
+			docker_ok "$_gl"
+			dk=$?
+		fi
 	fi
 	db_one "$engine" "$database" "$env_file" "$container"
 done

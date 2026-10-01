@@ -112,10 +112,11 @@ NL='
 
 # docker_ok: whether the docker daemon answers. Returns 0 when it does, 1
 # when docker is not installed or no daemon runs, 2 when the socket is there
-# but the SSH user may not use it (not in the docker group).
+# but the SSH user may not use it (not in the docker group). The optional
+# argument is the most seconds the daemon is asked for (default 20).
 docker_ok() {
 	has docker || return 1
-	if run_light docker version --format '{{.Server.Version}}' >/dev/null 2>&1; then
+	if run_for "${1:-20}" docker version --format '{{.Server.Version}}' >/dev/null 2>&1; then
 		return 0
 	fi
 	if [ -S /var/run/docker.sock ] && [ ! -w /var/run/docker.sock ]; then

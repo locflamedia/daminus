@@ -616,6 +616,11 @@ fn db_reads_dotenv_text_and_hands_the_login_over_stdin_only() {
             "DB_USERNAME='app'\nDB_PASSWORD='CANARY\"b\\c$d `x` ;#'\n",
             "[client]\nuser=\"app\"\npassword=\"CANARY\\\"b\\\\c$d `x` ;#\"\n",
         ),
+        // A bare `$` inside double quotes is a dollar sign.
+        (
+            "DB_USERNAME=app\nDB_PASSWORD=\"CANARY$x\"\n",
+            "[client]\nuser=\"app\"\npassword=\"CANARY$x\"\n",
+        ),
         // A bare value runs to a space and `#`; indented lines and tabs count.
         (
             "  DB_USERNAME=app\n\tDB_PASSWORD=CANARY#abc   # comment\n",
@@ -709,6 +714,8 @@ fn db_never_runs_the_env_file_and_refuses_notation_it_cannot_read() {
     let refused: &[&str] = &[
         // A backslash inside double quotes (an escape the reader does not decode).
         "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\\"x\"\n",
+        // `${NAME}` inside double quotes is expanded by most dotenv readers.
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY${X}\"\n",
         // An unclosed quote.
         "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\n",
         "DB_USERNAME=a\nDB_PASSWORD='CANARY\n",
@@ -781,6 +788,18 @@ fn db_postgres_login_travels_in_the_environment_by_name() {
     assert_eq!(
         r.env,
         "PGCONNECT_TIMEOUT=10\nPGPASSWORD=CANARY_p\nPGUSER=app\n"
+    );
+    // The image's default user when only a password is set.
+    let r = db_run("postgres", "POSTGRES_PASSWORD=CANARY_d\n", 0, DB_ROWS);
+    assert_eq!(
+        r.env,
+        "PGCONNECT_TIMEOUT=10\nPGPASSWORD=CANARY_d\nPGUSER=postgres\n"
+    );
+    // A user without a password is not a login the reader guesses at.
+    let r = db_run("postgres", "POSTGRES_DB=shop\n", 0, DB_ROWS);
+    assert_eq!(
+        by_target(&r.facts, "shop").unknown,
+        Some(UnknownReason::Unsupported)
     );
     // A MySQL URL is not a Postgres login.
     let r = db_run("postgres", "DATABASE_URL=mysql://u:p@db/shop\n", 0, DB_ROWS);
@@ -898,22 +917,30 @@ fn db_in_a_container_goes_through_docker_exec() {
         "MYSQL_USER=billing\r\nMYSQL_PASSWORD=CANARY_dotenv_billing_pw_2b6d\r\n",
     )
     .unwrap();
+    let host_env = tmp.path().join("host.env");
+    std::fs::write(
+        &host_env,
+        "DB_USERNAME=shop\nDB_PASSWORD=CANARY_dotenv_db_password_5e8f\n",
+    )
+    .unwrap();
     let list = format!(
         "mysql\tbilling\t{}\tshop-db-1\nmysql\tother\t{}\tmissing-1\nmysql\tmine\t{}\t\n",
         mysql_env.display(),
         mysql_env.display(),
-        mysql_env.display()
+        host_env.display()
     );
     // The container is the one the docker shim knows.
     let facts = run("db.size", &[("DAMINUS_DB", &list)], &[&shims()], &[]);
     let billing = by_target(&facts, "billing");
-    assert_eq!(billing.value, Some(3_650_722_202.0), "{billing:?}");
+    // The shim's server in the container holds other sizes than the host's.
+    assert_eq!(billing.value, Some(900_000_000.0), "{billing:?}");
+    assert_eq!(billing.data["tables"], 5);
     // A container the host does not have: docker exec fails.
     assert_eq!(
         by_target(&facts, "other").unknown,
         Some(UnknownReason::NeedsPerm)
     );
-    // The same login through a client on the host.
+    // The same login through a client on the host reaches the host's server.
     assert_eq!(by_target(&facts, "mine").value, Some(3_650_722_202.0));
 }
 
@@ -951,4 +978,43 @@ fn db_group_stops_when_its_time_is_spent() {
         assert_eq!(by_target(&facts, t).unknown, Some(UnknownReason::Timeout));
     }
     assert_eq!(std::fs::read_to_string(&calls).unwrap().lines().count(), 1);
+}
+
+/// The group allowance bounds every docker call, not only the start of each
+/// database: once it is spent after the daemon check, no container is asked
+/// anything, and the daemon is asked once for all of them.
+#[test]
+fn db_group_allowance_bounds_the_docker_calls() {
+    let tmp = tempfile::tempdir().unwrap();
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let calls = tmp.path().join("calls");
+    tool(
+        &bin,
+        "docker",
+        &format!("echo \"$1\" >>'{}'\nexit 0\n", calls.display()),
+    );
+    let env = tmp.path().join(".env");
+    std::fs::write(&env, "MYSQL_USER=a\nMYSQL_PASSWORD=CANARY_x\n").unwrap();
+    let list = ["a", "b", "c"]
+        .iter()
+        .map(|d| format!("mysql\t{d}\t{}\tc-{d}", env.display()))
+        .collect::<Vec<_>>()
+        .join("\n");
+    // Calls of date: d_group, the allowance check before the daemon question,
+    // and from the third call on it is 100 s later.
+    clock(&bin, 2);
+    let facts = run("db.size", &[("DAMINUS_DB", &list)], &[&bin], &[]);
+    for t in ["a", "b", "c"] {
+        assert_eq!(
+            by_target(&facts, t).unknown,
+            Some(UnknownReason::Timeout),
+            "{t}: {facts:?}"
+        );
+    }
+    assert_eq!(
+        std::fs::read_to_string(&calls).unwrap(),
+        "version\n",
+        "only the daemon question was asked, and once"
+    );
 }

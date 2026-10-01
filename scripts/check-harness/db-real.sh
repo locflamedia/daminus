@@ -5,7 +5,8 @@
 #
 #   native  a read-only container as a normal user, with the real mysql and
 #           psql clients, reaching the servers over a private network with
-#           the login from a `.env` file (DB_*, a DATABASE_URL, POSTGRES_*);
+#           the login from a `.env` file (DB_*, a DATABASE_URL, POSTGRES_*,
+#           POSTGRES_PASSWORD alone for the default user `postgres`);
 #   exec    on this machine, through `docker exec` into the server containers
 #           (MYSQL_*, POSTGRES_*), as a project with a database container is
 #           scanned.
@@ -47,6 +48,9 @@ odd_pw='CANARY_odd#"\x $HOME `id`'
 # shellcheck disable=SC2016 # the text is literal on purpose
 odd_my='CANARY_odd#"\\x $HOME `id`'
 wrong_pw=CANARY_wrong_0000
+# The Postgres login a .env without POSTGRES_USER stands for: the role
+# `postgres` (the servers' own superuser here is `shop`).
+pgdef_pw=CANARY_dbreal_pgdef_31c0
 
 work=$(mktemp -d)
 cleanup() {
@@ -134,6 +138,8 @@ pg_sql() { docker exec -i -e PGPASSWORD="$pg_pw" "$pg" psql -h 127.0.0.1 -U shop
 	printf '%s\n' 'CREATE TABLE tiny (a int);' 'INSERT INTO tiny VALUES (1), (2), (3);'
 	printf "CREATE ROLE shop2 LOGIN PASSWORD '%s';\n" "$odd_pw"
 	printf '%s\n' 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO shop2;'
+	printf "CREATE ROLE postgres LOGIN PASSWORD '%s';\n" "$pgdef_pw"
+	printf '%s\n' 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO postgres;'
 	printf '%s\n' 'ANALYZE;'
 } | pg_sql
 
@@ -346,6 +352,9 @@ POSTGRES_PASSWORD='$odd_pw'
 POSTGRES_HOST=$pg
 POSTGRES_PORT=5432
 " ok
+case_run native pg-default postgres shop "" "POSTGRES_PASSWORD=$pgdef_pw
+POSTGRES_HOST=$pg
+" ok
 case_run native my-wrong mysql shop "" "DB_HOST=$my
 DB_USERNAME=shop
 DB_PASSWORD=$wrong_pw
@@ -387,6 +396,8 @@ POSTGRES_PASSWORD=$pg_pw
 " ok
 case_run exec x-pg-odd postgres shop "$pg" "DB_USERNAME=shop2
 DB_PASSWORD='$odd_pw'
+" ok
+case_run exec x-pg-default postgres shop "$pg" "POSTGRES_PASSWORD=$pgdef_pw
 " ok
 case_run exec x-my-wrong mysql shop "$my" "MYSQL_USER=shop
 MYSQL_PASSWORD=$wrong_pw

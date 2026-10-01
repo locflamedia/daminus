@@ -13,9 +13,11 @@ esac
 case " $* " in
 *' -p'* | *' --password'* | *' -u'* | *' --user'*) exit 1 ;;
 esac
+# The billing login reaches the server inside the container: another server,
+# so other sizes.
 case $opts in
-*'user="shop"'*'password="CANARY_dotenv_db_password_5e8f"'*) ;;
-*'user="billing"'*'password="CANARY_dotenv_billing_pw_2b6d"'*) ;;
+*'user="shop"'*'password="CANARY_dotenv_db_password_5e8f"'*) rows=mysql.tsv ;;
+*'user="billing"'*'password="CANARY_dotenv_billing_pw_2b6d"'*) rows=mysql-billing.tsv ;;
 *) exit 1 ;;
 esac
-cat "$out/mysql.tsv"
+cat "$out/$rows"
