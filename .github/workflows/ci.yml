@@ -91,6 +91,8 @@ jobs:
         run: ./scripts/check-harness/run.sh
       - name: db.size against real MySQL 8 and Postgres 16 (read-only container and docker exec), canary logins, data checksums
         run: ./scripts/check-harness/db-real.sh
+      - name: Setup flow against a fake server (real sshd in Docker), unknown and wrong keys, ProxyJump, discover then scan, canaries
+        run: ./scripts/fake-server/e2e.sh
 
   supply:
     name: supply chain (cargo deny)

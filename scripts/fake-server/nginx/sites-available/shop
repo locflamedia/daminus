@@ -1,0 +1,12 @@
+server {
+	listen 80;
+	listen 443 ssl;
+	server_name shop-x.test www.shop-x.test;
+	root /home/daminus/app/public;
+	index index.php;
+	ssl_certificate /etc/letsencrypt/live/shop-x/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/shop-x/privkey.pem;
+	location ~ \.php$ {
+		fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+	}
+}
