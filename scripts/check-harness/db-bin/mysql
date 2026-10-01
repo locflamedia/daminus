@@ -1,0 +1,10 @@
+#!/bin/sh
+# Harness wrapper for the real MySQL client (see Dockerfile.db): records the
+# argument list of every call, which is what `ps` shows for it, then runs the
+# client. The password, which only travels on stdin, is never seen here.
+{
+	printf 'mysql'
+	for a in "$@"; do printf ' [%s]' "$a"; done
+	printf '\n'
+} >>/argv-log/calls
+exec /usr/bin/mysql "$@"

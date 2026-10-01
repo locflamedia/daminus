@@ -1,0 +1,9 @@
+#!/bin/sh
+# Harness wrapper for the real psql: records the argument list of every call,
+# then runs it. The login is in the environment (PG*), not here.
+{
+	printf 'psql'
+	for a in "$@"; do printf ' [%s]' "$a"; done
+	printf '\n'
+} >>/argv-log/calls
+exec /usr/bin/psql "$@"
