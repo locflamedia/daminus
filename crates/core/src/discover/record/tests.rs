@@ -128,3 +128,60 @@ fn caps_and_kinds_are_defined_for_every_record() {
     let login = parse(json!({"rec": "path", "path": "/a", "state": "missing"})).unwrap();
     assert_eq!((login.kind(), login.cap()), ("path", 100));
 }
+
+#[test]
+fn text_from_the_server_has_no_control_or_hidden_characters() {
+    let Some(SetupRecord::Login(l)) = parse(json!({
+        "rec": "login", "os": "Lin\u{7}ux\n", "kernel": "6.8\u{1b}[31m", "arch": "x86\u{202e}_64",
+        "distro": "  Ubuntu\u{200b} 24.04 ", "user": "dep\tloy", "uid": 1, "root": false,
+        "docker_group": false, "adm_group": false, "journal_group": false,
+        "docker": "ok", "gnu_find": true
+    })) else {
+        panic!("login dropped");
+    };
+    assert_eq!(
+        (l.os.as_str(), l.kernel.as_str(), l.arch.as_str()),
+        ("Linux", "6.8[31m", "x86_64")
+    );
+    assert_eq!(
+        (l.distro.as_str(), l.user.as_str()),
+        ("Ubuntu 24.04", "deploy")
+    );
+
+    let Some(SetupRecord::Port(p)) = parse(json!({
+        "rec": "port", "port": 80, "bind": "any", "proc": "ng\u{7}inx"
+    })) else {
+        panic!("port dropped");
+    };
+    assert_eq!(p.process.as_deref(), Some("nginx"));
+    let Some(SetupRecord::Port(p)) = parse(json!({
+        "rec": "port", "port": 80, "bind": "any", "proc": "\u{7}\u{7}"
+    })) else {
+        panic!("port dropped");
+    };
+    assert_eq!(p.process, None);
+}
+
+#[test]
+fn a_proxy_target_is_a_host_and_a_port_or_nothing() {
+    for (proxy, kept) in [
+        ("127.0.0.1:3000", true),
+        ("localhost:8081", true),
+        ("[::1]:9000", true),
+        ("app_backend", true),
+        ("unix:", true),
+        ("a<b>.com", false),
+        ("x\u{7}y", false),
+        ("a;b", false),
+        ("$upstream", false),
+        ("", false),
+    ] {
+        let Some(SetupRecord::Vhost(v)) = parse(json!({
+            "rec": "vhost", "file": "/etc/nginx/a", "names": ["a.example.com"],
+            "proxy": proxy, "ssl": false, "php": false, "listen": [80]
+        })) else {
+            panic!("vhost dropped");
+        };
+        assert_eq!(v.proxy.is_some(), kept, "{proxy:?}");
+    }
+}

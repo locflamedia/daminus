@@ -344,8 +344,108 @@ fn a_proxy_joins_the_folder_of_the_process_listening_on_its_port() {
     assert_eq!(p.projects.len(), 1);
     assert_eq!(p.projects[0].name, "example");
     assert_eq!(p.projects[0].urls, ["http://app.example.org"]);
-    assert_eq!(p.projects[0].components.len(), 1);
+    // The block's code folder is the one the process runs in, and the app itself.
+    assert_eq!(
+        p.projects[0].components,
+        [
+            comp(Role::Be, "vps-a", path("/srv/app")),
+            comp(
+                Role::Be,
+                "vps-a",
+                ProposedKind::Pm2 {
+                    app: "app-server".into(),
+                    pm2_home: None
+                }
+            ),
+        ]
+    );
     assert!(p.unassigned.is_empty());
+}
+
+#[test]
+fn a_proxy_only_block_gets_the_folder_of_its_process_even_with_nothing_else() {
+    let hosts = vec![(
+        alias("vps-a"),
+        found(|d| {
+            d.vhosts.push(vhost(
+                &["app.example.org"],
+                None,
+                Some("127.0.0.1:3000"),
+                true,
+                false,
+            ));
+            d.ports
+                .push(port(3000, Bind::Loopback, Some("/srv/app/current")));
+        }),
+    )];
+    let p = group(&hosts);
+    assert_eq!(p.projects.len(), 1);
+    assert_eq!(
+        p.projects[0].components,
+        [comp(Role::Be, "vps-a", path("/srv/app"))]
+    );
+}
+
+#[test]
+fn a_block_on_a_shared_folder_is_a_url_and_never_a_folder_component() {
+    for root in ["/var/www/html", "/usr/share/nginx/html", "/"] {
+        let hosts = vec![(
+            alias("vps-a"),
+            found(|d| {
+                d.vhosts
+                    .push(vhost(&["a.example.com"], Some(root), None, false, false));
+            }),
+        )];
+        let p = group(&hosts);
+        assert_eq!(p.projects.len(), 1, "{root}");
+        assert_eq!(p.projects[0].urls, ["http://a.example.com"], "{root}");
+        assert!(p.projects[0].components.is_empty(), "{root}");
+    }
+}
+
+#[test]
+fn an_env_above_two_apps_belongs_to_neither_and_one_inside_an_app_to_that_app() {
+    let hosts = vec![(
+        alias("vps-a"),
+        found(|d| {
+            d.vhosts.push(vhost(
+                &["web.example.com"],
+                Some("/srv/mono/front/public"),
+                None,
+                false,
+                false,
+            ));
+            d.vhosts.push(vhost(
+                &["api.other.org"],
+                Some("/srv/mono/back/public"),
+                None,
+                false,
+                false,
+            ));
+            // Above both apps: a tie between two groups.
+            d.envs.push(env("/srv/mono/.env"));
+            // Inside one of them.
+            d.envs.push(env("/srv/mono/back/.env"));
+        }),
+    )];
+    let p = group(&hosts);
+    assert_eq!(p.projects.len(), 2);
+    assert!(p.projects[0].env_files.is_empty());
+    let api: Vec<&str> = p.projects[1]
+        .env_files
+        .iter()
+        .map(|e| e.path.as_str())
+        .collect();
+    assert_eq!(api, ["/srv/mono/back/.env"]);
+    let loose: Vec<&str> = p
+        .unassigned
+        .iter()
+        .filter_map(|u| match &u.item {
+            SetupRecord::Env(e) => Some(e.path.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(loose, ["/srv/mono/.env"]);
 }
 
 #[test]

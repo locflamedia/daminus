@@ -244,7 +244,7 @@ impl SetupRecord {
                     &mut l.distro,
                     &mut l.user,
                 ] {
-                    cut(s, MAX_TEXT);
+                    clean_text(s, MAX_TEXT);
                 }
                 SetupRecord::Login(l)
             }
@@ -253,9 +253,7 @@ impl SetupRecord {
                 v.names.retain(|n| hostname(n));
                 v.names.truncate(MAX_LIST);
                 v.root = v.root.filter(|r| is_abs_path(r));
-                v.proxy = v
-                    .proxy
-                    .filter(|p| p.len() <= MAX_HOSTNAME && !p.chars().any(char::is_whitespace));
+                v.proxy = v.proxy.filter(|p| proxy_target(p));
                 if !is_abs_path(&v.file) {
                     v.file.clear();
                 }
@@ -299,8 +297,9 @@ impl SetupRecord {
             SetupRecord::Env(e) => is_abs_path(&e.path).then_some(SetupRecord::Env(e))?,
             SetupRecord::Port(mut p) => {
                 if let Some(name) = &mut p.process {
-                    cut(name, MAX_TEXT);
+                    clean_text(name, MAX_TEXT);
                 }
+                p.process = p.process.filter(|n| !n.is_empty());
                 p.cwd = p.cwd.filter(|d| is_abs_path(d));
                 SetupRecord::Port(p)
             }
@@ -358,6 +357,30 @@ fn hostname(s: &str) -> bool {
         && s.len() <= MAX_HOSTNAME
         && s.chars()
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | '*'))
+}
+
+/// A `proxy_pass` target as discover prints it: `host[:port]`, an IPv6 address
+/// in brackets, or the `unix:` of a socket.
+fn proxy_target(s: &str) -> bool {
+    !s.is_empty()
+        && s.len() <= MAX_HOSTNAME
+        && s.chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | ':' | '[' | ']'))
+}
+
+/// Free text from the server, as the screens show it: control characters and
+/// the invisible ones that reorder or hide text are removed, then it is
+/// trimmed and cut.
+fn clean_text(s: &mut String, max: usize) {
+    s.retain(|c| {
+        !c.is_control()
+            && !matches!(
+                c,
+                '\u{200b}'..='\u{200f}' | '\u{202a}'..='\u{202e}' | '\u{2066}'..='\u{2069}' | '\u{feff}'
+            )
+    });
+    *s = s.trim().to_owned();
+    cut(s, max);
 }
 
 fn cut(s: &mut String, max: usize) {

@@ -32,8 +32,8 @@ use std::collections::{BTreeMap, BTreeSet, HashSet};
 use serde::{Deserialize, Serialize};
 
 use self::names::{
-    apex, base_name, first_label, is_public_domain, is_worker_name, local_proxy_port, normalize,
-    parent, project_dir, related, slug,
+    apex, base_name, first_label, is_public_domain, is_worker_name, local_proxy_port, parent,
+    project_dir, related, slug,
 };
 use super::{
     ComposeProject, DbServer, DbSource, EnvFile, HostDiscovery, Pm2App, SetupRecord, Vhost,
@@ -323,26 +323,33 @@ impl<'a> Grouper<'a> {
     }
 
     /// Which group, by root node, owns `.env` number `e`: the one with a
-    /// folder closest to the file's, on the same host.
+    /// folder closest to the file's, on the same host. Folders of different
+    /// groups never nest, so two groups are equally close only when the file
+    /// sits above both (a monorepo's `.env`): it is then nobody's, and the
+    /// user picks.
     fn env_owner(&mut self, e: usize) -> Option<usize> {
         let (host, _, dir) = &self.envs[e];
         let dir = dir.clone()?;
         let host = *host;
-        let mut best: Option<(usize, usize)> = None;
+        let mut close: Vec<(usize, usize)> = Vec::new();
         for (i, n) in self.nodes.iter().enumerate() {
             if n.host != host {
                 continue;
             }
-            for d in &n.dirs {
-                if related(d, &dir) {
-                    let score = d.len().min(dir.len());
-                    if best.is_none_or(|(s, _)| score > s) {
-                        best = Some((score, i));
-                    }
-                }
+            for d in n.dirs.iter().filter(|d| related(d, &dir)) {
+                close.push((d.len().min(dir.len()), i));
             }
         }
-        best.map(|(_, i)| self.find(i))
+        let best = close.iter().map(|(score, _)| *score).max()?;
+        let owners: BTreeSet<usize> = close
+            .into_iter()
+            .filter(|(score, _)| *score == best)
+            .map(|(_, i)| self.find(i))
+            .collect();
+        match owners.into_iter().collect::<Vec<_>>().as_slice() {
+            [only] => Some(*only),
+            _ => None,
+        }
     }
 
     fn run(mut self) -> Proposal {
@@ -451,12 +458,19 @@ impl<'a> Grouper<'a> {
             let host = self.hosts[node.host].0.clone();
             match node.what {
                 What::Vhost(v) => {
-                    let Some(root) = &v.root else { continue };
-                    let Some(path) = project_dir(root).or_else(|| normalize(root)) else {
+                    // The block's own folder; a shared one (`/var/www/html`, `/`) is
+                    // not a project folder, so the block is then a URL only, unless
+                    // it proxies to a process that has a folder of its own.
+                    let Some(path) = node.dirs.first().cloned() else {
                         continue;
                     };
+                    let role = if v.php || v.root.is_none() {
+                        Role::Be
+                    } else {
+                        Role::Fe
+                    };
                     push(ProposedComponent {
-                        role: if v.php { Role::Be } else { Role::Fe },
+                        role,
                         host,
                         kind: ProposedKind::Path { path },
                     });
