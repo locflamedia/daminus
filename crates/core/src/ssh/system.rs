@@ -8,7 +8,7 @@
 
 use std::collections::HashSet;
 use std::ffi::OsString;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -20,6 +20,7 @@ use tokio::process::{Child, Command};
 use tokio::sync::mpsc;
 
 use super::classify::{StderrClassifier, StderrVerdict};
+use super::tools::SshTools;
 use super::{BoxFuture, Failure, RunEnd, RunRequest, RunSignal, Transport};
 use crate::domain::host::HostAlias;
 
@@ -62,13 +63,7 @@ const FORCED: &[&str] = &[
 /// The system `ssh`.
 #[derive(Debug, Clone)]
 pub struct SshTransport {
-    program: PathBuf,
-    keygen: PathBuf,
-    /// `ssh -F`; `None` reads the user's normal config.
-    config: Option<PathBuf>,
-    /// Variables set on every `ssh` and `ssh-keygen` (a GUI app's login-shell
-    /// `PATH`, `SSH_AUTH_SOCK`, `HOME`); the rest is inherited.
-    env: Vec<(OsString, OsString)>,
+    tools: SshTools,
     /// Process groups of runs still going.
     groups: Arc<Mutex<HashSet<i32>>>,
 }
@@ -82,18 +77,20 @@ impl Default for SshTransport {
 impl SshTransport {
     /// Uses `ssh` and `ssh-keygen` from `PATH` and the user's `~/.ssh/config`.
     pub fn new() -> Self {
+        Self::with_tools(SshTools::new())
+    }
+
+    /// Runs through these programs, config and environment.
+    pub fn with_tools(tools: SshTools) -> Self {
         Self {
-            program: PathBuf::from("ssh"),
-            keygen: PathBuf::from("ssh-keygen"),
-            config: None,
-            env: Vec::new(),
+            tools,
             groups: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
     /// Reads this config file instead of `~/.ssh/config` (dev CLI, tests).
-    pub fn with_config(mut self, path: impl Into<PathBuf>) -> Self {
-        self.config = Some(path.into());
+    pub fn with_config(mut self, path: impl Into<std::path::PathBuf>) -> Self {
+        self.tools = self.tools.with_config(path);
         self
     }
 
@@ -104,11 +101,14 @@ impl SshTransport {
         K: Into<OsString>,
         V: Into<OsString>,
     {
-        self.env = vars
-            .into_iter()
-            .map(|(k, v)| (k.into(), v.into()))
-            .collect();
+        self.tools = self.tools.with_env(vars);
         self
+    }
+
+    /// The programs, config and environment this transport uses, for the
+    /// helpers that read the same `~/.ssh/config` (host list, host keys).
+    pub fn tools(&self) -> &SshTools {
+        &self.tools
     }
 
     /// The `sh -c` program the server runs: the bundle under `timeout` when
@@ -124,11 +124,10 @@ impl SshTransport {
     #[cfg(test)]
     pub(crate) fn with_programs(
         mut self,
-        ssh: impl Into<PathBuf>,
-        keygen: impl Into<PathBuf>,
+        ssh: impl Into<std::path::PathBuf>,
+        keygen: impl Into<std::path::PathBuf>,
     ) -> Self {
-        self.program = ssh.into();
-        self.keygen = keygen.into();
+        self.tools = self.tools.with_programs(ssh, keygen, "ssh-keyscan");
         self
     }
 
@@ -143,7 +142,7 @@ impl SshTransport {
         remote: &str,
     ) -> Vec<OsString> {
         let mut args: Vec<OsString> = vec!["-T".into()];
-        if let Some(cfg) = &self.config {
+        if let Some(cfg) = &self.tools.config {
             args.push("-F".into());
             args.push(cfg.clone().into_os_string());
         }
@@ -164,8 +163,8 @@ impl SshTransport {
     }
 
     fn command(&self, args: &[OsString]) -> Command {
-        let mut cmd = Command::new(&self.program);
-        cmd.envs(self.env.iter().map(|(k, v)| (k, v)))
+        let mut cmd = Command::new(&self.tools.ssh);
+        cmd.envs(self.tools.env.iter().map(|(k, v)| (k, v)))
             .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
@@ -344,18 +343,14 @@ impl SshTransport {
         let limit = req.connect_timeout + Duration::from_secs(10);
         let _ = tokio::time::timeout(limit, child.wait()).await;
         drop(_guard);
-        fingerprint_of(&self.keygen, &self.env, file.path()).await
+        fingerprint_of(&self.tools, file.path()).await
     }
 }
 
 /// `ssh-keygen -lf <file>` → `ED25519 SHA256:…` for the first key in it.
-async fn fingerprint_of(
-    keygen: &Path,
-    env: &[(OsString, OsString)],
-    file: &Path,
-) -> Option<String> {
-    let out = Command::new(keygen)
-        .envs(env.iter().map(|(k, v)| (k, v)))
+async fn fingerprint_of(tools: &SshTools, file: &Path) -> Option<String> {
+    let out = Command::new(&tools.keygen)
+        .envs(tools.env.iter().map(|(k, v)| (k, v)))
         .arg("-lf")
         .arg(file)
         .stdin(Stdio::null())
@@ -367,9 +362,18 @@ async fn fingerprint_of(
     parse_keygen(&String::from_utf8_lossy(&out.stdout))
 }
 
-/// Parses one `ssh-keygen -l` line: `256 SHA256:abc host (ED25519)`.
+/// Parses the first `ssh-keygen -l` line: `256 SHA256:abc host (ED25519)`.
 pub(crate) fn parse_keygen(text: &str) -> Option<String> {
-    let line = text.lines().next()?;
+    text.lines().next().and_then(parse_keygen_line)
+}
+
+/// Every key fingerprint of an `ssh-keygen -l` output, one per line that has
+/// one, as `ED25519 SHA256:…`.
+pub(crate) fn parse_keygen_all(text: &str) -> Vec<String> {
+    text.lines().filter_map(parse_keygen_line).collect()
+}
+
+fn parse_keygen_line(line: &str) -> Option<String> {
     let mut parts = line.split_whitespace();
     let _bits = parts.next()?;
     let fp = parts.next()?;
@@ -485,6 +489,8 @@ impl Transport for SshTransport {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use super::*;
 
     #[test]
@@ -758,5 +764,9 @@ mod tests {
         );
         assert_eq!(parse_keygen("/tmp/x is not a key file.\n"), None);
         assert_eq!(parse_keygen(""), None);
+        assert_eq!(
+            parse_keygen_all("256 SHA256:a h (ED25519)\nnot a key\n3072 SHA256:b h (RSA)\n"),
+            vec!["ED25519 SHA256:a".to_owned(), "RSA SHA256:b".to_owned()]
+        );
     }
 }

@@ -5,9 +5,12 @@
 //! [`fake::FakeTransport`] replays scripted output in tests.
 
 mod classify;
+pub mod config;
 #[cfg(any(test, feature = "fake"))]
 pub mod fake;
+pub mod hostkey;
 mod system;
+mod tools;
 
 use std::future::Future;
 use std::pin::Pin;
@@ -17,6 +20,7 @@ use tokio::sync::mpsc;
 
 pub use classify::{StderrClassifier, StderrVerdict, classify};
 pub use system::SshTransport;
+pub use tools::{Captured, SshTools};
 
 use crate::domain::error::ErrorCode;
 use crate::domain::host::HostAlias;
@@ -119,6 +123,24 @@ pub trait Transport: Send + Sync {
 
     /// Kills every process still running (app quit, Ctrl-C).
     fn kill_all(&self);
+}
+
+/// How a host's part of a run ended. What stdout proved wins over stderr:
+/// `ended` (the script printed its last line) is `Reached`; once it `began`,
+/// ssh errors only make the run `Partial`; before that, a classified ssh
+/// failure is the outcome. The server-side `timeout` or the caller's budget
+/// make it `Timeout`.
+pub fn run_outcome(ended: bool, began: bool, end: &RunEnd, timed_out: bool) -> HostOutcome {
+    if ended {
+        return HostOutcome::Reached;
+    }
+    if timed_out || is_remote_timeout(end.exit) {
+        return HostOutcome::Timeout;
+    }
+    match &end.failure {
+        Some(f) if !began => f.outcome(),
+        _ => HostOutcome::Partial,
+    }
 }
 
 /// A remote exit code that means the server-side `timeout` stopped the bundle.
