@@ -1,2 +1,4 @@
 # Check scripts run on user servers; changes need a maintainer review for read-only safety.
 /crates/core/checks/ @locflamedia
+# The setup scripts (login test, discover) run on user servers too.
+/crates/core/discover/ @locflamedia

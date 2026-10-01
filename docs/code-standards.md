@@ -23,6 +23,8 @@
 - POSIX `sh`, read-only, no `sudo`, must pass `shellcheck`.
 - A check script is a function body in `crates/core/checks/`, named after its id (`sys.load` → `sys_load.sh`), run in a subshell after `prelude.sh`. It runs only builtins, prelude helpers and the commands in its manifest `needs` (allowlist test), and prints facts with `emit`. The full recipe is in `CONTRIBUTING.md` › Adding a check.
 
+- The setup scripts (`crates/core/discover/login.sh` and `discover.sh`) follow the same rules, with their own `needs` (`LOGIN_NEEDS`, `DISCOVER_NEEDS` in `discover/mod.rs`), and a stricter one: they never open a `.env`, only list it and test it with `-r`. They print records (`"rec"`), not facts.
+
 ## Naming
 
 - Rust files: `snake_case.rs`.

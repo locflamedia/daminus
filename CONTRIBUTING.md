@@ -44,6 +44,7 @@ git ls-files '*.sh' 'scripts/check-harness/bin/*' 'scripts/check-harness/db-bin/
 ./scripts/check-harness/deny-list.sh  # quick grep for write commands in checks
 ./scripts/check-harness/run.sh        # checks in read-only containers (needs docker, jq)
 ./scripts/check-harness/db-real.sh    # db.size against real MySQL 8 and Postgres 16 (needs docker, jq)
+./scripts/fake-server/e2e.sh          # the setup flow against a container with a real sshd (needs docker, jq)
 cargo deny check
 ```
 
@@ -72,6 +73,10 @@ The rules, all checked in CI (job `shell`):
 - **Never print secrets.** Read `.env` only to reach a database, as text (never `source` or `eval` it), and emit only the resulting numbers. A database client gets its login on stdin (an option file) or in `PG*` variables passed by name, never on its command line, and runs only constant `SELECT`/`SHOW` text kept in `Q_*` variables (the database tests in `check_scripts.rs` enforce both). The harness seeds `CANARY_*` values in the environment, project `.env` files and the docker/pm2 shims, and fails if one reaches stdout; `db-real.sh` does the same against real servers and also checks argument lists, `ps`, and that the data is unchanged.
 - Degrade gracefully when a tool is missing or a permission is lacking, instead of failing.
 - Must pass `shellcheck` (`crates/core/checks/.shellcheckrc` sets `shell=sh`).
+
+## Changing the setup scripts
+
+`crates/core/discover/login.sh` (the login test) and `discover.sh` (nginx server blocks, compose projects, pm2 apps, database servers, `.env` paths, listening ports) run on the user's servers like a check and follow the same rules: POSIX `sh`, read-only, allowlisted commands (`LOGIN_NEEDS` and `DISCOVER_NEEDS` in `crates/core/src/discover/mod.rs`), shellcheck, the grep deny-list, and the read-only container run, which also compares their records with `fixtures/discover/<distro>/` (`run.sh --bless` rewrites them) and checks them with `jq`. Two more rules: they print **records** (`{"rec":"…"}`), checked and capped by `RecordParser`, and they **never open a `.env`**: list it, test it with `-r`, nothing else (the harness `.env` files hold canary values; any that reach the output fail the run). The planted container's nginx config, docker/pm2 shims and listeners are in `scripts/check-harness/`. `scripts/fake-server/e2e.sh` runs the whole flow against a real sshd.
 
 ## Pull requests
 
