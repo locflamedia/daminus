@@ -1,0 +1,4 @@
+{"_":"begin","v":1,"bundle":"14a898f8cd8dd512"}
+{"check":"sec.upload_php","target":"/home/daminus/app/public/uploads/avatar.php","data":{"size":21,"mtime":1790847384,"total":1},"fp":"21:1790847384:746129390479"}
+{"_":"step","group":"security","ms":102}
+{"_":"end"}

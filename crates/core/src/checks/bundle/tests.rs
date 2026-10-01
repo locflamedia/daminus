@@ -264,12 +264,25 @@ emit t.g "" 0.5 n
 #[test]
 fn shipped_bundle_runs_to_end_with_valid_lines() {
     let m = manifest().unwrap();
-    let bundle = build(
-        &m,
-        &Selection::default(),
-        &BundleVars::from_scan(&ScanSettings::default()).unwrap(),
+    // The security checks look at the live process table and temp folders,
+    // which change between the two shells' runs; they get quiet stand-ins.
+    let quiet = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(quiet.path().join("proc/self")).unwrap();
+    std::fs::create_dir_all(quiet.path().join("proc/net")).unwrap();
+    std::fs::write(quiet.path().join("proc/net/tcp"), "  sl  local_address\n").unwrap();
+    std::fs::create_dir(quiet.path().join("tmp")).unwrap();
+    let mut vars = BundleVars::from_scan(&ScanSettings::default()).unwrap();
+    vars.set(
+        "DAMINUS_PROC",
+        quiet.path().join("proc").display().to_string(),
     )
     .unwrap();
+    vars.set(
+        "DAMINUS_TMP_DIRS",
+        quiet.path().join("tmp").display().to_string(),
+    )
+    .unwrap();
+    let bundle = build(&m, &Selection::default(), &vars).unwrap();
     assert_eq!(bundle.text.lines().next(), Some("exec 2>/dev/null"));
     assert!(bundle.text.ends_with("else main </dev/null; fi; exit 0\n"));
     let scripted: Vec<&str> = m
@@ -408,6 +421,8 @@ fn selection_filters_groups_and_ids() {
             CheckGroup::Disk,
             CheckGroup::Containers,
             CheckGroup::Databases,
+            CheckGroup::Security,
+            CheckGroup::CodeChanges,
             CheckGroup::System,
         ]),
         only: None,

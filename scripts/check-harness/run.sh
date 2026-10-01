@@ -48,34 +48,28 @@ cat >"$work/config/projects.json" <<'EOF'
    "env_file": "/home/daminus/app/.env.billing", "container": "shop-db-1"}
 ]}]}
 EOF
-printf '%s\n' '{"version": 1, "scan": {"large_file_mb": 1}}' >"$work/config/settings.json"
+printf '%s\n' '{"version": 1, "scan": {"large_file_mb": 1, "disabled_groups": []}}' >"$work/config/settings.json"
+# The clean project folder, for the security checks' ok case: the same host,
+# a folder with no PHP in its uploads. (The recent-code-changes group is off
+# by default; the harness turns every group on.)
+mkdir -p "$work/config-clean"
+cp "$work/config/settings.json" "$work/config-clean/settings.json"
+cat >"$work/config-clean/projects.json" <<'EOF2'
+{"version": 1, "projects": [{"id": "clean", "name": "clean", "components": [
+  {"role": "fe", "host": "harness", "kind": "path", "path": "/home/daminus/clean"}
+]}]}
+EOF2
 # Longest the whole bundle may take in the container (server budget).
 budget_s=60
 
 cargo build -q -p daminus-core --features cli --bin daminus-dev
 dev="$root/target/debug/daminus-dev"
 
-# Runs a bundle file in the harness container. The probe hashes $HOME and /tmp
-# (names, sizes, modes, mtimes and contents) before and after `sh -s`, and
-# prints both hashes on stderr, which goes to $3.hash. The bundle's own stderr
-# is merged into stdout ($3), so anything it printed there fails validation.
-# ~/.pm2 gets a stand-in daemon: a process titled as pm2 titles its daemon.
-# shellcheck disable=SC2016 # expanded inside the container, not here
-probe='truncate -s 600M "$HOME/app/storage/logs/laravel.log"
-sh -c "sleep 600; :" "PM2 v5.4.2: God Daemon ($HOME/.pm2)" </dev/null &
-daemon=$!
-printf %s "$daemon" >"$HOME/.pm2/pm2.pid"
-: >"$HOME/.pm2/rpc.sock"
-: >"$HOME/.pm2/pub.sock"
-snap() {
-	find "$HOME" /tmp -xdev -exec stat -c "%n %s %a %Y" {} + 2>/dev/null | sort
-	find "$HOME" /tmp -xdev -type f -exec sha256sum {} + 2>/dev/null | sort
-}
-before=$(snap | sha256sum)
-sh -s 2>&1
-after=$(snap | sha256sum)
-kill "$daemon"
-printf "%s\n%s\n" "$before" "$after" >&2'
+# Runs a bundle file in the harness container: run_bundle IMAGE BUNDLE OUT
+# [infected]. probe.sh does the work and prints the two $HOME and /tmp hashes
+# on stderr, which goes to OUT.hash. With `infected` the container also looks
+# compromised (PLANT=1, and /etc/ld.so.preload bind-mounted from
+# $work/ld.so.preload, written per distro below); otherwise it is a clean server.
 # The named volume is a device-backed directory mount (like a real data disk),
 # so disk.fs has a filesystem to report besides the overlay root and the
 # single-file bind mounts docker adds (/etc/hosts…), which it skips.
@@ -85,11 +79,20 @@ printf "%s\n%s\n" "$before" "$after" >&2'
 # PID 1 (the container's shell) and the socket files are the user's and
 # writable (on the read-only root they could not be), so pm2.app reaches
 # the pm2 shim. Both mounts are other filesystems, left out of the hashes.
+# /tmp allows execution, as on most servers: the planted miner runs from there.
+# --ipc none leaves no /dev/shm, so one is mounted for the planted executable.
 run_bundle() {
+	image=$1 bundle=$2 out=$3
+	if [ "${4-}" = infected ]; then
+		set -- -e PLANT=1 -v "$work/ld.so.preload:/etc/ld.so.preload:ro"
+	else
+		set --
+	fi
 	docker run --rm -i \
 		--read-only \
 		--volume daminus-harness-data:/data:ro \
-		--tmpfs /tmp:rw,nosuid,nodev,size=16m \
+		--tmpfs /tmp:rw,exec,nosuid,nodev,size=16m \
+		--tmpfs /dev/shm:rw,nosuid,nodev,size=1m \
 		--tmpfs /home/daminus/app/storage/logs:rw,nosuid,nodev,size=1m,uid=1500,gid=1500 \
 		--tmpfs /home/daminus/.pm2:rw,nosuid,nodev,size=1m,uid=1500,gid=1500 \
 		--ipc none \
@@ -97,7 +100,7 @@ run_bundle() {
 		--cap-drop ALL \
 		--security-opt no-new-privileges \
 		--user daminus \
-		"$1" sh -c "$probe" <"$2" >"$3" 2>"$3.hash"
+		"$@" "$image" sh /opt/daminus-harness/probe.sh <"$bundle" >"$out" 2>"$out.hash"
 }
 
 fail=0
@@ -116,6 +119,20 @@ shape() {
 		end' "$1" | sort -u
 }
 
+# golden_check LABEL OUTPUT GOLDEN: the output has the golden's shape (or
+# becomes the golden with --bless).
+golden_check() {
+	if [ "$bless" -eq 1 ]; then
+		cp "$2" "$3"
+		echo "blessed $3"
+	elif [ ! -f "$3" ]; then
+		problem "$1: no golden fixture (run with --bless)"
+	elif ! shape "$2" >"$2.shape" || ! shape "$3" >"$2.golden" ||
+		! diff -u "$2.golden" "$2.shape"; then
+		problem "$1: output shape differs from $3 (run with --bless if intended)"
+	fi
+}
+
 verify() { # label output-file
 	if ! "$dev" --config-dir "$work/config" ndjson "$2"; then
 		problem "$1: output is not valid NDJSON v1"
@@ -128,6 +145,58 @@ verify() { # label output-file
 	fi
 }
 
+# expect LABEL FILE FILTER [JQ-ARG…]: the file, read as one array of lines,
+# satisfies the jq filter.
+# shellcheck disable=SC2016 # the filters are jq programs, not shell
+expect() {
+	label=$1 file=$2 filter=$3
+	shift 3
+	if ! jq -e -s "$@" "$filter" "$file" >/dev/null; then
+		problem "$label"
+	fi
+}
+
+# What the security checks must find in the planted (infected) container. A
+# file's fingerprint is size:mtime: and 12 hex digits.
+# shellcheck disable=SC2016 # the filters are jq programs, not shell
+check_infected() { # distro file libc
+	d=$1 f=$2
+	re='^[0-9]+:[0-9]+:[0-9a-f]{12}$'
+	expect "$d sec.miner: the miner and the deleted hidden job" "$f" '
+		[.[] | select(.check == "sec.miner")] as $m
+		| ($m | map(select(.target == "xmrig" and .data.why == "name" and (.data.deleted | not))) | length) == 1
+		and ($m | map(select(.target == ".hidden-job" and .data.why == "deleted" and .data.deleted)) | length) == 1
+		and ($m | all(.data.seen == .data.total and (.unknown | not)))'
+	expect "$d sec.upload_php: avatar.php" "$f" '
+		[.[] | select(.check == "sec.upload_php")] as $u
+		| ($u | map(select(.target == "/home/daminus/app/public/uploads/avatar.php" and (.fp | test($re)))) | length) == 1
+		and ($u | map(select(.target | startswith("/home/daminus/clean"))) | length) == 0' --arg re "$re"
+	expect "$d sec.tmp_exec: executables in /tmp and /dev/shm" "$f" '
+		[.[] | select(.check == "sec.tmp_exec") | .target] | contains(["/tmp/xmrig", "/dev/shm/kinsing"])'
+	expect "$d sec.preload: the preloaded library" "$f" '
+		[.[] | select(.check == "sec.preload")]
+		| length == 1 and .[0].target == "/etc/ld.so.preload" and .[0].data.entries == 1
+		and .[0].data.libs == [$lib] and (.[0].fp | test($re))' --arg lib "$3" --arg re "$re"
+	expect "$d sec.ports: 6379 and 3306 (not 8080), held by perl" "$f" '
+		[.[] | select(.check == "sec.ports")] as $p
+		| ($p | map(.target) | sort) == ["3306", "6379"]
+		and ($p | all(.data.proc == "perl" and .fp == (.target + "/perl")))'
+	expect "$d sec.recent_change: counts the project folder" "$f" '
+		[.[] | select(.check == "sec.recent_change" and .target == "/home/daminus/app")]
+		| length == 1 and (.[0].value | type) == "number" and (.[0].data.files | length) <= 10'
+}
+
+# On the clean server: every security check says "looked, found none" and
+# none is unknown (the container's processes are all the user's, so the miner
+# check saw every one).
+# shellcheck disable=SC2016 # the filters are jq programs, not shell
+check_clean() { # distro file
+	expect "$1 clean server: every security check found nothing" "$2" '
+		[.[] | select((.check // "" | startswith("sec.")) and .check != "sec.recent_change")] as $s
+		| ($s | length) == 5 and ($s | all(.value == 0 and (.unknown | not)))
+		and ($s | map(select(.check == "sec.miner")) | all(.data.seen == .data.total))'
+}
+
 ids=$(jq -r '.checks[] | select(.script != null) | .id + " " + .script' "$root/crates/core/checks/manifest.json")
 
 for distro in ubuntu:24.04 debian:12; do
@@ -135,34 +204,57 @@ for distro in ubuntu:24.04 debian:12; do
 	image="daminus-harness:$tag"
 	echo "== $distro"
 	docker build -q --build-arg "BASE=$distro" -t "$image" "$here" >/dev/null
+	# The library a rootkit would preload is stood in for by libc, which every
+	# program may load harmlessly.
+	lib=$(docker run --rm "$image" sh -c 'ls /lib/*-linux-gnu/libc.so.6 /usr/lib/*-linux-gnu/libc.so.6 2>/dev/null | head -n 1')
+	if [ -z "$lib" ]; then
+		problem "$distro: no libc to stand in for a preloaded library"
+		exit 1
+	fi
+	printf '%s\n' "$lib" >"$work/ld.so.preload"
 
 	"$dev" --config-dir "$work/config" bundle --host harness >"$work/all.sh"
 	t0=$(date +%s)
-	run_bundle "$image" "$work/all.sh" "$work/all.ndjson"
+	run_bundle "$image" "$work/all.sh" "$work/all.ndjson" infected
 	took=$(($(date +%s) - t0))
 	verify "$distro all checks" "$work/all.ndjson"
 	echo "$distro: whole bundle in ${took} s (budget ${budget_s} s)"
 	if [ "$took" -ge "$budget_s" ]; then
 		problem "$distro: the whole bundle took ${took} s, over the ${budget_s} s budget"
 	fi
+	check_infected "$distro" "$work/all.ndjson" "$lib"
 
-	mkdir -p "$fixtures/$tag"
+	# The same security checks on a clean server (a folder with no PHP in its
+	# uploads, nothing planted): every one must say "looked, found none".
+	"$dev" --config-dir "$work/config-clean" bundle --host harness \
+		--only sec.miner --only sec.upload_php --only sec.tmp_exec --only sec.preload \
+		--only sec.ports --only sec.recent_change >"$work/clean.sh"
+	run_bundle "$image" "$work/clean.sh" "$work/clean.ndjson"
+	verify "$distro clean server" "$work/clean.ndjson"
+	check_clean "$distro" "$work/clean.ndjson"
+
+	mkdir -p "$fixtures/$tag/infected"
 	echo "$ids" | while read -r id script; do
 		name=${script%.sh}
+		cfg="$work/config"
+		case $name in
+		sec_*)
+			# The planted container's findings are kept in `infected/`; the
+			# golden every other consumer replays (a healthy host) comes from
+			# the clean server.
+			"$dev" --config-dir "$work/config" bundle --host harness --only "$id" >"$work/$name.sh"
+			out="$work/$tag-$name.planted.ndjson"
+			run_bundle "$image" "$work/$name.sh" "$out" infected
+			verify "$distro $id (planted)" "$out"
+			golden_check "$distro $id (planted)" "$out" "$fixtures/$tag/infected/$name.ndjson"
+			cfg="$work/config-clean"
+			;;
+		esac
+		"$dev" --config-dir "$cfg" bundle --host harness --only "$id" >"$work/$name.sh"
 		out="$work/$tag-$name.ndjson"
-		"$dev" --config-dir "$work/config" bundle --host harness --only "$id" >"$work/$name.sh"
 		run_bundle "$image" "$work/$name.sh" "$out"
 		verify "$distro $id" "$out"
-		golden="$fixtures/$tag/$name.ndjson"
-		if [ "$bless" -eq 1 ]; then
-			cp "$out" "$golden"
-			echo "blessed $golden"
-		elif [ ! -f "$golden" ]; then
-			problem "$distro $id: no golden fixture (run with --bless)"
-		elif ! shape "$out" >"$out.shape" || ! shape "$golden" >"$out.golden" ||
-			! diff -u "$out.golden" "$out.shape"; then
-			problem "$distro $id: output shape differs from $golden (run with --bless if intended)"
-		fi
+		golden_check "$distro $id" "$out" "$fixtures/$tag/$name.ndjson"
 		[ "$fail" -eq 0 ] || exit 1
 	done || fail=1
 done

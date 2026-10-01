@@ -200,3 +200,129 @@ async fn database_logins_never_reach_events_snapshots_or_the_report() {
         assert!(!text.contains("CANARY"), "a canary leaked");
     }
 }
+
+/// Kills the planted process when the test ends, whatever the outcome.
+#[cfg(target_os = "linux")]
+struct Planted(std::process::Child);
+
+#[cfg(target_os = "linux")]
+impl Drop for Planted {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
+
+/// The security checks look at live processes, uploaded files and their
+/// content; none of that, nor a process's environment, may reach an event,
+/// a saved file or the report. A process named like a miner runs with a canary
+/// in its environment, and an upload holds one in its text.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread")]
+async fn security_findings_never_carry_file_content_or_process_secrets() {
+    let site = TempDir::new().unwrap();
+    let uploads = site.path().join("public/uploads");
+    std::fs::create_dir_all(&uploads).unwrap();
+    std::fs::write(
+        uploads.join("shell.php"),
+        "<?php // CANARY_webshell_body_5d2e\n",
+    )
+    .unwrap();
+    let bin = TempDir::new().unwrap();
+    let miner = bin.path().join("xmrig");
+    std::os::unix::fs::symlink("/bin/sleep", &miner).unwrap();
+    let _planted = Planted(
+        std::process::Command::new(&miner)
+            .arg("60")
+            .env("CANARY_ENV_TOKEN", "CANARY_miner_environ_8c0f")
+            .stdin(std::process::Stdio::null())
+            .spawn()
+            .expect("start the planted miner"),
+    );
+
+    let projects: ProjectsFile = serde_json::from_value(json!({
+        "version": 1,
+        "projects": [{"id": "shop", "name": "Shop", "components": [
+            {"role": "fe", "host": "harness", "kind": "path", "path": site.path()}
+        ]}]
+    }))
+    .unwrap();
+    let mut settings = Settings::default();
+    settings.scan.disabled_groups = [
+        CheckGroup::Disk,
+        CheckGroup::Containers,
+        CheckGroup::Databases,
+        CheckGroup::Uptime,
+    ]
+    .into();
+
+    let dir = TempDir::new().unwrap();
+    let home = TempDir::new().unwrap();
+    let store = FsStore::new(dir.path());
+    store.save_projects(&projects, None).unwrap();
+    store.save_settings(&settings, None).unwrap();
+    let (tx, mut rx) = mpsc::channel(4096);
+    let service = ScanService::new(
+        Arc::new(ShellTransport {
+            home: home.path().to_owned(),
+        }),
+        Arc::new(FakeProbe::new()),
+        store.clone(),
+        tx,
+    );
+    service.start(&ScanScope::default()).unwrap();
+    let mut events = Vec::new();
+    while let Some(e) = rx.recv().await {
+        let last = matches!(
+            e.body,
+            ScanEventBody::Done { .. } | ScanEventBody::Cancelled | ScanEventBody::Failed { .. }
+        );
+        events.push(e);
+        if last {
+            break;
+        }
+    }
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("scan did not finish: {:?}", events.last());
+    };
+    let snap = store.load_snapshot(*snapshot_seq).unwrap();
+    let host = HostRef::Alias(HostAlias::parse("harness").unwrap());
+    assert!(snap.covered(&host, CheckGroup::Security));
+    let facts = &snap.facts[&host];
+    let upload = facts
+        .iter()
+        .find(|f| f.check == "sec.upload_php")
+        .expect("the upload is a finding");
+    assert!(
+        upload.target.ends_with("public/uploads/shell.php"),
+        "{upload:?}"
+    );
+    assert!(upload.fp.is_some() && upload.value.is_none());
+    let miner = facts
+        .iter()
+        .find(|f| f.check == "sec.miner" && f.target == "xmrig")
+        .expect("the planted miner is a finding");
+    assert_eq!(miner.data["why"], "name");
+    let sleep = std::fs::canonicalize("/bin/sleep").unwrap();
+    assert_eq!(
+        miner.fp.as_deref(),
+        Some(format!("xmrig|{}", sleep.display()).as_str()),
+        "{miner:?}"
+    );
+
+    let mut seen = vec![
+        format!("{events:?}"),
+        serde_json::to_string(&events).unwrap(),
+    ];
+    let report = latest_report(&store, snap.finished_at).unwrap();
+    seen.push(serde_json::to_string(&report).unwrap());
+    let mut files = Vec::new();
+    files_under(dir.path(), &mut files);
+    for f in &files {
+        seen.push(String::from_utf8_lossy(&std::fs::read(f).unwrap()).into_owned());
+    }
+    assert!(seen.iter().any(|t| t.contains("sec.upload_php")));
+    for text in &seen {
+        assert!(!text.contains("CANARY"), "a canary leaked");
+    }
+}

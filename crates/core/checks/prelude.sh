@@ -61,10 +61,15 @@ emit() {
 	printf '%s}\n' "$_e"
 }
 
-# emit_unknown CHECK TARGET REASON: the check could not answer. REASON is one
-# of needs_perm, missing, unsupported, timeout.
+# emit_unknown CHECK TARGET REASON [DATA]: the check could not answer. REASON
+# is one of needs_perm, missing, unsupported, timeout. DATA is an optional
+# JSON object that says how far it got (processes seen, say).
 emit_unknown() {
-	printf '{"check":%s,"target":%s,"unknown":"%s"}\n' "$(json_str "$1")" "$(json_str "$2")" "$3"
+	_d=""
+	if [ -n "${4-}" ]; then
+		_d=",\"data\":$4"
+	fi
+	printf '{"check":%s,"target":%s,"unknown":"%s"%s}\n' "$(json_str "$1")" "$(json_str "$2")" "$3" "$_d"
 }
 
 # perm_missing CHECK [TARGET]: the SSH user lacks a permission. Never sudo.
@@ -236,6 +241,106 @@ pm2_rows() {
 	'
 }
 
+# find_ok: find understands what the security checks use (GNU find: -printf,
+# -lname and -perm /MODE). Busybox and BSD find do not, and a check that ran
+# them anyway would see nothing and call that clean.
+find_ok() {
+	find / -maxdepth 0 -perm /111 -lname x -printf '' >/dev/null 2>&1
+}
+
+# sha12 FILE: the first 12 hex digits of the SHA-256 of FILE's first MiB, or
+# `-` when the file cannot be read or the server has no SHA-256 tool. Part of
+# the evidence fingerprint of file findings: size:mtime:sha12.
+sha12() {
+	if [ ! -r "$1" ]; then
+		printf -- '-'
+		return 0
+	fi
+	_h=""
+	if has sha256sum; then
+		_h=$(head -c 1048576 "$1" | sha256sum)
+	elif has shasum; then
+		_h=$(head -c 1048576 "$1" | shasum -a 256)
+	fi
+	_h=${_h%% *}
+	case $_h in
+	????????????*) printf '%.12s' "$_h" ;;
+	*) printf -- '-' ;;
+	esac
+}
+
+# sha12_text TEXT: the first 12 hex digits of the SHA-256 of TEXT and a
+# newline, or nothing when the server has no SHA-256 tool.
+sha12_text() {
+	_h=""
+	if has sha256sum; then
+		_h=$(printf '%s\n' "$1" | sha256sum)
+	elif has shasum; then
+		_h=$(printf '%s\n' "$1" | shasum -a 256)
+	fi
+	_h=${_h%% *}
+	case $_h in
+	????????????*) printf '%.12s' "$_h" ;;
+	esac
+}
+
+# file_fp SIZE MTIME FILE: the evidence fingerprint of one file, as
+# size:mtime:sha12 (mtime in whole seconds).
+file_fp() {
+	_m=${2%%.*}
+	is_num "$_m" || _m=0
+	printf '%s:%s:%s' "$1" "$_m" "$(sha12 "$3")"
+}
+
+# top_recent N: reads `SIZE TAB MTIME TAB PATH` lines (find -printf '%s\t%T@\t%p\n')
+# and prints how many there were, then the N newest, newest first. Lines that
+# do not start with two numbers (a file name holding a newline) are dropped.
+top_recent() {
+	awk -F '\t' -v keep="$1" '
+		$1 ~ /^[0-9]+$/ && $2 ~ /^[0-9.]+$/ { n++; m[n] = $2 + 0; line[n] = $0 }
+		END {
+			print n + 0
+			for (k = 1; k <= keep; k++) {
+				best = 0
+				for (i = 1; i <= n; i++) if (!(i in taken) && (best == 0 || m[best] < m[i])) best = i
+				if (best == 0) break
+				taken[best] = 1
+				print line[best]
+			}
+		}'
+}
+
+# skip_expr [NAME…]: the find expression that prunes the folders listed in
+# DAMINUS_SKIP_PATHS and the extra bare NAMEs given, one word per line, empty
+# when there is nothing to skip. A bare name matches at any depth, a relative
+# path as a suffix, an absolute one exactly. Use:
+#   IFS=$NL; set -f; set -- $(skip_expr vendor); unset IFS
+#   find DIR "$@" -type f ...
+skip_expr() {
+	set -f
+	_b=""
+	for _x in "$@"; do
+		_b="$_b${_b:+$NL-o$NL}-name$NL$_x"
+	done
+	IFS=$NL
+	for _x in ${DAMINUS_SKIP_PATHS-}; do
+		unset IFS
+		if [ -n "$_x" ]; then
+			case $_x in
+			/*) _t="-path$NL$_x" ;;
+			*/*) _t="-path$NL*/$_x" ;;
+			*) _t="-name$NL$_x" ;;
+			esac
+			_b="$_b${_b:+$NL-o$NL}$_t"
+		fi
+		IFS=$NL
+	done
+	unset IFS
+	if [ -n "$_b" ]; then
+		printf '(\n%s\n)\n-prune\n-o\n' "$_b"
+	fi
+}
+
 # now_ms: wall clock in milliseconds (seconds × 1000 where %N is missing).
 now_ms() {
 	_t=$(date +%s%N)
@@ -252,6 +357,10 @@ now_ms() {
 # disk.path), under half the host budget so the checks after it still run.
 # shellcheck disable=SC2034 # used by the check scripts
 DISK_GROUP_S=40
+# SEC_GROUP_S: the same for the security group (miner, uploads, temp, preload,
+# ports) and for the code-changes group.
+# shellcheck disable=SC2034 # used by the check scripts
+SEC_GROUP_S=30
 group_left() {
 	_now=$(now_ms)
 	_left=$(($1 - (_now - ${_g0:-$_now}) / 1000))

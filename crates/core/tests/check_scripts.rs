@@ -29,7 +29,19 @@ const BANNED: &[&str] = &[
 ];
 /// External commands the prelude itself uses.
 const PRELUDE_NEEDS: &[&str] = &[
-    "tr", "sed", "awk", "date", "nice", "ionice", "timeout", "docker", "ps",
+    "tr",
+    "sed",
+    "awk",
+    "date",
+    "nice",
+    "ionice",
+    "timeout",
+    "docker",
+    "ps",
+    "find",
+    "head",
+    "sha256sum",
+    "shasum",
 ];
 /// Distros the harness runs, as directory names under `fixtures/ndjson/`.
 const DISTROS: &[&str] = &["ubuntu-24.04", "debian-12"];
@@ -516,6 +528,23 @@ fn violations(
                     .into_iter()
                     .map(|p| format!("{file}: awk {p}")),
             ),
+            "sort" => {
+                // `-o FILE` writes, `--compress-program` runs a program, and
+                // `-T` picks where temporary files go.
+                for a in args {
+                    let writes = a == "--output"
+                        || a.starts_with("--output=")
+                        || a == "--compress-program"
+                        || a.starts_with("--compress-program=")
+                        || a == "--temporary-directory"
+                        || a.starts_with("--temporary-directory=")
+                        || a.starts_with("-T")
+                        || (a.starts_with('-') && !a.starts_with("--") && a.contains('o'));
+                    if writes {
+                        bad.push(format!("{file}: sort {a}"));
+                    }
+                }
+            }
             "find" => {
                 for a in args {
                     if matches!(
@@ -1045,6 +1074,7 @@ fn the_allowlist_catches_writes_and_unknown_commands() {
         "awk".to_owned(),
         "sed".to_owned(),
         "find".to_owned(),
+        "sort".to_owned(),
     ];
     let cases: &[(&str, &str)] = &[
         ("rm -rf /tmp/x", "`rm` is not allowed"),
@@ -1074,6 +1104,11 @@ fn the_allowlist_catches_writes_and_unknown_commands() {
         ("x=\"${y:-'$(rm y)'}\"", "quotes inside"),
         ("echo x >&out", "writes with `>&out`"),
         ("echo x 2>&out", "writes with `2>&out`"),
+        ("sort -o out x", "sort -o"),
+        ("sort -ro out x", "sort -ro"),
+        ("sort --output=out x", "sort --output=out"),
+        ("sort -T /tmp x", "sort -T"),
+        ("sort --compress-program=sh x", "sort --compress-program=sh"),
         ("find / -name x -delete", "find -delete"),
         ("find / -exec cat {} +", "find -exec"),
         (". /etc/profile", "banned command `.`"),
@@ -1109,6 +1144,7 @@ fn the_allowlist_catches_writes_and_unknown_commands() {
         "n=$(( (a + 1) * $(printf 2) ))",
         "echo \"${1#-}\" ${2-} ${x:-${y}}",
         "echo x >&- 2>&1 1>&2",
+        "printf '%s\\n' a | sort -u | sort -r",
         "awk -v n=1 -F '\\t' '{ print n }'",
     ];
     for src in clean {

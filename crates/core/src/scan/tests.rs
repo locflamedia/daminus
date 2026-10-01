@@ -183,10 +183,11 @@ async fn healthy_scan_saves_snapshot_with_coverage_timing_and_ordered_events() {
 
 #[tokio::test(start_paused = true)]
 async fn slow_host_does_not_hold_back_a_fast_one() {
-    // Every fixture line 2 s apart: slow, yet inside the 90 s budget.
+    // Every fixture line 1 s apart (about a minute in all): slow, yet inside
+    // the 90 s budget.
     let slow = FakeHost::slow(
         &fixture_run("ubuntu-24.04").unwrap(),
-        Duration::from_secs(2),
+        Duration::from_secs(1),
     );
     let mut r = rig(
         FakeTransport::new()

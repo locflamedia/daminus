@@ -1,0 +1,5 @@
+{"_":"begin","v":1,"bundle":"9485ae7a490ac038"}
+{"check":"sec.ports","target":"3306","data":{"port":3306,"proc":"perl"},"fp":"3306/perl"}
+{"check":"sec.ports","target":"6379","data":{"port":6379,"proc":"perl"},"fp":"6379/perl"}
+{"_":"step","group":"security","ms":12}
+{"_":"end"}

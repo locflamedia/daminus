@@ -214,14 +214,206 @@ fn pm2_status_and_restart_growth() {
     assert_eq!(grade(&pm2("online", 5), None), Ok);
 }
 
+/// A finding of a security check: no value, so `present` cannot read it as
+/// "looked, found none" (a zero-byte PHP file is still a finding).
+fn finding(check: &str, target: &str, data: Value) -> CheckFact {
+    CheckFact::new(check, target).with_data(data)
+}
+
+fn none_found(check: &str) -> CheckFact {
+    CheckFact::new(check, "").with_value(0.0, "count")
+}
+
+#[test]
+fn security_findings_grade_by_check_and_none_found_is_ok() {
+    let file = json!({"size": 0, "mtime": 1_790_000_000, "total": 1});
+    table(vec![
+        (
+            finding(
+                "sec.miner",
+                "xmrig",
+                json!({"seen": 212, "total": 212, "count": 1, "exe": "/tmp/xmrig", "deleted": false, "why": "name"}),
+            ),
+            Crit,
+        ),
+        (none_found("sec.miner"), Ok),
+        // An empty PHP file in uploads is a finding all the same.
+        (
+            finding(
+                "sec.upload_php",
+                "/srv/shop/public/uploads/a.php",
+                file.clone(),
+            ),
+            Crit,
+        ),
+        (none_found("sec.upload_php"), Ok),
+        (finding("sec.tmp_exec", "/tmp/.x/run", file.clone()), Warn),
+        (none_found("sec.tmp_exec"), Ok),
+        (
+            finding(
+                "sec.preload",
+                "/etc/ld.so.preload",
+                json!({"entries": 1, "libs": ["/lib/libevil.so"], "size": 17}),
+            ),
+            Crit,
+        ),
+        (none_found("sec.preload"), Ok),
+        (
+            finding(
+                "sec.ports",
+                "6379",
+                json!({"port": 6379, "proc": "redis-server"}),
+            ),
+            Warn,
+        ),
+        (
+            finding("sec.ports", "3306", json!({"port": 3306, "proc": ""})),
+            Warn,
+        ),
+        (none_found("sec.ports"), Ok),
+        (
+            CheckFact::new("sec.recent_change", "/srv/shop")
+                .with_value(14.0, "files")
+                .with_data(json!({"newest": 1_790_000_000, "files": []})),
+            Info,
+        ),
+        (
+            CheckFact::new("sec.recent_change", "/srv/shop")
+                .with_value(0.0, "files")
+                .with_data(json!({"newest": 0, "files": []})),
+            Info,
+        ),
+    ]);
+}
+
+/// Seeing only some of the processes is never "ok": it is a missing
+/// permission, and still says how far the check got.
+#[test]
+fn a_partial_miner_scan_is_needs_perm_with_its_coverage() {
+    let partial = CheckFact::new("sec.miner", "")
+        .with_unknown(UnknownReason::NeedsPerm)
+        .with_data(json!({"seen": 41, "total": 212}));
+    assert_eq!(
+        grade(&partial, None),
+        Severity::Unknown(UnknownReason::NeedsPerm)
+    );
+    assert_eq!(partial.data["seen"], 41);
+    for check in [
+        "sec.miner",
+        "sec.upload_php",
+        "sec.tmp_exec",
+        "sec.preload",
+        "sec.ports",
+    ] {
+        for reason in [
+            UnknownReason::NeedsPerm,
+            UnknownReason::Timeout,
+            UnknownReason::Unsupported,
+        ] {
+            let f = CheckFact::new(check, "").with_unknown(reason);
+            assert_eq!(grade(&f, None), Severity::Unknown(reason), "{check}");
+        }
+    }
+}
+
+fn tls(days: f64, expired: bool, untrusted: bool, mismatch: bool) -> CheckFact {
+    CheckFact::new("url.tls", "https://shop.example")
+        .with_value(days, "days")
+        .with_data(json!({"not_after": 1_800_000_000, "expired": expired,
+                          "untrusted": untrusted, "mismatch": mismatch}))
+}
+
+#[test]
+fn certificate_days_left_and_trust_flags() {
+    table(vec![
+        (tls(80.0, false, false, false), Ok),
+        (tls(14.0, false, false, false), Ok),
+        (tls(13.99, false, false, false), Warn),
+        (tls(3.0, false, false, false), Warn),
+        (tls(2.99, false, false, false), Crit),
+        (tls(0.0, false, false, false), Crit),
+        // Expired or untrusted is critical whatever the date says.
+        (tls(-5.0, true, false, false), Crit),
+        (tls(30.0, false, true, false), Crit),
+        (tls(30.0, false, false, true), Crit),
+        (tls(-2.0, true, true, false), Crit),
+    ]);
+    let unreachable = CheckFact::new("url.tls", "https://shop.example")
+        .with_unknown(UnknownReason::Unreachable)
+        .with_data(json!({"error": "refused"}));
+    assert_eq!(
+        grade(&unreachable, None),
+        Severity::Unknown(UnknownReason::Unreachable)
+    );
+}
+
+#[test]
+fn exposed_files_are_crit_and_clean_is_ok() {
+    let exposed = CheckFact::new("url.exposed", "https://shop.example")
+        .with_value(2.0, "count")
+        .with_data(
+            json!({"exposed": true, "matched_keys": ["/.env:DB_PASSWORD", "/.git/HEAD:ref"]}),
+        );
+    let clean = CheckFact::new("url.exposed", "https://shop.example")
+        .with_value(0.0, "count")
+        .with_data(json!({"exposed": false, "matched_keys": []}));
+    let down = CheckFact::new("url.exposed", "https://shop.example")
+        .with_unknown(UnknownReason::Timeout)
+        .with_data(json!({"error": "timeout"}));
+    table(vec![(exposed, Crit), (clean, Ok)]);
+    assert_eq!(
+        grade(&down, None),
+        Severity::Unknown(UnknownReason::Timeout)
+    );
+}
+
+/// The planted container's findings (`fixtures/ndjson/<distro>/infected/`)
+/// grade as the manifest says: each check's finding at its severity, each
+/// finding with an evidence fingerprint.
+#[test]
+fn planted_findings_grade_and_carry_a_fingerprint() {
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/ndjson");
+    for distro in ["ubuntu-24.04", "debian-12"] {
+        let want = [
+            ("sec_miner", "sec.miner", Crit),
+            ("sec_upload_php", "sec.upload_php", Crit),
+            ("sec_tmp_exec", "sec.tmp_exec", Warn),
+            ("sec_preload", "sec.preload", Crit),
+            ("sec_ports", "sec.ports", Warn),
+        ];
+        for (file, check, level) in want {
+            let path = dir
+                .join(distro)
+                .join("infected")
+                .join(format!("{file}.ndjson"));
+            let out = ndjson::parse(&std::fs::read(&path).unwrap());
+            let found: Vec<_> = out.facts.iter().filter(|f| f.check == check).collect();
+            assert!(!found.is_empty(), "{}: nothing found", path.display());
+            for f in found {
+                assert_eq!(grade(f, None), level, "{}: {f:?}", path.display());
+                assert!(f.fp.as_deref().is_some_and(|fp| !fp.is_empty()), "{f:?}");
+            }
+        }
+        let path = dir.join(distro).join("infected/sec_recent_change.ndjson");
+        let out = ndjson::parse(&std::fs::read(&path).unwrap());
+        assert!(out.facts.iter().all(|f| grade(f, None) == Info));
+    }
+}
+
 /// Every fact the scripts printed in the harness grades to a real level (or
 /// the unknown reason the script itself gave): no rule field is missing.
 #[test]
 fn golden_fixtures_grade_without_missing_fields() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/ndjson");
     for distro in ["ubuntu-24.04", "debian-12"] {
-        for entry in std::fs::read_dir(dir.join(distro)).unwrap() {
-            let path = entry.unwrap().path();
+        let mut files: Vec<_> = ["", "infected"]
+            .iter()
+            .flat_map(|sub| std::fs::read_dir(dir.join(distro).join(sub)).unwrap())
+            .map(|e| e.unwrap().path())
+            .filter(|p| p.extension().is_some_and(|x| x == "ndjson"))
+            .collect();
+        files.sort();
+        for path in files {
             let out = ndjson::parse(&std::fs::read(&path).unwrap());
             for f in &out.facts {
                 let got = grade(f, None);

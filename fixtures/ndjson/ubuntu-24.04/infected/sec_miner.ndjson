@@ -1,0 +1,5 @@
+{"_":"begin","v":1,"bundle":"6679c94bf3f4fa7b"}
+{"check":"sec.miner","target":"xmrig","data":{"seen":13,"total":13,"count":1,"exe":"/tmp/xmrig","deleted":false,"why":"name"},"fp":"xmrig|/tmp/xmrig"}
+{"check":"sec.miner","target":".hidden-job","data":{"seen":13,"total":13,"count":1,"exe":"/tmp/.hidden-job (deleted)","deleted":true,"why":"deleted"},"fp":".hidden-job|/tmp/.hidden-job (deleted)"}
+{"_":"step","group":"security","ms":15}
+{"_":"end"}
