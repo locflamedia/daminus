@@ -294,9 +294,13 @@ case_run() {
 		problem "$ctx $label: the home or temp folder changed during the run"
 	fi
 	calls=$(awk '/^--calls$/ { m = 1; next } /^--ps$/ { m = 2; next } m == 1' "$err")
-	seen=$(awk '/^--ps$/ { m = 1; next } m == 1' "$err")
+	# A Postgres server names its connections' user in its own process title
+	# (`postgres: shop2 shop [local] idle`), and a Linux host sees the processes
+	# of its containers. That is the server's title, not a client's command line.
+	seen=$(awk '/^--ps$/ { m = 1; next } m == 1 && !/^ *postgres: /' "$err")
 	if printf '%s\n%s\n' "$calls" "$seen" | grep -q 'CANARY_\|shop2'; then
 		problem "$ctx $label: a login was on a command line"
+		printf '%s\n%s\n' "$calls" "$seen" | grep 'CANARY_\|shop2' | head -n 3 | cut -c1-160 >&2
 	fi
 	if [ "$expect" != missing ] && ! printf '%s\n' "$calls" | grep -q .; then
 		problem "$ctx $label: the recorder saw no client call"
