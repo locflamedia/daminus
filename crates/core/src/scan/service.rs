@@ -33,7 +33,7 @@ use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::snapshot::{HostOutcome, HostTiming, NetCause, Snapshot};
 use crate::probe::{ProbeChecks, UrlProbe};
-use crate::ssh::{RunEnd, RunRequest, RunSignal, Transport, is_remote_timeout, outcome_error};
+use crate::ssh::{RunEnd, RunRequest, RunSignal, Transport, outcome_error, run_outcome};
 use crate::store::FsStore;
 
 /// Time each reachable host has for its bundle, from its first byte of
@@ -42,7 +42,7 @@ pub const HOST_BUDGET: Duration = Duration::from_secs(90);
 /// Most hosts scanned at once, whatever the setting says.
 pub const MAX_HOSTS_AT_ONCE: usize = 8;
 /// Longest connect timeout honoured, in seconds.
-const MAX_CONNECT_TIMEOUT_S: u32 = 120;
+pub(crate) const MAX_CONNECT_TIMEOUT_S: u32 = 120;
 
 /// Knobs that are not user settings. Tests shorten the budget.
 #[derive(Clone, Debug)]
@@ -218,6 +218,16 @@ impl ScanService {
     }
 }
 
+/// How many of `hosts` run at once: Settings › Scan `hosts_at_once`, or one
+/// per host when it is Auto, kept between 1 and [`MAX_HOSTS_AT_ONCE`].
+pub(crate) fn concurrency(hosts_at_once: Option<u32>, hosts: usize) -> usize {
+    let n = match hosts_at_once {
+        Some(n) => usize::try_from(n).unwrap_or(MAX_HOSTS_AT_ONCE),
+        None => hosts,
+    };
+    n.clamp(1, MAX_HOSTS_AT_ONCE)
+}
+
 /// The bundle every host runs, and its text per host: the checks and the
 /// hash are the same everywhere, only the variables naming that host's
 /// components differ.
@@ -318,12 +328,7 @@ struct Job {
 
 impl Job {
     fn concurrency(&self) -> usize {
-        let auto = self.targets.hosts.len();
-        let n = match self.settings.scan.hosts_at_once {
-            Some(n) => usize::try_from(n).unwrap_or(MAX_HOSTS_AT_ONCE),
-            None => auto,
-        };
-        n.clamp(1, MAX_HOSTS_AT_ONCE)
+        concurrency(self.settings.scan.hosts_at_once, self.targets.hosts.len())
     }
 
     async fn run(self) {
@@ -606,19 +611,9 @@ fn local_network_down(results: &[HostResult], local: Option<&LocalResult>, urls:
     hosts_down && urls_down && results.len() + urls >= 2
 }
 
-/// How a host's part ended. What stdout proves wins over stderr: once the
-/// bundle printed `begin`, ssh errors only make the run Partial.
+/// How a host's part ended (see [`run_outcome`]).
 fn decide(output: &HostOutput, end: &RunEnd, timed_out: bool) -> HostOutcome {
-    if output.ended {
-        return HostOutcome::Reached;
-    }
-    if timed_out || is_remote_timeout(end.exit) {
-        return HostOutcome::Timeout;
-    }
-    match &end.failure {
-        Some(f) if output.bundle.is_none() => f.outcome(),
-        _ => HostOutcome::Partial,
-    }
+    run_outcome(output.ended, output.bundle.is_some(), end, timed_out)
 }
 
 async fn probe_urls(

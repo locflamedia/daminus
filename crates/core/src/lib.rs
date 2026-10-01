@@ -12,5 +12,6 @@ pub mod discover;
 pub mod domain;
 pub mod probe;
 pub mod scan;
+pub mod setup;
 pub mod ssh;
 pub mod store;
