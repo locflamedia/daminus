@@ -8,6 +8,7 @@
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub mod checks;
+pub mod discover;
 pub mod domain;
 pub mod probe;
 pub mod scan;
