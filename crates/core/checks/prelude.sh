@@ -184,16 +184,27 @@ pm2_state() {
 	return 0
 }
 
-# pm2_rows: reads `pm2 jlist` on stdin and prints one line per process:
-# name TAB pm_id TAB status TAB restart_time TAB pm_uptime TAB memory.
+# nvm_path: adds the bin folders of node installs a non-interactive SSH
+# session does not have on PATH (nvm, nodejs tarballs), where pm2 usually is.
+# The folders are globbed, so call it before `set -f`.
+nvm_path() {
+	for _d in "$HOME"/.nvm/versions/node/*/bin /usr/local/lib/nodejs/*/bin; do
+		[ -d "$_d" ] && PATH="$PATH:$_d"
+	done
+	export PATH
+}
+
+# pm2_rows [cwd]: reads `pm2 jlist` on stdin and prints one line per process:
+# name TAB pm_id TAB status TAB restart_time TAB pm_uptime TAB memory, and
+# with `cwd` also TAB pm2_env.pm_cwd (the folder the app runs in).
 # Only these fields are read, by position in the JSON (top-level name and
-# pm_id, pm2_env.status/restart_time/pm_uptime, monit.memory); everything
+# pm_id, pm2_env.status/restart_time/pm_uptime/pm_cwd, monit.memory); everything
 # else, the process environment first of all, is never printed. pm2 writes
 # its own fields before the app environment it merges into pm2_env, so only
 # the first occurrence of a key counts. Strings are
 # split on quotes, so an escaped quote inside a value cannot end it early.
 pm2_rows() {
-	awk 'f || /^[[:space:]]*\[/ { f = 1; print }' | awk '
+	awk 'f || /^[[:space:]]*\[/ { f = 1; print }' | awk -v withcwd="${1-}" '
 		BEGIN { RS = "\""; depth = 0; instr = 0; had = 0 }
 		function keep(k, v) {
 			if (depth == 2 && k == "name") name = v
@@ -201,6 +212,7 @@ pm2_rows() {
 			else if (depth == 3 && parent[3] == "pm2_env" && k == "status" && st == "") st = v
 			else if (depth == 3 && parent[3] == "pm2_env" && k == "restart_time" && rs == "") rs = v
 			else if (depth == 3 && parent[3] == "pm2_env" && k == "pm_uptime" && up == "") up = v
+			else if (depth == 3 && parent[3] == "pm2_env" && k == "pm_cwd" && cwd == "") cwd = v
 			else if (depth == 3 && parent[3] == "monit" && k == "memory" && mem == "") mem = v
 		}
 		function scalar() {
@@ -225,10 +237,10 @@ pm2_rows() {
 				c = substr(t, i, 1)
 				if (c == "{" || c == "[") {
 					scalar(); depth++; parent[depth] = key; key = ""
-					if (depth == 2) { name = ""; id = ""; st = ""; rs = ""; up = ""; mem = "" }
+					if (depth == 2) { name = ""; id = ""; st = ""; rs = ""; up = ""; mem = ""; cwd = "" }
 				} else if (c == "}" || c == "]") {
 					scalar()
-					if (depth == 2 && c == "}") print name "\t" id "\t" st "\t" rs "\t" up "\t" mem
+					if (depth == 2 && c == "}") print name "\t" id "\t" st "\t" rs "\t" up "\t" mem (withcwd == "cwd" ? "\t" cwd : "")
 					depth--; key = ""
 				} else if (c == ",") {
 					scalar(); key = ""

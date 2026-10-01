@@ -13,10 +13,7 @@
 
 # pm2 is often installed with nvm, whose bin folder a non-interactive SSH
 # session does not have on PATH (node comes from the same folder).
-for d in "$HOME"/.nvm/versions/node/*/bin /usr/local/lib/nodejs/*/bin; do
-	[ -d "$d" ] && PATH="$PATH:$d"
-done
-export PATH
+nvm_path
 
 # The SSH user's own daemon, for entries that name no PM2_HOME. An entry's
 # PM2_HOME is only set inside the subshell of its own pm2 call, so it cannot

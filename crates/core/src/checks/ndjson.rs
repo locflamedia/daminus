@@ -16,9 +16,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 use crate::domain::fact::CheckFact;
-use crate::domain::ingest::{
-    MAX_HOST_BYTES, MAX_HOST_FACTS, MAX_LINE_BYTES, cap_arrays, clean_line,
-};
+use crate::domain::ingest::{LineBuffer, MAX_HOST_FACTS, cap_arrays, clean_line};
 use crate::domain::manifest::CheckGroup;
 use crate::domain::snapshot::HostOutcome;
 
@@ -98,11 +96,7 @@ pub struct Parser {
     /// Set by [`Parser::for_bundle`]; `None` accepts any well-formed line.
     expected: Option<Expected>,
     begun: bool,
-    /// Bytes of the current, unfinished line.
-    pending: Vec<u8>,
-    /// The current line already passed [`MAX_LINE_BYTES`]; skip to its end.
-    overlong: bool,
-    bytes: usize,
+    buf: LineBuffer,
 }
 
 impl Parser {
@@ -126,51 +120,18 @@ impl Parser {
 
     /// Takes the next chunk of output and returns the lines it completed.
     pub fn feed(&mut self, chunk: &[u8]) -> Vec<Line> {
-        let mut lines = Vec::new();
-        if self.out.truncated {
-            return lines;
-        }
-        let room = MAX_HOST_BYTES.saturating_sub(self.bytes);
-        let chunk = if chunk.len() > room {
-            self.out.truncated = true;
-            &chunk[..room]
-        } else {
-            chunk
-        };
-        self.bytes += chunk.len();
-        for part in chunk.split_inclusive(|b| *b == b'\n') {
-            let (body, complete) = match part.strip_suffix(b"\n") {
-                Some(body) => (body, true),
-                None => (part, false),
-            };
-            if !self.overlong {
-                if self.pending.len() + body.len() > MAX_LINE_BYTES {
-                    self.overlong = true;
-                    self.pending.clear();
-                } else {
-                    self.pending.extend_from_slice(body);
-                }
-            }
-            if complete {
-                if self.overlong {
-                    self.overlong = false;
-                    self.out.dropped += 1;
-                } else {
-                    let raw = std::mem::take(&mut self.pending);
-                    lines.extend(self.line(&raw));
-                }
-            }
-        }
-        lines
+        let got = self.buf.push(chunk);
+        self.out.truncated = self.buf.truncated();
+        self.out.dropped += got.overlong;
+        got.lines.iter().filter_map(|raw| self.line(raw)).collect()
     }
 
     /// Ends the stream: a last line without a newline is still parsed.
     pub fn finish(mut self) -> HostOutput {
-        if self.overlong {
-            self.out.dropped += 1;
-        } else if !self.pending.is_empty() {
-            let raw = std::mem::take(&mut self.pending);
-            let _ = self.line(&raw);
+        let rest = self.buf.finish();
+        self.out.dropped += rest.overlong;
+        for raw in &rest.lines {
+            let _ = self.line(raw);
         }
         self.out
     }

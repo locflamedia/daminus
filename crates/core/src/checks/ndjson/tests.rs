@@ -1,4 +1,5 @@
 use super::*;
+use crate::domain::ingest::MAX_LINE_BYTES;
 use crate::domain::severity::UnknownReason;
 
 const BEGIN: &str = r#"{"_":"begin","v":1,"bundle":"abc"}"#;

@@ -31,6 +31,8 @@ pub enum BundleError {
     MissingScript(String),
     #[error("check id {0:?} does not map to a unique shell function name")]
     BadCheckId(String),
+    #[error("folder {0:?} is not an absolute path without control characters")]
+    BadPath(String),
 }
 
 /// Set to `1` by a caller that keeps stdin open after the bundle (the SSH
@@ -273,6 +275,26 @@ pub fn build(
     assemble(PRELUDE, groups, vars)
 }
 
+/// Builds a bundle around one script that is not a check (the setup login
+/// test and discover): the prelude, `vars`, the body as function `c_<name>`,
+/// and a `main` that runs it between `begin` and `end` with one `step` line
+/// named `name`. Everything else, tail included, is as for a check bundle, so
+/// the script is just as read-only and just as easy to stop.
+pub fn build_script(name: &str, body: &str, vars: &BundleVars) -> Result<Bundle, BundleError> {
+    let function = function_name(name)?;
+    let code = format!(
+        "{function}() (\n{}\n)\nmain() {{\n\td_begin\n\td_group\n\t{function}\n\td_step {name}\n\td_end\n}}\n{TAIL}",
+        body.trim_end()
+    );
+    Ok(finish(
+        PRELUDE,
+        code,
+        vars,
+        vec![name.to_owned()],
+        Vec::new(),
+    ))
+}
+
 /// One check in the bundle: its id and script body.
 #[derive(Clone, Debug)]
 struct Part {
@@ -318,8 +340,24 @@ fn assemble(
     main.push_str(TAIL);
 
     let code = format!("{functions}{main}");
-    let hash = fnv1a64(format!("{prelude}\0{code}").as_bytes());
+    Ok(finish(
+        prelude,
+        code,
+        vars,
+        checks,
+        groups.keys().copied().collect(),
+    ))
+}
 
+/// Puts the prelude, the hash, the variables and the code together.
+fn finish(
+    prelude: &str,
+    code: String,
+    vars: &BundleVars,
+    checks: Vec<String>,
+    groups: Vec<CheckGroup>,
+) -> Bundle {
+    let hash = fnv1a64(format!("{prelude}\0{code}").as_bytes());
     let mut text = String::with_capacity(prelude.len() + code.len() + 256);
     text.push_str(prelude.trim_end());
     text.push('\n');
@@ -328,12 +366,12 @@ fn assemble(
         let _ = writeln!(text, "{name}={}", quote(value));
     }
     text.push_str(&code);
-    Ok(Bundle {
+    Bundle {
         text,
         hash,
         checks,
-        groups: groups.keys().copied().collect(),
-    })
+        groups,
+    }
 }
 
 /// The wire name of a group, as in the manifest and `step` lines.
