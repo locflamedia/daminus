@@ -47,6 +47,9 @@ pub struct ExposedCheck {
 enum Found {
     Exposed(Vec<String>),
     Clean,
+    /// A redirect that was not followed: the file behind it was never read.
+    /// The text is the `data.error` of the unknown fact.
+    NotFollowed(&'static str),
     Failed(ProbeError),
 }
 
@@ -88,6 +91,7 @@ impl ExposedCheck {
         let mut keys: Vec<String> = Vec::new();
         let mut exposed = 0_u32;
         let mut error = None;
+        let mut not_followed = None;
         for found in all {
             match found {
                 Found::Exposed(k) => {
@@ -95,12 +99,20 @@ impl ExposedCheck {
                     keys.extend(k);
                 }
                 Found::Clean => {}
+                Found::NotFollowed(why) => not_followed = not_followed.or(Some(why)),
                 Found::Failed(e) => error = error.or(Some(e)),
             }
         }
         keys.truncate(MAX_KEYS);
         match (exposed, error) {
             (0, Some(e)) => (failed(url, e), Some(e)),
+            // Nothing found, but a file was never read: not a clean result.
+            (0, None) if not_followed.is_some() => (
+                CheckFact::new(URL_EXPOSED, url)
+                    .with_unknown(UnknownReason::Unsupported)
+                    .with_data(json!({"error": not_followed})),
+                None,
+            ),
             _ => (
                 CheckFact::new(URL_EXPOSED, url)
                     .with_value(f64::from(exposed), "count")
@@ -133,6 +145,26 @@ async fn ask(client: &Client, site: &Url, file: &str) -> Found {
         Ok(r) => r,
         Err(e) => return Found::Failed(error_kind(&e)),
     };
+    if resp.status().is_redirection() {
+        // Judged against the response's own address: earlier redirects on
+        // the same host may already have moved it.
+        let here = resp.url().clone();
+        let target = resp
+            .headers()
+            .get(reqwest::header::LOCATION)
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| here.join(v).ok());
+        return match target {
+            Some(t)
+                if t.host_str().map(str::to_ascii_lowercase)
+                    != here.host_str().map(str::to_ascii_lowercase) =>
+            {
+                Found::NotFollowed("redirect_other_host")
+            }
+            Some(_) => Found::NotFollowed(ProbeError::TooManyRedirects.as_str()),
+            None => Found::Clean,
+        };
+    }
     if resp.status().as_u16() != 200 {
         return Found::Clean;
     }
@@ -168,9 +200,12 @@ fn matched_keys(path: &str, body: &str) -> Vec<String> {
 }
 
 /// Names of the `KEY=value` lines of a dotenv file, at most [`MAX_KEYS`],
-/// each once. Empty for anything that does not read as one: HTML, binary
-/// data, or text without such lines.
+/// each once. A name is a letter or `_` then letters, digits, `_` or `.`, at
+/// least two characters, and may be followed by spaces before the `=`. Empty
+/// for anything that does not read as one: HTML, binary data, or text
+/// without such lines.
 fn env_keys(body: &str) -> Vec<String> {
+    let body = body.strip_prefix('\u{feff}').unwrap_or(body);
     let head = body.trim_start();
     if head.starts_with('<') || body.contains('\0') {
         return Vec::new();
@@ -182,11 +217,12 @@ fn env_keys(body: &str) -> Vec<String> {
         let Some((name, _)) = line.split_once('=') else {
             continue;
         };
+        let name = name.trim_end();
         let valid = name.len() >= 2
-            && name.starts_with(|c: char| c.is_ascii_uppercase())
+            && name.starts_with(|c: char| c.is_ascii_alphabetic() || c == '_')
             && name
                 .chars()
-                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_');
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.');
         if valid && !keys.iter().any(|k| k == name) && keys.len() < MAX_KEYS {
             keys.push(name.to_owned());
         }

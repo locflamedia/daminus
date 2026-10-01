@@ -30,13 +30,16 @@ if [ "$left" -lt 2 ]; then
 fi
 
 # list_procs SECS: `P TAB pid TAB comm` for every live user process, then
-# `E TAB /proc/pid TAB executable` for every link find can read in SECS. The
-# names come from /proc/PID/comm and the flags from /proc/PID/stat: field 9,
-# bit 0x200000, is a kernel thread. A newline inside an executable's path
-# (a name the attacker chose) becomes `?`, so it cannot pass for another record. The state is the first field after the
-# closing parenthesis of the name. (A function, not inline in the
-# substitution below: bash 3.2, `sh` on a Mac, cannot parse a `case` or a `)`
-# inside `$(…)`.)
+# `E TAB /proc/pid TAB executable` for every link find can read in SECS, then
+# `L TAB pid` for every process still there. A process that ended while find
+# ran has no link and no `L` row, and is dropped from the total instead of
+# counting as one that could not be inspected. The names come from
+# /proc/PID/comm and the flags from /proc/PID/stat: field 9, bit 0x200000, is
+# a kernel thread. A newline inside an executable's path (a name the attacker
+# chose) becomes `?`, so it cannot pass for another record. The state is the
+# first field after the closing parenthesis of the name. (A function, not
+# inline in the substitution below: bash 3.2, `sh` on a Mac, cannot parse a
+# `case` or a `)` inside `$(…)`.)
 # shellcheck disable=SC2086,SC2295 # the stat fields are split on purpose.
 list_procs() {
 	paren=') '
@@ -52,6 +55,10 @@ list_procs() {
 		printf 'P\t%s\t%s\n' "$pid" "$comm"
 	done
 	run_for "$1" find "$proc" -maxdepth 2 -path "$proc/[0-9]*/exe" -printf 'E\t%h\t%l\0' | tr '\012\000' '?\012'
+	for dir in "$proc"/[0-9]*; do
+		[ -e "$dir/stat" ] || continue
+		printf 'L\t%s\n' "${dir##*/}"
+	done
 }
 
 procs=$(list_procs "$left" | awk -F '\t' '
@@ -71,6 +78,7 @@ procs=$(list_procs "$left" | awk -F '\t' '
 		name[$2] = comm
 		next
 	}
+	$1 == "L" { live[$2] = 1; next }
 	$1 == "E" {
 		pid = $2
 		sub(/.*\//, "", pid)
@@ -81,28 +89,38 @@ procs=$(list_procs "$left" | awk -F '\t' '
 		next
 	}
 	END {
-		printf "S\t%d\t%d\n", seen, total
+		gone = 0
+		for (k = 1; k <= total; k++) if (!(order[k] in path) && !(order[k] in live)) gone++
+		printf "S\t%d\t%d\n", seen, total - gone
 		for (k = 1; k <= total; k++) {
 			pid = order[k]
 			why = ""
 			if (tolower(name[pid]) in known) why = "name"
 			exe = path[pid]
 			deleted = 0
+			base = exe
 			if (exe ~ / \(deleted\)$/) {
 				deleted = 1
-				base = exe
 				sub(/ \(deleted\)$/, "", base)
+			}
+			# A miner renamed in comm still runs from a file with its name.
+			prog = base
+			sub(/.*\//, "", prog)
+			if (why == "" && prog != "" && (tolower(prog) in known)) why = "name"
+			if (deleted) {
 				if (why == "" && (base ~ /^\/(tmp|var\/tmp|dev|run|var\/run)\// || base ~ /^\/memfd:/)) why = "deleted"
 			}
 			if (why == "") continue
-			key = name[pid]
+			# One finding per distinct binary: two processes with one name
+			# can run different files.
+			key = name[pid] "\t" exe
 			if (key in count) { count[key]++; continue }
 			nkeys++; keys[nkeys] = key
-			count[key] = 1; reason[key] = why; kexe[key] = exe; kdel[key] = deleted
+			count[key] = 1; reason[key] = why; kname[key] = name[pid]; kexe[key] = exe; kdel[key] = deleted
 		}
 		for (i = 1; i <= nkeys; i++) {
 			key = keys[i]
-			printf "F\t%s\t%s\t%d\t%s\t%d\n", key, kexe[key], kdel[key], reason[key], count[key]
+			printf "F\t%s\t%s\t%d\t%s\t%d\n", kname[key], kexe[key], kdel[key], reason[key], count[key]
 		}
 	}')
 

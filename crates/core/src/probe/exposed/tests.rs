@@ -179,13 +179,31 @@ async fn a_redirect_to_another_host_is_not_followed() {
             .await;
     }
     let (f, err) = run(&site.uri()).await;
+    // The real site was never read, so it is not reported clean.
     assert_eq!(err, None);
-    assert_eq!(f.value, Some(0.0), "{f:?}");
+    assert_eq!(f.value, None, "{f:?}");
+    assert_eq!(f.unknown, Some(UnknownReason::Unsupported), "{f:?}");
+    assert_eq!(f.data, json!({"error": "redirect_other_host"}));
     assert_eq!(
         elsewhere.received_requests().await.unwrap().len(),
         0,
         "the other host was contacted"
     );
+}
+
+/// A file that is exposed stays a finding even when the other one redirected away.
+#[tokio::test]
+async fn a_finding_stands_when_the_other_file_redirects_away() {
+    let site = MockServer::start().await;
+    serve("/.env", 200, ENV_FILE).await.mount(&site).await;
+    Mock::given(method("GET"))
+        .and(path("/.git/HEAD"))
+        .respond_with(ResponseTemplate::new(302).insert_header("location", "http://localhost:1/x"))
+        .mount(&site)
+        .await;
+    let (f, _) = run(&site.uri()).await;
+    assert_eq!(f.value, Some(1.0), "{f:?}");
+    assert_eq!(f.unknown, None);
 }
 
 #[tokio::test]
@@ -196,9 +214,10 @@ async fn a_redirect_loop_stops() {
         .mount(&server)
         .await;
     let (f, err) = run(&server.uri()).await;
-    // After five redirects the answer is the redirect itself: no file.
+    // After five redirects the answer is the redirect itself: no file read.
     assert_eq!(err, None);
-    assert_eq!(f.value, Some(0.0), "{f:?}");
+    assert_eq!(f.unknown, Some(UnknownReason::Unsupported), "{f:?}");
+    assert_eq!(f.data, json!({"error": "redirects"}));
     assert_eq!(
         server.received_requests().await.unwrap().len(),
         2 * MAX_REDIRECTS
@@ -245,8 +264,15 @@ async fn failures_are_unknown_unless_something_was_found() {
 #[test]
 fn dotenv_keys_table() {
     let cases: &[(&str, &[&str])] = &[
-        ("A_B=1\nlower=2\nX=3\n9X=4\n", &["A_B"]),
+        ("A_B=1\nlower=2\nX=3\n9X=4\n", &["A_B", "lower"]),
         ("  export DB_HOST = x\nDB_HOST=y\n", &["DB_HOST"]),
+        ("\u{feff}APP_KEY=x\n", &["APP_KEY"]),
+        ("\u{feff}<html>\nAPP_KEY=x\n", &[]),
+        (
+            "db_password = x\nspring.datasource.url=y\n_PRIVATE=1\n",
+            &["db_password", "spring.datasource.url", "_PRIVATE"],
+        ),
+        ("a=b\n", &[]),
         ("# DB_PASSWORD=x\n", &[]),
         ("<html>\nAPP_KEY=x\n", &[]),
         ("APP_KEY=x\n<b>bold</b>\n", &["APP_KEY"]),

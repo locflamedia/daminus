@@ -1880,3 +1880,161 @@ fn security_group_stops_walking_when_its_time_is_spent() {
         assert_eq!(by_target(&facts, p).unknown, Some(UnknownReason::Timeout));
     }
 }
+
+/// A process that ends while the executables are being read is not one that
+/// could not be inspected: it leaves the total instead of turning a clean
+/// result into a missing-permission one.
+#[test]
+fn miner_ignores_a_process_that_ended_during_the_scan() {
+    let tmp = tempfile::tempdir().unwrap();
+    let proc = tmp.path().join("proc");
+    std::fs::create_dir_all(proc.join("self")).unwrap();
+    if !gnu_find() {
+        return;
+    }
+    process(&proc, 1, "systemd", "S", USER, Some("/usr/sbin/init"));
+    process(&proc, 300, "php-fpm", "S", USER, Some("/usr/sbin/php-fpm"));
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let real = String::from_utf8(
+        Command::new("sh")
+            .args(["-c", "command -v find"])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
+    // The walk of the executables starts after the process list was read.
+    tool(
+        &bin,
+        "find",
+        &format!(
+            "case \"$*\" in *-path*) rm -rf '{}' ;; esac\nexec '{}' \"$@\"\n",
+            proc.join("300").display(),
+            real.trim()
+        ),
+    );
+    let facts = run(
+        "sec.miner",
+        &[("DAMINUS_PROC", proc.to_str().unwrap())],
+        &[&bin],
+        &[],
+    );
+    let f = &facts[0];
+    assert_eq!((f.value, f.unknown), (Some(0.0), None), "{f:?}");
+    assert_eq!(f.data, serde_json::json!({"seen": 1, "total": 1}));
+}
+
+/// The name a process reports can be changed; the file it runs from keeps its name.
+#[test]
+fn miner_matches_the_executable_name_when_the_process_name_is_changed() {
+    let tmp = tempfile::tempdir().unwrap();
+    let proc = tmp.path().join("proc");
+    std::fs::create_dir_all(proc.join("self")).unwrap();
+    if !gnu_find() {
+        return;
+    }
+    process(&proc, 1, "systemd", "S", USER, Some("/usr/sbin/init"));
+    process(
+        &proc,
+        70,
+        "kworker/1:1",
+        "S",
+        USER,
+        Some("/home/web/.cache/XMRig"),
+    );
+    process(
+        &proc,
+        71,
+        "sshd",
+        "S",
+        USER,
+        Some("/home/web/.cache/cpuminer (deleted)"),
+    );
+    let facts = miner_run(&proc);
+    let mut targets: Vec<&str> = facts.iter().map(|f| f.target.as_str()).collect();
+    targets.sort_unstable();
+    assert_eq!(targets, ["kworker/1:1", "sshd"], "{facts:?}");
+    assert_eq!(by_target(&facts, "kworker/1:1").data["why"], "name");
+    assert_eq!(by_target(&facts, "sshd").data["why"], "name");
+    assert_eq!(by_target(&facts, "sshd").data["deleted"], true);
+}
+
+/// Two processes that share a name can run different files: each binary is
+/// its own finding, and identical ones are counted together.
+#[test]
+fn miner_keeps_one_finding_per_binary() {
+    let tmp = tempfile::tempdir().unwrap();
+    let proc = tmp.path().join("proc");
+    std::fs::create_dir_all(proc.join("self")).unwrap();
+    if !gnu_find() {
+        return;
+    }
+    process(&proc, 1, "systemd", "S", USER, Some("/usr/sbin/init"));
+    process(&proc, 80, "worker", "S", USER, Some("/tmp/a (deleted)"));
+    process(&proc, 81, "worker", "S", USER, Some("/tmp/b (deleted)"));
+    process(&proc, 82, "worker", "S", USER, Some("/tmp/b (deleted)"));
+    process(&proc, 83, "worker", "S", USER, Some("/usr/bin/worker"));
+    let facts = miner_run(&proc);
+    assert_eq!(facts.len(), 2, "{facts:?}");
+    let mut fps: Vec<(String, u64)> = facts
+        .iter()
+        .map(|f| {
+            (
+                f.fp.clone().unwrap_or_default(),
+                f.data["count"].as_u64().unwrap(),
+            )
+        })
+        .collect();
+    fps.sort();
+    assert_eq!(
+        fps,
+        [
+            ("worker|/tmp/a (deleted)".to_owned(), 1),
+            ("worker|/tmp/b (deleted)".to_owned(), 2)
+        ]
+    );
+}
+
+/// Upload folders are often a separate mounted volume: the walk must go in.
+#[test]
+fn project_walks_cross_mount_points() {
+    if !gnu_find() {
+        return;
+    }
+    let tmp = tempfile::tempdir().unwrap();
+    let app = tmp.path().join("app");
+    write(&app.join("public/uploads/a.php"), "<?php");
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let log = tmp.path().join("args");
+    let real = String::from_utf8(
+        Command::new("sh")
+            .args(["-c", "command -v find"])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
+    tool(
+        &bin,
+        "find",
+        &format!(
+            "echo \"$*\" >>'{}'\nexec '{}' \"$@\"\n",
+            log.display(),
+            real.trim()
+        ),
+    );
+    for id in ["sec.upload_php", "sec.recent_change"] {
+        let facts = run(
+            id,
+            &[("DAMINUS_PATHS", app.to_str().unwrap())],
+            &[&bin],
+            &[],
+        );
+        assert!(!facts.is_empty(), "{id}");
+    }
+    let args = std::fs::read_to_string(&log).unwrap();
+    assert!(args.contains(app.to_str().unwrap()), "{args}");
+    assert!(!args.contains("-xdev"), "{args}");
+}

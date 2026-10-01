@@ -6,6 +6,8 @@
 # the folder, value = how many files, data = the newest change time and the
 # 10 newest files as [path relative to the folder, mtime], fp = SHA-256 of
 # the sorted list of file names). Only listed, never opened.
+# The walk crosses mount points inside the folder: uploads are often a mounted
+# volume, and a folder the walk skipped would read as clean.
 
 [ -n "${DAMINUS_PATHS-}" ] || exit 0
 if ! find_ok; then
@@ -39,7 +41,7 @@ for path in $DAMINUS_PATHS; do
 		continue
 	fi
 	# mtime TAB path relative to the folder, one file a line.
-	found=$(run_for "$left" find "$path" -xdev "$@" -type f -mtime -3 "(" -name '*.php' -o -name '*.phtml' -o -name '*.js' -o -name '*.mjs' -o -name '*.cjs' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' -o -name '*.vue' -o -name '*.py' -o -name '*.rb' -o -name '*.pl' -o -name '*.cgi' -o -name '*.sh' -o -name '*.jsp' -o -name '*.asp' -o -name '*.aspx' -o -name '*.html' -o -name '*.htm' -o -name '.htaccess' ")" -printf '%T@\t%P\0' | tr '\012\000' '?\012')
+	found=$(run_for "$left" find "$path" "$@" -type f -mtime -3 "(" -name '*.php' -o -name '*.phtml' -o -name '*.js' -o -name '*.mjs' -o -name '*.cjs' -o -name '*.jsx' -o -name '*.ts' -o -name '*.tsx' -o -name '*.vue' -o -name '*.py' -o -name '*.rb' -o -name '*.pl' -o -name '*.cgi' -o -name '*.sh' -o -name '*.jsp' -o -name '*.asp' -o -name '*.aspx' -o -name '*.html' -o -name '*.htm' -o -name '.htaccess' ")" -printf '%T@\t%P\0' | tr '\012\000' '?\012')
 	# A find stopped at its time limit leaves nothing of the allowance.
 	if [ "$(group_left "$SEC_GROUP_S")" -lt 1 ]; then
 		emit_unknown sec.recent_change "$path" timeout

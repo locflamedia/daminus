@@ -6,6 +6,8 @@
 # data = size, mtime and how many were found in the folder, fp =
 # size:mtime:sha12 of its first MiB); a folder with none gets one fact with
 # the folder as target and value 0. Files are only listed and hashed.
+# The walk crosses mount points inside the folder: uploads are often a mounted
+# volume, and a folder the walk skipped would read as clean.
 #
 # File names are whatever an uploader chose. find ends each record with a NUL
 # and tr turns a newline inside a name into `?` before the list is read, so a
@@ -46,7 +48,7 @@ for path in $DAMINUS_PATHS; do
 	# are escaped; `*` also matches `/`, so these reach any depth.
 	glob=$(printf '%s\n' "$path" | sed 's/[][*?\\]/\\&/g')
 	# size TAB mtime TAB path, one file a line.
-	found=$(run_for "$left" find "$path" -xdev "$@" -type f \
+	found=$(run_for "$left" find "$path" "$@" -type f \
 		"(" -iname '*.php' -o -iname '*.php[0-9]' -o -iname '*.phtml' -o -iname '*.phar' -o -iname '*.pht' ")" \
 		"(" -path "$glob/uploads/*" -o -path "$glob/*/uploads/*" -o -path "$glob/storage/app/public/*" -o -path "$glob/*/storage/app/public/*" ")" \
 		-printf '%s\t%T@\t%p\0' | tr '\012\000' '?\012')
