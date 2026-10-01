@@ -543,3 +543,412 @@ fn disk_group_stops_walking_when_its_time_is_spent() {
         "a folder was walked after the time was spent"
     );
 }
+
+/// What `db.size` did for one database component: its facts, and what the
+/// fake client was handed (argv, the option file on stdin, PG* variables).
+struct DbRun {
+    facts: Vec<CheckFact>,
+    argv: Option<String>,
+    login: String,
+    env: String,
+    _tmp: tempfile::TempDir,
+}
+
+const DB_ROWS: &str = "0\t3\t3650722202\n1\torders\t2576980378\n1\tsessions\t188743680\n";
+
+/// Runs `db.size` for a component `shop` whose env file holds `env_text`,
+/// with a client that exits `exit` after printing `rows`.
+fn db_run(engine: &str, env_text: &str, exit: i32, rows: &str) -> DbRun {
+    let tmp = tempfile::tempdir().unwrap();
+    let bin = tmp.path().join("bin");
+    let log = tmp.path().join("log");
+    std::fs::create_dir_all(&bin).unwrap();
+    std::fs::create_dir_all(&log).unwrap();
+    std::fs::write(tmp.path().join("rows"), rows).unwrap();
+    std::fs::write(tmp.path().join(".env"), env_text).unwrap();
+    let body = format!(
+        "printf '%s\\n' \"$@\" >'{log}/argv'\n\
+         cat >'{log}/login'\n\
+         env | grep '^PG' | sort >'{log}/env'\n\
+         cat '{rows}'\n\
+         exit {exit}\n",
+        log = log.display(),
+        rows = tmp.path().join("rows").display()
+    );
+    tool(
+        &bin,
+        if engine == "mysql" { "mysql" } else { "psql" },
+        &body,
+    );
+    let entry = format!("{engine}\tshop\t{}\t", tmp.path().join(".env").display());
+    let facts = run(
+        "db.size",
+        &[("DAMINUS_DB", &entry)],
+        &[&bin],
+        &[("HOME", tmp.path().to_str().unwrap())],
+    );
+    let read = |n: &str| std::fs::read_to_string(log.join(n)).ok();
+    DbRun {
+        facts,
+        argv: read("argv"),
+        login: read("login").unwrap_or_default(),
+        env: read("env").unwrap_or_default(),
+        _tmp: tmp,
+    }
+}
+
+fn mysql_login(user: &str, password: &str, extra: &str) -> String {
+    format!("[client]\nuser=\"{user}\"\npassword=\"{password}\"\n{extra}")
+}
+
+/// The credentials are read from the file as text, in every notation the
+/// reader knows, and reach the client only as an option file on stdin.
+#[test]
+fn db_reads_dotenv_text_and_hands_the_login_over_stdin_only() {
+    let cases: &[(&str, &str)] = &[
+        // export, CRLF, double quotes, a trailing comment, host and port.
+        (
+            "# DB_PASSWORD=old\r\nexport DB_USERNAME=\"app user\"\r\nDB_PASSWORD=\"CANARY p#ss w0rd\" # note\r\nDB_HOST=db.internal\r\nDB_PORT=3307\r\n",
+            "[client]\nuser=\"app user\"\npassword=\"CANARY p#ss w0rd\"\nhost=db.internal\nport=3307\n",
+        ),
+        // Single quotes keep everything, and the option file escapes the rest.
+        (
+            "DB_USERNAME='app'\nDB_PASSWORD='CANARY\"b\\c$d `x` ;#'\n",
+            "[client]\nuser=\"app\"\npassword=\"CANARY\\\"b\\\\c$d `x` ;#\"\n",
+        ),
+        // A bare value runs to a space and `#`; indented lines and tabs count.
+        (
+            "  DB_USERNAME=app\n\tDB_PASSWORD=CANARY#abc   # comment\n",
+            "[client]\nuser=\"app\"\npassword=\"CANARY#abc\"\n",
+        ),
+        // The last assignment wins; an empty password is a password.
+        (
+            "DB_USERNAME=a\nDB_PASSWORD=CANARY_old\nDB_PASSWORD=CANARY_new\n",
+            "[client]\nuser=\"a\"\npassword=\"CANARY_new\"\n",
+        ),
+        (
+            "DB_USER=root\nDB_PASSWORD=\n",
+            "[client]\nuser=\"root\"\npassword=\"\"\n",
+        ),
+        // No newline at the end of the file.
+        (
+            "DB_USERNAME=app\nDB_PASSWORD=CANARY_x",
+            "[client]\nuser=\"app\"\npassword=\"CANARY_x\"\n",
+        ),
+        // The compose image's own names, and root as the fallback.
+        (
+            "MYSQL_USER=billing\nMYSQL_PASSWORD=CANARY_b\nMYSQL_HOST=10.0.0.4\n",
+            "[client]\nuser=\"billing\"\npassword=\"CANARY_b\"\nhost=10.0.0.4\n",
+        ),
+        (
+            "MYSQL_ROOT_PASSWORD=CANARY_r\n",
+            "[client]\nuser=\"root\"\npassword=\"CANARY_r\"\n",
+        ),
+        // DB_* beat DATABASE_URL, which beats MYSQL_*.
+        (
+            "MYSQL_USER=m\nDATABASE_URL=mysql://u:CANARY_u@10.1.2.3:3307/shop\nDB_USERNAME=d\nDB_PASSWORD=CANARY_d\n",
+            "[client]\nuser=\"d\"\npassword=\"CANARY_d\"\n",
+        ),
+        (
+            "MYSQL_USER=m\nMYSQL_PASSWORD=CANARY_m\nDATABASE_URL=mysql://u:CANARY_u@10.1.2.3:3307/shop\n",
+            "[client]\nuser=\"u\"\npassword=\"CANARY_u\"\nhost=10.1.2.3\nport=3307\n",
+        ),
+        (
+            "DATABASE_URL=mariadb://u@db/shop\n",
+            "[client]\nuser=\"u\"\npassword=\"\"\nhost=db\n",
+        ),
+    ];
+    for (env, login) in cases {
+        let r = db_run("mysql", env, 0, DB_ROWS);
+        let f = by_target(&r.facts, "shop");
+        assert_eq!(f.unknown, None, "{env:?}: {f:?}");
+        assert_eq!(f.value, Some(3_650_722_202.0), "{env:?}");
+        assert_eq!(r.login, *login, "{env:?}");
+        // The query and the database are the only non-flag arguments.
+        let argv = r.argv.unwrap();
+        let args: Vec<&str> = argv.lines().collect();
+        assert_eq!(
+            args[..4],
+            [
+                "--defaults-extra-file=/dev/stdin",
+                "--connect-timeout=10",
+                "-N",
+                "-B"
+            ]
+        );
+        assert_eq!(args[4], "-e");
+        assert!(args[5].starts_with("(SELECT 0, COUNT(*)"), "{args:?}");
+        assert_eq!(args[6..], ["shop"]);
+        assert!(!argv.contains("CANARY"), "a secret on argv: {argv}");
+    }
+}
+
+/// Values in the file are data: nothing in them is run, and a notation the
+/// reader cannot take as written is reported, not guessed.
+#[test]
+fn db_never_runs_the_env_file_and_refuses_notation_it_cannot_read() {
+    let tmp = tempfile::tempdir().unwrap();
+    let marker = tmp.path().join("pwned");
+    let evil = format!(
+        "DB_USERNAME=app\nDB_PASSWORD=$(touch {m})CANARY`touch {m}`\nDB_HOST=x\ntouch {m}\n. {m}\n",
+        m = marker.display()
+    );
+    let evil = evil.replace("DB_HOST=x\n", "");
+    let r = db_run("mysql", &evil, 0, DB_ROWS);
+    assert_eq!(by_target(&r.facts, "shop").unknown, None);
+    assert_eq!(
+        r.login,
+        mysql_login(
+            "app",
+            &format!("$(touch {m})CANARY`touch {m}`", m = marker.display()),
+            ""
+        )
+    );
+    assert!(!marker.exists(), "the env file was executed");
+
+    let refused: &[&str] = &[
+        // A backslash inside double quotes (an escape the reader does not decode).
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\\"x\"\n",
+        // An unclosed quote.
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\n",
+        "DB_USERNAME=a\nDB_PASSWORD='CANARY\n",
+        // No login at all, or a user without a source.
+        "APP_KEY=base64:CANARY\n",
+        "DB_PASSWORD=CANARY_only\n",
+        "",
+        // Not plain host or port.
+        "DB_USERNAME=a\nDB_HOST=a;b\n",
+        "DB_USERNAME=a\nDB_HOST=-oProxyCommand=x\n",
+        "DB_USERNAME=a\nDB_PORT=33x\n",
+        // URLs that are not the simple form.
+        "DATABASE_URL=mysql://u:p%40ss@db/shop\n",
+        "DATABASE_URL=mysql://u:p@db/shop?ssl=1\n",
+        "DATABASE_URL=mysql://u:p@[::1]/shop\n",
+        "DATABASE_URL=mysql://u:p@db/a/b\n",
+        "DATABASE_URL=mysql://db/shop\n",
+        "DATABASE_URL=sqlite:///x.db\n",
+        "DATABASE_URL=postgresql://u:p@db/shop\n",
+        "DATABASE_URL=redis://u:p@db/0\n",
+    ];
+    for env in refused {
+        let r = db_run("mysql", env, 0, DB_ROWS);
+        assert_eq!(
+            by_target(&r.facts, "shop").unknown,
+            Some(UnknownReason::Unsupported),
+            "{env:?}"
+        );
+        assert!(r.argv.is_none(), "{env:?}: the client was run");
+    }
+}
+
+#[test]
+fn db_postgres_login_travels_in_the_environment_by_name() {
+    let r = db_run(
+        "postgres",
+        "APP=x\nDATABASE_URL=postgresql://shop:CANARY_pg@10.0.0.9:5433/shop\n",
+        0,
+        "0\t2\t8379415\n1\tevents\t622592\n1\ttiny\t0\n",
+    );
+    let f = by_target(&r.facts, "shop");
+    assert_eq!(f.value, Some(8_379_415.0));
+    assert_eq!(f.data["engine"], "postgres");
+    assert_eq!(f.data["tables"], 2);
+    assert_eq!(
+        f.data["top"],
+        serde_json::json!([["events", 622_592], ["tiny", 0]])
+    );
+    assert_eq!(f.data["other"], 7_756_823);
+    assert_eq!(
+        r.env,
+        "PGCONNECT_TIMEOUT=10\nPGHOST=10.0.0.9\nPGPASSWORD=CANARY_pg\nPGPORT=5433\nPGUSER=shop\n"
+    );
+    let argv = r.argv.unwrap();
+    assert!(
+        !argv.contains("CANARY") && !argv.contains("10.0.0.9"),
+        "{argv}"
+    );
+    assert_eq!(
+        argv.lines().take(7).collect::<Vec<_>>(),
+        ["-X", "-w", "-A", "-t", "-F", "\t", "-d"]
+    );
+    // POSTGRES_* names; a password-less login.
+    let r = db_run(
+        "postgres",
+        "POSTGRES_USER=app\nPOSTGRES_PASSWORD=CANARY_p\n",
+        0,
+        DB_ROWS,
+    );
+    assert_eq!(
+        r.env,
+        "PGCONNECT_TIMEOUT=10\nPGPASSWORD=CANARY_p\nPGUSER=app\n"
+    );
+    // A MySQL URL is not a Postgres login.
+    let r = db_run("postgres", "DATABASE_URL=mysql://u:p@db/shop\n", 0, DB_ROWS);
+    assert_eq!(
+        by_target(&r.facts, "shop").unknown,
+        Some(UnknownReason::Unsupported)
+    );
+}
+
+#[test]
+fn db_outcome_follows_the_exit_code_and_the_shape_of_the_rows() {
+    let env = "DB_USERNAME=a\nDB_PASSWORD=CANARY_x\n";
+    // A refused login, an unreachable server and a missing database all
+    // exit non-zero: the reason is not read from any message.
+    let r = db_run(
+        "mysql",
+        env,
+        1,
+        "ERROR 1045 (28000): Access denied for user 'a' CANARY_x\n",
+    );
+    assert_eq!(
+        by_target(&r.facts, "shop").unknown,
+        Some(UnknownReason::NeedsPerm)
+    );
+    let r = db_run("mysql", env, 124, "");
+    assert_eq!(
+        by_target(&r.facts, "shop").unknown,
+        Some(UnknownReason::Timeout)
+    );
+    let r = db_run("mysql", env, 127, "");
+    assert_eq!(
+        by_target(&r.facts, "shop").unknown,
+        Some(UnknownReason::Missing)
+    );
+    // Exit 0 with nothing usable.
+    for rows in ["", "garbage\n", "1\torders\t5\n"] {
+        let r = db_run("mysql", env, 0, rows);
+        assert_eq!(
+            by_target(&r.facts, "shop").unknown,
+            Some(UnknownReason::Unsupported),
+            "{rows:?}"
+        );
+    }
+    // No tables: a size of 0. Noise lines and a seventh table are ignored;
+    // a decimal sum from the server is rounded.
+    let r = db_run("mysql", env, 0, "0\t0\t0\n");
+    let f = by_target(&r.facts, "shop");
+    assert_eq!(f.value, Some(0.0));
+    assert_eq!(f.data["top"], serde_json::json!([]));
+    let rows = "0\t7\t1000.0\nnote\n1\ta\t500\n1\tb\t200\n1\tc\t100\n1\td\t50\n1\te\t25\n1\tf\t10\n1\tg b\t5\n";
+    let r = db_run("mysql", env, 0, rows);
+    let f = by_target(&r.facts, "shop");
+    assert_eq!(f.value, Some(1000.0));
+    assert_eq!(f.data["tables"], 7);
+    assert_eq!(f.data["top"].as_array().unwrap().len(), 5);
+    assert_eq!(f.data["other"], 125);
+}
+
+#[test]
+fn db_env_file_that_is_absent_or_closed() {
+    let tmp = tempfile::tempdir().unwrap();
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    tool(&bin, "mysql", "cat >/dev/null\nexit 0\n");
+    let closed = tmp.path().join("closed");
+    std::fs::create_dir(&closed).unwrap();
+    std::fs::write(closed.join(".env"), "DB_USERNAME=a\n").unwrap();
+    let unreadable = tmp.path().join("unreadable.env");
+    std::fs::write(&unreadable, "DB_USERNAME=a\n").unwrap();
+    std::fs::set_permissions(&unreadable, std::fs::Permissions::from_mode(0o000)).unwrap();
+    std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o000)).unwrap();
+    let root = is_root(tmp.path());
+    let list = format!(
+        "mysql\tgone\t{}\t\nmysql\tnoread\t{}\t\nmysql\tclosed\t{}\t\nmysql\t-oops\t/x\t\nmysql\tshop\t/x\t-c\nmysql\tshop2\t/x\tbad name",
+        tmp.path().join("nope.env").display(),
+        unreadable.display(),
+        closed.join(".env").display(),
+    );
+    let facts = run("db.size", &[("DAMINUS_DB", &list)], &[&bin], &[]);
+    std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o755)).unwrap();
+    std::fs::set_permissions(&unreadable, std::fs::Permissions::from_mode(0o644)).unwrap();
+    assert_eq!(
+        by_target(&facts, "gone").unknown,
+        Some(UnknownReason::Missing)
+    );
+    if !root {
+        for t in ["noread", "closed"] {
+            assert_eq!(
+                by_target(&facts, t).unknown,
+                Some(UnknownReason::NeedsPerm),
+                "{t}"
+            );
+        }
+    }
+    // Names that could be read as options are refused before anything runs.
+    for t in ["-oops", "shop", "shop2"] {
+        assert_eq!(
+            by_target(&facts, t).unknown,
+            Some(UnknownReason::Unsupported),
+            "{t}"
+        );
+    }
+    // Without any database component the check says nothing.
+    assert!(run("db.size", &[("DAMINUS_DB", "")], &[&bin], &[]).is_empty());
+}
+
+/// Through the container: `docker exec` names the variables without values,
+/// the login goes in on stdin, and the harness' recorded rows come back.
+#[test]
+fn db_in_a_container_goes_through_docker_exec() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mysql_env = tmp.path().join("mysql.env");
+    std::fs::write(
+        &mysql_env,
+        "MYSQL_USER=billing\r\nMYSQL_PASSWORD=CANARY_dotenv_billing_pw_2b6d\r\n",
+    )
+    .unwrap();
+    let list = format!(
+        "mysql\tbilling\t{}\tshop-db-1\nmysql\tother\t{}\tmissing-1\nmysql\tmine\t{}\t\n",
+        mysql_env.display(),
+        mysql_env.display(),
+        mysql_env.display()
+    );
+    // The container is the one the docker shim knows.
+    let facts = run("db.size", &[("DAMINUS_DB", &list)], &[&shims()], &[]);
+    let billing = by_target(&facts, "billing");
+    assert_eq!(billing.value, Some(3_650_722_202.0), "{billing:?}");
+    // A container the host does not have: docker exec fails.
+    assert_eq!(
+        by_target(&facts, "other").unknown,
+        Some(UnknownReason::NeedsPerm)
+    );
+    // The same login through a client on the host.
+    assert_eq!(by_target(&facts, "mine").value, Some(3_650_722_202.0));
+}
+
+/// The database group shares one allowance like the disk group: once it is
+/// spent, the remaining databases are timed out without running a client.
+#[test]
+fn db_group_stops_when_its_time_is_spent() {
+    let tmp = tempfile::tempdir().unwrap();
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let calls = tmp.path().join("calls");
+    std::fs::write(tmp.path().join("rows"), DB_ROWS).unwrap();
+    tool(
+        &bin,
+        "mysql",
+        &format!(
+            "cat >/dev/null\necho x >>'{}'\ncat '{}'\n",
+            calls.display(),
+            tmp.path().join("rows").display()
+        ),
+    );
+    let env = tmp.path().join(".env");
+    std::fs::write(&env, "DB_USERNAME=a\nDB_PASSWORD=CANARY_x\n").unwrap();
+    let list = ["a", "b", "c"]
+        .iter()
+        .map(|d| format!("mysql\t{d}\t{}\t", env.display()))
+        .collect::<Vec<_>>()
+        .join("\n");
+    // Calls of date: d_group, then the allowance check before each database;
+    // from the third call on it is 100 s later.
+    clock(&bin, 2);
+    let facts = run("db.size", &[("DAMINUS_DB", &list)], &[&bin], &[]);
+    assert_eq!(by_target(&facts, "a").unknown, None, "{facts:?}");
+    for t in ["b", "c"] {
+        assert_eq!(by_target(&facts, t).unknown, Some(UnknownReason::Timeout));
+    }
+    assert_eq!(std::fs::read_to_string(&calls).unwrap().lines().count(), 1);
+}

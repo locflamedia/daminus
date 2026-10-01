@@ -32,6 +32,7 @@ pub const SCRIPTS: &[(&str, &str)] = &[
         include_str!("../../checks/docker_compose.sh"),
     ),
     ("pm2_app.sh", include_str!("../../checks/pm2_app.sh")),
+    ("db_size.sh", include_str!("../../checks/db_size.sh")),
 ];
 
 /// The source of a check script by its manifest file name.

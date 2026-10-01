@@ -325,6 +325,19 @@
       "id": "db.size",
       "group": "databases",
       "runs": "remote",
+      "script": "db_size.sh",
+      "needs": ["mysql", "psql", "docker", "awk", "sed", "tr"],
+      "facts": {
+        "target": "database name (database component)",
+        "value": "size of the database (MySQL: data + index length from information_schema, cached by the server for up to 24 h; Postgres: pg_database_size)",
+        "unit": "bytes",
+        "data": {
+          "engine": "mysql or postgres",
+          "tables": "number of tables",
+          "top": "five largest tables, [name, bytes]",
+          "other": "bytes outside the five"
+        }
+      },
       "rule": {
         "type": "info"
       }

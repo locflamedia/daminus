@@ -27,7 +27,10 @@ mkdir -p "$work/config"
 # The harness host's components, as projects.json names them: the project
 # folder, the compose project the docker shim knows and one it does not, pm2
 # apps the pm2 shim lists, one it does not, and one under another user's
-# PM2_HOME. The large-files floor drops to 1 MB for the 2 MiB upload.
+# PM2_HOME, and three databases: MySQL read with DB_*, Postgres with a
+# DATABASE_URL, and MySQL inside the container the docker shim knows (its
+# credentials come from MYSQL_* in a CRLF file). The large-files floor drops to
+# 1 MB for the 2 MiB upload.
 cat >"$work/config/projects.json" <<'EOF'
 {"version": 1, "projects": [{"id": "shop", "name": "shop", "components": [
   {"role": "fe", "host": "harness", "kind": "path", "path": "/home/daminus/app"},
@@ -36,7 +39,13 @@ cat >"$work/config/projects.json" <<'EOF'
   {"role": "worker", "host": "harness", "kind": "pm2", "app": "api"},
   {"role": "worker", "host": "harness", "kind": "pm2", "app": "queue"},
   {"role": "worker", "host": "harness", "kind": "pm2", "app": "deleted"},
-  {"role": "worker", "host": "harness", "kind": "pm2", "app": "admin", "pm2_home": "/root/.pm2"}
+  {"role": "worker", "host": "harness", "kind": "pm2", "app": "admin", "pm2_home": "/root/.pm2"},
+  {"role": "db", "host": "harness", "kind": "db", "engine": "mysql", "database": "shop",
+   "env_file": "/home/daminus/app/.env"},
+  {"role": "db", "host": "harness", "kind": "db", "engine": "postgres", "database": "analytics",
+   "env_file": "/home/daminus/app/.env.pg"},
+  {"role": "db", "host": "harness", "kind": "db", "engine": "mysql", "database": "billing",
+   "env_file": "/home/daminus/app/.env.billing", "container": "shop-db-1"}
 ]}]}
 EOF
 printf '%s\n' '{"version": 1, "scan": {"large_file_mb": 1}}' >"$work/config/settings.json"

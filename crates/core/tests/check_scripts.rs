@@ -689,6 +689,273 @@ fn awk_code_only(prog: &str) -> String {
     out
 }
 
+// ---------------------------------------------------------- database rules
+
+/// SQL functions a database query constant may call.
+const SQL_FUNCTIONS: &[&str] = &[
+    "count",
+    "coalesce",
+    "sum",
+    "cast",
+    "database",
+    "current_database",
+    "pg_database_size",
+    "pg_total_relation_size",
+];
+/// Words that may stand right before a `(` without being a function call.
+const SQL_BEFORE_PAREN: &[&str] = &[
+    "select", "union", "all", "from", "where", "and", "or", "not", "in", "as", "on", "by", "is",
+    "limit",
+];
+/// Statements and clauses that write, lock, run code or read files.
+const SQL_FORBIDDEN: &[&str] = &[
+    "insert", "update", "delete", "drop", "alter", "create", "grant", "revoke", "truncate",
+    "replace", "lock", "call", "copy", "load", "set", "execute", "prepare", "into", "outfile",
+    "dumpfile", "handler", "vacuum", "analyze", "explain", "do", "begin", "commit", "rollback",
+];
+/// Shell variables that hold a login (or the `.env` text it came from).
+const SECRET_VARS: &[&str] = &[
+    "$_pass",
+    "$_cp",
+    "$_user",
+    "$_cu",
+    "$_host",
+    "$_port",
+    "$_val",
+    "$_env",
+    "$PGPASSWORD",
+    "$PGUSER",
+    "$PGHOST",
+];
+
+/// The problems with one SQL constant (the text between the quotes).
+fn sql_constant_problems(name: &str, sql: &str) -> Vec<String> {
+    let mut bad = Vec::new();
+    let head = sql.split_whitespace().next().unwrap_or_default();
+    if !(head.eq_ignore_ascii_case("select") || head.eq_ignore_ascii_case("show"))
+        && !sql.trim_start().starts_with("(SELECT")
+    {
+        bad.push(format!("{name}: does not start with SELECT or SHOW"));
+    }
+    if sql.contains(['\'', ';', '$', '`', '\\', '#']) || sql.contains("--") || sql.contains("/*") {
+        bad.push(format!(
+            "{name}: holds a quote, `;`, `$`, a comment or an escape"
+        ));
+    }
+    let lower = sql.to_ascii_lowercase();
+    let words = regex::Regex::new(r"[a-z_][a-z0-9_]*").unwrap();
+    for m in words.find_iter(&lower) {
+        if SQL_FORBIDDEN.contains(&m.as_str()) {
+            bad.push(format!("{name}: uses `{}`", m.as_str().to_uppercase()));
+        }
+    }
+    let calls = regex::Regex::new(r"([a-z_][a-z0-9_]*)\s*\(").unwrap();
+    for c in calls.captures_iter(&lower) {
+        let word = &c[1];
+        if !SQL_BEFORE_PAREN.contains(&word) && !SQL_FUNCTIONS.contains(&word) {
+            bad.push(format!("{name}: calls `{word}(`, not an allowed function"));
+        }
+    }
+    bad
+}
+
+/// The tool a command line runs, with the arguments left for it: looks
+/// through `run_light` and `docker exec [-i] [-e NAME]… CONTAINER`.
+fn db_tool<'a>(cmd: &'a Cmd, bad: &mut Vec<String>, file: &str) -> Option<(&'a str, &'a [String])> {
+    let (name, args): (&str, &[String]) = match cmd.name.as_str() {
+        "run_light" => (args_first(&cmd.args)?, &cmd.args[1..]),
+        other => (other, &cmd.args[..]),
+    };
+    match name {
+        "mysql" | "psql" => Some((name, args)),
+        "docker" => match args.first().map(String::as_str) {
+            Some("inspect") => {
+                let format = args
+                    .iter()
+                    .position(|a| a == "--format")
+                    .and_then(|i| args.get(i + 1));
+                match format {
+                    Some(f) if !f.contains("Env") && !f.contains(".Config") => {}
+                    _ => bad.push(format!(
+                        "{file}: docker inspect without a field-only --format"
+                    )),
+                }
+                None
+            }
+            Some("exec") => {
+                let mut rest = &args[1..];
+                loop {
+                    match rest {
+                        [flag, tail @ ..] if flag == "-i" => rest = tail,
+                        [flag, var, tail @ ..] if flag == "-e" => {
+                            if var.contains('=') || var.starts_with('$') {
+                                bad.push(format!(
+                                    "{file}: docker exec -e {var} (name the variable only)"
+                                ));
+                            }
+                            rest = tail;
+                        }
+                        [flag, ..] if flag.starts_with('-') => {
+                            bad.push(format!("{file}: docker exec option {flag}"));
+                            return None;
+                        }
+                        _ => break,
+                    }
+                }
+                match rest {
+                    [container, tool, tail @ ..]
+                        if container == "$container" && (tool == "mysql" || tool == "psql") =>
+                    {
+                        Some((tool.as_str(), tail))
+                    }
+                    _ => {
+                        bad.push(format!(
+                            "{file}: docker exec of something else than the SQL client"
+                        ));
+                        None
+                    }
+                }
+            }
+            other => {
+                bad.push(format!("{file}: docker {other:?} (only exec and inspect)"));
+                None
+            }
+        },
+        _ => None,
+    }
+}
+
+fn args_first(args: &[String]) -> Option<&str> {
+    args.first().map(String::as_str)
+}
+
+/// Rules for scripts that run a database client. Returns the problems and
+/// the number of client calls it saw (a test that sees none proves nothing).
+///
+/// - SQL lives only in `Q_NAME='SELECT …'` constants (one statement, one
+///   assignment each), allowed to call a short list of functions only;
+/// - a client gets its query as `-e "$Q_NAME"` / `-c "$Q_NAME"`, its login
+///   only through an option file on stdin (`mysql`) or `PG*` variables passed
+///   by name (`psql`, `docker exec -e NAME`), and no other option;
+/// - no fact, message or `echo` mentions a login variable, and only the
+///   option-file `printf` formats one.
+fn db_violations(file: &str, src: &str) -> (Vec<String>, usize) {
+    let mut bad = Vec::new();
+    let code: Vec<&str> = src
+        .lines()
+        .filter(|l| !l.trim_start().starts_with('#'))
+        .collect();
+
+    // SQL constants.
+    let assign = regex::Regex::new(r"^\s*(Q_[A-Z0-9_]+)=(.*)$").unwrap();
+    let any_q = regex::Regex::new(r"(\$\{?)?\bQ_[A-Z0-9_]+").unwrap();
+    let mut assigned = BTreeSet::new();
+    for line in &code {
+        if let Some(c) = assign.captures(line) {
+            let (name, value) = (c[1].to_owned(), c[2].trim());
+            if !assigned.insert(name.clone()) {
+                bad.push(format!("{file}: {name} assigned twice"));
+            }
+            match value.strip_prefix('\'').and_then(|v| v.strip_suffix('\'')) {
+                Some(sql) => bad.extend(sql_constant_problems(&format!("{file}: {name}"), sql)),
+                None => bad.push(format!("{file}: {name} is not a single-quoted constant")),
+            }
+            continue;
+        }
+        for m in any_q.captures_iter(line) {
+            if m.get(1).is_none() {
+                bad.push(format!(
+                    "{file}: `{}` is not a plain use of a constant",
+                    &m[0]
+                ));
+            }
+        }
+    }
+    if code
+        .iter()
+        .any(|l| l.contains("/dev/stdin") && !l.contains("--defaults-extra-file=/dev/stdin"))
+    {
+        bad.push(format!("{file}: /dev/stdin outside --defaults-extra-file"));
+    }
+
+    // Client calls and what mentions a login.
+    let scanned = scan(src);
+    let mut calls = 0;
+    for cmd in &scanned.cmds {
+        match cmd.name.as_str() {
+            "emit" | "emit_unknown" | "perm_missing" | "echo" | "json_str" => {
+                for a in &cmd.args {
+                    if SECRET_VARS.iter().any(|v| a.contains(v)) {
+                        bad.push(format!("{file}: `{} … {a}` would print a login", cmd.name));
+                    }
+                }
+            }
+            "printf" => {
+                // The .env text may be piped into the in-script reader.
+                let mentions = cmd
+                    .args
+                    .iter()
+                    .skip(1)
+                    .any(|a| SECRET_VARS.iter().any(|v| *v != "$_env" && a.contains(v)));
+                if mentions && !cmd.args.first().is_some_and(|f| f.starts_with("[client]")) {
+                    bad.push(format!("{file}: printf of a login outside the option file"));
+                }
+            }
+            _ => {}
+        }
+        let Some((tool, args)) = db_tool(cmd, &mut bad, file) else {
+            continue;
+        };
+        calls += 1;
+        let is_q = |a: &str| a.starts_with("$Q_") && assigned.contains(&a[1..]);
+        let mut it = args.iter().peekable();
+        let mut first = true;
+        let mut query = false;
+        let mut db = false;
+        while let Some(a) = it.next() {
+            let ok = match (tool, a.as_str()) {
+                ("mysql", "--defaults-extra-file=/dev/stdin") => first,
+                ("mysql", "-N" | "-B") | ("psql", "-X" | "-w" | "-A" | "-t") => true,
+                ("mysql", opt) if opt.starts_with("--connect-timeout=") => opt
+                    ["--connect-timeout=".len()..]
+                    .chars()
+                    .all(|c| c.is_ascii_digit()),
+                ("mysql", "-e") | ("psql", "-c") => {
+                    query = it.next().is_some_and(|q| is_q(q));
+                    query
+                }
+                ("psql", "-F") => it.next().is_some_and(|v| v == "$TAB"),
+                ("psql", "-d") => {
+                    db = it.next().is_some_and(|v| v == "$database");
+                    db
+                }
+                ("mysql", "$database") => {
+                    db = it.peek().is_none();
+                    db
+                }
+                _ => false,
+            };
+            if !ok {
+                bad.push(format!("{file}: {tool} argument `{a}` is not allowed"));
+            }
+            first = false;
+        }
+        if tool == "mysql"
+            && args.first().map(String::as_str) != Some("--defaults-extra-file=/dev/stdin")
+        {
+            bad.push(format!(
+                "{file}: mysql without --defaults-extra-file=/dev/stdin first"
+            ));
+        }
+        if !query || !db {
+            bad.push(format!(
+                "{file}: {tool} call without a constant query and the database"
+            ));
+        }
+    }
+    (bad, calls)
+}
+
 fn prelude_functions() -> BTreeSet<String> {
     scan(PRELUDE).functions
 }
@@ -846,6 +1113,141 @@ fn the_allowlist_catches_writes_and_unknown_commands() {
         let got = violations("t.sh", src, &needs, &fns);
         assert!(got.is_empty(), "{src:?} flagged: {got:?}");
     }
+}
+
+#[test]
+fn database_scripts_run_only_constant_select_queries() {
+    let m = manifest().unwrap();
+    let mut seen = 0;
+    for (file, src) in SCRIPTS {
+        let spec = m
+            .checks
+            .iter()
+            .find(|c| c.script.as_deref() == Some(*file))
+            .expect("script in manifest");
+        let uses_client = spec.needs.iter().any(|n| n == "mysql" || n == "psql");
+        let (bad, calls) = db_violations(file, src);
+        if uses_client {
+            assert!(
+                bad.is_empty(),
+                "database rule violations:\n{}",
+                bad.join("\n")
+            );
+            seen += calls;
+        } else {
+            assert_eq!(
+                calls, 0,
+                "{file} runs a database client it does not declare"
+            );
+        }
+    }
+    // mysql and psql, each on the host and through docker exec.
+    assert_eq!(seen, 4, "client calls the tokenizer saw");
+}
+
+#[test]
+fn the_database_rules_catch_writes_logins_on_argv_and_variable_queries() {
+    let q = "Q_A='SELECT 1'\n";
+    let cases: &[(&str, &str)] = &[
+        ("Q_A='DROP TABLE x'\n", "does not start with SELECT or SHOW"),
+        ("Q_A='SELECT 1; DROP TABLE x'\n", "holds a quote"),
+        ("Q_A='SELECT 1 INTO OUTFILE x'\n", "uses `INTO`"),
+        (
+            "Q_A='SELECT pg_terminate_backend(1)'\n",
+            "calls `pg_terminate_backend(",
+        ),
+        ("Q_A='SELECT load_file(x)'\n", "calls `load_file("),
+        ("Q_A='SELECT sleep (5)'\n", "calls `sleep("),
+        ("Q_A='SELECT 1 -- x'\n", "holds a quote"),
+        ("Q_A=\"SELECT 1\"\n", "not a single-quoted constant"),
+        ("Q_A='SELECT 1'\nQ_A='SELECT 2'\n", "assigned twice"),
+        ("Q_A=$x\n", "not a single-quoted constant"),
+        ("read -r Q_A\n", "not a plain use"),
+        ("mysql -e 'DROP TABLE x' db\n", "mysql argument `-e`"),
+        (
+            "mysql --defaults-extra-file=/dev/stdin -e \"$sql\" \"$database\"\n",
+            "mysql argument `-e`",
+        ),
+        (
+            "mysql -ppass -e \"$Q_A\" \"$database\"\n",
+            "mysql argument `-ppass`",
+        ),
+        (
+            "mysql --password=x --defaults-extra-file=/dev/stdin\n",
+            "mysql argument `--password=x`",
+        ),
+        (
+            "mysql -u root --defaults-extra-file=/dev/stdin\n",
+            "mysql argument `-u`",
+        ),
+        (
+            "mysql --defaults-extra-file=/tmp/c -e \"$Q_A\" \"$database\"\n",
+            "mysql argument `--defaults-extra-file=/tmp/c`",
+        ),
+        (
+            "mysql -N --defaults-extra-file=/dev/stdin -e \"$Q_A\" \"$database\"\n",
+            "mysql argument `--defaults-extra-file=/dev/stdin`",
+        ),
+        (
+            "mysql --defaults-extra-file=/dev/stdin -e \"$Q_A\"\n",
+            "without a constant query and the database",
+        ),
+        (
+            "psql -U root -d \"$database\" -c \"$Q_A\"\n",
+            "psql argument `-U`",
+        ),
+        (
+            "psql -h db -d \"$database\" -c \"$Q_A\"\n",
+            "psql argument `-h`",
+        ),
+        ("psql -f x.sql -d \"$database\"\n", "psql argument `-f`"),
+        ("psql -d \"$database\" -c \"$Q_B\"\n", "psql argument `-c`"),
+        ("run_light psql -d x -c \"$Q_A\"\n", "psql argument `-d`"),
+        (
+            "docker exec -e PGPASSWORD=x \"$container\" psql\n",
+            "docker exec -e PGPASSWORD=x",
+        ),
+        (
+            "docker exec -u root \"$container\" mysql\n",
+            "docker exec option -u",
+        ),
+        (
+            "docker exec \"$container\" sh -c x\n",
+            "docker exec of something else",
+        ),
+        ("docker run x\n", "docker Some(\"run\")"),
+        (
+            "docker inspect \"$container\"\n",
+            "without a field-only --format",
+        ),
+        (
+            "docker inspect --format '{{json .Config.Env}}' c\n",
+            "without a field-only --format",
+        ),
+        (
+            "emit db.size \"$database\" \"$_pass\"\n",
+            "would print a login",
+        ),
+        ("echo \"$PGPASSWORD\"\n", "would print a login"),
+        (
+            "printf '%s' \"$_cp\"\n",
+            "printf of a login outside the option file",
+        ),
+        ("cat /dev/stdin\n", "/dev/stdin outside"),
+    ];
+    for (src, want) in cases {
+        let (bad, _) = db_violations("t.sh", &format!("{q}{src}"));
+        let got = bad.join("\n");
+        assert!(got.contains(want), "{src:?}: want {want:?}, got {got:?}");
+    }
+    let clean = "Q_A='SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY 1 LIMIT 5'\n\
+        printf '[client]\\nuser=\"%s\"\\n' \"$_cu\" | run_light docker exec -i \"$container\" mysql --defaults-extra-file=/dev/stdin --connect-timeout=10 -N -B -e \"$Q_A\" \"$database\" 2>/dev/null\n\
+        run_light psql -X -w -A -t -F \"$TAB\" -d \"$database\" -c \"$Q_A\"\n\
+        run_light docker exec -e PGUSER -e PGPASSWORD \"$container\" psql -X -w -A -t -F \"$TAB\" -d \"$database\" -c \"$Q_A\"\n\
+        run_light docker inspect --format '{{.State.Running}}' \"$container\"\n";
+    let (bad, calls) = db_violations("t.sh", clean);
+    assert!(bad.is_empty(), "clean script flagged: {bad:?}");
+    assert_eq!(calls, 3);
 }
 
 #[test]

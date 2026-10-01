@@ -1,6 +1,7 @@
 # Harness image for the read-only check run (scripts/check-harness/run.sh).
-# A stock distro plus: a normal user, a project folder whose .env holds canary
-# secrets, and shims for docker, pm2, dmesg, mysql and psql that print
+# A stock distro plus: a normal user, a project folder whose .env files hold
+# canary secrets (MySQL by DB_*, Postgres by DATABASE_URL, a compose database
+# by MYSQL_* with CRLF and `export`), and shims for docker, pm2, dmesg, mysql and psql that print
 # recorded output (with canaries where the real tool would show secrets).
 # Nothing else is installed: checks must work with what a minimal server has.
 #
@@ -17,7 +18,10 @@ COPY --chown=daminus:daminus home/ /home/daminus/
 RUN chmod -R a+rX /opt/daminus-harness \
     && chmod 0755 /opt/daminus-harness/bin/* \
     && mv /home/daminus/app/env.canary /home/daminus/app/.env \
-    && chmod 0600 /home/daminus/app/.env
+    && mv /home/daminus/app/env-pg.canary /home/daminus/app/.env.pg \
+    && mv /home/daminus/app/env-billing.canary /home/daminus/app/.env.billing \
+    && sed -i 's/$/\r/' /home/daminus/app/.env.billing \
+    && chmod 0600 /home/daminus/app/.env /home/daminus/app/.env.pg /home/daminus/app/.env.billing
 RUN cd /home/daminus/app \
     && mkdir -p storage/logs public/uploads node_modules/pkg \
     && for d in $(seq 1 500); do mkdir -p "src/m$d"; done \

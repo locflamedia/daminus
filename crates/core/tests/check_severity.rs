@@ -123,6 +123,33 @@ fn sizes_are_info() {
     table(vec![(path, Info), (df, Info)]);
 }
 
+#[test]
+fn database_size_is_info_and_unknowns_keep_their_reason() {
+    let mysql = CheckFact::new("db.size", "shop")
+        .with_value(3_650_722_202.0, "bytes")
+        .with_data(
+            json!({"engine": "mysql", "tables": 14, "top": [["orders", 2_576_980_378_u64]],
+                          "other": 1_073_741_824_u64}),
+        );
+    let empty = CheckFact::new("db.size", "scratch")
+        .with_value(0.0, "bytes")
+        .with_data(json!({"engine": "postgres", "tables": 0, "top": [], "other": 0}));
+    table(vec![(mysql, Info), (empty, Info)]);
+    // A size growing fast is a delta for the reader, not a severity.
+    let before = CheckFact::new("db.size", "shop").with_value(1.0, "bytes");
+    let after = CheckFact::new("db.size", "shop").with_value(1.0e12, "bytes");
+    assert_eq!(grade(&after, Some(&before)), Info);
+    for reason in [
+        UnknownReason::NeedsPerm,
+        UnknownReason::Missing,
+        UnknownReason::Unsupported,
+        UnknownReason::Timeout,
+    ] {
+        let f = CheckFact::new("db.size", "shop").with_unknown(reason);
+        assert_eq!(grade(&f, None), Severity::Unknown(reason));
+    }
+}
+
 fn compose(not_running: u32, restarts: u32, mem_pct: f64) -> CheckFact {
     fact(
         "docker.compose",

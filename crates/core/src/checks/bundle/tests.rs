@@ -407,6 +407,7 @@ fn selection_filters_groups_and_ids() {
         disabled_groups: BTreeSet::from([
             CheckGroup::Disk,
             CheckGroup::Containers,
+            CheckGroup::Databases,
             CheckGroup::System,
         ]),
         only: None,
@@ -426,8 +427,15 @@ fn selection_filters_groups_and_ids() {
     let b = build(&m, &only, &vars).unwrap();
     assert_eq!(b.checks, ["disk.fs"]);
     assert!(!b.text.contains("c_sys_load"));
+    let only_db = Selection {
+        only: Some(BTreeSet::from(["db.size".to_owned()])),
+        ..Selection::default()
+    };
+    let b = build(&m, &only_db, &vars).unwrap();
+    assert_eq!(b.checks, ["db.size"]);
+    assert_eq!(b.groups, [CheckGroup::Databases]);
 
-    for id in ["nope", "url.http", "db.size"] {
+    for id in ["nope", "url.http"] {
         let bad = Selection {
             only: Some(BTreeSet::from([id.to_owned()])),
             ..Selection::default()
@@ -680,6 +688,9 @@ fn components_of_the_host_travel_as_lists() {
                  "pm2_home": "/home/www/.pm2/"},
                 {"role": "db", "host": "vps-a", "kind": "db", "engine": "mysql",
                  "database": "shop", "env_file": "/srv/shop/.env"},
+                {"role": "db", "host": "vps-a", "kind": "db", "engine": "postgres",
+                 "database": "reports", "env_file": "/srv/shop/.env.pg",
+                 "container": "shop-pg-1"},
                 {"role": "fe", "host": "vps-b", "kind": "path", "path": "/srv/other"}
             ]},
             {"id": "b", "name": "B", "components": [
@@ -695,12 +706,18 @@ fn components_of_the_host_travel_as_lists() {
     assert_eq!(vars.0[PATHS_VAR], "/srv/shop\n/");
     assert_eq!(vars.0[COMPOSE_VAR], "shop");
     assert_eq!(vars.0[PM2_VAR], "queue\nadmin\t/home/www/.pm2");
+    // Names and paths only: the credentials stay in the .env on the server.
+    assert_eq!(
+        vars.0[DB_VAR],
+        "mysql\tshop\t/srv/shop/.env\t\npostgres\treports\t/srv/shop/.env.pg\tshop-pg-1"
+    );
 
     // A host without components still gets the variables, empty.
     let mut none = BundleVars::new();
     none.add_components(&projects, &HostAlias::parse("vps-c").unwrap())
         .unwrap();
     assert_eq!(none.0[PATHS_VAR], "");
+    assert_eq!(none.0[DB_VAR], "");
 
     // Components change the text, never the hash.
     let m = manifest().unwrap();

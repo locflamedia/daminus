@@ -1,5 +1,21 @@
 #!/bin/sh
-# Harness shim: prints recorded rows for any query. Reads (and drops) stdin,
-# where the real client gets its --defaults-extra-file with the password.
-cat >/dev/null
-cat /opt/daminus-harness/out/db/mysql.tsv
+# Harness shim: answers like the MySQL client for the db.size query. The real
+# client gets its credentials as an option file on stdin, so this one reads
+# it from there and, like a refused login, exits 1 unless it holds the user
+# and password of one of the harness .env files. Its arguments never hold a
+# password; one that did would fail here.
+out=${HARNESS_OUT:-/opt/daminus-harness/out}/db
+opts=$(cat)
+case " $* " in
+*' --defaults-extra-file=/dev/stdin '*) ;;
+*) exit 1 ;;
+esac
+case " $* " in
+*' -p'* | *' --password'* | *' -u'* | *' --user'*) exit 1 ;;
+esac
+case $opts in
+*'user="shop"'*'password="CANARY_dotenv_db_password_5e8f"'*) ;;
+*'user="billing"'*'password="CANARY_dotenv_billing_pw_2b6d"'*) ;;
+*) exit 1 ;;
+esac
+cat "$out/mysql.tsv"

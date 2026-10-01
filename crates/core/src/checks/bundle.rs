@@ -13,7 +13,7 @@ use std::fmt::Write as _;
 
 use crate::domain::host::HostAlias;
 use crate::domain::manifest::{CheckGroup, Manifest, Runs};
-use crate::domain::project::{ComponentKind, ProjectsFile};
+use crate::domain::project::{ComponentKind, DbEngine, ProjectsFile};
 use crate::domain::settings::ScanSettings;
 
 use super::{PRELUDE, script};
@@ -138,7 +138,8 @@ impl BundleVars {
 
     /// Adds what `host` carries in `projects.json`: code folders
     /// ([`PATHS_VAR`]), compose projects ([`COMPOSE_VAR`]) and pm2 apps
-    /// ([`PM2_VAR`]), one per line, each once, in project order. Component
+    /// ([`PM2_VAR`]) and databases ([`DB_VAR`]), one per line, each once, in
+    /// project order. Component
     /// names and paths were validated on load (no control characters), so a
     /// line or a tab never splits one.
     pub fn add_components(
@@ -149,6 +150,7 @@ impl BundleVars {
         let mut paths: Vec<String> = Vec::new();
         let mut compose: Vec<String> = Vec::new();
         let mut pm2: Vec<String> = Vec::new();
+        let mut db: Vec<String> = Vec::new();
         let push = |list: &mut Vec<String>, item: String| {
             if !list.contains(&item) {
                 list.push(item);
@@ -174,12 +176,28 @@ impl BundleVars {
                     };
                     push(&mut pm2, line);
                 }
-                ComponentKind::Db { .. } => {}
+                ComponentKind::Db {
+                    engine,
+                    database,
+                    env_file,
+                    container,
+                } => {
+                    let engine = match engine {
+                        DbEngine::Mysql => "mysql",
+                        DbEngine::Postgres => "postgres",
+                    };
+                    let container = container.as_deref().unwrap_or_default();
+                    push(
+                        &mut db,
+                        format!("{engine}\t{database}\t{env_file}\t{container}"),
+                    );
+                }
             }
         }
         self.set(PATHS_VAR, paths.join("\n"))?;
         self.set(COMPOSE_VAR, compose.join("\n"))?;
         self.set(PM2_VAR, pm2.join("\n"))?;
+        self.set(DB_VAR, db.join("\n"))?;
         Ok(())
     }
 }
@@ -191,6 +209,10 @@ pub const COMPOSE_VAR: &str = "DAMINUS_COMPOSE";
 /// pm2 apps on the host (`pm2.app`), one per line: the app name, then a tab
 /// and the daemon's `PM2_HOME` when the component names one.
 pub const PM2_VAR: &str = "DAMINUS_PM2";
+/// Databases on the host (`db.size`), one per line: engine, database name,
+/// `.env` path and container name (empty when the client runs on the host),
+/// tab-separated. Only paths and names: the credentials stay in the `.env`.
+pub const DB_VAR: &str = "DAMINUS_DB";
 
 /// Which checks go in the bundle.
 #[derive(Clone, Debug, Default)]

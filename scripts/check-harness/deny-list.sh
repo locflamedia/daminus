@@ -14,10 +14,14 @@ words='rm|mv|cp|tee|dd|truncate|shred|chmod|chown|chgrp|ln|mkdir|rmdir|touch|ins
 status=0
 for file in "$@"; do
 	# Drop comments; in the prelude, line 1 (`exec 2>/dev/null`) is the one
-	# allowed exec. Then drop redirects to /dev/null or to a descriptor.
+	# allowed exec. Then drop redirects to /dev/null or to a descriptor, and
+	# the one other use of the word: `docker exec` of the SQL client in the
+	# container (the allowlist test pins the rest of that command).
+	# shellcheck disable=SC2016 # the `$` in the sed pattern is literal
 	code=$(sed -e 's/^[[:space:]]*#.*//' -e 's/[[:space:]]#[^"'\'']*$//' "$file" |
 		awk -v prelude="$(basename "$file")" 'prelude == "prelude.sh" && NR == 1 { print ""; next } { print }' |
-		sed -E 's/[0-9]?>>?[[:space:]]*(\/dev\/null|&[0-9-])//g')
+		sed -E -e 's/[0-9]?>>?[[:space:]]*(\/dev\/null|&[0-9-])//g' \
+			-e 's/docker exec (-i |-e [A-Z_]+ )*"\$container" (mysql|psql) /docker-sql-client /g')
 	report() {
 		hits=$(printf '%s\n' "$code" | grep -nE "$1" || true)
 		if [ -n "$hits" ]; then

@@ -9,6 +9,27 @@
 out=${HARNESS_OUT:-/opt/daminus-harness/out}/docker
 cmd=${1-}
 [ "$#" -gt 0 ] && shift
+# `docker exec [-i] [-e NAME]... CONTAINER COMMAND...` runs COMMAND (a shim
+# on PATH) for the one container the harness has. An `-e` that carries a
+# value (NAME=value) would put a secret on argv, so it fails here.
+if [ "$cmd" = exec ]; then
+	while [ "$#" -gt 0 ]; do
+		case $1 in
+		-i) shift ;;
+		-e)
+			case ${2-} in
+			'' | *=*) exit 1 ;;
+			esac
+			shift 2
+			;;
+		-*) exit 1 ;;
+		*) break ;;
+		esac
+	done
+	[ "${1-}" = shop-db-1 ] || exit 1
+	shift
+	exec "$@"
+fi
 format=""
 filter=""
 while [ "$#" -gt 0 ]; do
@@ -35,6 +56,7 @@ ps)
 	;;
 inspect)
 	case $format in
+	'{{.State.Running}}') echo true ;;
 	'' | *Env*) cat "$out/inspect.json" ;;
 	*) cat "$out/inspect.tsv" ;;
 	esac

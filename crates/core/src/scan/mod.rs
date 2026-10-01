@@ -2,6 +2,8 @@
 //! saving the raw snapshot. `evaluate` (in `domain`) turns snapshots into
 //! what the user sees.
 
+#[cfg(test)]
+mod canary_tests;
 pub mod event;
 mod report;
 mod service;
