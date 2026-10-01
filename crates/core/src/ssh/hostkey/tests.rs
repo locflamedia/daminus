@@ -199,6 +199,20 @@ async fn host_key_alias_replaces_the_host_name() {
 }
 
 #[tokio::test]
+async fn a_host_key_alias_may_be_any_word() {
+    if !have_keygen() {
+        return;
+    }
+    let rig = Rig::new();
+    let (public, fp) = make_key(rig.dir.path(), "server");
+    rig.record("prod@eu", &public);
+    let mut host = rig.host();
+    host.host_key_alias = Some("prod@eu".into());
+    let info = check(&rig.tools(None), &host).await;
+    assert_eq!(info.known, [fp]);
+}
+
+#[tokio::test]
 async fn a_proxied_host_is_not_scanned_directly() {
     if !have_keygen() {
         return;

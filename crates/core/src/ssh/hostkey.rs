@@ -85,14 +85,15 @@ fn lookup_name(host: &ResolvedHost) -> String {
 }
 
 /// Whether `s` can be handed to `ssh-keygen` / `ssh-keyscan` as a host name:
-/// no option, space or control character.
+/// no option, space or control character. Anything else goes (a `HostKeyAlias`
+/// may be any word, an IPv6 address may carry a `%zone`): the programs are
+/// started without a shell, and the name is an argument of `-F` or follows `--`.
 fn plain_host(s: &str) -> bool {
     let name = s.trim_start_matches('[');
     !s.is_empty()
         && s.len() <= 255
         && !name.starts_with('-')
-        && s.chars()
-            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | ':' | '[' | ']'))
+        && s.chars().all(|c| !c.is_control() && !c.is_whitespace())
 }
 
 /// The recorded keys of `host` in the files ssh would read.

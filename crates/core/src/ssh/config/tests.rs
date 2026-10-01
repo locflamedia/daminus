@@ -187,6 +187,53 @@ fn an_include_that_includes_itself_stops() {
 }
 
 #[test]
+fn a_file_that_includes_itself_lists_what_it_leaves_out_once() {
+    let rig = Rig::new(
+        "\
+Include config
+Include other
+Host *
+    User deploy
+Match host db-1
+    User root
+Host bare
+    User nobody
+",
+    );
+    rig.write(".ssh/other", "Include config\nInclude other\n");
+    let list = rig.list();
+    assert_eq!(
+        skipped(&list),
+        [
+            ("*", SkipReason::Wildcard),
+            ("Match host db-1", SkipReason::Match),
+            ("bare", SkipReason::NoHostName),
+        ]
+    );
+}
+
+#[test]
+fn a_host_name_before_the_first_host_applies_to_every_alias() {
+    let rig = Rig::new("HostName shared.example.com\nHost a\n  User u\nHost b\n");
+    let list = rig.list();
+    assert_eq!(aliases(&list), ["a", "b"]);
+    assert!(list.skipped.is_empty());
+    // One inside a block still belongs to that block only.
+    let rig = Rig::new("Host a\n  HostName a.example.com\nHost b\n");
+    assert_eq!(aliases(&rig.list()), ["a"]);
+}
+
+#[test]
+fn the_f_file_is_read_without_a_home_folder() {
+    let s = ConfigSource::at(None, Some(Path::new("/tmp/hosts/ssh_config"))).unwrap();
+    assert_eq!(s.file, PathBuf::from("/tmp/hosts/ssh_config"));
+    assert_eq!(s.include_base, PathBuf::from("/tmp/hosts"));
+    assert!(ConfigSource::at(None, None).is_none());
+    let s = ConfigSource::at(Some("/Users/x".into()), None).unwrap();
+    assert_eq!(s.file, PathBuf::from("/Users/x/.ssh/config"));
+}
+
+#[test]
 fn a_block_opened_in_an_included_file_does_not_leak_out() {
     let rig = Rig::new(
         "\

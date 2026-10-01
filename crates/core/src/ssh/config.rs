@@ -96,20 +96,45 @@ pub struct ConfigSource {
 }
 
 impl ConfigSource {
-    /// The config `tools` reads: its `-F` file, else `$HOME/.ssh/config`.
-    /// `None` when `-F` is not set and there is no `HOME`.
+    /// The config `tools` reads: its `-F` file, else `$HOME/.ssh/config`. The
+    /// home folder is `$HOME`, else the one the user database says (as ssh
+    /// does); without either the `-F` file is still read, with its own folder
+    /// standing in. `None` when `-F` is not set and there is no home at all.
     pub fn for_tools(tools: &SshTools) -> Option<Self> {
-        let home = tools.var("HOME").map(PathBuf::from)?;
-        let include_base = home.join(".ssh");
-        let file = tools
-            .config()
-            .map_or_else(|| include_base.join("config"), Path::to_path_buf);
-        Some(Self {
-            file,
-            include_base,
-            home,
-        })
+        let home = tools.var("HOME").map(PathBuf::from).or_else(passwd_home);
+        Self::at(home, tools.config())
     }
+
+    fn at(home: Option<PathBuf>, config: Option<&Path>) -> Option<Self> {
+        match (home, config) {
+            (Some(home), config) => {
+                let include_base = home.join(".ssh");
+                let file = config.map_or_else(|| include_base.join("config"), Path::to_path_buf);
+                Some(Self {
+                    file,
+                    include_base,
+                    home,
+                })
+            }
+            (None, Some(file)) => {
+                let dir = file.parent().map(Path::to_path_buf).unwrap_or_default();
+                Some(Self {
+                    file: file.to_path_buf(),
+                    include_base: dir.clone(),
+                    home: dir,
+                })
+            }
+            (None, None) => None,
+        }
+    }
+}
+
+/// The home folder of the user running this process, from the user database.
+fn passwd_home() -> Option<PathBuf> {
+    nix::unistd::User::from_uid(nix::unistd::Uid::current())
+        .ok()
+        .flatten()
+        .map(|u| u.dir)
 }
 
 /// Lists the hosts of `source`. A missing file is the empty state, not an error.
@@ -118,6 +143,8 @@ pub fn list_hosts(source: &ConfigSource) -> Result<HostList, AppError> {
         source,
         blocks: Vec::new(),
         files: 0,
+        global_host_name: false,
+        chain: vec![canonical(&source.file)],
     };
     let found = match std::fs::read_to_string(&source.file) {
         Ok(text) => {
@@ -161,6 +188,17 @@ struct Parser<'a> {
     source: &'a ConfigSource,
     blocks: Vec<Block>,
     files: usize,
+    /// A `HostName` before any `Host` or `Match` line: ssh applies it to
+    /// every host.
+    global_host_name: bool,
+    /// The files being read, outermost first: an `Include` of one of them
+    /// would only read it again.
+    chain: Vec<PathBuf>,
+}
+
+/// `path` as the file system names it, so two spellings of one file match.
+fn canonical(path: &Path) -> PathBuf {
+    std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
 impl Parser<'_> {
@@ -198,10 +236,11 @@ impl Parser<'_> {
                     current = Some(self.blocks.len() - 1);
                 }
                 "hostname" => {
-                    if let Some(i) = current
-                        && !args.is_empty()
-                    {
-                        self.blocks[i].host_name = true;
+                    if !args.is_empty() {
+                        match current {
+                            Some(i) => self.blocks[i].host_name = true,
+                            None => self.global_host_name = true,
+                        }
                     }
                 }
                 "include" => {
@@ -213,8 +252,14 @@ impl Parser<'_> {
                             if self.files >= MAX_FILES {
                                 return;
                             }
+                            let id = canonical(&included);
+                            if self.chain.contains(&id) {
+                                continue;
+                            }
                             if let Ok(body) = std::fs::read_to_string(&included) {
+                                self.chain.push(id);
                                 self.parse(&included, &body, depth + 1, current);
+                                self.chain.pop();
                             }
                         }
                     }
@@ -265,36 +310,45 @@ impl Parser<'_> {
     fn finish(self, found: bool) -> HostList {
         let mut hosts: Vec<ConfigHost> = Vec::new();
         let mut skipped = Vec::new();
+        // The same entry can come twice through an `Include` read from two places.
+        fn skip(list: &mut Vec<SkippedHost>, entry: SkippedHost) {
+            if !list.contains(&entry) {
+                list.push(entry);
+            }
+        }
         for block in &self.blocks {
             if block.kind == BlockKind::Match {
-                skipped.push(SkippedHost {
-                    pattern: shown(&format!("Match {}", block.patterns.join(" "))),
-                    reason: SkipReason::Match,
-                    file: block.file.clone(),
-                    line: block.line,
-                });
+                skip(
+                    &mut skipped,
+                    SkippedHost {
+                        pattern: shown(&format!("Match {}", block.patterns.join(" "))),
+                        reason: SkipReason::Match,
+                        file: block.file.clone(),
+                        line: block.line,
+                    },
+                );
                 continue;
             }
             for pattern in &block.patterns {
-                let skip = |reason| SkippedHost {
+                let entry = |reason| SkippedHost {
                     pattern: shown(pattern),
                     reason,
                     file: block.file.clone(),
                     line: block.line,
                 };
                 if pattern.contains(['*', '?', '!']) {
-                    skipped.push(skip(SkipReason::Wildcard));
+                    skip(&mut skipped, entry(SkipReason::Wildcard));
                     continue;
                 }
                 let Ok(alias) = HostAlias::parse(pattern) else {
-                    skipped.push(skip(SkipReason::InvalidAlias));
+                    skip(&mut skipped, entry(SkipReason::InvalidAlias));
                     continue;
                 };
                 if hosts.iter().any(|h| h.alias == alias) {
                     continue;
                 }
                 if !self.has_host_name(&alias) {
-                    skipped.push(skip(SkipReason::NoHostName));
+                    skip(&mut skipped, entry(SkipReason::NoHostName));
                     continue;
                 }
                 hosts.push(ConfigHost {
@@ -312,12 +366,14 @@ impl Parser<'_> {
         }
     }
 
-    /// Whether any `Host` block that applies to `alias` sets a `HostName`
-    /// (its own, or a pattern such as `Host web-*`).
+    /// Whether a `HostName` applies to `alias`: one set before any block, or
+    /// by a `Host` block that applies to it (its own, or a pattern such as
+    /// `Host web-*`).
     fn has_host_name(&self, alias: &HostAlias) -> bool {
-        self.blocks.iter().any(|b| {
-            b.kind == BlockKind::Host && b.host_name && applies(&b.patterns, alias.as_str())
-        })
+        self.global_host_name
+            || self.blocks.iter().any(|b| {
+                b.kind == BlockKind::Host && b.host_name && applies(&b.patterns, alias.as_str())
+            })
     }
 }
 

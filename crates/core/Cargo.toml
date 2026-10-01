@@ -26,7 +26,7 @@ ts = ["dep:ts-rs"]
 
 [dependencies]
 clap = { version = "4.6", features = ["derive"], optional = true }
-nix = { version = "0.31", default-features = false, features = ["signal", "process"] }
+nix = { version = "0.31", default-features = false, features = ["signal", "process", "user"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2"] }
 regex = "1.13"
 rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "std", "tls12"] }

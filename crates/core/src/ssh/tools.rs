@@ -31,6 +31,19 @@ impl Captured {
     }
 }
 
+/// Kills a process group when dropped: whatever the program started (a
+/// ProxyCommand, a `Match exec`) goes with it. Only held while the program's
+/// group leader has not been waited on, so the id is still its own.
+struct KillGroup(Option<i32>);
+
+impl Drop for KillGroup {
+    fn drop(&mut self) {
+        if let Some(pgid) = self.0 {
+            let _ = killpg(Pid::from_raw(pgid), Signal::SIGKILL);
+        }
+    }
+}
+
 /// Where the OpenSSH programs are and how to start them.
 #[derive(Debug, Clone)]
 pub struct SshTools {
@@ -162,10 +175,13 @@ impl SshTools {
             let status = child.wait().await.ok();
             (buf, status)
         };
+        // Dropped while the program has not been reaped (a timeout, or the
+        // caller giving up on this future), the guard stops its group.
+        let mut guard = KillGroup(pgid);
         let done = tokio::time::timeout(limit, run).await;
-        if let Some(pgid) = pgid {
-            // Whatever the program left behind (a ProxyCommand, a `Match exec`).
-            let _ = killpg(Pid::from_raw(pgid), Signal::SIGKILL);
+        if done.is_ok() {
+            // Reaped: the group id may be another group's by now.
+            guard.0 = None;
         }
         let (buf, status) = done.ok()?;
         Some(Captured {
@@ -225,6 +241,39 @@ mod tests {
             tokio::time::sleep(Duration::from_millis(20)).await;
         }
         panic!("child {pid} survived the timeout");
+    }
+
+    #[tokio::test]
+    async fn capture_stops_what_it_started_when_the_caller_gives_up() {
+        let dir = tempfile::tempdir().unwrap();
+        let pidfile = dir.path().join("pid");
+        let tools = SshTools::new();
+        let body = format!("sleep 60 & echo $! > '{}'; wait", pidfile.display());
+        let cmd = sh(&tools, &body);
+        let task = tokio::spawn(async move {
+            SshTools::new()
+                .capture(cmd, b"", Duration::from_secs(60))
+                .await
+        });
+        let mut pid = None;
+        for _ in 0..100 {
+            if let Ok(text) = std::fs::read_to_string(&pidfile)
+                && let Ok(n) = text.trim().parse::<i32>()
+            {
+                pid = Some(n);
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        let pid = pid.expect("the program never started");
+        task.abort();
+        for _ in 0..100 {
+            if nix::sys::signal::kill(Pid::from_raw(pid), None).is_err() {
+                return;
+            }
+            tokio::time::sleep(Duration::from_millis(20)).await;
+        }
+        panic!("child {pid} survived the abort");
     }
 
     #[tokio::test]
