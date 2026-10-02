@@ -21,6 +21,8 @@
   --surface-2: #eceef6;
   --surface-3: #e6e8f1;
   --surface-well: #f7f8fc;
+  --surface-pop: var(--surface-0);
+  --menu-hover: var(--surface-1);
   --base: #eceef8;
   --page: #f8f8fc;
   --page-sheet: #f2f3f8;
@@ -78,7 +80,7 @@
   --node-bg: var(--surface-0);
   /* The project tile: a two-stop tint at 135 degrees, white mark on top. */
   --tint-amber-1: #f5c572;
-  --tint-amber-2: #c98416;
+  --tint-amber-2: #b96c0b;
   --tint-blue-1: #9db0ff;
   --tint-blue-2: #4f6bed;
   --tint-lilac-1: #c9b6f7;
@@ -268,6 +270,8 @@
     --surface-2: #2a2d3b;
     --surface-3: #2f3242;
     --surface-well: #20222d;
+    --surface-pop: var(--surface-1);
+    --menu-hover: var(--surface-3);
     --base: #101118;
     --page: #101118;
     --page-sheet: #101118;
@@ -317,7 +321,7 @@
     --role-worker: #f2a0c6;
     --node-bg: var(--surface-2);
     --tint-amber-1: #f5c572;
-    --tint-amber-2: #c98416;
+    --tint-amber-2: #b96c0b;
     --tint-blue-1: #9db0ff;
     --tint-blue-2: #4f6bed;
     --tint-lilac-1: #c9b6f7;
@@ -410,6 +414,8 @@
   --surface-2: #2a2d3b;
   --surface-3: #2f3242;
   --surface-well: #20222d;
+  --surface-pop: var(--surface-1);
+  --menu-hover: var(--surface-3);
   --base: #101118;
   --page: #101118;
   --page-sheet: #101118;
@@ -459,7 +465,7 @@
   --role-worker: #f2a0c6;
   --node-bg: var(--surface-2);
   --tint-amber-1: #f5c572;
-  --tint-amber-2: #c98416;
+  --tint-amber-2: #b96c0b;
   --tint-blue-1: #9db0ff;
   --tint-blue-2: #4f6bed;
   --tint-lilac-1: #c9b6f7;

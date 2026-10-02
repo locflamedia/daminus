@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
+import { LOCALES } from '@/i18n'
 import { useLayoutRange } from '@/lib/viewport'
 import { useSettingsStore } from '@/stores/settings'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -20,7 +21,7 @@ const range = useLayoutRange()
 const hints = computed((): Record<string, string> => {
   if (range.value === 'narrow') return {}
   return {
-    general: t(`language.${settings.language}`),
+    general: LOCALES.map((l) => l.toUpperCase()).join(' / '),
     appearance: t(`theme.${settings.theme}`),
   }
 })

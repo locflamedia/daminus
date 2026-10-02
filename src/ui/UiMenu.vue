@@ -213,7 +213,7 @@ function apart(index: number): boolean {
   gap: 2px;
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--surface-0);
+  background: var(--surface-pop);
 }
 
 .item {
@@ -232,8 +232,9 @@ function apart(index: number): boolean {
 }
 
 .item:hover,
-.item:focus-visible {
-  background: var(--surface-1);
+.item:focus-visible,
+.item[aria-checked='true'] {
+  background: var(--menu-hover);
 }
 
 .item:focus-visible {

@@ -72,7 +72,7 @@ function toggle() {
   max-width: 100%;
   padding: var(--space-3);
   border-radius: var(--radius-md);
-  background: var(--surface-0);
+  background: var(--surface-pop);
   color: var(--ink);
   font-size: var(--text-12);
   line-height: 1.45;

@@ -112,7 +112,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside, tru
   position: fixed;
   z-index: 50;
   max-width: calc(100vw - 16px);
-  background: var(--surface-0);
+  background: var(--surface-pop);
   box-shadow: var(--shadow-pop);
 }
 

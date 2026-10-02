@@ -51,6 +51,8 @@ describe('light tokens match the canvas', () => {
     '--surface-3': '#e6e8f1',
     '--base': '#eceef8',
     '--surface-well': '#f7f8fc',
+    '--surface-pop': 'var(--surface-0)',
+    '--menu-hover': 'var(--surface-1)',
     '--page': '#f8f8fc',
     '--page-sheet': '#f2f3f8',
     '--btn': '#1c1d24',
@@ -228,6 +230,10 @@ describe('chart tokens match the canvas', () => {
     }
   })
 
+  it('ends the amber monogram gradient on the same warn amber', () => {
+    expect(light.get('--tint-amber-2')).toBe(light.get('--chart-amber'))
+  })
+
   it('uses one tint set for the scan strips and the heatmap', () => {
     for (const state of ['ok', 'warn', 'crit']) {
       expect(light.get(`--heat-${state}`)).toBe(light.get(`--strip-${state}`))
@@ -295,6 +301,8 @@ describe('dark tokens match the canvas', () => {
 describe('dark token gaps are filled with the values of the Components · Dark board', () => {
   const expected: Record<string, string> = {
     '--surface-well': '#20222d',
+    '--surface-pop': 'var(--surface-1)',
+    '--menu-hover': 'var(--surface-3)',
     '--accent-mid': '#7b91ff',
     '--accent-ink-hover': '#c2ccff',
     '--side-hover': 'rgba(255, 255, 255, 0.05)',

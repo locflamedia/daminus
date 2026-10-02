@@ -491,7 +491,7 @@ if (props.defaultOpen) {
   gap: 2px;
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--surface-0);
+  background: var(--surface-pop);
   box-shadow: var(--shadow-overlay);
   transform-origin: top left;
 }
@@ -526,7 +526,7 @@ if (props.defaultOpen) {
 
 .option.active,
 .option.selected {
-  background: var(--surface-1);
+  background: var(--menu-hover);
 }
 
 .name {
