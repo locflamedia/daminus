@@ -310,6 +310,16 @@ mod ipc {
     }
 
     #[test]
+    fn projects_list_returns_the_projects_without_host_settings_or_rules() {
+        let app = mock_app(FakeTransport::new());
+        let list = app.invoke("projects_list", json!({})).unwrap();
+        assert_eq!(list.as_array().map(Vec::len), Some(1));
+        assert_eq!(list[0]["id"], json!("shop"));
+        assert_eq!(list[0]["name"], json!("Shop"));
+        assert!(list[0]["components"].is_array());
+    }
+
+    #[test]
     fn scope_object_errors_reject_with_the_app_error_shape() {
         let app = mock_app(FakeTransport::new());
         let err = app

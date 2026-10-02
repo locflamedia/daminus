@@ -8,6 +8,7 @@
     "allow-scan-stop",
     "allow-scan-status",
     "allow-report-latest",
+    "allow-projects-list",
     "allow-reveal-config-dir",
     "core:event:allow-listen",
     "core:event:allow-unlisten",

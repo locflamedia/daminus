@@ -43,6 +43,7 @@ pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + 
         commands::scan_stop,
         commands::scan_status,
         commands::report_latest,
+        commands::projects_list,
         commands::reveal_config_dir,
     ]
 }
