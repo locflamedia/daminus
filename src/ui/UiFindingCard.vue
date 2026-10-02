@@ -95,6 +95,10 @@ const titleId = useId()
   height: var(--h-control-sm);
 }
 
+.head :deep(.chip) {
+  align-self: center;
+}
+
 .since {
   margin-left: auto;
   color: var(--ink-3);

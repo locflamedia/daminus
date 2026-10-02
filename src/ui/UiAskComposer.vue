@@ -112,12 +112,18 @@ function onKeydown(event: KeyboardEvent) {
   flex: 1 1 auto;
   min-width: 0;
   padding: 6px 0;
+  border: 0;
+  background: transparent;
   overflow-y: hidden;
   color: var(--ink);
   font-size: var(--text-13);
   line-height: 20px;
   outline: none;
   resize: none;
+}
+
+.area:focus-visible {
+  box-shadow: none;
 }
 
 .area::placeholder {

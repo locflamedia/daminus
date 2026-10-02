@@ -498,6 +498,7 @@ const cardBase = computed(() => ({
           :status="{
             tone: 'neutral',
             icon: 'check-circle',
+            tileTone: 'ok' as const,
             title: k('card.allPassed'),
             meta: k('card.nothingChanged'),
             chip: k('card.zeroIssues'),
@@ -519,6 +520,7 @@ const cardBase = computed(() => ({
           :status="{
             tone: 'neutral',
             icon: 'check-circle',
+            tileTone: 'ok' as const,
             title: k('card.allPassed'),
             chip: k('card.zeroIssues'),
           }"

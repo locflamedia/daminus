@@ -2,7 +2,7 @@
   Domain link, from the board "Micro UI": a 12 px globe, the domain in ink-2, and a small ↗
   in ink-4 that says it opens the browser. With `sslDays` a second part shows the certificate
   as a lock and "SSL 41 d": green while it is fine, amber under 14 days, rose under 3 (an
-  expired one reads "SSL expired"). The link does not navigate the app's own webview: it
+  expired one reads "SSL expired"). `bare` drops the globe (the project card's head). The link does not navigate the app's own webview: it
   reports `open` with the address and the owner hands it to the system browser.
 -->
 <script setup lang="ts">
@@ -12,7 +12,7 @@ import { useFormat } from '@/composables/use-format'
 import { sslTone } from '@/lib/micro'
 import UiIcon from './UiIcon.vue'
 
-const props = defineProps<{ domain: string; sslDays?: number }>()
+const props = defineProps<{ domain: string; sslDays?: number; bare?: boolean }>()
 const emit = defineEmits<{ open: [url: string] }>()
 
 const { t } = useI18n()
@@ -31,12 +31,13 @@ const ssl = computed(() => {
   <span class="domain">
     <a
       class="link"
+      :class="{ bare }"
       :href="url"
       rel="noopener noreferrer"
       :aria-label="t('ui.openInBrowser', { site: domain })"
       @click.prevent="emit('open', url)"
     >
-      <UiIcon name="globe" :size="12" />
+      <UiIcon v-if="!bare" name="globe" :size="12" />
       <span class="name">{{ domain }}</span>
       <UiIcon name="external" :size="12" class="out" />
     </a>
@@ -62,6 +63,10 @@ const ssl = computed(() => {
   min-width: 0;
   border-radius: var(--radius-xs);
   color: var(--ink-2);
+}
+
+.link.bare {
+  color: var(--ink-3);
 }
 
 .link:hover {

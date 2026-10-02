@@ -1,12 +1,12 @@
 <!-- One atom of the board "Micro UI": a name, a grey stage holding the sample and its spec. -->
 <script setup lang="ts">
-defineProps<{ name: string; spec: string }>()
+defineProps<{ name: string; spec: string; plain?: boolean }>()
 </script>
 
 <template>
   <div class="atom">
     <span class="name">{{ name }}</span>
-    <div class="stage"><slot /></div>
+    <div class="stage" :class="{ plain }"><slot /></div>
     <span class="spec mono">{{ spec }}</span>
   </div>
 </template>
@@ -36,6 +36,10 @@ defineProps<{ name: string; spec: string }>()
   padding: 10px var(--space-3);
   border-radius: var(--radius-sm);
   background: var(--surface-1);
+}
+
+.stage.plain {
+  background: var(--surface-0);
 }
 
 .spec {

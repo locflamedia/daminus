@@ -51,6 +51,8 @@ export interface ProjectCardMetric {
 export interface ProjectCardStatus {
   tone: RowTone
   icon: IconName
+  /** The glyph's colour when it differs from the row (the green tick on a grey row). */
+  tileTone?: RowTone
   title: string
   meta?: string
   /** The count chip ("2 issues", "0 issues"). */
@@ -132,7 +134,7 @@ function onCardClick(event: MouseEvent) {
       <UiMonogram :name="name" :icon="icon" :tint="tint" :size="36" />
       <span class="names">
         <b class="name" :title="name">{{ name }}</b>
-        <UiDomainLink v-if="domain" :domain="domain" @open="emit('open-domain', $event)" />
+        <UiDomainLink v-if="domain" bare :domain="domain" @open="emit('open-domain', $event)" />
       </span>
       <UiChipMorph v-if="showChip" class="state" :tone="chipTone" :label="stateLabel" />
       <span v-else class="state word" :class="`word-${state}`">{{ stateLabel }}</span>
@@ -158,6 +160,7 @@ function onCardClick(event: MouseEvent) {
       size="status"
       :tone="status.tone"
       :tile="status.icon"
+      :tile-tone="status.tileTone"
       :title="status.title"
       :meta="status.meta"
     >
@@ -284,6 +287,10 @@ function onCardClick(event: MouseEvent) {
 
 .count-crit {
   color: var(--crit-ink);
+}
+
+.status.tone-neutral {
+  background: var(--surface-1);
 }
 
 .status.blurred {

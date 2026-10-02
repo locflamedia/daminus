@@ -109,9 +109,17 @@ const id = useId()
 .input {
   flex: 1 1 auto;
   min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--ink);
   font-size: var(--text-13);
   outline: none;
+}
+
+.input:focus-visible {
+  box-shadow: none;
 }
 
 .input::placeholder {

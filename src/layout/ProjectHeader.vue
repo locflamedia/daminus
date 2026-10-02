@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import type { Level } from '@/api'
+import { useViewportWidth } from '@/lib/viewport'
+import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
+import UiMenu from '@/ui/UiMenu.vue'
 import ProjectDot from './ProjectDot.vue'
 import { PROJECT_TABS, type ProjectTab } from './project-tabs'
 
@@ -18,7 +21,23 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
 const dots = computed(() => props.tabLevels ?? {})
+
+// "Tabs become a menu under 960 in project pages" (board "Narrow window"): the same tabs, in
+// a menu opened from a button that names the current one.
+const MENU_BELOW = 960
+const width = useViewportWidth()
+const asMenu = computed(() => width.value < MENU_BELOW)
+const items = computed(() =>
+  PROJECT_TABS.map((name) => ({
+    id: name,
+    label: t(`project.tabs.${name}`),
+  })),
+)
+function pick(id: string) {
+  void router.push({ name: 'project', params: { id: props.id, tab: id } })
+}
 </script>
 
 <template>
@@ -37,7 +56,25 @@ const dots = computed(() => props.tabLevels ?? {})
       </span>
     </div>
     <span class="grow" />
-    <div class="tabs" role="tablist" :aria-label="t('project.tabsLabel')">
+    <UiMenu
+      v-if="asMenu"
+      :items="items"
+      :label="t('project.tabsLabel')"
+      placement="bottom-end"
+      @select="pick"
+    >
+      <template #trigger="{ attrs, toggle }">
+        <UiButton v-bind="attrs" variant="secondary" trailing-icon="chevron-down" @click="toggle">
+          {{ t(`project.tabs.${tab}`) }}
+          <span
+            v-if="dots[tab] === 'warn' || dots[tab] === 'crit'"
+            class="mark"
+            :class="dots[tab]"
+          />
+        </UiButton>
+      </template>
+    </UiMenu>
+    <div v-else class="tabs" role="tablist" :aria-label="t('project.tabsLabel')">
       <RouterLink
         v-for="name in PROJECT_TABS"
         :key="name"

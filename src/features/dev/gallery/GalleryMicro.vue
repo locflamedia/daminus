@@ -159,7 +159,7 @@ const haloKey = ref(0)
           <UiEmptyValue reason="not-set-up" :hint="k('emptyValue.notSetUp')" />
         </GalleryAtom>
 
-        <GalleryAtom :name="k('sectionHeader.name')" :spec="k('sectionHeader.spec')">
+        <GalleryAtom :name="k('sectionHeader.name')" :spec="k('sectionHeader.spec')" plain>
           <div class="wide">
             <UiSectionHeader
               icon="database"

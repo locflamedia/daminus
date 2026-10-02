@@ -77,6 +77,11 @@ const openable = computed(() => props.state === 'open')
   text-align: left;
 }
 
+/* The chip is top-aligned by default (it sits in text rows); here it is centred in the 40 px. */
+.row :deep(.chip) {
+  align-self: center;
+}
+
 button.row {
   transition: background-color var(--dur-color) var(--ease-state);
 }
