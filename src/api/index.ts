@@ -1,3 +1,4 @@
+export * from './clipboard'
 export * from './commands'
 export * from './events'
 export type { AppError } from './bindings/AppError'
