@@ -137,6 +137,57 @@ describe('light tokens match the canvas', () => {
   })
 })
 
+describe('chart tokens match the canvas', () => {
+  const expected: Record<string, string> = {
+    '--chart-accent-70': '#8fa2ff',
+    '--chart-lilac': '#b9a6f2',
+    '--chart-lilac-soft': '#c9b6f7',
+    '--chart-blush': '#f2a7c3',
+    '--chart-grey': '#d6d9e4',
+    '--chart-grey-soft': '#e2e4ee',
+    '--chart-amber': '#c98416',
+    '--chart-amber-soft': '#f6d9a8',
+    '--chart-rose-soft': '#f3b8c9',
+    '--chart-bar-old': '#c9d2fa',
+    '--chart-bar-top': '#6f87f2',
+    '--chart-issue-warn': '#e9a23b',
+    '--chart-issue-info': '#a9b9f5',
+    '--tile-1': '#d2c2f4',
+    '--tile-2': '#c5cdf7',
+    '--tile-3': '#dce3ff',
+    '--tile-grow': '#f6d2a0',
+    '--heat-ok': '#c9ebd7',
+    '--heat-warn': '#f6d9a8',
+    '--heat-crit': '#f2b8ca',
+    '--heat-none': '#eceef6',
+    '--strip-ok': '#bfe3cf',
+    '--strip-warn': '#f2cf96',
+    '--strip-crit': '#efa8bf',
+    '--strip-none': '#e6e8f1',
+    '--hatch-1': '#e6e8f1',
+    '--hatch-2': '#f7f8fc',
+  }
+  it.each(Object.entries(expected))('%s is %s', (name, value) => {
+    expect(light.get(name)).toBe(value)
+  })
+
+  it('re-lights every chart colour for dark, so a tint never stays pale on a dark card', () => {
+    for (const name of Object.keys(expected)) {
+      if (name === '--chart-issue-info' || name.startsWith('--hatch')) continue
+      expect(darkAttr.get(name), name).toBeDefined()
+      expect(darkAttr.get(name), name).not.toBe(light.get(name))
+    }
+  })
+
+  it('keeps the chart durations of the Motion board: bars 500 ms, tween and fade 300 ms', () => {
+    expect(light.get('--dur-bar')).toBe('500ms')
+    expect(light.get('--dur-tween')).toBe('300ms')
+    expect(light.get('--dur-fade')).toBe('300ms')
+    expect(light.get('--dur-gauge')).toBe('700ms')
+    expect(light.get('--dur-draw')).toBe('600ms')
+  })
+})
+
 describe('dark tokens match the canvas', () => {
   const expected: Record<string, string> = {
     '--page': '#101118',
@@ -187,9 +238,10 @@ describe('theme blocks', () => {
 })
 
 describe('token usage', () => {
-  // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; and the
-  // two knobs of UiCard that a caller sets on the element for a denser or looser board.
-  const RUNTIME = new Set(['--d', '--hold', '--card-gap', '--card-pad'])
+  // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; the
+  // two knobs of UiCard that a caller sets on the element for a denser or looser board; and the
+  // swatch colour and column count a chart passes down from its data.
+  const RUNTIME = new Set(['--d', '--hold', '--card-gap', '--card-pad', '--swatch', '--cols'])
 
   it('only references tokens that are defined', () => {
     const defined = new Set([...light.keys(), ...darkAttr.keys()])

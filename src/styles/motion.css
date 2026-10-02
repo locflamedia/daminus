@@ -48,6 +48,80 @@
   animation: m-halo 2.2s var(--ease-out) 3;
 }
 
+/* A bar rises from its base (scaleY, 500 ms), 40 ms apart; --d carries the stagger. */
+.m-bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: m-bar var(--dur-bar) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A meter fill grows from its left edge. */
+.m-grow {
+  transform-origin: left;
+  animation: m-grow var(--dur-bar) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* The soft area under a drawn line fades in as the line finishes. */
+.m-fill {
+  animation: m-fade var(--dur-fade) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* An end dot or a gauge number settles after the line it belongs to. */
+.m-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: m-pop var(--dur-knob) var(--ease-pop) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.m-late {
+  animation: m-late var(--dur-state) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes m-bar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes m-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes m-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes m-late {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @keyframes m-rise {
   from {
     opacity: 0;
@@ -129,6 +203,15 @@
   .m-draw {
     animation: none;
     stroke-dasharray: none;
+  }
+
+  /* Bars, fills and dots keep the end state; their durations are zero, the delay goes too. */
+  .m-bar,
+  .m-grow,
+  .m-fill,
+  .m-pop,
+  .m-late {
+    animation-delay: 0ms;
   }
 
   .m-spin,
