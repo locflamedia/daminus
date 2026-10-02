@@ -125,6 +125,8 @@
     "servers": "Servers",
     "issues": "{n} issue | {n} issues",
     "unreachable": "Unreachable",
+    "stale": "{n} d old",
+    "scanning": "scanning",
     "settings": "Settings",
     "back": "Back",
     "foldSidebar": "Fold the sidebar",
@@ -139,7 +141,15 @@
     "hosts": "Hosts",
     "ai": "AI providers",
     "data": "Data",
-    "about": "About"
+    "about": "About",
+    "desc": {
+      "general": "Language, region and what happens when Daminus opens.",
+      "appearance": "Theme, motion and the small pleasures. Everything here is cosmetic; nothing changes what is checked.",
+      "scan": "What a scan reads, how long it waits and when it speaks up.",
+      "hosts": "Read from your ssh config. Keys stay in ssh-agent; Daminus never stores them.",
+      "ai": "AI is optional. It only explains scan results; it never runs a command.",
+      "data": "Everything stays on this Mac. Here is what that means, and how to take it with you or wipe it."
+    }
   },
   "theme": {
     "system": "System",
@@ -172,7 +182,9 @@
     "scanAll": "Scan all",
     "stop": "Stop",
     "scanMeta": "Scan #{seq} · {when}",
-    "scanMetaRunning": "Scan #{seq} · running · {elapsed}",
+    "scanning": "Scanning",
+    "lastScan": "Last scan",
+    "lastScanRest": "scan #{seq} · {when}",
     "noScan": "No scans yet",
     "hostsOf": "{done} of {total} hosts",
     "urlChecks": "URL checks",
@@ -191,6 +203,12 @@
     "firstScan": "No scans yet. Press Scan all to read your servers.",
     "results": "Results",
     "hosts": "Hosts"
+  },
+  "scanChip": {
+    "queued": "queued",
+    "reading": "reading…",
+    "done": "done",
+    "failed": "failed"
   },
   "scanHost": {
     "queued": "queued",
@@ -231,7 +249,8 @@
     "minAgo": "{n} min ago",
     "today": "today {time}",
     "yesterday": "yesterday {time}",
-    "daysAgo": "{n} d ago"
+    "daysAgo": "{n} d ago",
+    "daysAgoLong": "{n} day ago | {n} days ago"
   },
   "units": {
     "ms": "ms",

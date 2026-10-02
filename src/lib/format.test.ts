@@ -8,6 +8,7 @@ import {
   formatDuration,
   formatMeasure,
   formatNumber,
+  formatWeekdayDateTime,
   formatWhen,
 } from './format'
 
@@ -144,5 +145,17 @@ describe('formatDateTime', () => {
     const t = new Date(2026, 8, 26, 11, 58)
     expect(formatDateTime(t, 'en')).toMatch(/Sep 26, 2026.*11:58/)
     expect(formatDateTime(t, 'vi')).toMatch(/11:58/)
+  })
+})
+
+describe('formatWeekdayDateTime', () => {
+  const when = new Date(2026, 8, 22, 21, 10)
+
+  it('writes weekday, day, month and clock as the boards do', () => {
+    expect(formatWeekdayDateTime(when, 'en')).toBe('Tue 22 Sep 21:10')
+  })
+
+  it('keeps the day first in Vietnamese', () => {
+    expect(formatWeekdayDateTime(when, 'vi')).toMatch(/22\/9 21:10$/)
   })
 })

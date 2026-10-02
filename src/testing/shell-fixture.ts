@@ -1,6 +1,6 @@
 // A small window's worth of data: three projects and five servers, one of them unreachable.
 // Used by the development mock and the gallery's shell section.
-import type { Project, Report } from '@/api'
+import type { Project, Report, ScanRun } from '@/api'
 import { counts, diskItem, project, report, server } from './report-fixture'
 
 const HOSTS = [
@@ -10,9 +10,13 @@ const HOSTS = [
   { host: 'db-main', pct: 41, level: 'ok' as const, used: ['booking'] },
 ]
 
-export function shellReport(): Report {
+/** `agoMs` is how long ago the scan finished: two minutes by default, so the results are current. */
+export function shellReport(agoMs = 2 * 60_000): Report {
+  const at = new Date(Date.now() - agoMs).toISOString()
   return report({
     seq: 12,
+    scanned_at: at,
+    evaluated_at: at,
     projects: [
       project('kho-hang', { level: 'crit', counts: counts({ crit: 2, warn: 1 }) }),
       project('tiemtra', { level: 'warn', counts: counts({ warn: 2 }) }),
@@ -44,4 +48,28 @@ export function shellProjects(): Project[] {
     { id: 'tiemtra', name: 'tiemtra', color: '#4f6bed', urls: ['https://tiemtra.vn'], ...base },
     { id: 'booking', name: 'booking', color: '#9a7bea', urls: ['https://booking.vn'], ...base },
   ]
+}
+
+/** The midpoint of a scan: two hosts done, two being read, one waiting, URL checks finished. */
+export function shellScanRun(now = Date.now()): ScanRun {
+  const idle = { facts: 0, dropped: 0 }
+  const done = {
+    ...idle,
+    facts: 14,
+    state: 'finished' as const,
+    outcome: { state: 'reached' as const },
+  }
+  return {
+    scan_id: 'dev-scan',
+    started_at: new Date(now - 6400).toISOString(),
+    next_seq: 12,
+    hosts: {
+      '@local': done,
+      'vps-sg-1': done,
+      'vps-sg-2': done,
+      'vps-hn-3': { ...idle, state: 'running' },
+      'db-main': { ...idle, state: 'running' },
+      'legacy-shop': { ...idle, state: 'queued' },
+    },
+  }
 }

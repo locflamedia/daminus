@@ -8,7 +8,8 @@ import { i18n } from '@/i18n'
 import { LAYOUT_RANGE, type SidebarRange } from '@/lib/viewport'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
-import { shellProjects, shellReport } from '@/testing/shell-fixture'
+import { useScanStore } from '@/stores/scan'
+import { shellProjects, shellReport, shellScanRun } from '@/testing/shell-fixture'
 import AppRail from './AppRail.vue'
 import AppSidebar from './AppSidebar.vue'
 import SettingsNav from './SettingsNav.vue'
@@ -68,7 +69,65 @@ describe('AppSidebar project rows', () => {
   })
 })
 
+describe('AppSidebar title bar and scan state', () => {
+  it('leaves the first row to the window buttons of the overlay title bar', async () => {
+    const wrapper = await mountShell(AppSidebar)
+    const first = wrapper.get('nav').element.firstElementChild
+    expect(first?.classList.contains('lights')).toBe(true)
+    expect(first?.nextElementSibling?.classList.contains('brand')).toBe(true)
+  })
+
+  it('says "scanning" in accent on Overview while a scan runs, in place of the issue count', async () => {
+    const wrapper = await mountShell(AppSidebar)
+    const overview = () => wrapper.findAll('a.item')[0]
+    expect(overview()?.get('.count').text()).toBe('5 issues')
+    useScanStore().run = shellScanRun()
+    await flushPromises()
+    const count = overview()?.get('.count')
+    expect(count?.text()).toBe('scanning')
+    expect(count?.classes()).toContain('scanning')
+  })
+})
+
+describe('AppSidebar with results over a day old', () => {
+  const FOUR_DAYS = 4 * 86_400_000
+
+  it('reads "4 d old" on Overview and colours no project count', async () => {
+    useReportStore().latest = shellReport(FOUR_DAYS)
+    const wrapper = await mountShell(AppSidebar)
+    const overview = wrapper.findAll('a.item')[0]
+    expect(overview?.get('.count').text()).toBe('4 d old')
+    expect(overview?.get('.count').classes()).toContain('old')
+    const projects = wrapper.findAll('a.item').filter((a) => a.find('.slot').exists())
+    expect(projects.some((r) => r.find('.count').exists())).toBe(false)
+  })
+
+  it('keeps every server ring in the accent until a fresh scan says otherwise', async () => {
+    useReportStore().latest = shellReport(FOUR_DAYS)
+    const stale = await mountShell(AppSidebar)
+    expect(stale.findAll('.ring').every((r) => r.classes().includes('tone-normal'))).toBe(true)
+    expect(stale.findAll('.server .count').some((c) => c.classes().includes('warn'))).toBe(false)
+
+    useReportStore().latest = shellReport()
+    const fresh = await mountShell(AppSidebar)
+    expect(fresh.findAll('.ring').some((r) => r.classes().includes('tone-warn'))).toBe(true)
+  })
+
+  it('is current under a day: the issue count stays', async () => {
+    useReportStore().latest = shellReport(23 * 3_600_000)
+    const wrapper = await mountShell(AppSidebar)
+    expect(wrapper.findAll('a.item')[0]?.get('.count').text()).toBe('5 issues')
+  })
+})
+
 describe('AppRail', () => {
+  it('leaves the first row to the window buttons of the overlay title bar', async () => {
+    const wrapper = await mountShell(AppRail, 'narrow')
+    const first = wrapper.get('.scroll').element.firstElementChild
+    expect(first?.classList.contains('lights')).toBe(true)
+    expect(first?.nextElementSibling?.classList.contains('brand')).toBe(true)
+  })
+
   it('shows a tile per project with its badge, and the gear alone for Settings', async () => {
     const wrapper = await mountShell(AppRail, 'narrow', '/project/kho-hang/overview')
     const tiles = wrapper.findAll('a.project')
@@ -90,6 +149,11 @@ describe('AppRail', () => {
 })
 
 describe('SettingsNav', () => {
+  it('leaves the first row to the window buttons of the overlay title bar', async () => {
+    const wrapper = await mountShell(SettingsNav, 'wide', '/settings/general')
+    expect(wrapper.get('nav').element.firstElementChild?.classList.contains('lights')).toBe(true)
+  })
+
   it('shows the values at the right of the items down to 1080 px', async () => {
     const wrapper = await mountShell(SettingsNav, 'medium', '/settings/general')
     expect(wrapper.findAll('.hint').map((h) => h.text())).toEqual(['EN / VI', 'System'])

@@ -167,6 +167,15 @@ export function formatDateTime(value: DateLike, locale: Locale = currentLocale()
   }).format(toDate(value))
 }
 
+/** Weekday, day, month and clock of an older scan: `Sun 22 Sep 21:10`. */
+export function formatWeekdayDateTime(value: DateLike, locale: Locale = currentLocale()): string {
+  const date = toDate(value)
+  const weekday = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale, {
+    weekday: 'short',
+  }).format(date)
+  return `${weekday} ${formatDate(date, locale)} ${formatClock(date, locale)}`
+}
+
 function startOfDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }

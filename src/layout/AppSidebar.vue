@@ -3,7 +3,9 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
+import { useNow } from '@/composables/use-now'
 import { diskTone, isUnreachable, issueCount } from '@/lib/rollups'
+import { staleDays } from '@/lib/staleness'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useScanStore } from '@/stores/scan'
@@ -16,6 +18,10 @@ const { t } = useI18n()
 const report = useReportStore()
 const projects = useProjectsStore()
 const scan = useScanStore()
+
+/** Results over a day old: Overview reads "4 d old" and nothing is coloured by severity. */
+const clock = useNow()
+const oldDays = computed(() => staleDays(report.latest?.scanned_at, clock.value))
 
 /** Hosts a running scan is connecting to or reading right now. */
 const reading = computed(
@@ -43,7 +49,7 @@ const serverRows = computed(() =>
       host: s.host,
       unreachable,
       pct,
-      tone: pct === null ? '' : diskTone(pct),
+      tone: pct === null || oldDays.value !== null ? '' : diskTone(pct),
       reading: reading.value.has(s.host),
     }
   }),
@@ -52,6 +58,7 @@ const serverRows = computed(() =>
 
 <template>
   <nav class="sidebar" :aria-label="t('nav.primary')">
+    <span class="lights" aria-hidden="true" />
     <div class="brand">
       <img :src="brandMark" alt="" width="22" height="22" />
       <b>{{ t('app.name') }}</b>
@@ -67,7 +74,11 @@ const serverRows = computed(() =>
       <RouterLink to="/" class="item" active-class="" exact-active-class="on">
         <UiIcon name="grid" />
         {{ t('nav.overview') }}
-        <span v-if="report.latest && projects.issues > 0" class="count">
+        <span v-if="scan.scanning" class="count scanning">{{ t('nav.scanning') }}</span>
+        <span v-else-if="oldDays !== null" class="count old">
+          {{ t('nav.stale', { n: oldDays }) }}
+        </span>
+        <span v-else-if="report.latest && projects.issues > 0" class="count">
           {{ t('nav.issues', { n: projects.issues }, projects.issues) }}
         </span>
       </RouterLink>
@@ -96,7 +107,11 @@ const serverRows = computed(() =>
           :color="projects.color(p.id)"
         />
         <span class="name">{{ p.id }}</span>
-        <span v-if="issueCount(p) > 0" class="count strong" :class="projectCountTone(p.level)">
+        <span
+          v-if="oldDays === null && issueCount(p) > 0"
+          class="count strong"
+          :class="projectCountTone(p.level)"
+        >
           {{ issueCount(p) }}
         </span>
       </RouterLink>
@@ -114,7 +129,12 @@ const serverRows = computed(() =>
         :class="{ off: s.unreachable }"
         active-class="on"
       >
-        <DiskRing :pct="s.pct" :reading="s.reading" :dim="s.unreachable" />
+        <DiskRing
+          :pct="s.pct"
+          :reading="s.reading"
+          :dim="s.unreachable"
+          :neutral="oldDays !== null"
+        />
         <span class="mono name">{{ s.host }}</span>
         <span v-if="s.unreachable" class="count strong">{{ t('nav.unreachable') }}</span>
         <span v-else-if="s.pct !== null" class="count strong" :class="s.tone">
@@ -142,6 +162,20 @@ const serverRows = computed(() =>
   padding: var(--space-4);
   overflow-y: auto;
   background: linear-gradient(165deg, var(--side-1), var(--side-2) 58%, var(--side-3));
+  line-height: normal;
+}
+
+.lights {
+  flex: none;
+  height: var(--lights-row);
+}
+
+:global(:root[data-fullscreen='true']) .lights {
+  display: none;
+}
+
+:global(:root[data-fullscreen='true']) .sidebar {
+  padding-top: var(--side-top-fullscreen);
 }
 
 .brand {
@@ -266,6 +300,14 @@ const serverRows = computed(() =>
 
 .count.strong {
   font-weight: var(--weight-medium);
+}
+
+.count.scanning {
+  color: var(--accent-ink);
+}
+
+.count.old {
+  color: var(--warn-ink);
 }
 
 .count.crit {

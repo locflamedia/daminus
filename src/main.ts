@@ -18,9 +18,10 @@ useSettingsStore(pinia).init()
 
 // A development aid: `?mock` answers the commands with a fixed report (see api/dev-mock.ts).
 async function start() {
-  if (import.meta.env.DEV && new URLSearchParams(location.search).has('mock')) {
+  const mock = import.meta.env.DEV ? new URLSearchParams(location.search).get('mock') : null
+  if (mock !== null) {
     const { installDevMock } = await import('./api/dev-mock')
-    installDevMock()
+    installDevMock(mock)
   }
   app.mount('#app')
 }
