@@ -50,6 +50,8 @@ describe('light tokens match the canvas', () => {
     '--surface-2': '#eceef6',
     '--surface-3': '#e6e8f1',
     '--base': '#eceef8',
+    '--surface-well': '#f7f8fc',
+    '--page': '#f8f8fc',
     '--page-sheet': '#f2f3f8',
     '--btn': '#1c1d24',
     '--btn-hover': '#33343e',
@@ -120,6 +122,21 @@ describe('light tokens match the canvas', () => {
     expect(light.get('--dur-knob')).toBe('220ms')
   })
 
+  it('keeps the surface durations of the Motion in the app table', () => {
+    expect(light.get('--dur-popover')).toBe('150ms')
+    expect(light.get('--dur-sheet')).toBe('200ms')
+    expect(light.get('--dur-drawer')).toBe('300ms')
+    expect(light.get('--dur-toast')).toBe('220ms')
+    expect(light.get('--dur-toast-out')).toBe('200ms')
+    expect(light.get('--dur-menu-close')).toBe('120ms')
+    expect(light.get('--dur-theme')).toBe('200ms')
+  })
+
+  it('draws the segmented track in surface-1 in both themes', () => {
+    expect(light.get('--seg-track')).toBe('var(--surface-1)')
+    expect(darkAttr.get('--seg-track')).toBe('var(--surface-1)')
+  })
+
   it('keeps the severity washes, scrims and code colours of the boards', () => {
     expect(light.get('--card-wash-crit')).toBe('#fff1f5')
     expect(light.get('--card-wash-warn')).toBe('#fff7ec')
@@ -136,7 +153,9 @@ describe('light tokens match the canvas', () => {
 
   it('keeps the easing curves of the Motion boards', () => {
     expect(light.get('--ease-out')).toBe('cubic-bezier(0.23, 1, 0.32, 1)')
-    expect(light.get('--ease-in-out')).toBe('cubic-bezier(0.65, 0, 0.35, 1)')
+    // One curve for moving things: the drawer is the same token.
+    expect(light.get('--ease-in-out')).toBe('cubic-bezier(0.77, 0, 0.175, 1)')
+    expect(light.get('--ease-drawer')).toBe('var(--ease-in-out)')
     expect(light.get('--ease-settle')).toBe('cubic-bezier(0.34, 1.4, 0.64, 1)')
   })
 })
@@ -175,8 +194,8 @@ describe('chart tokens match the canvas', () => {
     '--chart-blush': '#f2a7c3',
     '--chart-grey': '#d6d9e4',
     '--chart-grey-soft': '#e2e4ee',
-    '--chart-amber': '#c98416',
-    '--chart-amber-soft': '#f6d9a8',
+    '--chart-amber': '#b96c0b',
+    '--chart-amber-soft': '#f2cf96',
     '--chart-rose-soft': '#f3b8c9',
     '--chart-bar-old': '#c9d2fa',
     '--chart-bar-top': '#6f87f2',
@@ -186,9 +205,9 @@ describe('chart tokens match the canvas', () => {
     '--tile-2': '#c5cdf7',
     '--tile-3': '#dce3ff',
     '--tile-grow': '#f6d2a0',
-    '--heat-ok': '#c9ebd7',
-    '--heat-warn': '#f6d9a8',
-    '--heat-crit': '#f2b8ca',
+    '--heat-ok': '#bfe3cf',
+    '--heat-warn': '#f2cf96',
+    '--heat-crit': '#efa8bf',
     '--heat-none': '#eceef6',
     '--strip-ok': '#bfe3cf',
     '--strip-warn': '#f2cf96',
@@ -207,6 +226,30 @@ describe('chart tokens match the canvas', () => {
       expect(darkAttr.get(name), name).toBeDefined()
       expect(darkAttr.get(name), name).not.toBe(light.get(name))
     }
+  })
+
+  it('uses one tint set for the scan strips and the heatmap', () => {
+    for (const state of ['ok', 'warn', 'crit']) {
+      expect(light.get(`--heat-${state}`)).toBe(light.get(`--strip-${state}`))
+      expect(darkAttr.get(`--heat-${state}`)).toBe(darkAttr.get(`--strip-${state}`))
+    }
+  })
+
+  it('keeps the dark chart palette of the Components · Dark board', () => {
+    const dark: Record<string, string> = {
+      '--chart-lilac': '#a893f0',
+      '--chart-lilac-soft': '#3a3160',
+      '--chart-blush': '#5a2a3e',
+      '--chart-bar-old': '#34407a',
+      '--heat-ok': '#1e4a35',
+      '--heat-warn': '#5a4319',
+      '--heat-crit': '#5c2a3b',
+      '--chart-issue-warn': '#f0a64a',
+      '--tile-1': '#252b4c',
+      '--tile-2': '#2e2a4a',
+      '--tile-grow': '#3b2a1a',
+    }
+    for (const [name, value] of Object.entries(dark)) expect(darkAttr.get(name), name).toBe(value)
   })
 
   it('keeps the chart durations of the Motion board: bars 500 ms, tween and fade 300 ms', () => {
@@ -249,6 +292,43 @@ describe('dark tokens match the canvas', () => {
   })
 })
 
+describe('dark token gaps are filled with the values of the Components · Dark board', () => {
+  const expected: Record<string, string> = {
+    '--surface-well': '#20222d',
+    '--accent-mid': '#7b91ff',
+    '--accent-ink-hover': '#c2ccff',
+    '--side-hover': 'rgba(255, 255, 255, 0.05)',
+    '--kbd-on-glass': 'rgba(255, 255, 255, 0.08)',
+    '--shadow-tray': '0 1px 2px rgba(0, 0, 0, 0.4)',
+    '--shadow-overlay': '0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8)',
+    '--shadow-pop': '0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7)',
+    '--scrim-sheet': 'rgba(0, 0, 0, 0.4)',
+    '--scrim-dialog': 'rgba(0, 0, 0, 0.55)',
+    '--btn': '#ecedf3',
+    // The glass tray is the card tone at the light twin's opacity.
+    '--tray': 'rgba(26, 28, 38, 0.55)',
+  }
+  it.each(Object.entries(expected))('%s is %s', (name, value) => {
+    expect(darkAttr.get(name)).toBe(value)
+  })
+
+  it('leaves the ambient washes and blob as they are in light', () => {
+    for (const name of ['--wash-1', '--wash-2', '--wash-3', '--blob']) {
+      expect(darkAttr.get(name), name).toBe(light.get(name))
+    }
+  })
+
+  it('derives the dark button hovers from the tokens, not from picked colours', () => {
+    expect(darkAttr.get('--btn-hover')).toBe('color-mix(in srgb, var(--btn) 90%, var(--btn-ink))')
+    expect(darkAttr.get('--danger-hover')).toBe(
+      'color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%)',
+    )
+    expect(darkAttr.get('--danger-press')).toBe(
+      'color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%)',
+    )
+  })
+})
+
 describe('theme blocks', () => {
   it('apply the same dark values for [data-theme=dark] and for the system setting', () => {
     expect([...darkMedia.entries()]).toEqual([...darkAttr.entries()])
@@ -271,7 +351,15 @@ describe('token usage', () => {
   // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; the
   // two knobs of UiCard that a caller sets on the element for a denser or looser board; and the
   // swatch colour and column count a chart passes down from its data.
-  const RUNTIME = new Set(['--d', '--hold', '--card-gap', '--card-pad', '--swatch', '--cols'])
+  const RUNTIME = new Set([
+    '--d',
+    '--hold',
+    '--card-gap',
+    '--card-pad',
+    '--swatch',
+    '--cols',
+    '--mark',
+  ])
 
   it('only references tokens that are defined', () => {
     const defined = new Set([...light.keys(), ...darkAttr.keys()])

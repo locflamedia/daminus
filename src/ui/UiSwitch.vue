@@ -95,7 +95,7 @@ function onChange(event: Event) {
   height: 16px;
   border-radius: 50%;
   background: var(--surface-0);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-knob);
   transition: transform var(--dur-knob) var(--ease-settle);
 }
 
@@ -105,7 +105,7 @@ function onChange(event: Event) {
 
 .native:checked + .track .knob {
   background: var(--btn-ink);
-  box-shadow: none;
+  box-shadow: var(--shadow-knob-on);
   transform: translateX(16px);
 }
 
