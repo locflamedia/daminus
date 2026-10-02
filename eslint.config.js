@@ -23,6 +23,23 @@ const tauriGlobalBan = ['__TAURI__', '__TAURI_INTERNALS__'].flatMap((property) =
   { object: 'globalThis', property, message: tauriBoundaryMessage },
 ])
 
+// Server and AI text is always rendered as text. `vue/no-v-html` covers templates; these
+// cover the same sinks in scripts and render functions, everywhere (src/api/ included).
+const htmlMessage = 'Server and AI text is rendered as text, never as HTML.'
+const htmlSinkSyntax = [
+  {
+    selector: 'AssignmentExpression[left.property.name=/^(innerHTML|outerHTML)$/]',
+    message: htmlMessage,
+  },
+  { selector: 'Property[key.name=/^(innerHTML|outerHTML)$/]', message: htmlMessage },
+  {
+    selector:
+      'CallExpression[callee.property.name=/^(insertAdjacentHTML|createContextualFragment)$/]',
+    message: htmlMessage,
+  },
+]
+const htmlSinkProperties = [{ object: 'document', property: 'write', message: htmlMessage }]
+
 export default defineConfigWithVueTs(
   {
     name: 'daminus/ignores',
@@ -36,8 +53,8 @@ export default defineConfigWithVueTs(
     rules: {
       'vue/no-v-html': 'error',
       'no-restricted-imports': ['error', tauriImportBan],
-      'no-restricted-syntax': ['error', tauriDynamicImportBan],
-      'no-restricted-properties': ['error', ...tauriGlobalBan],
+      'no-restricted-syntax': ['error', tauriDynamicImportBan, ...htmlSinkSyntax],
+      'no-restricted-properties': ['error', ...tauriGlobalBan, ...htmlSinkProperties],
     },
   },
   {
@@ -45,8 +62,8 @@ export default defineConfigWithVueTs(
     files: ['src/api/**'],
     rules: {
       'no-restricted-imports': 'off',
-      'no-restricted-syntax': 'off',
-      'no-restricted-properties': 'off',
+      'no-restricted-syntax': ['error', ...htmlSinkSyntax],
+      'no-restricted-properties': ['error', ...htmlSinkProperties],
     },
   },
   skipFormatting,
