@@ -20,6 +20,17 @@ export const routes: RouteRecordRaw[] = [
     component: SettingsView,
     meta: { settings: true },
   },
+  // The component gallery exists in development only; the production bundle drops it.
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: '/dev/gallery',
+          name: 'gallery',
+          component: () => import('@/features/dev/gallery/GalleryView.vue'),
+          meta: { bare: true },
+        } satisfies RouteRecordRaw,
+      ]
+    : []),
   { path: '/:rest(.*)*', redirect: '/' },
 ]
 
