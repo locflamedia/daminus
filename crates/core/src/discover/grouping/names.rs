@@ -9,6 +9,8 @@ const GENERIC: &[&str] = &[
     "/var",
     "/var/www",
     "/var/www/html",
+    "/www",
+    "/www/wwwroot",
     "/var/lib",
     "/usr",
     "/usr/local",
@@ -186,12 +188,15 @@ mod tests {
             "/root",
             "/opt",
             "/usr/share/nginx/html",
+            "/www",
+            "/www/wwwroot/",
         ] {
             assert!(is_generic(g), "{g}");
         }
         for p in [
             "/srv/shop",
             "/var/www/shop",
+            "/www/wwwroot/shop.example",
             "/home/deploy/shop",
             "/opt/app",
             "/data/x",

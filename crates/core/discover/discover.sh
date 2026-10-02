@@ -44,8 +44,30 @@ glob_files() {
 # --------------------------------------------------------------------- nginx
 
 # nginx_files: nginx.conf and what it includes (up to 4 levels, 60 files), one per line.
+# The main nginx config: the test override, else the first readable of the
+# usual places (distro, source build, aaPanel), else the first that exists.
+nginx_conf() {
+	if [ -n "${DAMINUS_NGINX_CONF:-}" ]; then
+		printf '%s' "$DAMINUS_NGINX_CONF"
+		return 0
+	fi
+	for _p in /etc/nginx/nginx.conf /usr/local/nginx/conf/nginx.conf /www/server/nginx/conf/nginx.conf; do
+		[ -r "$_p" ] && {
+			printf '%s' "$_p"
+			return 0
+		}
+	done
+	for _p in /etc/nginx/nginx.conf /usr/local/nginx/conf/nginx.conf /www/server/nginx/conf/nginx.conf; do
+		[ -e "$_p" ] && {
+			printf '%s' "$_p"
+			return 0
+		}
+	done
+	printf '%s' /etc/nginx/nginx.conf
+}
+
 nginx_files() {
-	_conf=${DAMINUS_NGINX_CONF:-/etc/nginx/nginx.conf}
+	_conf=$(nginx_conf)
 	[ -r "$_conf" ] || return 0
 	_base=${_conf%/*}
 	_seen=$NL
@@ -86,7 +108,7 @@ nginx_files() {
 
 disc_nginx() {
 	# A config that exists but cannot be read: the list will be incomplete.
-	_c=${DAMINUS_NGINX_CONF:-/etc/nginx/nginx.conf}
+	_c=$(nginx_conf)
 	if [ -e "$_c" ] && [ ! -r "$_c" ]; then
 		printf '{"rec":"note","code":"nginx_no_permission"}\n'
 		return 0
@@ -472,7 +494,7 @@ disc_env() {
 		_k=0
 		while [ "$_k" -lt 3 ] && [ -n "$_x" ] && [ -d "$_x" ]; do
 			case $_x in
-			/ | /var | /var/www | /var/www/html | /srv | /opt | /home | /usr | /usr/share | /etc | /root | /usr/share/nginx | /usr/share/nginx/html) ;;
+			/ | /var | /var/www | /var/www/html | /www | /www/wwwroot | /srv | /opt | /home | /usr | /usr/share | /etc | /root | /usr/share/nginx | /usr/share/nginx/html) ;;
 			/home/*/*) _cands="$_cands$_x$NL" ;;
 			/home/*) ;;
 			*) _cands="$_cands$_x$NL" ;;
@@ -484,7 +506,7 @@ disc_env() {
 	done
 	unset IFS
 	_roots=""
-	for _r in /var/www /srv /opt /home /data /app; do
+	for _r in /var/www /www/wwwroot /srv /opt /home /data /app; do
 		[ -d "$_r" ] && _roots="$_roots$_r$NL"
 	done
 	_found=""
