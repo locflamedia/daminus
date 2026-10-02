@@ -305,5 +305,23 @@
   },
   "tooltip": {
     "issues": "{name} · {count}"
+  },
+  "ui": {
+    "close": "Đóng",
+    "dismiss": "Bỏ qua",
+    "copy": "Sao chép",
+    "copied": "Đã chép",
+    "copyFailed": "Không sao chép được",
+    "command": {
+      "name": "Lệnh",
+      "removed": "Đã bỏ {n} ký tự ẩn hoặc ký tự điều khiển.",
+      "riskTitle": "Kiểm tra trước khi chạy",
+      "risk": {
+        "pipeToShell": "Lệnh này đưa thẳng thứ tải về vào shell, nên bạn không thấy được cái gì sẽ chạy.",
+        "base64Decode": "Lệnh này giải mã một đoạn văn bản ẩn. Xem đoạn đó biến thành gì trước khi chạy.",
+        "remove": "Lệnh này xóa tệp. Kiểm tra đường dẫn trước khi chạy."
+      }
+    },
+    "failed": "Lỗi"
   }
 }

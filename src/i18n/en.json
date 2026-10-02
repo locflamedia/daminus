@@ -305,5 +305,23 @@
   },
   "tooltip": {
     "issues": "{name} · {count}"
+  },
+  "ui": {
+    "close": "Close",
+    "dismiss": "Dismiss",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "command": {
+      "name": "Command",
+      "removed": "{n} hidden or control character was removed. | {n} hidden or control characters were removed.",
+      "riskTitle": "Check before you run it",
+      "risk": {
+        "pipeToShell": "It pipes what it downloads straight into a shell, so you never see what runs.",
+        "base64Decode": "It decodes hidden text. Check what the text turns into before you run it.",
+        "remove": "It deletes files. Check the path before you run it."
+      }
+    },
+    "failed": "Failed"
   }
 }

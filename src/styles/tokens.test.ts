@@ -116,6 +116,20 @@ describe('light tokens match the canvas', () => {
     expect(light.get('--dur-knob')).toBe('220ms')
   })
 
+  it('keeps the severity washes, scrims and code colours of the boards', () => {
+    expect(light.get('--card-wash-crit')).toBe('#fff1f5')
+    expect(light.get('--card-wash-warn')).toBe('#fff7ec')
+    expect(light.get('--card-wash-info')).toBe('#f3f5ff')
+    expect(darkAttr.get('--card-wash-crit')).toBe('#2a1820')
+    expect(darkAttr.get('--card-wash-warn')).toBe('#2a2116')
+    expect(darkAttr.get('--card-wash-info')).toBe('#1c2033')
+    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.16)')
+    expect(light.get('--scrim-dialog')).toBe('rgba(27, 29, 42, 0.24)')
+    expect(light.get('--code-hl')).toBe('#f4a6bf')
+    expect(light.get('--delay-tooltip')).toBe('400ms')
+    expect(light.get('--delay-sheen')).toBe('400ms')
+  })
+
   it('keeps the easing curves of the Motion boards', () => {
     expect(light.get('--ease-out')).toBe('cubic-bezier(0.23, 1, 0.32, 1)')
     expect(light.get('--ease-in-out')).toBe('cubic-bezier(0.65, 0, 0.35, 1)')
@@ -173,8 +187,9 @@ describe('theme blocks', () => {
 })
 
 describe('token usage', () => {
-  // Set from script on the element itself (see lib/motion.ts), so not declared in CSS.
-  const RUNTIME = new Set(['--d', '--hold'])
+  // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; and the
+  // two knobs of UiCard that a caller sets on the element for a denser or looser board.
+  const RUNTIME = new Set(['--d', '--hold', '--card-gap', '--card-pad'])
 
   it('only references tokens that are defined', () => {
     const defined = new Set([...light.keys(), ...darkAttr.keys()])

@@ -29,6 +29,12 @@
   --code-ink: #c9cee0;
   --code-dim: #80859a;
   --code-key: #9fb0ff;
+  --code-str: #f4b5cb;
+  --code-hl: #f4a6bf;
+  --code-ok: #a6e3b8;
+  --code-warn: #f4c98a;
+  /* Accent text on the ink fill of toasts and tooltips (the dark fill inverts, so it flips). */
+  --on-btn-accent: #9fb0ff;
 
   /* Accent: focus ring, active nav mark, running scans, meters, chart lines. */
   --accent: #4f6bed;
@@ -50,6 +56,11 @@
   --info-ink: var(--accent-ink);
   --info-soft: var(--accent-soft);
   --crit-halo: rgba(210, 67, 106, 0.45);
+  /* The first 88 px of a finding or status card fades from its severity into the card. */
+  --card-wash-crit: #fff1f5;
+  --card-wash-warn: #fff7ec;
+  --card-wash-info: #f3f5ff;
+  --card-wash-ok: var(--ok-soft);
 
   /* Ambient ground: three soft washes under a glass tray, then a white card. */
   --wash-1: #a9b9f5;
@@ -80,7 +91,13 @@
   --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 20px 44px -28px rgba(40, 48, 90, 0.25);
   --shadow-overlay: 0 2px 6px rgba(40, 48, 90, 0.08), 0 40px 90px -40px rgba(40, 48, 90, 0.45);
   --shadow-primary: 0 1px 2px rgba(28, 29, 36, 0.2), 0 8px 20px -8px rgba(28, 29, 36, 0.45);
+  --shadow-pop: 0 2px 6px rgba(40, 48, 90, 0.08), 0 24px 48px -24px rgba(40, 48, 90, 0.35);
+  --shadow-drawer: -1px 0 0 rgba(40, 48, 90, 0.04), -24px 0 48px -24px rgba(40, 48, 90, 0.28);
+  --shadow-panel: 0 1px 2px rgba(40, 48, 90, 0.08), 0 32px 80px -24px rgba(40, 48, 90, 0.45);
   --focus-ring: 0 0 0 2px var(--accent);
+  /* Ink at 16% behind a sheet and 24% behind a blocking dialog. */
+  --scrim-sheet: rgba(27, 29, 42, 0.16);
+  --scrim-dialog: rgba(27, 29, 42, 0.24);
 
   /* Type: Geist for everything you read, Geist Mono for what you could paste into a terminal. */
   --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
@@ -165,6 +182,10 @@
   --dur-menu-close: 120ms;
   --dur-gauge: 700ms;
   --dur-theme: 200ms;
+  --dur-toast-out: 200ms;
+  --dur-sheen: 1600ms;
+  --delay-sheen: 400ms;
+  --delay-tooltip: 400ms;
   --stagger: 80ms;
 }
 
@@ -191,6 +212,12 @@
     --code-ink: #c9cee0;
     --code-dim: #80859a;
     --code-key: #9fb0ff;
+    --code-str: #f4b5cb;
+    --code-hl: #f4a6bf;
+    --code-ok: #a6e3b8;
+    --code-warn: #f4c98a;
+    /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
+    --on-btn-accent: #3a55d6;
 
     --accent: #7b91ff;
     --accent-ink: #a3b2ff;
@@ -211,6 +238,9 @@
     --info-ink: var(--accent-ink);
     --info-soft: var(--accent-soft);
     --crit-halo: rgba(210, 67, 106, 0.45);
+    --card-wash-crit: #2a1820;
+    --card-wash-warn: #2a2116;
+    --card-wash-info: #1c2033;
 
     --wash-1: #a9b9f5;
     --wash-2: #d2c2f4;
@@ -239,7 +269,12 @@
     --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -28px rgba(0, 0, 0, 0.5);
     --shadow-overlay: 0 2px 6px rgba(0, 0, 0, 0.2), 0 40px 90px -40px rgba(0, 0, 0, 0.7);
     --shadow-primary: none;
+    --shadow-pop: 0 2px 6px rgba(0, 0, 0, 0.2), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+    --shadow-drawer: -1px 0 0 rgba(255, 255, 255, 0.04), -24px 0 48px -24px rgba(0, 0, 0, 0.6);
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
     --focus-ring: 0 0 0 2px var(--accent);
+    --scrim-sheet: rgba(0, 0, 0, 0.4);
+    --scrim-dialog: rgba(0, 0, 0, 0.55);
   }
 }
 
@@ -265,6 +300,12 @@
   --code-ink: #c9cee0;
   --code-dim: #80859a;
   --code-key: #9fb0ff;
+  --code-str: #f4b5cb;
+  --code-hl: #f4a6bf;
+  --code-ok: #a6e3b8;
+  --code-warn: #f4c98a;
+  /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
+  --on-btn-accent: #3a55d6;
 
   --accent: #7b91ff;
   --accent-ink: #a3b2ff;
@@ -285,6 +326,9 @@
   --info-ink: var(--accent-ink);
   --info-soft: var(--accent-soft);
   --crit-halo: rgba(210, 67, 106, 0.45);
+  --card-wash-crit: #2a1820;
+  --card-wash-warn: #2a2116;
+  --card-wash-info: #1c2033;
 
   --wash-1: #a9b9f5;
   --wash-2: #d2c2f4;
@@ -313,7 +357,12 @@
   --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -28px rgba(0, 0, 0, 0.5);
   --shadow-overlay: 0 2px 6px rgba(0, 0, 0, 0.2), 0 40px 90px -40px rgba(0, 0, 0, 0.7);
   --shadow-primary: none;
+  --shadow-pop: 0 2px 6px rgba(0, 0, 0, 0.2), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+  --shadow-drawer: -1px 0 0 rgba(255, 255, 255, 0.04), -24px 0 48px -24px rgba(0, 0, 0, 0.6);
+  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
   --focus-ring: 0 0 0 2px var(--accent);
+  --scrim-sheet: rgba(0, 0, 0, 0.4);
+  --scrim-dialog: rgba(0, 0, 0, 0.55);
 }
 
 /*
@@ -339,6 +388,7 @@
     --dur-menu-close: var(--dur-color);
     --dur-gauge: 0ms;
     --dur-theme: 0ms;
+    --dur-toast-out: var(--dur-color);
     --stagger: 0ms;
   }
 }
