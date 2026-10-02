@@ -25,7 +25,8 @@ Q_PG='SELECT 0, CAST((SELECT COUNT(*) FROM pg_stat_user_tables) AS text), pg_dat
 
 # env_get KEY: the value of KEY in the dotenv text $_env. Prints it; returns
 # 0 when found, 1 when KEY is not there, 2 when its value is not plain
-# (a backslash or an unclosed quote inside quotes). The last assignment wins.
+# (inside double quotes a backslash other than `\\` and `\"`, `${`, or an
+# unclosed quote). The last assignment wins.
 # A line is KEY=VALUE, with an optional `export ` before it; a value is
 # "double quoted", 'single quoted' or bare (cut at a space and `#`).
 # shellcheck disable=SC2295 # KEY is a plain name, so it is no glob.
@@ -41,19 +42,24 @@ env_get() {
 			_v=${_l#$1=}
 			case $_v in
 			\"*)
-				_v=${_v#\"}
+				# Up to the first unescaped quote; `\\` and `\"` are decoded, any
+				# other backslash or a missing closing quote is not plain. A line
+				# that matches comes back as `=` and the decoded text.
+				_v=$(printf '%s\n' "$_v" | sed -e 's/^"\(\([^\\"]*\\[\\"]\)*[^\\"]*\)".*$/=\1/' -e 's/\\\([\\"]\)/\1/g')
 				case $_v in
-				*\\*) _st=2 ;;
-				*\"*)
-					_v=${_v%%\"*}
-					# `${NAME}` is expanded by most dotenv readers inside double
-					# quotes, so the text here may not be the password.
-					case $_v in
-					*\$\{*) _st=2 ;;
-					*) _st=0 ;;
-					esac
+				=*)
+					_v=${_v#=}
+					_st=0
 					;;
-				*) _st=2 ;;
+				*)
+					_v=""
+					_st=2
+					;;
+				esac
+				# `${NAME}` is expanded by most dotenv readers inside double
+				# quotes, so the text here may not be the password.
+				case $_v in
+				*\$\{*) _st=2 ;;
 				esac
 				;;
 			\'*)

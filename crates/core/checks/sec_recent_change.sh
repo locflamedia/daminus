@@ -50,11 +50,17 @@ for path in $DAMINUS_PATHS; do
 	fi
 	# The count, the newest time and the ten newest, from `mtime TAB name` lines.
 	summary=$(printf '%s\n' "$found" | awk -F '\t' '
-		# A JSON string without escapes: quotes and backslashes become ?,
-		# control characters are dropped.
-		function jstr(s) {
-			gsub(/[\\"]/, "?", s); gsub(/[[:cntrl:]]/, "", s)
-			return "\"" s "\""
+		# A JSON string: control characters are dropped, a backslash and a
+		# quote are escaped (character by character: gsub escapes differ).
+		function jstr(s,    o, i, c) {
+			gsub(/[[:cntrl:]]/, "", s)
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c == "\\" || c == "\"") o = o "\\"
+				o = o c
+			}
+			return "\"" o "\""
 		}
 		$1 ~ /^[0-9.]+$/ && 1 < NF {
 			n++; m[n] = $1 + 0

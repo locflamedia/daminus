@@ -616,6 +616,12 @@ fn db_reads_dotenv_text_and_hands_the_login_over_stdin_only() {
             "DB_USERNAME='app'\nDB_PASSWORD='CANARY\"b\\c$d `x` ;#'\n",
             "[client]\nuser=\"app\"\npassword=\"CANARY\\\"b\\\\c$d `x` ;#\"\n",
         ),
+        // Inside double quotes `\\` and `\"` are decoded; the option file
+        // escapes them again.
+        (
+            "DB_USERNAME=app\nDB_PASSWORD=\"CANARY\\\\b\\\"q\\\\\"\n",
+            "[client]\nuser=\"app\"\npassword=\"CANARY\\\\b\\\"q\\\\\"\n",
+        ),
         // A bare `$` inside double quotes is a dollar sign.
         (
             "DB_USERNAME=app\nDB_PASSWORD=\"CANARY$x\"\n",
@@ -712,8 +718,13 @@ fn db_never_runs_the_env_file_and_refuses_notation_it_cannot_read() {
     assert!(!marker.exists(), "the env file was executed");
 
     let refused: &[&str] = &[
-        // A backslash inside double quotes (an escape the reader does not decode).
-        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\\"x\"\n",
+        // Any other backslash inside double quotes is an escape the reader
+        // does not decode, and so is one that leaves the quote open.
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\nx\"\n",
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\$x\"\n",
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\\"\n",
+        // An escaped backslash does not hide a `${`.
+        "DB_USERNAME=a\nDB_PASSWORD=\"CANARY\\\\${X}\"\n",
         // `${NAME}` inside double quotes is expanded by most dotenv readers.
         "DB_USERNAME=a\nDB_PASSWORD=\"CANARY${X}\"\n",
         // An unclosed quote.
@@ -824,6 +835,24 @@ fn db_outcome_follows_the_exit_code_and_the_shape_of_the_rows() {
         by_target(&r.facts, "shop").unknown,
         Some(UnknownReason::NeedsPerm)
     );
+    // Other connection failures read the same: nothing but a timeout and a
+    // missing client is told apart by the exit status.
+    for exit in [2, 255] {
+        let r = db_run("mysql", env, exit, "");
+        assert_eq!(
+            by_target(&r.facts, "shop").unknown,
+            Some(UnknownReason::NeedsPerm),
+            "mysql exit {exit}"
+        );
+    }
+    for exit in [1, 2] {
+        let r = db_run("postgres", env, exit, "");
+        assert_eq!(
+            by_target(&r.facts, "shop").unknown,
+            Some(UnknownReason::NeedsPerm),
+            "postgres exit {exit}"
+        );
+    }
     let r = db_run("mysql", env, 124, "");
     assert_eq!(
         by_target(&r.facts, "shop").unknown,
@@ -2037,4 +2066,72 @@ fn project_walks_cross_mount_points() {
     let args = std::fs::read_to_string(&log).unwrap();
     assert!(args.contains(app.to_str().unwrap()), "{args}");
     assert!(!args.contains("-xdev"), "{args}");
+}
+
+/// A project folder whose own name holds a backslash, a quote and a space is
+/// matched by the target of each check that walks it, and the names found
+/// inside it come back unchanged, not cut or turned into `?`.
+#[test]
+fn checks_handle_backslash_and_quote_in_project_folder_names() {
+    if !cfg!(target_os = "linux") {
+        // BSD du and find: the checks answer unsupported there.
+        return;
+    }
+    let tmp = tempfile::tempdir().unwrap();
+    let app = tmp.path().join("my\\app \"x\"");
+    let paths = app.to_str().unwrap();
+    let vars = [("DAMINUS_PATHS", paths), ("DAMINUS_LARGE_FILE_MB", "1")];
+
+    write(&app.join("sub\\dir/big.bin"), &"x".repeat(2 << 20));
+    write(&app.join("q\"t/small.txt"), "x");
+    write(&app.join("uploads/s\\h.php"), "<?php");
+    write(&app.join("src/a\\b.php"), "<?php");
+    let log = app.join("storage/logs/laravel.log");
+    write(&log, "");
+    std::fs::File::create(&log)
+        .unwrap()
+        .set_len(600 << 20)
+        .unwrap();
+
+    let facts = run("disk.path", &vars, &[], &[]);
+    let f = by_target(&facts, paths);
+    assert_eq!(f.unknown, None, "{f:?}");
+    assert_eq!(f.data["top"][0][0], "sub\\dir", "{f:?}");
+    assert!(
+        f.data["top"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|t| t[0] == "q\"t"),
+        "{f:?}"
+    );
+    assert!(
+        f.data["files"]
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!(["sub\\dir/big.bin", 2 << 20])),
+        "{f:?}"
+    );
+
+    let facts = run("logs.big", &vars, &[], &[]);
+    let want = format!("{paths}/storage/logs/laravel.log");
+    assert_eq!(
+        by_target(&facts, &want).value,
+        Some(f64::from(600_u32 << 20))
+    );
+
+    let facts = run("sec.upload_php", &vars, &[], &[]);
+    let want = format!("{paths}/uploads/s\\h.php");
+    assert_eq!(by_target(&facts, &want).data["total"], 1);
+
+    let facts = run("sec.recent_change", &vars, &[], &[]);
+    let f = by_target(&facts, paths);
+    assert_eq!(f.value, Some(2.0), "{f:?}");
+    let names: Vec<&str> = f.data["files"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|e| e[0].as_str().unwrap())
+        .collect();
+    assert!(names.contains(&"src/a\\b.php"), "{names:?}");
 }
