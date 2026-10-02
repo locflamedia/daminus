@@ -89,7 +89,7 @@ function onKeydown(e: KeyboardEvent) {
   if (e.metaKey && e.key.toLowerCase() === 'r') {
     e.preventDefault()
     if (!scan.scanning) void scan.start()
-  } else if (e.key === 'Escape' && scan.scanning) {
+  } else if (e.key === 'Escape' && !e.defaultPrevented && scan.scanning) {
     void scan.stop()
   }
 }

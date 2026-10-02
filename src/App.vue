@@ -3,6 +3,7 @@ import { defineAsyncComponent, onBeforeUnmount, onMounted } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import AppWindow from '@/layout/AppWindow.vue'
 import { useScanStore } from '@/stores/scan'
+import UiToastHost from '@/ui/UiToastHost.vue'
 
 const scan = useScanStore()
 const route = useRoute()
@@ -23,4 +24,5 @@ onBeforeUnmount(() => scan.dispose())
     <RouterView />
   </AppWindow>
   <component :is="DevSwitch" v-if="DevSwitch && route.meta.bare !== true" />
+  <UiToastHost />
 </template>
