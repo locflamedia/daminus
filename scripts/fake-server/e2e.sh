@@ -285,9 +285,40 @@ ok "the scan checked the discovered components" jq -e '
 ok "and the mariadbd that listens on every address is a finding" jq -e '
 	[.items[] | select(.key.check == "sec.ports" and .key.target == "3306")] | length == 1' "$work/report.json"
 
+# ----------------------------------------------------------------- aaPanel
+# The server's nginx moves aside and an aaPanel layout takes its place: the
+# config under /www/server/nginx/conf includes the panel's vhost folder, and the
+# site lives in /www/wwwroot with a canary .env.
+docker exec -u root "$name" sh -c '
+	mv /etc/nginx /etc/nginx.off
+	mkdir -p /www/server/nginx/conf /www/server/panel/vhost/nginx /www/wwwroot/shop.example/public
+	echo "http { include /www/server/panel/vhost/nginx/*.conf; }" >/www/server/nginx/conf/nginx.conf
+	printf "%s\n" "server {" "  listen 80;" "  server_name shop.example;" \
+		"  root /www/wwwroot/shop.example/public;" \
+		"  location ~ \\.php\$ { fastcgi_pass unix:/tmp/php-cgi.sock; }" "}" \
+		>/www/server/panel/vhost/nginx/shop.example.conf
+	echo "<?php echo 1;" >/www/wwwroot/shop.example/public/index.php
+	echo "DB_PASSWORD=CANARY_aapanel_env_value" >/www/wwwroot/shop.example/.env
+	chmod -R a+rX /www'
+rc=0
+app -F "$cfg" --config-dir "$work/cfg-aa" discover --host fake-a --dry-run >"$work/aapanel.txt" 2>&1 || rc=$?
+cat "$work/aapanel.txt"
+aa=$(cat "$work/aapanel.txt")
+ok "discover on an aaPanel layout succeeds" test "$rc" -eq 0
+ok "the site in the panel's vhost folder is a project with its URL" has "$aa" "url http://shop.example"
+ok "and its code folder is the site folder, not the shared /www/wwwroot" has_re "$aa" "path /www/wwwroot/shop.example\$"
+app --config-dir "$work/cfg-aa" setup-bundle discover >"$work/aapanel-discover.sh"
+docker exec -i -u daminus "$name" sh -s <"$work/aapanel-discover.sh" >"$work/aapanel.ndjson"
+# shellcheck disable=SC2016 # jq programs
+ok "the vhost and the .env path are listed, the .env is not opened" jq -s -e '
+	([.[] | select(.rec == "vhost" and .names == ["shop.example"])][0]
+		| .root == "/www/wwwroot/shop.example/public" and .php == true)
+	and ([.[] | select(.rec == "env" and .path == "/www/wwwroot/shop.example/.env")]
+		| length == 1 and .[0].readable == true and (.[0] | keys | sort) == ["path", "readable", "rec"])' "$work/aapanel.ndjson"
+
 # ------------------------------------------------------- secrets and files
 leaks=$(grep -rl CANARY "$work/cfg-a" "$work/cfg-new" "$work/cfg-wrong" "$work/cfg-down" "$work/cfg-jump" \
-	"$work/again.txt" "$work/scan.txt" "$work/scan.err" "$work/report.json" 2>/dev/null || true)
+	"$work/again.txt" "$work/aapanel.txt" "$work/aapanel.ndjson" "$work/cfg-aa" "$work/scan.txt" "$work/scan.err" "$work/report.json" 2>/dev/null || true)
 ok "no canary value reached any output, config folder or snapshot" test -z "$leaks"
 [ -z "$leaks" ] || echo "$leaks" >&2
 ok "known_hosts files are untouched" same_sum "$work/known_hosts" "$known_before"

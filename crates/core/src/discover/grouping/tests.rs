@@ -388,7 +388,12 @@ fn a_proxy_only_block_gets_the_folder_of_its_process_even_with_nothing_else() {
 
 #[test]
 fn a_block_on_a_shared_folder_is_a_url_and_never_a_folder_component() {
-    for root in ["/var/www/html", "/usr/share/nginx/html", "/"] {
+    for root in [
+        "/var/www/html",
+        "/usr/share/nginx/html",
+        "/www/wwwroot",
+        "/",
+    ] {
         let hosts = vec![(
             alias("vps-a"),
             found(|d| {
@@ -687,4 +692,32 @@ fn proposal_survives_json() {
     let p = group(&five_servers());
     let json = serde_json::to_string(&p).unwrap();
     assert_eq!(serde_json::from_str::<Proposal>(&json).unwrap(), p);
+}
+
+#[test]
+fn an_aapanel_site_is_a_project_with_its_folder_and_env() {
+    let hosts = vec![(
+        alias("vps-a"),
+        found(|d| {
+            d.vhosts.push(vhost(
+                &["shop.example"],
+                Some("/www/wwwroot/shop.example/public"),
+                None,
+                false,
+                true,
+            ));
+            d.envs.push(env("/www/wwwroot/shop.example/.env"));
+            d.envs.push(env("/www/wwwroot/.env"));
+        }),
+    )];
+    let p = group(&hosts);
+    assert_eq!(p.projects.len(), 1);
+    assert_eq!(p.projects[0].urls, ["http://shop.example"]);
+    assert_eq!(
+        p.projects[0].components,
+        [comp(Role::Be, "vps-a", path("/www/wwwroot/shop.example"))]
+    );
+    // The `.env` of the site joins it; the one in the shared folder is nobody's.
+    let loose: Vec<&str> = p.unassigned.iter().map(|u| u.item.kind()).collect();
+    assert_eq!(loose, ["env"]);
 }
