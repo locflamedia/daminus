@@ -30,6 +30,16 @@ defineProps<{
   height: 72px;
 }
 
+/* The header sits over the page's drag strip: only its controls take the pointer, so the
+   blank space and the title still drag the window. */
+.page-header {
+  pointer-events: none;
+}
+
+.page-header > :not(.titles, .grow) {
+  pointer-events: auto;
+}
+
 .titles {
   display: flex;
   flex-direction: column;

@@ -127,6 +127,17 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   height: 72px;
 }
 
+/* The header sits over the page's drag strip: only its controls take the pointer, so the
+   blank space, the tile and the name still drag the window. */
+.project-header {
+  pointer-events: none;
+}
+
+.project-header > :not(.titles, .grow, :first-child),
+.crumb {
+  pointer-events: auto;
+}
+
 .titles {
   display: flex;
   flex-direction: column;
@@ -138,6 +149,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 .crumb {
   display: flex;
   align-items: center;
+  align-self: flex-start;
   gap: 6px;
   color: var(--ink-3);
   font-size: var(--text-12);
