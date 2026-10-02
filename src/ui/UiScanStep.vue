@@ -90,6 +90,7 @@ const detailTone = computed(() => (props.state === 'failed' ? 'crit' : 'plain'))
   gap: var(--space-3);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
+  line-height: normal;
 }
 
 .step.shaded {

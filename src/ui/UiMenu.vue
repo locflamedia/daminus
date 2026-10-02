@@ -195,7 +195,7 @@ function apart(index: number): boolean {
         <span v-if="item.mark && item.markLabel" class="sr-only">{{ item.markLabel }}</span>
         <span v-if="item.hint" class="hint">{{ item.hint }}</span>
         <span v-if="item.keys && item.keys.length > 0" class="keys">
-          <UiKbd v-for="key in item.keys" :key="key">{{ key }}</UiKbd>
+          <UiKbd v-for="key in item.keys" :key="key" tone="on-menu">{{ key }}</UiKbd>
         </span>
       </button>
     </div>
@@ -223,7 +223,7 @@ function apart(index: number): boolean {
   width: 100%;
   height: var(--h-control);
   padding: 0 var(--space-2);
-  border-radius: var(--radius-xs);
+  border-radius: 8px;
   color: var(--ink);
   font-size: var(--text-13);
   text-align: left;
@@ -264,7 +264,7 @@ function apart(index: number): boolean {
   gap: var(--space-2);
   height: 30px;
   padding: 0 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
 }
 
 .compact .label {

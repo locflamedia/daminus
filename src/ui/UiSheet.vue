@@ -1,10 +1,11 @@
 <!--
-  Sheet, from the board "Feedback" (Sheet) and "Project sheet": for editing (add or edit a
-  project, settings, permission help). It rises over the window from the bottom edge: a glass
-  tray (radius 20 at the top) around a white card (14), the page behind dimmed by a 16 % ink
-  scrim. Header 56 (title 15/500, context 12 in ink-3, close 28), a body that scrolls while
-  header and footer stay, and a 64 px footer on surface-1: the destructive action on the left
-  (`footer-start`), cancel and save on the right (`footer-end`).
+  Sheet, from the boards "Feedback" (Sheet) and "Project sheet": for editing (add or edit a
+  project, settings, permission help). A centred card over the window, 760 px wide (a narrower
+  window keeps 24 px margins) and at most 88 % of the window high: a glass tray (radius 20 on
+  every corner) around a white card (14). The page behind is dimmed by the sheet scrim and
+  blurred 3 px. Header 56 (title 15/500, context 12 in ink-3, close 28), a body that scrolls
+  while header and footer stay, and a 64 px footer on surface-1: the destructive action on the
+  left (`footer-start`), cancel and save on the right (`footer-end`).
 
   It does not close itself. Escape and the close button say `close` and the owner decides, so
   a form with unsaved changes can ask once before it goes; a press on the scrim does nothing,
@@ -23,11 +24,11 @@ const props = withDefaults(
     open: boolean
     title: string
     context?: string
-    /** A fixed, centred width (760px) instead of the full 88 % sheet. */
+    /** The card's width; 760px unless a screen needs another. */
     width?: string
     closeLabel?: string
   }>(),
-  { context: undefined, width: undefined, closeLabel: undefined },
+  { context: undefined, width: '760px', closeLabel: undefined },
 )
 
 const emit = defineEmits<{ close: [] }>()
@@ -54,8 +55,7 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
       <div
         ref="panel"
         class="tray"
-        :class="{ narrow: width }"
-        :style="width ? { width } : undefined"
+        :style="{ width }"
         role="dialog"
         aria-modal="true"
         :aria-labelledby="titleId"
@@ -90,6 +90,9 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
   position: absolute;
   inset: 0;
   z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
 }
 
@@ -97,36 +100,33 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
   position: absolute;
   inset: 0;
   background: var(--scrim-sheet);
+  backdrop-filter: blur(var(--scrim-blur));
 }
 
 .tray {
-  position: absolute;
-  right: var(--space-8);
-  bottom: 0;
-  left: var(--space-8);
-  height: 88%;
-  padding: 6px 6px 0;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: calc(100% - 2 * var(--space-6));
+  max-height: 88%;
+  padding: 6px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface-0) 60%, transparent);
-  transform-origin: 50% 100%;
-}
-
-.tray.narrow {
-  right: auto;
-  left: 50%;
-  max-width: calc(100% - 2 * var(--space-8));
-  translate: -50% 0;
+  box-shadow: var(--shadow-overlay);
+  transform-origin: 50% 0;
 }
 
 .tray:focus-visible {
-  box-shadow: none;
+  box-shadow: var(--shadow-overlay);
 }
 
 .card {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
-  height: 100%;
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-md);
   background: var(--surface-0);
 }
 

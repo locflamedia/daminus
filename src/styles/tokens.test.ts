@@ -146,7 +146,8 @@ describe('light tokens match the canvas', () => {
     expect(darkAttr.get('--card-wash-crit')).toBe('#2a1820')
     expect(darkAttr.get('--card-wash-warn')).toBe('#2a2116')
     expect(darkAttr.get('--card-wash-info')).toBe('#1c2033')
-    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.16)')
+    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.22)')
+    expect(light.get('--scrim-blur')).toBe('3px')
     expect(light.get('--scrim-dialog')).toBe('rgba(27, 29, 42, 0.24)')
     expect(light.get('--code-hl')).toBe('#f4a6bf')
     expect(light.get('--delay-tooltip')).toBe('400ms')
@@ -451,5 +452,43 @@ describe('primitives', () => {
       }
     }
     expect(offenders).toEqual([])
+  })
+})
+
+describe('overlay tokens follow the Components · Dark overlays', () => {
+  it('draws the toast and tooltip in the primary fill with the #3a55d6 action in dark', () => {
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--btn')).toBe('#ecedf3')
+      expect(dark.get('--btn-ink')).toBe('#101118')
+      expect(dark.get('--on-btn-accent')).toBe('#3a55d6')
+      expect(dark.get('--toast-ok-bg')).toBe('transparent')
+      expect(dark.get('--toast-ok-ink')).toBe('#146b40')
+    }
+    expect(light.get('--on-btn-accent')).toBe('#9fb0ff')
+    expect(light.get('--toast-ok-bg')).toBe('var(--ok-solid)')
+  })
+
+  it('dims with 22 % ink and a 3 px blur in light, 40 % and 55 % black in dark', () => {
+    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.22)')
+    expect(light.get('--scrim-blur')).toBe('3px')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--scrim-sheet')).toBe('rgba(0, 0, 0, 0.4)')
+      expect(dark.get('--scrim-dialog')).toBe('rgba(0, 0, 0, 0.55)')
+    }
+  })
+
+  it('draws both drawers in dark with the overlay shadow in black', () => {
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--shadow-drawer')).toBe(dark.get('--shadow-overlay'))
+      expect(dark.get('--shadow-panel')).toBe(dark.get('--shadow-overlay'))
+      expect(dark.get('--shadow-pop')).toBe(
+        '0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7)',
+      )
+    }
+  })
+
+  it('keeps the flat key on a menu surface-1 in light and the key tone in dark', () => {
+    expect(light.get('--kbd-on-menu')).toBe('var(--surface-1)')
+    expect(darkAttr.get('--kbd-on-menu')).toBe('var(--kbd-bg)')
   })
 })

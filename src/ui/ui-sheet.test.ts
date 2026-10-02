@@ -171,10 +171,18 @@ describe('UiSheet', () => {
     expect(sheet.emitted('close')).toHaveLength(1)
   })
 
-  it('takes a fixed width when asked', () => {
-    make({ width: '760px' })
+  it('is a 760 px centred card unless another width is asked for', () => {
+    make()
     expect(wrapper!.get('.tray').attributes('style')).toContain('width: 760px')
-    expect(wrapper!.get('.tray').classes()).toContain('narrow')
+    wrapper!.unmount()
+    make({ width: '520px' })
+    expect(wrapper!.get('.tray').attributes('style')).toContain('width: 520px')
+  })
+
+  it('blurs the page behind it with the sheet scrim', () => {
+    make()
+    expect(wrapper!.get('.scrim').attributes('aria-hidden')).toBe('true')
+    expect(wrapper!.get('.tray').classes()).not.toContain('narrow')
   })
 
   it('renders title and context as text', () => {

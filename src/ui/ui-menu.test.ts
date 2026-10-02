@@ -48,6 +48,14 @@ const press = (key: string, init: KeyboardEventInit = {}) =>
   )
 
 describe('UiMenu', () => {
+  it('draws its shortcuts as flat keys on the menu surface', async () => {
+    make()
+    await open()
+    const keys = [...document.querySelectorAll('[role="menuitem"] kbd')]
+    expect(keys.map((k) => k.textContent)).toEqual(['⌘', 'R'])
+    for (const key of keys) expect(key.classList.contains('kbd-on-menu')).toBe(true)
+  })
+
   it('is a menu button: closed, then role=menu with a menuitem per row', async () => {
     make()
     expect(menu()).toBeNull()

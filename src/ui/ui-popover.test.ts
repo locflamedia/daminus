@@ -42,6 +42,14 @@ const press = (el: Element, key: string, init: KeyboardEventInit = {}) =>
   el.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init }))
 
 describe('UiPopover', () => {
+  it('is a radius-12 surface, a step tighter than a menu', async () => {
+    make({ open: true })
+    await nextTick()
+    await nextTick()
+    const surface = document.querySelector<HTMLElement>('[role="dialog"]')
+    expect(surface?.style.borderRadius).toBe('12px')
+  })
+
   it('is closed until the trigger is pressed, and the trigger says what it opens', async () => {
     make()
     expect(panel()).toBeNull()

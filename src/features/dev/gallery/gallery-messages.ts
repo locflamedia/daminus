@@ -325,7 +325,7 @@ const baseMessages = {
       dialogTrust: 'Trust new key',
       sheet: 'Sheet',
       sheetLede:
-        'For editing. Rises from the bottom to 88 % of the window, the page dims to 16 %. Esc or Cancel asks to close; a press on the scrim does nothing.',
+        'For editing. A centred card, 760 wide (narrower windows keep 24 px margins), radius 20 on every corner, at most 88 % of the window high. The scrim is 22 % with a 3 px blur. It opens with scale .98 and 8 px up, 200 ms. Esc or Cancel asks to close; a press on the scrim does nothing.',
       sheetOpen: 'Open the sheet',
       sheetTitle: 'Edit kho-hang',
       sheetContext: '4 components',
@@ -878,7 +878,7 @@ const baseMessages = {
       dialogTrust: 'Tin khoá mới',
       sheet: 'Sheet',
       sheetLede:
-        'Để chỉnh sửa. Trồi lên từ cạnh dưới đến 88 % cửa sổ, trang phía sau mờ còn 16 %. Esc hoặc Hủy là xin đóng; bấm vào lớp mờ không làm gì.',
+        'Để chỉnh sửa. Một thẻ ở giữa, rộng 760 (cửa sổ hẹp hơn giữ lề 24 px), bo 20 cả bốn góc, cao tối đa 88 % cửa sổ. Lớp mờ 22 % cùng blur 3 px. Mở bằng scale .98 và lên 8 px, 200 ms. Esc hoặc Hủy là xin đóng; bấm vào lớp mờ không làm gì.',
       sheetOpen: 'Mở sheet',
       sheetTitle: 'Sửa kho-hang',
       sheetContext: '4 thành phần',

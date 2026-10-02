@@ -50,6 +50,10 @@
   --code-thumb: rgba(255, 255, 255, 0.35);
   /* Accent text on the ink fill of toasts and tooltips (the dark fill inverts, so it flips). */
   --on-btn-accent: #9fb0ff;
+  --on-btn-ink-2: #b9bccb;
+  --toast-ok-bg: var(--ok-solid);
+  --toast-ok-ink: var(--on-solid);
+  --toast-ok-glyph: 1;
 
   /* Accent: focus ring, active nav mark, running scans, meters, chart lines. */
   --accent: #4f6bed;
@@ -140,6 +144,7 @@
   --side-line: rgba(95, 100, 120, 0.18);
   --seg-track: var(--surface-1);
   --kbd-bg: var(--surface-2);
+  --kbd-on-menu: var(--surface-1);
   --kbd-on-btn: rgba(255, 255, 255, 0.14);
   --kbd-on-glass: rgba(255, 255, 255, 0.6);
   --skeleton-1: #e6e8f1;
@@ -175,7 +180,8 @@
   --switch-disabled-track: color-mix(in srgb, var(--ink-5) 40%, var(--surface-3));
   --switch-disabled-knob: var(--surface-0);
   /* Ink at 16% behind a sheet and 24% behind a blocking dialog. */
-  --scrim-sheet: rgba(27, 29, 42, 0.16);
+  --scrim-sheet: rgba(27, 29, 42, 0.22);
+  --scrim-blur: 3px;
   --scrim-dialog: rgba(27, 29, 42, 0.24);
 
   /* Type: Geist for everything you read, Geist Mono for what you could paste into a terminal. */
@@ -317,6 +323,10 @@
     --code-thumb: rgba(255, 255, 255, 0.35);
     /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
     --on-btn-accent: #3a55d6;
+    --on-btn-ink-2: color-mix(in srgb, var(--btn-ink) 72%, var(--btn));
+    --toast-ok-bg: transparent;
+    --toast-ok-ink: #146b40;
+    --toast-ok-glyph: 1.4;
 
     --accent: #7b91ff;
     --accent-ink: #a3b2ff;
@@ -399,6 +409,7 @@
     --side-line: rgba(255, 255, 255, 0.08);
     --seg-track: var(--surface-1);
     --kbd-bg: var(--surface-2);
+    --kbd-on-menu: var(--kbd-bg);
     --kbd-on-btn: rgba(16, 17, 24, 0.1);
     --kbd-on-glass: rgba(255, 255, 255, 0.08);
     --skeleton-1: #2a2d3b;
@@ -419,7 +430,7 @@
     --shadow-primary: none;
     --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7);
     --shadow-drawer: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
-    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
     --focus-ring: 0 0 0 2px var(--accent);
     --ring-gap: #101118;
     --field-focus-bg: var(--surface-1);
@@ -477,6 +488,10 @@
   --code-thumb: rgba(255, 255, 255, 0.35);
   /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
   --on-btn-accent: #3a55d6;
+  --on-btn-ink-2: color-mix(in srgb, var(--btn-ink) 72%, var(--btn));
+  --toast-ok-bg: transparent;
+  --toast-ok-ink: #146b40;
+  --toast-ok-glyph: 1.4;
 
   --accent: #7b91ff;
   --accent-ink: #a3b2ff;
@@ -559,6 +574,7 @@
   --side-line: rgba(255, 255, 255, 0.08);
   --seg-track: var(--surface-1);
   --kbd-bg: var(--surface-2);
+  --kbd-on-menu: var(--kbd-bg);
   --kbd-on-btn: rgba(16, 17, 24, 0.1);
   --kbd-on-glass: rgba(255, 255, 255, 0.08);
   --skeleton-1: #2a2d3b;
@@ -579,7 +595,7 @@
   --shadow-primary: none;
   --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7);
   --shadow-drawer: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
-  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
+  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
   --focus-ring: 0 0 0 2px var(--accent);
   --ring-gap: #101118;
   --field-focus-bg: var(--surface-1);

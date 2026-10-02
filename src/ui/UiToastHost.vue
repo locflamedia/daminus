@@ -1,7 +1,7 @@
 <!--
   Where toasts appear: bottom right of the window, newest at the bottom, 8 px apart. Mount it
   once at the window root; `useToastStore().push(...)` puts a toast here. A toast rises 12 px
-  and fades in over 240 ms and leaves by dropping 8 px over 200 ms; Reduce Motion keeps the
+  and fades in over 220 ms and leaves by dropping 8 px over 200 ms; Reduce Motion keeps the
   fades. Items are a polite live region each, so the host itself adds no announcement.
 -->
 <script setup lang="ts">
