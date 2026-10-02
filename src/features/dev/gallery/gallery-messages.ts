@@ -1,6 +1,8 @@
+import { moreGalleryMessages } from './gallery-messages-more'
+
 // Sample copy for the dev gallery, in both languages. It is merged into the app's messages
 // only when the gallery opens, so it never reaches the production bundle.
-export const galleryMessages = {
+const baseMessages = {
   en: {
     title: 'Component gallery',
     lede: 'Development only. Every primitive in every variant and state, in the theme and language chosen here.',
@@ -1032,4 +1034,9 @@ export const galleryMessages = {
       },
     },
   },
+}
+
+export const galleryMessages = {
+  en: { ...baseMessages.en, ...moreGalleryMessages.en },
+  vi: { ...baseMessages.vi, ...moreGalleryMessages.vi },
 }

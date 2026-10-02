@@ -11,8 +11,10 @@ import { useSettingsStore } from '@/stores/settings'
 import UiSeg from '@/ui/UiSeg.vue'
 import GalleryActions from './GalleryActions.vue'
 import GalleryCharts from './GalleryCharts.vue'
+import GalleryComposed from './GalleryComposed.vue'
 import GalleryDisplay from './GalleryDisplay.vue'
 import GalleryInputs from './GalleryInputs.vue'
+import GalleryMicro from './GalleryMicro.vue'
 import GalleryOverlays from './GalleryOverlays.vue'
 import { galleryMessages } from './gallery-messages'
 
@@ -68,6 +70,16 @@ const languages = computed(() => LOCALES.map((value) => ({ value, label: t(`lang
       <h2 class="group-title">{{ t('gallery.display.title') }}</h2>
       <p class="group-lede">{{ t('gallery.display.lede') }}</p>
       <GalleryDisplay />
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">{{ t('gallery.micro.title') }}</h2>
+      <GalleryMicro />
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">{{ t('gallery.composed.title') }}</h2>
+      <GalleryComposed />
     </section>
 
     <section class="group">
