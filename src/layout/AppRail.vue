@@ -7,6 +7,7 @@ import { isUnreachable, issueCount } from '@/lib/rollups'
 import { useProjectsStore } from '@/stores/projects'
 import { useScanStore } from '@/stores/scan'
 import UiIcon from '@/ui/UiIcon.vue'
+import { badgeText } from '@/lib/micro'
 import DiskRing from './DiskRing.vue'
 import ProjectDot from './ProjectDot.vue'
 
@@ -106,7 +107,9 @@ const overviewTip = computed(() =>
         @pointerleave="leave"
       >
         <UiIcon name="grid" />
-        <b v-if="projects.issues > 0" class="badge accent">{{ projects.issues }}</b>
+        <b v-if="badgeText(projects.issues)" class="badge accent">{{
+          badgeText(projects.issues)
+        }}</b>
       </RouterLink>
       <RouterLink
         to="/history"
@@ -140,8 +143,8 @@ const overviewTip = computed(() =>
               "
             />
           </span>
-          <b v-if="issueCount(p) > 0" class="badge" :class="badge(p.level)">
-            {{ issueCount(p) }}
+          <b v-if="badgeText(issueCount(p))" class="badge" :class="badge(p.level)">
+            {{ badgeText(issueCount(p)) }}
           </b>
         </RouterLink>
       </template>

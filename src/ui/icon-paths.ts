@@ -38,6 +38,14 @@ export const ICON_PATHS = {
   external: 'M6 3h7v7M13 3 4 12',
   copy: 'M6.5 5h5.5A1.5 1.5 0 0 1 13.5 6.5V12a1.5 1.5 0 0 1-1.5 1.5H6.5A1.5 1.5 0 0 1 5 12V6.5A1.5 1.5 0 0 1 6.5 5z M11 5V4a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 3 4v5.5A1.5 1.5 0 0 0 4.5 11H5',
   send: 'M8 13V3M3.8 7.2 8 3l4.2 4.2',
+  // The delta pill: the arrow shows the direction, the colour says whether it is good.
+  'arrow-up': 'M8 13V3M3.8 7.2 8 3l4.2 4.2',
+  'arrow-down': 'M8 3v10M3.8 8.8 8 13l4.2-4.2',
+  minus: 'M3 8h10',
+  // The overflow menu of a section header; drawn with a thicker stroke (2.4).
+  more: 'M3.5 8h.01M8 8h.01M12.5 8h.01',
+  // A plain ring: the dashed form means "not set up" (an empty value), the solid one a frame.
+  circle: 'M8 2a6 6 0 1 1 0 12A6 6 0 1 1 8 2z',
   terminal:
     'M3.8 2.8h8.4a2 2 0 0 1 2 2v6.4a2 2 0 0 1-2 2H3.8a2 2 0 0 1-2-2V4.8a2 2 0 0 1 2-2z M4.8 6.5l2 1.5-2 1.5 M8.5 10h3',
   lock: 'M5 7h6a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z M5.2 7V5.2a2.8 2.8 0 0 1 5.6 0V7',
@@ -53,3 +61,16 @@ export const ICON_PATHS = {
 } as const
 
 export type IconName = keyof typeof ICON_PATHS
+
+/**
+ * Stroke by size, from the board "Icons, motion and access": the stroke thins slightly as
+ * the icon grows, so the weight looks constant (12 px 1.8, 14 px 1.6, 16 px 1.5, 18 px 1.4,
+ * 24 px 1.3). A size between two steps takes the nearest one.
+ */
+export function strokeForSize(size: number): number {
+  if (size <= 13) return 1.8
+  if (size <= 15) return 1.6
+  if (size <= 17) return 1.5
+  if (size <= 20) return 1.4
+  return 1.3
+}

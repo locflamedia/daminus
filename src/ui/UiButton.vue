@@ -179,8 +179,7 @@ function onClick(event: MouseEvent) {
 .btn-primary {
   --bg: var(--btn);
   --fg: var(--btn-ink);
-  /* A tenth of the opposite tone: lighter on the dark button, darker on the light one. */
-  --bg-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
+  --bg-hover: var(--btn-hover);
   --bg-press: var(--btn);
   --bg-off: var(--surface-3);
 }
@@ -191,7 +190,7 @@ function onClick(event: MouseEvent) {
 
 .btn-secondary {
   --bg: var(--surface-0);
-  --bg-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+  --bg-hover: var(--secondary-hover);
   --bg-press: var(--surface-1);
   --shadow: var(--shadow-control);
 }
@@ -222,8 +221,8 @@ function onClick(event: MouseEvent) {
 .btn-danger {
   --bg: var(--crit-soft);
   --fg: var(--crit-ink);
-  --bg-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
-  --bg-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
+  --bg-hover: var(--danger-hover);
+  --bg-press: var(--danger-press);
   --fg-off: var(--ink-5);
 }
 

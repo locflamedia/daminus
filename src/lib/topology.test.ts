@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { layoutTopology, type TopologyInput } from './topology'
+import { layoutServers, layoutTopology, roleOf, type TopologyInput } from './topology'
 
 const node = (id: string, state: TopologyInput['state'], host: string | null): TopologyInput => ({
   id,
@@ -49,5 +49,68 @@ describe('layoutTopology', () => {
 
   it('has no nodes for no components', () => {
     expect(layoutTopology([])).toEqual({ nodes: [], hidden: 0 })
+  })
+})
+
+describe('roleOf', () => {
+  it('reads the role from the label, case and spaces aside', () => {
+    expect(roleOf({ label: 'FE' })).toBe('fe')
+    expect(roleOf({ label: ' Worker ' })).toBe('worker')
+    expect(roleOf({ label: 'APP' })).toBe('app')
+    expect(roleOf({ label: 'cache' })).toBe('other')
+  })
+
+  it('prefers the role it is given', () => {
+    expect(roleOf({ label: 'Queue', role: 'worker' })).toBe('worker')
+  })
+})
+
+describe('layoutServers', () => {
+  it('puts neighbours on one server in one node', () => {
+    const view = layoutServers([
+      node('fe', 'ok', 'vps-sg-1'),
+      node('be', 'ok', 'vps-sg-2'),
+      node('db', 'warn', 'vps-sg-2'),
+    ])
+    expect(view.groups.map((g) => [g.host, g.roles.map((r) => r.label), g.state])).toEqual([
+      ['vps-sg-1', ['FE'], 'ok'],
+      ['vps-sg-2', ['BE', 'DB'], 'warn'],
+    ])
+    expect(view.hidden).toBe(0)
+  })
+
+  it('keeps one node for a project on a single server', () => {
+    const view = layoutServers([
+      node('fe', 'ok', 'a'),
+      node('be', 'ok', 'a'),
+      node('db', 'ok', 'a'),
+    ])
+    expect(view.groups).toHaveLength(1)
+    expect(view.groups[0]?.roles.map((r) => r.role)).toEqual(['fe', 'be', 'db'])
+  })
+
+  it('starts a new node where the server changes back', () => {
+    const view = layoutServers([
+      node('fe', 'ok', 'a'),
+      node('be', 'ok', 'b'),
+      node('db', 'ok', 'a'),
+    ])
+    expect(view.groups.map((g) => g.host)).toEqual(['a', 'b', 'a'])
+  })
+
+  it('folds the healthiest servers past four, never a failing one', () => {
+    const view = layoutServers([
+      node('a', 'ok', '1'),
+      node('b', 'ok', '2'),
+      node('c', 'crit', '3'),
+      node('d', 'ok', '4'),
+      node('e', 'warn', '5'),
+      node('f', 'ok', '6'),
+    ])
+    expect(view.hidden).toBe(2)
+    expect(view.groups.map((g) => g.host)).toEqual(
+      ['1', '3', '5', '2'].sort((x, y) => Number(x) - Number(y)),
+    )
+    expect(view.groups.some((g) => g.state === 'crit')).toBe(true)
   })
 })

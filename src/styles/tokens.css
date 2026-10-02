@@ -25,6 +25,11 @@
   --page-sheet: #f2f3f8;
   --btn: #1c1d24;
   --btn-ink: #ffffff;
+  /* Hover and pressed fills of the buttons, as drawn on the board "Actions". */
+  --btn-hover: #33343e;
+  --secondary-hover: #f9fafc;
+  --danger-hover: #f8d8e3;
+  --danger-press: #f4cbd9;
   --code: #1c1d24;
   --code-ink: #c9cee0;
   --code-dim: #80859a;
@@ -61,6 +66,24 @@
   --card-wash-warn: #fff7ec;
   --card-wash-info: #f3f5ff;
   --card-wash-ok: var(--ok-soft);
+
+  /* Roles on a topology node (FE, BE, DB, worker), as the Overview boards colour them. */
+  --role-fe: #3a55d6;
+  --role-be: #6a4fc4;
+  --role-db: #146b40;
+  --role-worker: #b0487a;
+  --node-bg: var(--surface-0);
+  /* The project tile: a two-stop tint at 135 degrees, white mark on top. */
+  --tint-amber-1: #f5c572;
+  --tint-amber-2: #c98416;
+  --tint-blue-1: #9db0ff;
+  --tint-blue-2: #4f6bed;
+  --tint-lilac-1: #c9b6f7;
+  --tint-lilac-2: #8b6fe0;
+  --tint-rose-1: #f28ba8;
+  --tint-rose-2: #d2436a;
+  --tint-grey-1: #d6d9e4;
+  --tint-grey-2: #9ea3b7;
 
   /* Ambient ground: three soft washes under a glass tray, then a white card. */
   --wash-1: #a9b9f5;
@@ -240,6 +263,10 @@
     --page-sheet: #101118;
     --btn: #ecedf3;
     --btn-ink: #101118;
+    --btn-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
+    --secondary-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+    --danger-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
+    --danger-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
     --code: #0b0c11;
     --code-ink: #c9cee0;
     --code-dim: #80859a;
@@ -273,6 +300,21 @@
     --card-wash-crit: #2a1820;
     --card-wash-warn: #2a2116;
     --card-wash-info: #1c2033;
+    --role-fe: #a3b2ff;
+    --role-be: #bba7ff;
+    --role-db: #7bdcac;
+    --role-worker: #f2a0c6;
+    --node-bg: var(--surface-2);
+    --tint-amber-1: #f5c572;
+    --tint-amber-2: #c98416;
+    --tint-blue-1: #9db0ff;
+    --tint-blue-2: #4f6bed;
+    --tint-lilac-1: #c9b6f7;
+    --tint-lilac-2: #8b6fe0;
+    --tint-rose-1: #f28ba8;
+    --tint-rose-2: #d2436a;
+    --tint-grey-1: #d6d9e4;
+    --tint-grey-2: #9ea3b7;
 
     --wash-1: #a9b9f5;
     --wash-2: #d2c2f4;
@@ -323,7 +365,7 @@
 
     --shadow-none: none;
     --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
-    --shadow-node: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-node: none;
     --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
     --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
@@ -357,6 +399,10 @@
   --page-sheet: #101118;
   --btn: #ecedf3;
   --btn-ink: #101118;
+  --btn-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
+  --secondary-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+  --danger-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
+  --danger-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
   --code: #0b0c11;
   --code-ink: #c9cee0;
   --code-dim: #80859a;
@@ -390,6 +436,21 @@
   --card-wash-crit: #2a1820;
   --card-wash-warn: #2a2116;
   --card-wash-info: #1c2033;
+  --role-fe: #a3b2ff;
+  --role-be: #bba7ff;
+  --role-db: #7bdcac;
+  --role-worker: #f2a0c6;
+  --node-bg: var(--surface-2);
+  --tint-amber-1: #f5c572;
+  --tint-amber-2: #c98416;
+  --tint-blue-1: #9db0ff;
+  --tint-blue-2: #4f6bed;
+  --tint-lilac-1: #c9b6f7;
+  --tint-lilac-2: #8b6fe0;
+  --tint-rose-1: #f28ba8;
+  --tint-rose-2: #d2436a;
+  --tint-grey-1: #d6d9e4;
+  --tint-grey-2: #9ea3b7;
 
   --wash-1: #a9b9f5;
   --wash-2: #d2c2f4;
@@ -440,7 +501,7 @@
 
   --shadow-none: none;
   --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
-  --shadow-node: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-node: none;
   --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
