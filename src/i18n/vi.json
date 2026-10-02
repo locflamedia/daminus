@@ -326,6 +326,8 @@
     "issues": "{name} · {count}"
   },
   "ui": {
+    "cancel": "Hủy",
+    "holdAnnounce": "Giữ để xác nhận, hoặc nhấn để mở hộp xác nhận.",
     "close": "Đóng",
     "dismiss": "Bỏ qua",
     "copy": "Sao chép",

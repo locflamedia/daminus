@@ -9,8 +9,8 @@
 
   The owner passes the groups and decides what picking an id does (open a project, run a
   scan); an empty result says so with the query. It fills the nearest positioned ancestor, as
-  the dialog does, and scales in .98 to 1 with a fade in 200 ms (the fade only under Reduce
-  Motion).
+  the dialog does, and scales in .98 to 1 with a fade in 150 ms (the fade only under Reduce
+  Motion). Opened by the shortcut (`instant`) it appears at once, with no motion.
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref, toRef, useId, watch } from 'vue'
@@ -45,6 +45,8 @@ const props = defineProps<{
   groups: readonly PaletteGroup[]
   /** The field's accessible name and placeholder. */
   label: string
+  /** Opened from the keyboard shortcut: it appears with no motion at all. */
+  instant?: boolean
 }>()
 
 const emit = defineEmits<{ select: [id: string, group: string]; close: [] }>()
@@ -127,7 +129,7 @@ function onKeydown(event: KeyboardEvent) {
 </script>
 
 <template>
-  <Transition name="palette" appear>
+  <Transition name="palette" :css="!instant" appear>
     <div v-if="open" class="layer" @mousedown.self="emit('close')">
       <div class="scrim" aria-hidden="true" />
       <div
@@ -216,8 +218,12 @@ function onKeydown(event: KeyboardEvent) {
   max-width: 100%;
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--surface-0);
-  box-shadow: var(--shadow-pop);
+  background: var(--surface-pop);
+  box-shadow: var(--shadow-overlay);
+}
+
+.panel :deep(.field:not(:hover, :focus-within)) {
+  background: var(--palette-well);
 }
 
 .list {
@@ -253,7 +259,7 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 .item[aria-selected='true'] {
-  background: var(--surface-1);
+  background: var(--menu-hover);
 }
 
 .glyph {
@@ -288,12 +294,12 @@ function onKeydown(event: KeyboardEvent) {
 
 .palette-enter-active,
 .palette-leave-active {
-  transition: opacity var(--dur-sheet) var(--ease-out);
+  transition: opacity var(--dur-popover) var(--ease-out);
 }
 
 .palette-enter-active .panel,
 .palette-leave-active .panel {
-  transition: transform var(--dur-sheet) var(--ease-out);
+  transition: transform var(--dur-popover) var(--ease-out);
 }
 
 .palette-enter-from,

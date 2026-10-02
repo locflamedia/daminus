@@ -21,6 +21,7 @@ import UiProviderRow from './UiProviderRow.vue'
 import UiRoll from './UiRoll.vue'
 import UiScanStep from './UiScanStep.vue'
 import UiSearchField from './UiSearchField.vue'
+import UiSparkline from './UiSparkline.vue'
 import UiTopology from './UiTopology.vue'
 
 vi.mock('@/api', () => ({ copyText: vi.fn().mockResolvedValue(undefined) }))
@@ -237,6 +238,14 @@ describe('UiCommandPalette', () => {
     return make(UiCommandPalette, { open: true, groups, label: 'Search', query: '', ...props })
   }
   const options = () => [...document.querySelectorAll('[role="option"]')].map((o) => o.textContent)
+
+  it('fades in over 150 ms, and with no motion at all when opened by the shortcut', () => {
+    open()
+    expect(wrapper!.html()).toContain('css="true"')
+    wrapper!.unmount()
+    open({ instant: true })
+    expect(wrapper!.html()).toContain('css="false"')
+  })
   const input = () => document.querySelector('input') as HTMLInputElement
 
   it('lists every group with its rows when the query is empty', () => {
@@ -679,6 +688,13 @@ describe('UiTopology forms', () => {
   it('reads out the state of each node', () => {
     make(UiTopology, { ...common, mode: 'servers' })
     expect(wrapper!.findAll('.sr-only').map((s) => s.text())).toEqual(['Healthy', 'Warning'])
+  })
+})
+
+describe('UiMetricTile, headroom', () => {
+  it('gives its sparkline 15 % headroom, as every chart does', () => {
+    make(UiMetricTile, { label: 'Latency', value: '1', series: [1, 2, 3, 4] })
+    expect(wrapper!.findComponent(UiSparkline).props('headroom')).toBe(0.15)
   })
 })
 

@@ -214,18 +214,45 @@ const LANGUAGE_STATES = [
             <span class="on on-field"><UiKbd tone="on-field">⌘K</UiKbd></span>
           </div>
         </GalleryFrame>
-
-        <GalleryFrame :title="t('gallery.inputs.hold')" :text="t('gallery.inputs.holdLede')">
-          <UiHoldButton
-            :label="t('gallery.inputs.holdLabel')"
-            :hint="t('gallery.inputs.holdHint')"
-            @confirm="confirmed++"
-          />
-          <span class="mono spec">hold 1.5 s linear · release snaps back in 200 ms</span>
-          <span class="mono spec">confirm × {{ confirmed }}</span>
-        </GalleryFrame>
       </div>
     </div>
+
+    <GalleryFrame :title="t('gallery.inputs.hold')" :text="t('gallery.inputs.holdLede')">
+      <div class="hold-grid">
+        <div class="hold-panel">
+          <span class="cap">{{ t('gallery.inputs.holdA') }}</span>
+          <div class="hold-row">
+            <UiHoldButton
+              :label="t('gallery.inputs.holdLabel')"
+              :action-label="t('gallery.inputs.holdAction')"
+              @confirm="confirmed++"
+            />
+            <span class="note">{{ t('gallery.inputs.holdSpec') }}</span>
+          </div>
+          <span class="mono spec">confirm × {{ confirmed }}</span>
+        </div>
+        <div class="hold-panel">
+          <span class="cap">{{ t('gallery.inputs.holdB') }}</span>
+          <div class="hold-stage">
+            <UiHoldButton
+              contained
+              :label="t('gallery.inputs.holdLabel')"
+              :action-label="t('gallery.inputs.holdAction')"
+              :confirm-title="t('gallery.inputs.holdTitle')"
+              :confirm-body="t('gallery.inputs.holdBody')"
+              :confirm-label="t('gallery.inputs.holdAction')"
+              @confirm="confirmed++"
+            />
+          </div>
+        </div>
+        <div class="hold-notes">
+          <p v-for="n in 4" :key="n">
+            <b>{{ t(`gallery.inputs.holdNote${n}.name`) }}</b>
+            {{ t(`gallery.inputs.holdNote${n}.text`) }}
+          </p>
+        </div>
+      </div>
+    </GalleryFrame>
 
     <GalleryFrame
       :title="t('gallery.inputs.languageStates')"
@@ -331,6 +358,60 @@ const LANGUAGE_STATES = [
 
 .state-stage {
   min-height: 340px;
+}
+
+.hold-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.hold-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-well);
+}
+
+.hold-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hold-stage {
+  position: relative;
+  display: grid;
+  min-height: 188px;
+  padding: var(--space-5);
+  border-radius: 12px;
+}
+
+.note {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  line-height: 1.45;
+}
+
+.hold-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  color: var(--ink-2);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.hold-notes b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
 }
 
 .spec {

@@ -49,7 +49,7 @@ const props = withDefaults(
     note?: string
     /** Why the value is missing, on hover (needs-permission). */
     reason?: string
-    /** Share of the series' range left above and below the line (10 % on the card). */
+    /** Share of the series' range left above and below the line (15 % everywhere). */
     headroom?: number
     /** When set, the line draws only the first time this key is seen. */
     once?: string
@@ -67,7 +67,7 @@ const props = withDefaults(
     state: 'normal',
     note: undefined,
     reason: undefined,
-    headroom: 0.1,
+    headroom: 0.15,
     once: undefined,
     form: 'trend',
     noteTone: undefined,

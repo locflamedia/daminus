@@ -326,6 +326,8 @@
     "issues": "{name} · {count}"
   },
   "ui": {
+    "cancel": "Cancel",
+    "holdAnnounce": "Hold to confirm, or press to open a confirmation.",
     "close": "Close",
     "dismiss": "Dismiss",
     "copy": "Copy",

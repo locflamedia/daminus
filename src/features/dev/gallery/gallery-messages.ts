@@ -79,7 +79,7 @@ const baseMessages = {
       keysLede:
         'Key 18 px for shortcuts; on the dark button, on a filled field and on the sidebar glass.',
       hold: 'Hold to confirm',
-      holdLede: 'No dialog: the fill sweeps across while held; letting go early snaps back.',
+      holdLede: 'The hold stays; a click or assistive activation opens a confirmation.',
       model: 'Model',
       modelCustom: 'Type a model id…',
       modelDefault: 'default',
@@ -111,8 +111,32 @@ const baseMessages = {
       twoOfFour: '2 of 4',
       wildcard: 'Wildcard, skipped',
       search: 'Search',
-      holdLabel: 'Hold to delete history',
+      holdLabel: 'Hold to clear history',
       holdHint: 'Hold for 1.5 s. Letting go early cancels.',
+      holdA: 'A · Hold, as drawn',
+      holdB: 'B · A plain click, VoiceOver, Switch or Voice Control',
+      holdSpec:
+        'pointer, or Space / Enter held · 1.5 s fill, linear · release early = nothing happens',
+      holdAction: 'Clear history',
+      holdTitle: 'Clear scan history?',
+      holdBody:
+        'Deletes 12 saved scans on this Mac. Projects, settings and expected rules stay. This can’t be undone.',
+      holdNote1: {
+        name: 'Two ways, same result.',
+        text: 'Holding still confirms in place. A click that ends before the hold starts filling (under 300 ms), or any activation from assistive tech, opens the dialog instead of doing nothing.',
+      },
+      holdNote2: {
+        name: 'Dialog.',
+        text: '380 wide, scrim 22%. Title asks the question; body says what goes and what stays. Focus starts on Cancel; Esc cancels; the confirm button is crit solid with white text and names the action.',
+      },
+      holdNote3: {
+        name: 'Announced.',
+        text: 'The button reads “Clear history, button. Hold to confirm, or press to open a confirmation.”',
+      },
+      holdNote4: {
+        name: 'Where.',
+        text: 'Every action behind a hold: Clear history and Clear AI replies (Settings › Data), Remove project (edit sheet).',
+      },
       languageLabel: 'App language',
       searchLanguages: 'Search languages',
       notTranslated: 'Not translated yet',
@@ -683,7 +707,7 @@ const baseMessages = {
       keys: 'Phím',
       keysLede: 'Phím 18 px cho phím tắt; trên nút tối, trong ô nền đặc và trên kính thanh bên.',
       hold: 'Giữ để xác nhận',
-      holdLede: 'Không hộp thoại: lớp màu quét ngang khi giữ; thả sớm sẽ co lại.',
+      holdLede: 'Vẫn là giữ; nhấp thường hoặc kích hoạt từ công nghệ hỗ trợ sẽ mở hộp xác nhận.',
       model: 'Mô hình',
       modelCustom: 'Nhập mã mô hình…',
       modelDefault: 'mặc định',
@@ -717,6 +741,30 @@ const baseMessages = {
       search: 'Tìm kiếm',
       holdLabel: 'Giữ để xoá lịch sử',
       holdHint: 'Giữ 1,5 giây. Thả sớm sẽ hủy.',
+      holdA: 'A · Giữ, như đã vẽ',
+      holdB: 'B · Nhấp thường, VoiceOver, Switch hoặc Voice Control',
+      holdSpec:
+        'chuột, hoặc giữ Space / Enter · lấp đầy 1,5 giây, tuyến tính · thả sớm = không có gì xảy ra',
+      holdAction: 'Xoá lịch sử',
+      holdTitle: 'Xoá lịch sử quét?',
+      holdBody:
+        'Xoá 12 lần quét đã lưu trên máy Mac này. Dự án, cài đặt và các quy tắc “dự kiến” vẫn giữ nguyên. Không thể hoàn tác.',
+      holdNote1: {
+        name: 'Hai cách, cùng kết quả.',
+        text: 'Giữ yên thì xác nhận ngay tại chỗ. Nhấp kết thúc trước khi lớp màu bắt đầu chạy (dưới 300 ms), hoặc mọi kích hoạt từ công nghệ hỗ trợ, sẽ mở hộp thoại thay vì không làm gì.',
+      },
+      holdNote2: {
+        name: 'Hộp thoại.',
+        text: 'Rộng 380, màn mờ 22%. Tiêu đề đặt câu hỏi; thân nói cái gì mất, cái gì còn. Focus bắt đầu ở Hủy; Esc để hủy; nút xác nhận màu crit đặc, chữ trắng và gọi đúng tên hành động.',
+      },
+      holdNote3: {
+        name: 'Đọc to.',
+        text: 'Nút đọc “Xoá lịch sử, nút. Giữ để xác nhận, hoặc nhấn để mở hộp xác nhận.”',
+      },
+      holdNote4: {
+        name: 'Áp dụng ở đâu.',
+        text: 'Mọi hành động sau một lần giữ: Xoá lịch sử và Xoá câu trả lời AI (Cài đặt › Dữ liệu), Xoá dự án (sheet sửa).',
+      },
       languageLabel: 'Ngôn ngữ ứng dụng',
       searchLanguages: 'Tìm ngôn ngữ',
       notTranslated: 'Chưa có bản dịch',

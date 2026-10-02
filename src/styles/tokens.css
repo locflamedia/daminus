@@ -22,6 +22,8 @@
   --surface-3: #e6e8f1;
   --surface-well: #f7f8fc;
   --surface-pop: var(--surface-0);
+  /* The search field inside the command palette, a step off the palette's own surface. */
+  --palette-well: var(--surface-1);
   --menu-hover: var(--surface-1);
   --base: #eceef8;
   --page: #f8f8fc;
@@ -318,6 +320,7 @@
     --surface-3: #2f3242;
     --surface-well: #20222d;
     --surface-pop: var(--surface-1);
+    --palette-well: var(--surface-0);
     --menu-hover: var(--surface-3);
     --base: #101118;
     --page: #101118;
@@ -499,6 +502,7 @@
   --surface-3: #2f3242;
   --surface-well: #20222d;
   --surface-pop: var(--surface-1);
+  --palette-well: var(--surface-0);
   --menu-hover: var(--surface-3);
   --base: #101118;
   --page: #101118;
