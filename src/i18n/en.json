@@ -317,9 +317,10 @@
       "removed": "{n} hidden or control character was removed. | {n} hidden or control characters were removed.",
       "riskTitle": "Check before you run it",
       "risk": {
-        "pipeToShell": "It pipes what it downloads straight into a shell, so you never see what runs.",
+        "pipeToShell": "It runs text that another command produces, such as a download piped into a shell, so you never see what runs.",
         "base64Decode": "It decodes hidden text. Check what the text turns into before you run it.",
-        "remove": "It deletes files. Check the path before you run it."
+        "remove": "It deletes files. Check the path before you run it.",
+        "destructive": "It can overwrite a disk or change owners and permissions across a whole folder. Check the target before you run it."
       }
     },
     "failed": "Failed"

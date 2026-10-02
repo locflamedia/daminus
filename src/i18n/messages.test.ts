@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { AppError } from '@/api'
 import { checkManifest } from '@/lib/check-manifest'
 import en from './en.json'
 import { DEFAULT_LOCALE, LOCALES, localeFromTag } from './index'
@@ -81,29 +82,33 @@ describe('locale files', () => {
   })
 
   it('word every error code the core can send', () => {
-    const codes = [
-      'ssh_auth',
-      'ssh_host_key_unknown',
-      'ssh_host_key_changed',
-      'ssh_unreachable',
-      'timeout',
-      'scan_in_progress',
-      'nothing_to_scan',
-      'local_network_down',
-      'config_invalid',
-      'config_from_newer_version',
-      'config_changed_on_disk',
-      'store_busy',
-      'io',
-      'secret_access_denied',
-      'provider_auth',
-      'provider_rate_limit',
-      'provider_unavailable',
-      'schema_invalid',
-      'internal',
-    ]
+    // A Record over the generated type: the build fails when the core gains a code that is
+    // missing here, so a new code cannot reach the UI without a sentence in both languages.
+    const known: Record<AppError['code']['kind'], true> = {
+      ssh_auth: true,
+      ssh_host_key_unknown: true,
+      ssh_host_key_changed: true,
+      ssh_unreachable: true,
+      timeout: true,
+      scan_in_progress: true,
+      nothing_to_scan: true,
+      local_network_down: true,
+      config_invalid: true,
+      config_from_newer_version: true,
+      config_changed_on_disk: true,
+      store_busy: true,
+      io: true,
+      secret_access_denied: true,
+      provider_auth: true,
+      provider_rate_limit: true,
+      provider_unavailable: true,
+      schema_invalid: true,
+      internal: true,
+    }
     for (const locale of LOCALES) {
-      for (const code of codes) expect(messages[locale].get(`error.${code}`), code).toBeTruthy()
+      for (const code of Object.keys(known)) {
+        expect(messages[locale].get(`error.${code}`), code).toBeTruthy()
+      }
     }
   })
 })

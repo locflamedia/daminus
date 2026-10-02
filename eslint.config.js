@@ -34,9 +34,13 @@ const htmlSinkSyntax = [
   { selector: 'Property[key.name=/^(innerHTML|outerHTML)$/]', message: htmlMessage },
   {
     selector:
-      'CallExpression[callee.property.name=/^(insertAdjacentHTML|createContextualFragment)$/]',
+      'CallExpression[callee.property.name=/^(insertAdjacentHTML|createContextualFragment|parseFromString|setHTMLUnsafe|parseHTMLUnsafe)$/]',
     message: htmlMessage,
   },
+  // A parser or a computed key reaches the same sinks without naming them.
+  { selector: "NewExpression[callee.name='DOMParser']", message: htmlMessage },
+  { selector: 'MemberExpression[computed=true][property.value=/HTML/]', message: htmlMessage },
+  { selector: 'AssignmentExpression[left.property.name=/^srcdoc$/]', message: htmlMessage },
 ]
 const htmlSinkProperties = [{ object: 'document', property: 'write', message: htmlMessage }]
 

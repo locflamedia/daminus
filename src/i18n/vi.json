@@ -317,9 +317,10 @@
       "removed": "Đã bỏ {n} ký tự ẩn hoặc ký tự điều khiển.",
       "riskTitle": "Kiểm tra trước khi chạy",
       "risk": {
-        "pipeToShell": "Lệnh này đưa thẳng thứ tải về vào shell, nên bạn không thấy được cái gì sẽ chạy.",
+        "pipeToShell": "Lệnh này chạy đoạn văn bản do một lệnh khác tạo ra, ví dụ thứ tải về được đưa thẳng vào shell, nên bạn không thấy được cái gì sẽ chạy.",
         "base64Decode": "Lệnh này giải mã một đoạn văn bản ẩn. Xem đoạn đó biến thành gì trước khi chạy.",
-        "remove": "Lệnh này xóa tệp. Kiểm tra đường dẫn trước khi chạy."
+        "remove": "Lệnh này xoá file. Kiểm tra đường dẫn trước khi chạy.",
+        "destructive": "Lệnh này có thể ghi đè một ổ đĩa hoặc đổi chủ sở hữu và quyền trên cả một thư mục. Kiểm tra đối tượng trước khi chạy."
       }
     },
     "failed": "Lỗi"

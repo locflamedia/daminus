@@ -8,7 +8,7 @@ import { describe, expect, it } from 'vitest'
 
 const SRC = fileURLToPath(new URL('..', import.meta.url))
 const SINKS =
-  /v-html|innerHTML|outerHTML|insertAdjacentHTML|document\.write|createContextualFragment/
+  /v-html|innerHTML|outerHTML|insertAdjacentHTML|document\.write|createContextualFragment|DOMParser|parseFromString|setHTMLUnsafe|parseHTMLUnsafe|srcdoc|\[\s*['"`]\w*HTML/
 
 function sources(dir: string, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
