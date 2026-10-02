@@ -721,3 +721,80 @@ fn an_aapanel_site_is_a_project_with_its_folder_and_env() {
     let loose: Vec<&str> = p.unassigned.iter().map(|u| u.item.kind()).collect();
     assert_eq!(loose, ["env"]);
 }
+
+#[test]
+fn sites_under_one_public_suffix_are_separate_projects() {
+    let host = found(|d| {
+        d.vhosts.push(vhost(
+            &["beru.io.vn"],
+            Some("/www/wwwroot/beru.io.vn"),
+            None,
+            true,
+            false,
+        ));
+        d.vhosts.push(vhost(
+            &["robertnguyen.io.vn", "www.robertnguyen.io.vn"],
+            Some("/www/wwwroot/robertnguyen.io.vn"),
+            None,
+            true,
+            false,
+        ));
+        d.vhosts.push(vhost(
+            &["api.beru.io.vn"],
+            None,
+            Some("127.0.0.1:3000"),
+            true,
+            false,
+        ));
+    });
+    let p = group(&[(alias("vps-a"), host)]);
+    let ids: Vec<&str> = p.projects.iter().map(|p| p.id.as_str()).collect();
+    assert_eq!(ids, ["beru", "robertnguyen"]);
+    assert_eq!(
+        p.projects[0].urls,
+        ["https://beru.io.vn", "https://api.beru.io.vn"]
+    );
+    assert_eq!(p.projects[1].urls, ["https://robertnguyen.io.vn"]);
+}
+
+#[test]
+fn blocks_without_a_public_name_are_not_a_project_by_themselves() {
+    // The aaPanel phpMyAdmin tool: two blocks on one folder, no public name.
+    let host = found(|d| {
+        d.vhosts.push(vhost(
+            &["phpmyadmin"],
+            Some("/www/server/phpmyadmin"),
+            None,
+            false,
+            true,
+        ));
+        d.vhosts.push(vhost(
+            &["_", "localhost", "203.0.113.5"],
+            Some("/www/server/phpmyadmin"),
+            None,
+            false,
+            true,
+        ));
+    });
+    let p = group(&[(alias("vps-a"), host)]);
+    assert!(p.projects.is_empty(), "{p:#?}");
+    assert_eq!(p.unassigned.len(), 2);
+    assert!(
+        p.unassigned
+            .iter()
+            .all(|u| matches!(u.item, SetupRecord::Vhost(_)))
+    );
+}
+
+#[test]
+fn a_block_without_a_public_name_stays_with_its_compose_project() {
+    let host = found(|d| {
+        d.vhosts
+            .push(vhost(&["_"], None, Some("127.0.0.1:8081"), false, false));
+        d.compose.push(compose("api", "/srv/api", &[8081]));
+    });
+    let p = group(&[(alias("vps-a"), host)]);
+    assert_eq!(p.projects.len(), 1, "{p:#?}");
+    assert_eq!(p.projects[0].id, "api");
+    assert!(p.unassigned.is_empty());
+}

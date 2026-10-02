@@ -515,7 +515,7 @@ disc_env() {
 		# shellcheck disable=SC2046,SC2086 # split on newlines only, with globbing off
 		set -- $_roots -maxdepth 3 $(skip_expr node_modules vendor .git .cache .npm)
 		unset IFS
-		_found=$(run_for "$_left" find "$@" -type f "(" -name '.env' -o -name '.env.*' ")" ! -name '*.example' ! -name '*.sample' ! -name '*.dist' ! -name '*.template' ! -name '*.tpl' ! -name '*.bak' ! -name '*.orig' -printf '%p\0' | tr '\012\000' '?\012')
+		_found=$(run_for "$_left" find "$@" -type f "(" -name '.env' -o -name '.env.*' ")" ! -name '*.example' ! -name '*.sample' ! -name '*.dist' ! -name '*.template' ! -name '*.tpl' ! -name '*.bak*' ! -name '*.orig*' ! -name '*.old*' ! -name '*.backup*' -printf '%p\0' | tr '\012\000' '?\012')
 	fi
 	_left=$(group_left "$BUDGET_S")
 	if [ -n "$_cands" ] && [ "$_left" -ge 2 ]; then
@@ -523,7 +523,7 @@ disc_env() {
 		# shellcheck disable=SC2086 # split on newlines only, with globbing off
 		set -- $_cands -maxdepth 1
 		unset IFS
-		_more=$(run_for "$_left" find "$@" -type f "(" -name '.env' -o -name '.env.*' ")" ! -name '*.example' ! -name '*.sample' ! -name '*.dist' ! -name '*.template' ! -name '*.tpl' ! -name '*.bak' ! -name '*.orig' -printf '%p\0' | tr '\012\000' '?\012')
+		_more=$(run_for "$_left" find "$@" -type f "(" -name '.env' -o -name '.env.*' ")" ! -name '*.example' ! -name '*.sample' ! -name '*.dist' ! -name '*.template' ! -name '*.tpl' ! -name '*.bak*' ! -name '*.orig*' ! -name '*.old*' ! -name '*.backup*' -printf '%p\0' | tr '\012\000' '?\012')
 		_found="$_found$NL$_more"
 	fi
 	_n=0

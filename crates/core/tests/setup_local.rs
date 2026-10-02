@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::sync::Arc;
 
-use daminus_core::discover::SetupRecord;
+use daminus_core::discover::{NoteCode, SetupRecord};
 use daminus_core::domain::host::HostAlias;
 use daminus_core::setup::{Saved, SetupEvent, SetupEventBody, SetupService, Step};
 use daminus_core::ssh::{BoxFuture, RunEnd, RunRequest, RunSignal, SshTools, Transport};
@@ -141,6 +141,16 @@ async fn setup_never_lets_a_server_secret_out() {
     .unwrap();
     std::fs::write(project.join(".env.production"), "TOKEN=CANARY_token_4d4d\n").unwrap();
     std::fs::write(project.join(".env.example"), "TOKEN=CANARY_example_5e5e\n").unwrap();
+    // Copies and backups of a `.env` are not env files.
+    for name in [
+        ".env.bak.pre-harden",
+        ".env.production.bak",
+        ".env.orig",
+        ".env.old",
+        ".env.backup-2024",
+    ] {
+        std::fs::write(project.join(name), "TOKEN=CANARY_backup_8b8b\n").unwrap();
+    }
 
     let nginx = root.join("nginx");
     std::fs::create_dir_all(nginx.join("sites-enabled")).unwrap();
@@ -240,7 +250,7 @@ async fn setup_never_lets_a_server_secret_out() {
     );
 
     // With GNU find (Linux) the `.env` search ran: the two real files are
-    // listed by path and the example file is not.
+    // listed by path; the example file and the backups are not.
     let found = result.hosts[0].discovery.as_ref().unwrap();
     if gnu_find() {
         let mut envs: Vec<String> = found.envs.iter().map(|e| e.path.clone()).collect();
@@ -273,4 +283,77 @@ async fn setup_never_lets_a_server_secret_out() {
     }));
     // The app never wrote a known-hosts file.
     assert!(!home.join(".ssh/known_hosts").exists());
+}
+
+/// An nginx config this user may not read is reported, not mistaken for "no sites".
+#[tokio::test]
+async fn an_unreadable_nginx_config_is_a_note() {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    let conf = root.join("nginx.conf");
+    std::fs::write(&conf, "http { }\n").unwrap();
+    std::fs::set_permissions(&conf, std::fs::Permissions::from_mode(0o000)).unwrap();
+    if std::fs::File::open(&conf).is_ok() {
+        // Running as root: nothing is unreadable.
+        return;
+    }
+
+    let home = root.join("home");
+    std::fs::create_dir_all(home.join(".ssh")).unwrap();
+    let ssh_config = root.join("ssh_config");
+    std::fs::write(
+        &ssh_config,
+        "Host vps-a\n    HostName 127.0.0.1\n    Port 1\n    User deploy\n",
+    )
+    .unwrap();
+    let shims = repo().join("scripts/check-harness/bin");
+    let path = format!(
+        "{}:{}",
+        shims.display(),
+        std::env::var("PATH").unwrap_or_default()
+    );
+    let transport = LocalSh {
+        env: vec![
+            ("PATH".into(), path),
+            ("HOME".into(), home.display().to_string()),
+            (
+                "HARNESS_OUT".into(),
+                repo()
+                    .join("scripts/check-harness/out")
+                    .display()
+                    .to_string(),
+            ),
+            ("DAMINUS_NGINX_CONF".into(), conf.display().to_string()),
+        ],
+    };
+    let tools = SshTools::new()
+        .with_config(&ssh_config)
+        .with_env([("HOME", home.as_os_str())]);
+    let store = FsStore::new(root.join("config"));
+    let (tx, mut rx) = mpsc::channel(4096);
+    let service = SetupService::new(Arc::new(transport), tools, store, tx);
+
+    let host = alias("vps-a");
+    service
+        .start(Step::Discover, std::slice::from_ref(&host), &[])
+        .unwrap();
+    let events = drain(&mut rx).await;
+    assert!(
+        matches!(events.last().map(|e| &e.body), Some(SetupEventBody::Done)),
+        "{events:?}"
+    );
+
+    let result = service.result();
+    let found = result.hosts[0].discovery.as_ref().expect("a discovery");
+    assert!(
+        found
+            .notes
+            .iter()
+            .any(|n| n.code == NoteCode::NginxNoPermission),
+        "{:?}",
+        found.notes
+    );
+    assert!(found.vhosts.is_empty());
 }

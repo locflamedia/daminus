@@ -46,6 +46,7 @@ problem() {
 # has TEXT NEEDLE: the text contains the fixed string; has_re: the pattern.
 has() { printf '%s\n' "$1" | grep -qF -- "$2"; }
 has_re() { printf '%s\n' "$1" | grep -q -- "$2"; }
+lacks() { ! has "$1" "$2"; }
 # same_sum FILE SUM: the file still has the checksum it had.
 same_sum() { [ "$(cksum <"$1")" = "$2" ]; }
 
@@ -288,7 +289,8 @@ ok "and the mariadbd that listens on every address is a finding" jq -e '
 # ----------------------------------------------------------------- aaPanel
 # The server's nginx moves aside and an aaPanel layout takes its place: the
 # config under /www/server/nginx/conf includes the panel's vhost folder, and the
-# site lives in /www/wwwroot with a canary .env.
+# site lives in /www/wwwroot with a canary .env, next to backups of it and the
+# panel's phpMyAdmin tool (a block with no public name).
 docker exec -u root "$name" sh -c '
 	mv /etc/nginx /etc/nginx.off
 	mkdir -p /www/server/nginx/conf /www/server/panel/vhost/nginx /www/wwwroot/shop.example/public
@@ -299,6 +301,15 @@ docker exec -u root "$name" sh -c '
 		>/www/server/panel/vhost/nginx/shop.example.conf
 	echo "<?php echo 1;" >/www/wwwroot/shop.example/public/index.php
 	echo "DB_PASSWORD=CANARY_aapanel_env_value" >/www/wwwroot/shop.example/.env
+	echo "DB_PASSWORD=CANARY_aapanel_env_backup" >/www/wwwroot/shop.example/.env.bak.pre-harden
+	echo "DB_PASSWORD=CANARY_aapanel_env_old" >/www/wwwroot/shop.example/.env.old
+	echo "DB_PASSWORD=CANARY_aapanel_env_production" >/www/wwwroot/shop.example/.env.production
+	mkdir -p /www/server/phpmyadmin
+	echo "<?php echo 1;" >/www/server/phpmyadmin/index.php
+	printf "%s\n" "server {" "  listen 888;" "  server_name phpmyadmin;" \
+		"  root /www/server/phpmyadmin;" \
+		"  location ~ \\.php\$ { fastcgi_pass unix:/tmp/php-cgi.sock; }" "}" \
+		>/www/server/panel/vhost/nginx/phpmyadmin.conf
 	chmod -R a+rX /www'
 rc=0
 app -F "$cfg" --config-dir "$work/cfg-aa" discover --host fake-a --dry-run >"$work/aapanel.txt" 2>&1 || rc=$?
@@ -307,14 +318,18 @@ aa=$(cat "$work/aapanel.txt")
 ok "discover on an aaPanel layout succeeds" test "$rc" -eq 0
 ok "the site in the panel's vhost folder is a project with its URL" has "$aa" "url http://shop.example"
 ok "and its code folder is the site folder, not the shared /www/wwwroot" has_re "$aa" "path /www/wwwroot/shop.example\$"
+ok "the phpMyAdmin tool is not a project" lacks "$aa" "(phpmyadmin)"
+ok "but it is listed under not in a project" has "$aa" "nginx phpmyadmin"
 app --config-dir "$work/cfg-aa" setup-bundle discover >"$work/aapanel-discover.sh"
 docker exec -i -u daminus "$name" sh -s <"$work/aapanel-discover.sh" >"$work/aapanel.ndjson"
 # shellcheck disable=SC2016 # jq programs
-ok "the vhost and the .env path are listed, the .env is not opened" jq -s -e '
+ok "the vhost and the .env paths are listed (backups skipped), no .env is opened" jq -s -e '
 	([.[] | select(.rec == "vhost" and .names == ["shop.example"])][0]
 		| .root == "/www/wwwroot/shop.example/public" and .php == true)
 	and ([.[] | select(.rec == "env" and .path == "/www/wwwroot/shop.example/.env")]
-		| length == 1 and .[0].readable == true and (.[0] | keys | sort) == ["path", "readable", "rec"])' "$work/aapanel.ndjson"
+		| length == 1 and .[0].readable == true and (.[0] | keys | sort) == ["path", "readable", "rec"])
+	and ([.[] | select(.rec == "env") | .path | select(startswith("/www/wwwroot/shop.example/"))] | sort
+		== ["/www/wwwroot/shop.example/.env", "/www/wwwroot/shop.example/.env.production"])' "$work/aapanel.ndjson"
 
 # ------------------------------------------------------- secrets and files
 leaks=$(grep -rl CANARY "$work/cfg-a" "$work/cfg-new" "$work/cfg-wrong" "$work/cfg-down" "$work/cfg-jump" \
