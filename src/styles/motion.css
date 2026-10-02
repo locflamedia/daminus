@@ -1,0 +1,143 @@
+/*
+ * Motion utilities, from the board "Motion in the app". Each one plays once, when its
+ * event happens (the element appears), never on a timer. Only transform and opacity move,
+ * plus stroke-dashoffset for drawings; blur appears only in the one-off reveal of new
+ * values. Durations are tokens, and reduced motion zeroes the ones that move (tokens.css),
+ * so these classes need no media query of their own except for loops.
+ */
+
+/* A card, row or block arrives: rise 8 px, unblur 3 px. Stagger with --d (see lib/motion.ts). */
+.m-enter {
+  animation: m-rise var(--dur-enter) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A host result lands: values unblur 3 px to 0 and rise 4 px in 200 ms. */
+.m-reveal {
+  animation: m-reveal var(--dur-state) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A chart line draws (needs pathLength="1" on the path); the area under it fades in. */
+.m-draw {
+  stroke-dasharray: 1;
+  animation: m-draw var(--dur-draw) var(--ease-in-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.m-fade-in {
+  animation: m-fade var(--dur-sheet) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Spinner: the scan's one loop, only on a host being read. */
+.m-spin {
+  transform-origin: center;
+  animation: m-spin 0.9s linear infinite;
+}
+
+/* Skeleton sheen while a value is awaited. */
+.m-shimmer {
+  background: linear-gradient(90deg, var(--skeleton-1), var(--skeleton-2), var(--skeleton-1));
+  background-size: 200% 100%;
+  animation: m-shimmer 1.3s ease-in-out infinite;
+}
+
+/* Critical dot: three halo pulses, then still. The only repeating motion on a card. */
+.m-halo {
+  animation: m-halo 2.2s var(--ease-out) 3;
+}
+
+@keyframes m-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes m-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes m-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes m-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes m-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes m-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes m-halo {
+  0% {
+    box-shadow: 0 0 0 0 var(--crit-halo);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Blur and rise are off; the fade stays at the colour duration. */
+  .m-enter,
+  .m-reveal {
+    animation-name: m-fade;
+    animation-duration: var(--dur-color);
+    animation-delay: 0ms;
+  }
+
+  .m-draw {
+    animation: none;
+    stroke-dasharray: none;
+  }
+
+  .m-spin,
+  .m-shimmer {
+    animation: none;
+  }
+
+  .m-halo {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--crit-halo);
+  }
+}
