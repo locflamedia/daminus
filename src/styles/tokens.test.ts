@@ -141,6 +141,32 @@ describe('light tokens match the canvas', () => {
   })
 })
 
+describe('topology role tokens match the Overview boards', () => {
+  it('colours FE, BE, DB and worker, and re-lights them for dark', () => {
+    expect([
+      light.get('--role-fe'),
+      light.get('--role-be'),
+      light.get('--role-db'),
+      light.get('--role-worker'),
+    ]).toEqual(['#3a55d6', '#6a4fc4', '#146b40', '#b0487a'])
+    for (const dark of [darkAttr, darkMedia]) {
+      expect([
+        dark.get('--role-fe'),
+        dark.get('--role-be'),
+        dark.get('--role-db'),
+        dark.get('--role-worker'),
+      ]).toEqual(['#a3b2ff', '#bba7ff', '#7bdcac', '#f2a0c6'])
+    }
+  })
+
+  it('fills a node white in light and surface-2 without a shadow in dark', () => {
+    expect(light.get('--node-bg')).toBe('var(--surface-0)')
+    expect(darkAttr.get('--node-bg')).toBe('var(--surface-2)')
+    expect(darkAttr.get('--shadow-node')).toBe('none')
+    expect(darkMedia.get('--shadow-node')).toBe('none')
+  })
+})
+
 describe('chart tokens match the canvas', () => {
   const expected: Record<string, string> = {
     '--chart-accent-70': '#8fa2ff',

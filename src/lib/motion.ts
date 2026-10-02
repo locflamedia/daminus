@@ -25,6 +25,11 @@ export function staggerDelay(index: number, stepMs = 80): string {
   return `${Math.max(0, index) * stepMs}ms`
 }
 
+/** Delay of word `index` in an answer that arrives: words fade in 60 ms apart. */
+export function wordDelay(index: number, stepMs = 60): string {
+  return `${Math.max(0, index) * stepMs}ms`
+}
+
 const played = new Set<string>()
 
 /**

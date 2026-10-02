@@ -4,6 +4,22 @@ import { describe, expect, it } from 'vitest'
 import UiRow from './UiRow.vue'
 import UiRowList from './UiRowList.vue'
 
+describe('UiRow actions', () => {
+  it('holds actions that reveal on hover and focus, and marks the row as their host', () => {
+    const wrapper = mount(UiRow, {
+      props: { size: 'compact', title: 'storage/logs' },
+      slots: { actions: '<button type="button">Copy</button>' },
+    })
+    expect(wrapper.classes()).toContain('m-actions-host')
+    expect(wrapper.get('.actions').classes()).toContain('m-actions')
+    expect(wrapper.get('.actions button').text()).toBe('Copy')
+  })
+
+  it('has no host mark without actions', () => {
+    expect(mount(UiRow, { props: { title: 'x' } }).classes()).not.toContain('m-actions-host')
+  })
+})
+
 describe('UiRow', () => {
   it('draws a tile, a title, a meta line and a trailing slot', () => {
     const wrapper = mount(UiRow, {

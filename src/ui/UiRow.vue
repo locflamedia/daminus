@@ -7,6 +7,9 @@
   holds one chip, one value or one time, never two. `tone` tints the whole row (the inline
   banner is a warn row); healthy rows stay grey and take their colour from the tile only.
 
+  The `actions` slot holds small buttons that appear on the right when the pointer is on the
+  row (4 px slide and fade, 150 ms) and stay while anything in the row has keyboard focus.
+
   With `columns` the slot is the row's own grid cells (the server table), and `header` makes
   it the 28 px column-header row. As a `button` the row is a target: hover fills it, the
   focus ring is the usual one, and it emits `click`. Everything in it is text.
@@ -54,7 +57,12 @@ const props = withDefaults(
   },
 )
 
-defineSlots<{ default?: () => unknown; leading?: () => unknown; trailing?: () => unknown }>()
+defineSlots<{
+  default?: () => unknown
+  leading?: () => unknown
+  trailing?: () => unknown
+  actions?: () => unknown
+}>()
 const emit = defineEmits<{ click: [event: MouseEvent] }>()
 const slots = useSlots()
 
@@ -78,6 +86,7 @@ const flat = computed(() => props.header || props.tone !== 'neutral')
         'row-button': as === 'button',
         'row-raised': raised,
         'no-lead': columns === undefined && !hasLeading,
+        'm-actions-host': $slots.actions,
       },
     ]"
     :data-flat="flat || undefined"
@@ -101,7 +110,10 @@ const flat = computed(() => props.header || props.tone !== 'neutral')
           <span v-if="meta" class="meta" :class="{ mono }">{{ meta }}</span>
         </slot>
       </span>
-      <span v-if="$slots.trailing" class="trailing"><slot name="trailing" /></span>
+      <span v-if="$slots.trailing || $slots.actions" class="trailing">
+        <span v-if="$slots.actions" class="actions m-actions"><slot name="actions" /></span>
+        <slot name="trailing" />
+      </span>
     </template>
   </component>
 </template>
@@ -261,6 +273,12 @@ const flat = computed(() => props.header || props.tone !== 'neutral')
   gap: var(--space-2);
   color: var(--ink-3);
   font-size: var(--text-11);
+}
+
+.actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
 .row-button {

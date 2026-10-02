@@ -6,6 +6,8 @@
   the meaning. `tray` wraps the card in the glass tray (radius 20 = 14 + 6) that content
   sits in on the window ground. The gap between blocks is `--card-gap` (12 by default) and
   the padding `--card-pad`; set them on the element for the denser or looser boards.
+  `lift` is the hover of a card that opens: 2 px up and a deeper shadow in 200 ms, on a
+  pointer only (the Motion board); the arrow inside may carry `m-nudge` to move 3 px.
 -->
 <script setup lang="ts">
 export type CardTone = 'neutral' | 'ok' | 'warn' | 'crit' | 'info'
@@ -14,17 +16,20 @@ withDefaults(
   defineProps<{
     tone?: CardTone
     tray?: boolean
+    lift?: boolean
     as?: 'div' | 'section' | 'article' | 'li'
   }>(),
-  { tone: 'neutral', tray: false, as: 'div' },
+  { tone: 'neutral', tray: false, lift: false, as: 'div' },
 )
 </script>
 
 <template>
   <component :is="as" v-if="tray" class="tray">
-    <div class="card flat" :class="`card-${tone}`"><slot /></div>
+    <div class="card flat" :class="[`card-${tone}`, { 'm-lift': lift }]"><slot /></div>
   </component>
-  <component :is="as" v-else class="card" :class="`card-${tone}`"><slot /></component>
+  <component :is="as" v-else class="card" :class="[`card-${tone}`, { 'm-lift': lift }]"
+    ><slot
+  /></component>
 </template>
 
 <style scoped>

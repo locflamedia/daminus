@@ -2,7 +2,7 @@
   Chip, from the board "Components": a 22 px pill that names a state ("6 of 6", "Needs a
   look", "Critical", "Scanning", "0 issues"). The word carries the meaning and the tone
   backs it up; colour is never the only signal. `plain` is the white chip for use on a
-  grey well (a project name on a finding). An optional 12 px glyph goes before the word
+  grey well (a project name on a finding), `plain-ok` the same on a green row. An optional 12 px glyph goes before the word
   (the chip morph of the Motion board swaps it for a spinner while `busy`). The text is
   always rendered as text.
 -->
@@ -11,7 +11,7 @@ import UiIcon from './UiIcon.vue'
 import UiSpinner from './UiSpinner.vue'
 import type { IconName } from './icon-paths'
 
-export type ChipTone = 'ok' | 'warn' | 'crit' | 'info' | 'neutral' | 'plain'
+export type ChipTone = 'ok' | 'warn' | 'crit' | 'info' | 'neutral' | 'plain' | 'plain-ok'
 
 withDefaults(defineProps<{ tone?: ChipTone; icon?: IconName; busy?: boolean }>(), {
   tone: 'neutral',
@@ -75,5 +75,11 @@ withDefaults(defineProps<{ tone?: ChipTone; icon?: IconName; busy?: boolean }>()
 .chip-plain {
   background: var(--surface-0);
   color: var(--ink-3);
+}
+
+/* White on a green row: the "Resolved" chip of a finding. */
+.chip-plain-ok {
+  background: var(--surface-0);
+  color: var(--ok-ink);
 }
 </style>

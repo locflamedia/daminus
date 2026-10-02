@@ -37,6 +37,16 @@ describe('UiCard', () => {
     expect(tray.get('.card').element.tagName).toBe('DIV')
   })
 
+  it('lifts on hover only when asked, in the tray form too', () => {
+    expect(mount(UiCard).classes()).not.toContain('m-lift')
+    expect(mount(UiCard, { props: { lift: true } }).classes()).toContain('m-lift')
+    expect(
+      mount(UiCard, { props: { lift: true, tray: true } })
+        .get('.card')
+        .classes(),
+    ).toContain('m-lift')
+  })
+
   it('has no border, and no edge on one side only', () => {
     expect(style).not.toMatch(/\bborder(-(left|right|top|bottom|inline|block)[\w-]*)?\s*:/)
     expect(style).not.toMatch(/\boutline\s*:/)

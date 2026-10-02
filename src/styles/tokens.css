@@ -142,6 +142,7 @@
   --shadow-seg: 0 1px 2px rgba(40, 48, 90, 0.1);
   --shadow-control: 0 1px 2px rgba(40, 48, 90, 0.08), 0 4px 12px -6px rgba(40, 48, 90, 0.14);
   --shadow-card: 0 1px 2px rgba(40, 48, 90, 0.04), 0 12px 32px -16px rgba(40, 48, 90, 0.2);
+  --shadow-lift-hover: 0 2px 4px rgba(40, 48, 90, 0.06), 0 18px 32px -16px rgba(40, 48, 90, 0.32);
   --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 20px 44px -28px rgba(40, 48, 90, 0.25);
   --shadow-overlay: 0 2px 6px rgba(40, 48, 90, 0.08), 0 40px 90px -40px rgba(40, 48, 90, 0.45);
   --shadow-primary: 0 1px 2px rgba(28, 29, 36, 0.2), 0 8px 20px -8px rgba(28, 29, 36, 0.45);
@@ -240,6 +241,9 @@
   --dur-fade: 300ms;
   --dur-theme: 200ms;
   --dur-toast-out: 200ms;
+  --dur-roll: 400ms;
+  --dur-lift: 200ms;
+  --dur-word: 60ms;
   --dur-sheen: 1600ms;
   --delay-sheen: 400ms;
   --delay-tooltip: 400ms;
@@ -372,6 +376,8 @@
     --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
     --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+    --shadow-lift-hover:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 32px -16px rgba(0, 0, 0, 0.7);
     --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -28px rgba(0, 0, 0, 0.5);
     --shadow-overlay: 0 2px 6px rgba(0, 0, 0, 0.2), 0 40px 90px -40px rgba(0, 0, 0, 0.7);
     --shadow-primary: none;
@@ -509,6 +515,8 @@
   --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
   --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  --shadow-lift-hover:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 32px -16px rgba(0, 0, 0, 0.7);
   --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -28px rgba(0, 0, 0, 0.5);
   --shadow-overlay: 0 2px 6px rgba(0, 0, 0, 0.2), 0 40px 90px -40px rgba(0, 0, 0, 0.7);
   --shadow-primary: none;
@@ -547,6 +555,9 @@
     --dur-fade: var(--dur-color);
     --dur-theme: 0ms;
     --dur-toast-out: var(--dur-color);
+    --dur-roll: 0ms;
+    --dur-lift: var(--dur-color);
+    --dur-word: 0ms;
     --stagger: 0ms;
   }
 }

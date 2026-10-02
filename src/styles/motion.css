@@ -82,6 +82,84 @@
   animation-delay: var(--d, 0ms);
 }
 
+/*
+ * AI thinking: a shimmer bar while the model works, then the words fade in 60 ms apart (set
+ * --d on each word, see lib/motion.ts wordDelay). Evidence rows follow the text.
+ */
+.m-think {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-soft) 0%,
+    var(--accent-mid) 40%,
+    var(--accent-soft) 80%
+  );
+  background-size: 200% 100%;
+  animation: m-shimmer 1.4s linear infinite;
+}
+
+.m-word {
+  display: inline-block;
+  animation: m-word var(--dur-state) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A card that can be opened lifts 2 px on a pointer hover and its chevron nudges 3 px. */
+@media (hover: hover) {
+  .m-lift {
+    transition:
+      transform var(--dur-lift) var(--ease-out),
+      box-shadow var(--dur-lift) var(--ease-state);
+  }
+
+  .m-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift-hover);
+  }
+
+  .m-lift .m-nudge {
+    transition:
+      transform var(--dur-lift) var(--ease-out),
+      color var(--dur-lift) var(--ease-state);
+  }
+
+  .m-lift:hover .m-nudge {
+    transform: translateX(3px);
+    color: var(--ink);
+  }
+}
+
+/*
+ * Row actions: on a `.m-actions-host` (the row) the `.m-actions` inside it slide 4 px and
+ * fade in on hover, and are always shown while anything in the row has keyboard focus.
+ */
+.m-actions {
+  opacity: 0;
+  transform: translateX(4px);
+  transition:
+    opacity var(--dur-popover) var(--ease-state),
+    transform var(--dur-popover) var(--ease-out);
+}
+
+.m-actions-host:is(:hover, :focus-within) .m-actions {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes m-word {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
 @keyframes m-bar {
   from {
     transform: scaleY(0);
@@ -215,8 +293,19 @@
   }
 
   .m-spin,
-  .m-shimmer {
+  .m-shimmer,
+  .m-think {
     animation: none;
+  }
+
+  /* No slide, no blur: a quiet fade. */
+  .m-word {
+    animation-name: m-fade;
+    animation-delay: 0ms;
+  }
+
+  .m-actions {
+    transform: none;
   }
 
   .m-halo {
