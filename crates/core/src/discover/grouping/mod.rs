@@ -2,11 +2,13 @@
 //!
 //! Pure: records in, a [`Proposal`] out. Items are linked when they share
 //! evidence, and each linked group that has a public domain, or at least two
-//! parts, becomes a project; the rest are listed as "Not in a project".
+//! parts (server blocks without a public name do not count on their own),
+//! becomes a project; the rest are listed as "Not in a project".
 //!
 //! The evidence, strongest first:
 //! - **a domain**: nginx server blocks whose `server_name`s share a registered
-//!   domain (`shop-x.com`, `api.shop-x.com`) belong together, on any host;
+//!   domain (`shop-x.com`, `api.shop-x.com`; by the Public Suffix List, so
+//!   `beru.io.vn` and `robertnguyen.io.vn` are two) belong together, on any host;
 //! - **a folder**: a web root, a compose working folder and a pm2 folder that
 //!   are the same folder or one inside the other (after taking `public`,
 //!   `dist`, `current`… off) belong together, on one host. Folders every site
@@ -389,7 +391,15 @@ impl<'a> Grouper<'a> {
                 .iter()
                 .any(|&i| !self.nodes[i].domains.is_empty());
             let parts = members.nodes.len() + members.envs.len() + members.dbs.len();
-            if !has_domain && parts < 2 {
+            // Server blocks with no public name (`_`, `phpmyadmin`, an IP) are not
+            // a project by themselves, however many there are; they need a
+            // compose project, a pm2 app or a `.env` beside them.
+            let only_nameless_blocks = members
+                .nodes
+                .iter()
+                .all(|&i| matches!(self.nodes[i].what, What::Vhost(_)))
+                && members.envs.is_empty();
+            if !has_domain && (parts < 2 || only_nameless_blocks) {
                 rejected.extend(&members.nodes);
                 continue;
             }

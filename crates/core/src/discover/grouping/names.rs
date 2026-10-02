@@ -45,11 +45,6 @@ const WEB_SUBDIRS: &[&str] = &[
     "current",
 ];
 
-/// Second-level labels under a two-letter country code (`co.uk`, `com.vn`).
-const SECOND_LEVEL: &[&str] = &[
-    "co", "com", "net", "org", "gov", "edu", "ac", "or", "ne", "go",
-];
-
 /// Name endings that only resolve inside a network.
 const PRIVATE_SUFFIXES: &[&str] = &[".local", ".internal", ".lan", ".localhost", ".localdomain"];
 
@@ -115,17 +110,16 @@ pub fn is_public_domain(name: &str) -> bool {
         && n.split('.').all(|l| !l.is_empty())
 }
 
-/// The domain a name belongs to: `www.` taken off, then the last two labels
-/// (three under `co.uk`, `com.vn`…).
+/// The domain a name belongs to: `www.` taken off, then the registered domain
+/// by the Public Suffix List (`api.shop.co.uk` → `shop.co.uk`, `a.io.vn` →
+/// `a.io.vn`). The list is compiled in, so nothing is fetched at run time. It
+/// includes the private section, so `a.github.io` and `b.github.io` are two
+/// owners, like `a.io.vn` and `b.io.vn`. A name that is itself a public suffix,
+/// or has no registered domain, stays as it is.
 pub fn apex(name: &str) -> String {
     let n = name.to_ascii_lowercase();
     let n = n.strip_prefix("www.").unwrap_or(&n);
-    let labels: Vec<&str> = n.split('.').collect();
-    let keep = match labels.as_slice() {
-        [.., second, last] if last.len() == 2 && SECOND_LEVEL.contains(second) => 3,
-        _ => 2,
-    };
-    labels[labels.len().saturating_sub(keep)..].join(".")
+    psl::domain_str(n).unwrap_or(n).to_owned()
 }
 
 /// The first label of a domain (`shop-x.com` → `shop-x`).
@@ -244,6 +238,18 @@ mod tests {
             ("api.shop.co.uk", "shop.co.uk"),
             ("www.shop.com.vn", "shop.com.vn"),
             ("Shop.COM", "shop.com"),
+            ("beru.io.vn", "beru.io.vn"),
+            ("www.beru.io.vn", "beru.io.vn"),
+            ("api.robertnguyen.io.vn", "robertnguyen.io.vn"),
+            ("shop.com.vn", "shop.com.vn"),
+            ("a.b.shop.co.uk", "shop.co.uk"),
+            // Private suffixes count: each subdomain is its own owner.
+            ("alice.github.io", "alice.github.io"),
+            ("bob.github.io", "bob.github.io"),
+            // A name that is itself a suffix, or no known suffix at all.
+            ("io.vn", "io.vn"),
+            ("co.uk", "co.uk"),
+            ("shop-x.test", "shop-x.test"),
         ] {
             assert_eq!(apex(name), want, "{name}");
         }
@@ -260,6 +266,21 @@ mod tests {
             "db.internal",
             "intranet",
             "a..com",
+        ] {
+            assert!(!is_public_domain(no), "{no}");
+        }
+    }
+
+    #[test]
+    fn names_that_are_not_domains_never_reach_a_registered_domain() {
+        for no in [
+            "phpmyadmin",
+            "_",
+            "localhost",
+            "127.0.0.1",
+            "203.0.113.5",
+            "2001:db8::1",
+            "intranet",
         ] {
             assert!(!is_public_domain(no), "{no}");
         }
