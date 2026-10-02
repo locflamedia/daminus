@@ -54,7 +54,7 @@ const props = withDefaults(
     /** Gridline labels, formatted by the caller ("7.5 GB"). */
     formatY: (value: number) => string
     /** Labels under the axis at scan positions; the first is left aligned, the last right. */
-    xLabels?: readonly { index: number; text: string }[]
+    xLabels?: readonly { index: number; text: string; anchor?: 'start' | 'middle' | 'end' }[]
     /** Value range; defaults to the data with 10 % headroom. */
     domain?: readonly [number, number]
     /** Gridline values; defaults to two to four round values inside the domain. */
@@ -71,6 +71,10 @@ const props = withDefaults(
     label: string
     size?: { width: number; height: number }
     plot?: { left: number; right: number; top: number; bottom: number }
+    /** Space between the value labels and the plot, 12 unless the board draws less. */
+    axisGap?: number
+    /** Distance of the date labels from the foot of the drawing, 4 unless the board draws more. */
+    dateInset?: number
     once?: string
   }>(),
   {
@@ -84,6 +88,8 @@ const props = withDefaults(
     legend: () => [],
     size: () => ({ width: 760, height: 236 }),
     plot: () => ({ left: 48, right: 20, top: 20, bottom: 32 }),
+    axisGap: 12,
+    dateInset: 4,
     once: undefined,
   },
 )
@@ -212,7 +218,7 @@ const xTicks = computed(() => {
   return props.xLabels.flatMap((l, k) => {
     const x = points[l.index]?.[0]
     if (x === undefined) return []
-    return [{ ...l, x, anchor: k === 0 ? 'start' : k === last ? 'end' : 'middle' }]
+    return [{ ...l, x, anchor: l.anchor ?? (k === 0 ? 'start' : k === last ? 'end' : 'middle') }]
   })
 })
 
@@ -348,7 +354,7 @@ const gid = (name: string) => `${name}-${uid}`
           v-for="g in gridLines"
           :key="g.value"
           class="axis"
-          :x="box.x0 - 12"
+          :x="box.x0 - axisGap"
           :y="g.y + 4"
           text-anchor="end"
         >
@@ -450,7 +456,7 @@ const gid = (name: string) => `${name}-${uid}`
           class="axis"
           :class="{ now: hovered === t.index }"
           :x="t.x"
-          :y="H - 4"
+          :y="H - dateInset"
           :text-anchor="t.anchor"
         >
           {{ t.text }}

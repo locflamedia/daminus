@@ -39,6 +39,7 @@ import UiTopologyNode from '@/ui/UiTopologyNode.vue'
 import UiTreemap, { type TreemapTile } from '@/ui/UiTreemap.vue'
 import GalleryFrame from './GalleryFrame.vue'
 import {
+  DB_COMPACT,
   DB_DAYS,
   DB_FIRST_SCAN,
   DB_SIZE,
@@ -108,6 +109,15 @@ const historyXLabels = computed(() => [
   { index: 10, text: dateLabel(9) },
   { index: 13, text: k('history.today') },
 ])
+const compactLabels = computed(() => [
+  { index: 0, text: dateLabel(5), anchor: 'middle' as const },
+  { index: 4, text: dateLabel(9) },
+  { index: 8, text: k('history.today') },
+])
+const compactEnd = computed(() => ({
+  value: gb(8.43),
+  delta: fmt.delta(1.07, 'GB').text,
+}))
 const ranges = computed(() => [
   { value: '7', label: k('history.range7') },
   { value: '14', label: k('history.range14') },
@@ -689,6 +699,7 @@ const issueLegend = computed(() => [
             :band="{ from: 85, to: 100, label: k('memory.band') }"
             :size="{ width: 640, height: 252 }"
             :plot="{ left: 44, right: 8, top: 16, bottom: 24 }"
+            :axis-gap="10"
             :label="k('memory.aria')"
           />
         </GalleryFrame>
@@ -714,6 +725,37 @@ const issueLegend = computed(() => [
               <UiSparkline :values="[210, 212]" />
             </div>
           </div>
+        </GalleryFrame>
+      </div>
+
+      <div class="two compact">
+        <GalleryFrame
+          :title="k('history.compactTitle')"
+          :text="k('history.compactText')"
+          :spec="k('history.compactSpec')"
+        >
+          <UiHistoryChart
+            :series="[{ id: 'size', values: DB_COMPACT }]"
+            :format-y="gb"
+            :x-labels="compactLabels"
+            :domain="[6.5, 8.685]"
+            :grid="[7, 8]"
+            :threshold="8"
+            :end-label="compactEnd"
+            :size="{ width: 560, height: 190 }"
+            :plot="{ left: 48, right: 12, top: 20, bottom: 40 }"
+            :axis-gap="8"
+            :date-inset="14"
+            :label="k('history.compactAria')"
+          />
+        </GalleryFrame>
+
+        <GalleryFrame :title="k('rules.title')">
+          <ul class="rules">
+            <li v-for="rule in ['monotone', 'fills', 'number', 'status']" :key="rule">
+              <b>{{ k(`rules.${rule}Head`) }}</b> {{ k(`rules.${rule}`) }}
+            </li>
+          </ul>
         </GalleryFrame>
       </div>
 
@@ -1034,6 +1076,10 @@ const issueLegend = computed(() => [
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
 }
 
+.two.compact {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
 .two.even {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1047,6 +1093,7 @@ const issueLegend = computed(() => [
 @media (max-width: 1100px) {
   .two,
   .two.wide,
+  .two.compact,
   .two.even,
   .three {
     grid-template-columns: minmax(0, 1fr);
@@ -1197,6 +1244,23 @@ const issueLegend = computed(() => [
   gap: 6px;
   color: var(--ink-2);
   font-size: var(--text-12);
+}
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--text-13);
+  line-height: 1.5;
+  list-style: none;
+}
+
+.rules b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
 }
 
 .notes {

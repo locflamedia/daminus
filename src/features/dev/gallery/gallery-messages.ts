@@ -372,6 +372,7 @@ const baseMessages = {
         compactText:
           'The compact form of the Data display board: latest value and its change at the end, no legend for one series.',
         compactAria: 'Database size rose gently, then jumped to 8.43 GB in the latest scan',
+        compactSpec: 'monotone curve · dotted grid · gradient stroke · end marker',
       },
       memory: {
         title: 'Memory used',
@@ -534,6 +535,21 @@ const baseMessages = {
         note: 'Ringed columns are the two scans being compared',
         cell: '{scan} · {group} · {state}',
         aria: 'Check groups across twelve scans: disk and containers turned to warnings in the last three scans, response time wobbled at scans 9 and 11',
+      },
+      rules: {
+        title: 'Chart rules',
+        monotoneHead: 'Monotone curves.',
+        monotone:
+          'Smooth, but never above the highest or below the lowest real value. 2.5 stroke, round caps and joins.',
+        fillsHead: 'Soft fills.',
+        fills:
+          'Area fades from 22% to 0. Gridlines are dotted, horizontal only, three or four of them.',
+        numberHead: 'Say the number.',
+        number:
+          'The current value and delta sit above the chart in 28 px. The chart shows the shape, the text gives the figure.',
+        statusHead: 'Status by exception.',
+        status:
+          'Only the part past a threshold turns amber or rose. Everything else stays accent or lilac.',
       },
       byServer: {
         title: 'Topology by server',
@@ -960,6 +976,7 @@ const baseMessages = {
         compactText:
           'Dạng gọn của board Hiển thị dữ liệu: giá trị mới nhất và mức thay đổi ở cuối đường, không chú giải khi chỉ có một chuỗi.',
         compactAria: 'Dung lượng cơ sở dữ liệu tăng nhẹ rồi nhảy lên 8,43 GB ở lần quét mới nhất',
+        compactSpec: 'đường monotone · lưới chấm · nét chuyển màu · điểm cuối',
       },
       memory: {
         title: 'Bộ nhớ đang dùng',
@@ -1122,6 +1139,20 @@ const baseMessages = {
         note: 'Cột có viền là hai lần quét đang so sánh',
         cell: '{scan} · {group} · {state}',
         aria: 'Các nhóm kiểm tra qua mười hai lần quét: ổ đĩa và container chuyển sang cảnh báo trong ba lần quét gần nhất, thời gian phản hồi dao động ở lần quét 9 và 11',
+      },
+      rules: {
+        title: 'Quy tắc biểu đồ',
+        monotoneHead: 'Đường cong monotone.',
+        monotone:
+          'Mượt nhưng không bao giờ cao hơn giá trị lớn nhất hay thấp hơn giá trị nhỏ nhất có thật. Nét 2,5, đầu và khớp bo tròn.',
+        fillsHead: 'Vùng dưới mềm.',
+        fills: 'Vùng dưới mờ dần từ 22% về 0. Đường lưới chấm, chỉ nằm ngang, ba hoặc bốn đường.',
+        numberHead: 'Nói ra con số.',
+        number:
+          'Giá trị hiện tại và mức thay đổi nằm trên biểu đồ, cỡ 28 px. Biểu đồ cho thấy hình dạng, chữ cho con số.',
+        statusHead: 'Trạng thái theo ngoại lệ.',
+        status:
+          'Chỉ đoạn vượt ngưỡng mới chuyển hổ phách hoặc hồng đậm. Mọi thứ khác giữ màu nhấn hoặc tím nhạt.',
       },
       byServer: {
         title: 'Sơ đồ theo máy chủ',

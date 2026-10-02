@@ -212,6 +212,28 @@ describe('UiHistoryChart', () => {
     expect(wrapper.get('.tip').attributes('aria-hidden')).toBe('true')
   })
 
+  it('places value and date labels where the board puts them, and lets a label pick its anchor', () => {
+    const wrapper = mount(UiHistoryChart, {
+      props: {
+        ...base,
+        domain: [6.5, 8.75] as const,
+        size: { width: 560, height: 190 },
+        plot: { left: 48, right: 12, top: 20, bottom: 40 },
+        axisGap: 8,
+        dateInset: 14,
+        xLabels: [
+          { index: 0, text: '18 Sep', anchor: 'middle' as const },
+          { index: 4, text: 'today' },
+        ],
+      },
+    })
+    const axis = wrapper.findAll('.axis')
+    expect(axis[0]?.attributes('x')).toBe('40')
+    const dates = axis.slice(-2)
+    expect(dates.map((d) => d.attributes('y'))).toEqual(['176', '176'])
+    expect(dates.map((d) => d.attributes('text-anchor'))).toEqual(['middle', 'end'])
+  })
+
   it('takes a pinned scan from its model', () => {
     const wrapper = mount(UiHistoryChart, { props: { ...base, hovered: 2 } })
     expect(wrapper.get('.tip').text()).toContain('scan 2')

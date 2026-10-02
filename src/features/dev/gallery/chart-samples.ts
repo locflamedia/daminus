@@ -16,6 +16,9 @@ export const DB_FIRST_SCAN = 27
 
 /** The scan number under the first bar of the duration chart; the last is #42. */
 export const SCAN_FIRST = 29
+/** The compact history chart of the Data display board: nine scans, the last one past the threshold. */
+export const DB_COMPACT = [6.98, 7.06, 7.13, 7.19, 7.24, 7.28, 7.33, 7.36, 8.43]
+
 export const SCAN_DURATION = [2.9, 3.1, 2.7, 3.4, 2.6, 2.8, 3.0, 2.4, 2.5, 2.3, 2.6, 2.4, 3.0, 2.2]
 
 export const MEMORY_ONE = [62, 64, 63, 66, 68, 67, 70, 72, 71, 74, 76, 75, 79, 81]
