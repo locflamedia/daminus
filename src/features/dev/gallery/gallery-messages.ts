@@ -116,8 +116,25 @@ const baseMessages = {
       languageLabel: 'App language',
       searchLanguages: 'Search languages',
       notTranslated: 'Not translated yet',
+      notTranslatedHint: 'Not translated yet. Help translate →',
       helpTranslate: 'Help translate Daminus',
       noLanguage: 'No language found',
+      languageStates: 'Language menu, other states',
+      languageStatesLede: 'Flags are inline SVG; English uses the UK flag.',
+      langState: {
+        empty: {
+          name: 'Search with no match',
+          text: 'One grey line, no illustration. The help-translate link stays at the bottom when it was there.',
+        },
+        pending: {
+          name: 'Not translated yet · cannot be chosen',
+          text: 'Dimmed rows show their share. Click, Enter and arrow keys pass over them; a tooltip says why and links to help translate.',
+        },
+        keyboard: {
+          name: 'Keyboard',
+          text: '↑ ↓ move between languages you can pick · ⏎ chooses and switches the app at once · esc closes and keeps the current language · typing filters by native or English name and code',
+        },
+      },
     },
     display: {
       title: 'Display',
@@ -224,6 +241,27 @@ const baseMessages = {
       commandRemove: 'Removes files',
       commandLong: 'Long: scrolls, never cut',
       commandCopied: 'copied × {n}',
+      safety: 'Command safety',
+      safetyLede: 'Every command Daminus shows for copying, from Permission help or an AI answer.',
+      face: { idle: 'rest', copied: '1.6 s, then back', failed: 'until the next visit' },
+      rules: {
+        whole: {
+          name: 'Whole command, never an ellipsis.',
+          text: 'Long lines scroll sideways inside the block, with a thin scroll bar always visible; line breaks are joined with a space.',
+        },
+        cleaned: {
+          name: 'Cleaned before showing.',
+          text: 'Control and hidden characters (zero-width, bidi overrides, escape codes) are removed; what is shown is exactly what is copied.',
+        },
+        warn: {
+          name: 'Warn in view.',
+          text: 'An amber note under the block, one line per risk, when the command pipes into a shell, decodes base64 or runs rm. Copy stays enabled.',
+        },
+        faces: {
+          name: 'Copy has three faces.',
+          text: 'Copy, Copied, Failed. Failed never hides the text, so it can be selected by hand.',
+        },
+      },
     },
     overlays: {
       title: 'Overlays',
@@ -631,8 +669,25 @@ const baseMessages = {
       languageLabel: 'Ngôn ngữ ứng dụng',
       searchLanguages: 'Tìm ngôn ngữ',
       notTranslated: 'Chưa có bản dịch',
+      notTranslatedHint: 'Chưa có bản dịch. Giúp dịch →',
       helpTranslate: 'Giúp dịch Daminus',
       noLanguage: 'Không tìm thấy ngôn ngữ',
+      languageStates: 'Menu ngôn ngữ, các trạng thái khác',
+      languageStatesLede: 'Cờ là SVG nội tuyến; tiếng Anh dùng cờ Anh.',
+      langState: {
+        empty: {
+          name: 'Tìm không có kết quả',
+          text: 'Một dòng xám, không có hình minh hoạ. Liên kết giúp dịch vẫn nằm dưới cùng nếu trước đó có.',
+        },
+        pending: {
+          name: 'Chưa có bản dịch · không chọn được',
+          text: 'Dòng mờ hiện tỷ lệ đã dịch. Bấm, Enter và phím mũi tên bỏ qua chúng; chú thích nói lý do và dẫn tới trang giúp dịch.',
+        },
+        keyboard: {
+          name: 'Bàn phím',
+          text: '↑ ↓ di chuyển giữa các ngôn ngữ chọn được · ⏎ chọn và đổi ngôn ngữ ứng dụng ngay · esc đóng và giữ ngôn ngữ hiện tại · gõ để lọc theo tên gốc, tên tiếng Anh hoặc mã',
+        },
+      },
     },
     display: {
       title: 'Hiển thị',
@@ -739,6 +794,27 @@ const baseMessages = {
       commandRemove: 'Xoá file',
       commandLong: 'Dài: cuộn, không cắt',
       commandCopied: 'đã chép × {n}',
+      safety: 'An toàn của lệnh',
+      safetyLede: 'Mọi lệnh Daminus hiện để sao chép, từ trợ giúp quyền hoặc câu trả lời của AI.',
+      face: { idle: 'nghỉ', copied: '1,6 giây rồi quay lại', failed: 'đến lần ghé sau' },
+      rules: {
+        whole: {
+          name: 'Cả lệnh, không bao giờ cắt bằng dấu ba chấm.',
+          text: 'Dòng dài cuộn ngang trong khối, có thanh cuộn mảnh luôn hiện; xuống dòng được nối bằng dấu cách.',
+        },
+        cleaned: {
+          name: 'Làm sạch trước khi hiện.',
+          text: 'Ký tự điều khiển và ký tự ẩn (độ rộng bằng không, đảo chiều văn bản, mã escape) bị bỏ; thấy gì thì chép đúng nấy.',
+        },
+        warn: {
+          name: 'Cảnh báo ngay trong tầm nhìn.',
+          text: 'Một ghi chú màu hổ phách dưới khối, mỗi rủi ro một dòng, khi lệnh đưa vào shell, giải mã base64 hoặc chạy rm. Nút sao chép vẫn bật.',
+        },
+        faces: {
+          name: 'Nút sao chép có ba mặt.',
+          text: 'Sao chép, Đã chép, Lỗi. Lỗi không bao giờ giấu văn bản, nên vẫn chọn tay được.',
+        },
+      },
     },
     overlays: {
       title: 'Lớp phủ',

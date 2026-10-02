@@ -52,6 +52,14 @@ const languages = computed<SelectOption[]>(() => [
 ])
 
 const confirmed = ref(0)
+
+// The three typed states of the language menu: nothing found, only dimmed rows, and the
+// arrow keys on the first row.
+const LANGUAGE_STATES = [
+  { key: 'empty', query: 'klingon', help: true },
+  { key: 'pending', query: 'fr', help: false },
+  { key: 'keyboard', query: 'e', help: false },
+] as const
 </script>
 
 <template>
@@ -154,7 +162,7 @@ const confirmed = ref(0)
       <GalleryFrame :title="t('gallery.inputs.checkbox')" :text="t('gallery.inputs.checkboxLede')">
         <div class="stack tight">
           <UiCheckbox
-            :model-value="false"
+            :model-value="hostCount === 3"
             filled
             :indeterminate="hostCount > 0 && hostCount < 3"
             :meta="t('gallery.inputs.twoOfFour')"
@@ -187,6 +195,7 @@ const confirmed = ref(0)
             :accessible-name="t('gallery.inputs.languageLabel')"
             :search-placeholder="t('gallery.inputs.searchLanguages')"
             :pending-label="t('gallery.inputs.notTranslated')"
+            :pending-hint="t('gallery.inputs.notTranslatedHint')"
             :help-label="t('gallery.inputs.helpTranslate')"
             :empty-label="t('gallery.inputs.noLanguage')"
             default-open
@@ -217,6 +226,33 @@ const confirmed = ref(0)
         </GalleryFrame>
       </div>
     </div>
+
+    <GalleryFrame
+      :title="t('gallery.inputs.languageStates')"
+      :text="t('gallery.inputs.languageStatesLede')"
+    >
+      <div class="states">
+        <div v-for="state in LANGUAGE_STATES" :key="state.key" class="state">
+          <span class="cap">{{ t(`gallery.inputs.langState.${state.key}.name`) }}</span>
+          <div class="state-stage">
+            <UiSelect
+              :model-value="language"
+              variant="language"
+              :options="languages"
+              :accessible-name="t('gallery.inputs.languageLabel')"
+              :search-placeholder="t('gallery.inputs.searchLanguages')"
+              :pending-label="t('gallery.inputs.notTranslated')"
+              :pending-hint="t('gallery.inputs.notTranslatedHint')"
+              :help-label="state.help ? t('gallery.inputs.helpTranslate') : undefined"
+              :empty-label="t('gallery.inputs.noLanguage')"
+              :default-query="state.query"
+              default-open
+            />
+          </div>
+          <span class="cap">{{ t(`gallery.inputs.langState.${state.key}.text`) }}</span>
+        </div>
+      </div>
+    </GalleryFrame>
   </div>
 </template>
 
@@ -274,7 +310,27 @@ const confirmed = ref(0)
 }
 
 .language-stage {
-  min-height: 420px;
+  width: 280px;
+  min-height: 480px;
+  margin-left: auto;
+}
+
+.states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.state-stage {
+  min-height: 340px;
 }
 
 .spec {

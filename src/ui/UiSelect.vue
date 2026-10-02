@@ -16,6 +16,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import UiFlag from './UiFlag.vue'
 import UiIcon from './UiIcon.vue'
+import UiTooltip from './UiTooltip.vue'
 import type { FlagCode } from './flags'
 
 export interface SelectOption {
@@ -46,6 +47,8 @@ const props = withDefaults(
     emptyLabel?: string
     /** Heading of the group of rows that carry `progress`. */
     pendingLabel?: string
+    /** The tooltip of a dimmed row: why it cannot be picked and where to help. */
+    pendingHint?: string
     /** The link at the end of the language menu; it emits `help`. */
     helpLabel?: string
     /** The last row of a default menu, for a value that is not listed. */
@@ -53,6 +56,8 @@ const props = withDefaults(
     disabled?: boolean
     /** Starts open (the gallery draws the open menu). */
     defaultOpen?: boolean
+    /** With `defaultOpen`: the text already typed in the search, as the gallery draws it. */
+    defaultQuery?: string
   }>(),
   {
     variant: 'default',
@@ -61,10 +66,12 @@ const props = withDefaults(
     searchPlaceholder: undefined,
     emptyLabel: undefined,
     pendingLabel: undefined,
+    pendingHint: undefined,
     helpLabel: undefined,
     customLabel: undefined,
     disabled: false,
     defaultOpen: false,
+    defaultQuery: undefined,
   },
 )
 
@@ -80,6 +87,8 @@ const input = ref<HTMLInputElement>()
 const open = ref(false)
 const query = ref('')
 const active = ref<string>()
+/** What last moved the highlight: the pointer tints a row, the keys ring it. */
+const activeBy = ref<'pointer' | 'key'>('pointer')
 
 const isLanguage = computed(() => props.variant === 'language')
 const selected = computed(() => props.options.find((o) => o.value === props.modelValue))
@@ -125,9 +134,10 @@ function focusInput() {
   void nextTick(() => input.value?.focus())
 }
 
-function openMenu() {
+function openMenu(by: 'pointer' | 'key' = 'pointer') {
   if (props.disabled || open.value) return
   query.value = ''
+  activeBy.value = by
   open.value = true
   active.value = navigable.value.includes(props.modelValue) ? props.modelValue : navigable.value[0]
   focusInput()
@@ -157,6 +167,11 @@ function choose(value: string) {
   closeMenu(true)
 }
 
+function hover(value: string) {
+  active.value = value
+  activeBy.value = 'pointer'
+}
+
 function move(step: 1 | -1) {
   const values = navigable.value
   if (values.length === 0) return
@@ -164,6 +179,7 @@ function move(step: 1 | -1) {
   const next =
     at === -1 ? (step === 1 ? 0 : values.length - 1) : (at + step + values.length) % values.length
   active.value = values[next]
+  activeBy.value = 'key'
   void nextTick(() =>
     document.getElementById(optionId(values[next] ?? ''))?.scrollIntoView?.({ block: 'nearest' }),
   )
@@ -172,7 +188,7 @@ function move(step: 1 | -1) {
 function onTriggerKeydown(event: KeyboardEvent) {
   if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
     event.preventDefault()
-    openMenu()
+    openMenu('key')
   }
 }
 
@@ -217,6 +233,9 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutsidePoint
 
 if (props.defaultOpen) {
   open.value = true
+  query.value = props.defaultQuery ?? ''
+  // A typed menu is drawn as the keys leave it: the highlighted row has the ring.
+  if (props.defaultQuery) activeBy.value = 'key'
   active.value = navigable.value.includes(props.modelValue) ? props.modelValue : navigable.value[0]
 }
 </script>
@@ -294,11 +313,14 @@ if (props.defaultOpen) {
             :id="optionId(option.value)"
             :key="option.value"
             class="option"
-            :class="{ active: active === option.value, selected: option.value === modelValue }"
+            :class="[
+              { active: active === option.value, selected: option.value === modelValue },
+              active === option.value ? `by-${activeBy}` : '',
+            ]"
             role="option"
             :aria-selected="option.value === modelValue"
             @mousedown.prevent
-            @mousemove="active = option.value"
+            @mousemove="hover(option.value)"
             @click="choose(option.value)"
           >
             <template v-if="isLanguage">
@@ -339,7 +361,7 @@ if (props.defaultOpen) {
             role="option"
             aria-selected="false"
             @mousedown.prevent
-            @mousemove="active = CUSTOM"
+            @mousemove="hover(CUSTOM)"
             @click="choose(CUSTOM)"
           >
             <span class="mark" />
@@ -350,23 +372,31 @@ if (props.defaultOpen) {
             <span v-if="pendingLabel" class="group-label" aria-hidden="true">{{
               pendingLabel
             }}</span>
-            <div
+            <UiTooltip
               v-for="option in pending"
-              :id="optionId(option.value)"
               :key="option.value"
-              class="option option-pending"
-              role="option"
-              aria-selected="false"
-              aria-disabled="true"
+              :text="pendingHint ?? ''"
+              :disabled="!pendingHint"
+              side="bottom"
             >
-              <UiFlag v-if="option.flag" :code="option.flag" />
-              <span class="name">{{ option.label }}</span>
-              <span v-if="option.detail" class="detail">{{ option.detail }}</span>
-              <span class="tail">
-                <span class="percent">{{ option.progress }}%</span>
-                <span v-if="option.code" class="code">{{ option.code }}</span>
-              </span>
-            </div>
+              <div
+                :id="optionId(option.value)"
+                class="option option-pending"
+                role="option"
+                aria-selected="false"
+                aria-disabled="true"
+                :aria-description="pendingHint"
+                @mousedown.prevent
+              >
+                <UiFlag v-if="option.flag" :code="option.flag" />
+                <span class="name">{{ option.label }}</span>
+                <span v-if="option.detail" class="detail">{{ option.detail }}</span>
+                <span class="tail">
+                  <span class="percent">{{ option.progress }}%</span>
+                  <span v-if="option.code" class="code">{{ option.code }}</span>
+                </span>
+              </div>
+            </UiTooltip>
           </div>
         </div>
 
@@ -420,8 +450,8 @@ if (props.defaultOpen) {
 
 .field:focus-visible,
 .open .field {
-  background: var(--surface-0);
-  box-shadow: var(--focus-ring);
+  background: var(--field-focus-bg);
+  box-shadow: var(--field-focus-ring);
 }
 
 .value {
@@ -564,12 +594,18 @@ if (props.defaultOpen) {
   padding: 0 10px;
 }
 
-.select-language .option.active {
+.select-language .option.selected:not(.active) {
+  background: transparent;
+}
+
+/* The pointer tints a row; the arrow keys ring it, so the two never look alike. */
+.select-language .option.active.by-pointer {
   background: var(--accent-soft);
 }
 
-.select-language .option.selected:not(.active) {
-  background: transparent;
+.select-language .option.active.by-key {
+  background: var(--surface-1);
+  box-shadow: inset 0 0 0 2px var(--accent-mid);
 }
 
 .detail {
@@ -641,7 +677,10 @@ if (props.defaultOpen) {
 }
 
 .empty {
-  padding: var(--space-2) 10px;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 10px;
   color: var(--ink-3);
   font-size: var(--text-12);
 }

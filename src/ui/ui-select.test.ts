@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import UiSelect, { type SelectOption } from './UiSelect.vue'
 
 const models: SelectOption[] = [
@@ -176,6 +176,7 @@ describe('UiSelect (default)', () => {
 
 describe('UiSelect (language)', () => {
   const base = {
+    pendingHint: 'Not translated yet. Help translate →',
     modelValue: 'en',
     options: languages,
     variant: 'language',
@@ -230,6 +231,59 @@ describe('UiSelect (language)', () => {
     await search.trigger('keydown', { key: 'ArrowDown' })
     await search.trigger('keydown', { key: 'Enter' })
     expect(wrapper.emitted('update:modelValue')).toEqual([['vi']])
+  })
+
+  it('says why a dimmed row cannot be picked in a tooltip, after the usual delay', async () => {
+    vi.useFakeTimers()
+    try {
+      const wrapper = make(base)
+      await wrapper.get('button.field').trigger('click')
+      const row = wrapper.get('[role="group"] [role="option"]')
+      expect(row.attributes('aria-description')).toBe('Not translated yet. Help translate →')
+      row.element.dispatchEvent(
+        new MouseEvent('mouseover', { bubbles: true, relatedTarget: document.body }),
+      )
+      expect(document.querySelector('[role="tooltip"]')).toBeNull()
+      vi.advanceTimersByTime(400)
+      await wrapper.vm.$nextTick()
+      expect(document.querySelector('[role="tooltip"]')?.textContent).toContain(
+        'Not translated yet. Help translate →',
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('does nothing on Enter when only dimmed rows match, and keeps the menu open', async () => {
+    const wrapper = make(base)
+    await wrapper.get('button.field').trigger('click')
+    await wrapper.get('input').setValue('fr')
+    expect(options(wrapper).map((o) => o.get('.name').text())).toEqual(['Français'])
+    await wrapper.get('input').trigger('keydown', { key: 'Enter' })
+    await wrapper.get('input').trigger('keydown', { key: 'ArrowDown' })
+    await wrapper.get('input').trigger('keydown', { key: 'Enter' })
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+    expect(wrapper.find('[role="listbox"]').exists()).toBe(true)
+  })
+
+  it('tints the row under the pointer and rings the row the arrow keys are on', async () => {
+    const wrapper = make(base)
+    await wrapper.get('button.field').trigger('click')
+    await wrapper.get('input').trigger('keydown', { key: 'ArrowDown' })
+    const [en, vi] = options(wrapper)
+    expect(vi?.classes()).toContain('active')
+    expect(vi?.classes()).toContain('by-key')
+    await en?.trigger('mousemove')
+    expect(en?.classes()).toContain('by-pointer')
+    expect(en?.classes()).not.toContain('by-key')
+  })
+
+  it('keeps the help link under the empty line', async () => {
+    const wrapper = make(base)
+    await wrapper.get('button.field').trigger('click')
+    await wrapper.get('input').setValue('klingon')
+    expect(wrapper.get('.empty').text()).toBe('No language found')
+    expect(wrapper.find('button.help').exists()).toBe(true)
   })
 
   it('finds a language by its English name, its code or without accents', async () => {

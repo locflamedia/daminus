@@ -1,10 +1,10 @@
-// Flag artwork for the language select: 20 x 15 drawings of the flags the board shows. They
-// are brand artwork like the project marks, so their colours are fixed and never follow the
-// theme. Stars are computed, not typed, so every point is exact.
+// Flag artwork for the language select: 20 x 15 drawings, the same ones the canvas draws as
+// inline SVG (English is the UK flag). They are brand artwork like the project marks, so their
+// colours are fixed and never follow the theme.
 export type FlagCode = 'gb' | 'vn' | 'jp' | 'kr' | 'cn' | 'fr'
 
 export interface FlagShape {
-  /** Painted back to front. `d` is a path or polygon points; `kind` says which. */
+  /** Painted back to front. `d` is a path, `points` a polygon. */
   parts: Array<
     | { kind: 'rect'; x: number; y: number; w: number; h: number; fill: string }
     | { kind: 'circle'; cx: number; cy: number; r: number; fill: string }
@@ -13,92 +13,87 @@ export interface FlagShape {
   >
 }
 
-/** Points of a five-pointed star, `rotation` in degrees (0 points straight up). */
-export function star(cx: number, cy: number, outer: number, rotation = 0): string {
-  const inner = outer * 0.382
-  const points: string[] = []
-  for (let i = 0; i < 10; i++) {
-    const radius = i % 2 === 0 ? outer : inner
-    const angle = ((rotation + i * 36 - 90) * Math.PI) / 180
-    points.push(
-      `${(cx + radius * Math.cos(angle)).toFixed(2)},${(cy + radius * Math.sin(angle)).toFixed(2)}`,
-    )
-  }
-  return points.join(' ')
-}
-
 const WHITE = '#ffffff'
 const RED = '#c8102e'
+const BANNER_RED = '#de2910'
+const GOLD = '#ffde00'
 
-/** The Taegeuk's four trigrams: three bars each, in the corners around the centre. */
-function trigram(cx: number, cy: number, angle: number): FlagShape['parts'] {
-  const bars: FlagShape['parts'] = []
-  const rad = (angle * Math.PI) / 180
-  for (const offset of [-1, 0, 1]) {
-    // Bars sit across the diagonal axis; `offset` steps them along it.
-    const along = offset * 1.1
-    const x = cx + Math.cos(rad) * along
-    const y = cy + Math.sin(rad) * along
-    const dx = -Math.sin(rad) * 1.4
-    const dy = Math.cos(rad) * 1.4
-    bars.push({
-      kind: 'path',
-      d: `M${(x - dx).toFixed(2)} ${(y - dy).toFixed(2)}L${(x + dx).toFixed(2)} ${(y + dy).toFixed(2)}`,
-      stroke: '#111111',
-      width: 0.6,
-    })
-  }
-  return bars
-}
+/** A five-pointed star as the canvas lists its points, so every vertex is exact. */
+const starPoly = (points: string): FlagShape['parts'][number] => ({
+  kind: 'poly',
+  points,
+  fill: GOLD,
+})
 
 export const FLAGS: Record<FlagCode, FlagShape> = {
   gb: {
     parts: [
       { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: '#012169' },
-      { kind: 'path', d: 'M0 0L20 15M20 0L0 15', stroke: WHITE, width: 3 },
-      { kind: 'path', d: 'M0 0L20 15M20 0L0 15', stroke: RED, width: 1 },
-      { kind: 'path', d: 'M10 0V15M0 7.5H20', stroke: WHITE, width: 5 },
-      { kind: 'path', d: 'M10 0V15M0 7.5H20', stroke: RED, width: 3 },
+      { kind: 'path', d: 'M0 0l20 15M20 0L0 15', stroke: WHITE, width: 3 },
+      { kind: 'path', d: 'M0 0l20 15M20 0L0 15', stroke: RED, width: 1.1 },
+      { kind: 'path', d: 'M10 0v15M0 7.5h20', stroke: WHITE, width: 5 },
+      { kind: 'path', d: 'M10 0v15M0 7.5h20', stroke: RED, width: 3 },
     ],
   },
   vn: {
     parts: [
       { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: '#da251d' },
-      { kind: 'poly', points: star(10, 8, 4.6), fill: '#ffff00' },
+      {
+        kind: 'poly',
+        points:
+          '10.00,3.20 11.08,6.31 14.37,6.38 11.75,8.37 12.70,11.52 10.00,9.64 7.30,11.52 8.25,8.37 5.63,6.38 8.92,6.31',
+        fill: '#ffcd00',
+      },
     ],
   },
   jp: {
     parts: [
       { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: WHITE },
-      { kind: 'circle', cx: 10, cy: 7.5, r: 4.2, fill: '#bc002d' },
+      { kind: 'circle', cx: 10, cy: 7.5, r: 4.4, fill: '#bc002d' },
     ],
   },
   kr: {
     parts: [
       { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: WHITE },
-      { kind: 'path', d: 'M6.6 7.5a3.4 3.4 0 0 1 6.8 0z', fill: '#cd2e3a' },
-      { kind: 'path', d: 'M13.4 7.5a3.4 3.4 0 0 1-6.8 0z', fill: '#0047a0' },
-      ...trigram(3.6, 3.2, 35),
-      ...trigram(16.4, 3.2, -35),
-      ...trigram(3.6, 11.8, -35),
-      ...trigram(16.4, 11.8, 35),
+      { kind: 'circle', cx: 10, cy: 7.5, r: 3.6, fill: '#0047a0' },
+      {
+        kind: 'path',
+        d: 'M6.4 7.5a3.6 3.6 0 0 1 7.2 0a1.8 1.8 0 0 1-3.6 0a1.8 1.8 0 0 0-3.6 0z',
+        fill: '#cd2e3a',
+      },
+      {
+        kind: 'path',
+        d: 'M2.2 2.6l1.6-1.2M2.8 3.4l1.6-1.2M3.4 4.2l1.6-1.2M15 1.4l1.6 1.2M15.6 .6l1.6 1.2M16.2 13.6l1.6-1.2M15.6 12.8l1.6-1.2M2.2 12.4l1.6 1.2M2.8 11.6l1.6 1.2',
+        stroke: '#1b1d2a',
+        width: 0.55,
+      },
     ],
   },
   cn: {
     parts: [
-      { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: '#de2910' },
-      { kind: 'poly', points: star(4, 4, 2.6), fill: '#ffde00' },
-      { kind: 'poly', points: star(8, 1.7, 0.9, 20), fill: '#ffde00' },
-      { kind: 'poly', points: star(9.6, 3.6, 0.9, 40), fill: '#ffde00' },
-      { kind: 'poly', points: star(9.6, 6, 0.9, 20), fill: '#ffde00' },
-      { kind: 'poly', points: star(8, 7.7, 0.9, 0), fill: '#ffde00' },
+      { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: BANNER_RED },
+      starPoly(
+        '4.60,1.60 5.26,3.49 7.26,3.53 5.67,4.75 6.25,6.67 4.60,5.52 2.95,6.67 3.53,4.75 1.94,3.53 3.94,3.49',
+      ),
+      starPoly(
+        '8.60,1.10 8.79,1.64 9.36,1.65 8.90,2.00 9.07,2.55 8.60,2.22 8.13,2.55 8.30,2.00 7.84,1.65 8.41,1.64',
+      ),
+      starPoly(
+        '10.00,2.80 10.19,3.34 10.76,3.35 10.30,3.70 10.47,4.25 10.00,3.92 9.53,4.25 9.70,3.70 9.24,3.35 9.81,3.34',
+      ),
+      starPoly(
+        '10.00,5.10 10.19,5.64 10.76,5.65 10.30,6.00 10.47,6.55 10.00,6.22 9.53,6.55 9.70,6.00 9.24,5.65 9.81,5.64',
+      ),
+      starPoly(
+        '8.60,6.80 8.79,7.34 9.36,7.35 8.90,7.70 9.07,8.25 8.60,7.92 8.13,8.25 8.30,7.70 7.84,7.35 8.41,7.34',
+      ),
     ],
   },
   fr: {
     parts: [
-      { kind: 'rect', x: 0, y: 0, w: 6.67, h: 15, fill: '#0055a4' },
-      { kind: 'rect', x: 6.67, y: 0, w: 6.66, h: 15, fill: WHITE },
-      { kind: 'rect', x: 13.33, y: 0, w: 6.67, h: 15, fill: '#ef4135' },
+      { kind: 'rect', x: 0, y: 0, w: 20, h: 15, fill: WHITE },
+      { kind: 'rect', x: 0, y: 0, w: 6.67, h: 15, fill: '#002395' },
+      { kind: 'rect', x: 13.33, y: 0, w: 6.67, h: 15, fill: '#ed2939' },
     ],
   },
 }
