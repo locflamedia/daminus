@@ -58,7 +58,7 @@ withDefaults(
   );
   background-size: 200% 100%;
   opacity: 0;
-  animation: skeleton-sheen var(--dur-sheen) linear var(--delay-sheen) infinite;
+  animation: skeleton-sheen var(--dur-sheen) ease var(--delay-sheen) infinite;
 }
 
 @keyframes skeleton-sheen {

@@ -2,13 +2,14 @@
   Checkbox row, from the board "Inputs": used in Setup to pick hosts. The whole 40 px row is
   the target. Box 16, radius 5; unchecked = an inset 1.5 ink-4 ring, checked = ink fill with
   a tick that draws in 180 ms. A disabled row dims and explains itself in its trailing text.
-  `indeterminate` (a select-all over a partial selection) is announced as "mixed" and, as on
-  the board, drawn as an unchecked box.
+  `indeterminate` (a select-all over a partial selection) is announced as "mixed" and drawn as
+  an ink box with a dash; clicking it ticks everything (the box reports `true`, as a native
+  indeterminate checkbox does), so the parent selects all.
 -->
 <script setup lang="ts">
 import { useId } from 'vue'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     modelValue: boolean
     /** Set the label in Geist Mono (host names, paths). */
@@ -27,24 +28,27 @@ const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
 const id = useId()
 
 function onChange(event: Event) {
-  emit('update:modelValue', (event.target as HTMLInputElement).checked)
+  // A mixed box always means "select all" when it is used: whatever the native state says.
+  emit('update:modelValue', props.indeterminate || (event.target as HTMLInputElement).checked)
 }
 </script>
 
 <template>
-  <label class="check" :class="{ off: disabled, filled }" :for="id">
+  <label class="check" :class="{ off: disabled, filled, mixed: indeterminate }" :for="id">
     <input
       :id="id"
       class="native"
       type="checkbox"
       :checked="modelValue"
+      :indeterminate="indeterminate"
       :aria-checked="indeterminate ? 'mixed' : modelValue"
       :disabled="disabled"
       @change="onChange"
     />
     <span class="box" aria-hidden="true">
       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-        <path d="m2.2 5.2 1.8 1.8 3.8-4" pathLength="1" />
+        <path class="tick" d="m2.2 5.2 1.8 1.8 3.8-4" pathLength="1" />
+        <path class="dash" d="M2.5 5h5" pathLength="1" />
       </svg>
     </span>
     <span class="label" :class="{ mono }"><slot /></span>
@@ -97,32 +101,44 @@ function onChange(event: Event) {
   stroke-width: 1.8;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.box path {
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   transition: stroke-dashoffset var(--dur-check) var(--ease-out);
 }
 
-.native:checked + .box {
+.native:checked + .box,
+.mixed .box {
   background: var(--btn);
   box-shadow: none;
 }
 
-.native:checked + .box svg {
+.native:checked + .box .tick,
+.mixed .box .dash {
   stroke-dashoffset: 0;
+}
+
+/* A mixed box shows the dash, never the tick, even when the native state also reads checked. */
+.mixed .native + .box .tick {
+  stroke-dashoffset: 1;
 }
 
 .native:focus-visible + .box,
 .check[data-force='focus'] .box {
   box-shadow:
     inset 0 0 0 1.5px var(--ink-4),
-    0 0 0 2px var(--surface-0),
+    0 0 0 2px var(--ring-gap),
     0 0 0 4px var(--accent);
 }
 
 .native:checked:focus-visible + .box,
-.check[data-force='focus'] .native:checked + .box {
+.mixed .native:focus-visible + .box,
+.check[data-force='focus'] .native:checked + .box,
+.check.mixed[data-force='focus'] .box {
   box-shadow:
-    0 0 0 2px var(--surface-0),
+    0 0 0 2px var(--ring-gap),
     0 0 0 4px var(--accent);
 }
 
@@ -144,6 +160,10 @@ function onChange(event: Event) {
 .off {
   background: var(--surface-1);
   color: var(--ink-4);
+}
+
+.off .meta {
+  color: inherit;
 }
 
 .off .box {

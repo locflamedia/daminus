@@ -34,6 +34,25 @@ describe('UiCheckbox', () => {
     expect(wrapper.classes()).toContain('filled')
   })
 
+  it('draws a mixed box as the ink box with a dash, and a click ticks everything', async () => {
+    const wrapper = mount(UiCheckbox, {
+      props: { modelValue: false, indeterminate: true },
+      slots: { default: 'Select all' },
+    })
+    expect(wrapper.classes()).toContain('mixed')
+    expect(wrapper.find('.box .dash').exists()).toBe(true)
+    expect((wrapper.get('input').element as HTMLInputElement).indeterminate).toBe(true)
+    // Whatever the native box says after the click, a mixed box reports "all".
+    await wrapper.get('input').trigger('change')
+    expect(wrapper.emitted('update:modelValue')).toEqual([[true]])
+  })
+
+  it('does not draw the mixed state for a plain box', () => {
+    const wrapper = mount(UiCheckbox, { props: { modelValue: true }, slots: { default: 'x' } })
+    expect(wrapper.classes()).not.toContain('mixed')
+    expect(wrapper.get('input').attributes('aria-checked')).toBe('true')
+  })
+
   it('disables the row and says why in its trailing text', () => {
     const wrapper = mount(UiCheckbox, {
       props: { modelValue: false, disabled: true, meta: 'Wildcard, skipped' },

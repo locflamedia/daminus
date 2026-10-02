@@ -31,6 +31,9 @@
   /* Hover and pressed fills of the buttons, as drawn on the board "Actions". */
   --btn-hover: #33343e;
   --secondary-hover: #f9fafc;
+  --secondary-bg: var(--surface-0);
+  --secondary-press: var(--surface-1);
+  --secondary-shadow: var(--shadow-control);
   --danger-hover: #f8d8e3;
   --danger-press: #f4cbd9;
   --code: #1c1d24;
@@ -41,6 +44,10 @@
   --code-hl: #f4a6bf;
   --code-ok: #a6e3b8;
   --code-warn: #f4c98a;
+  --code-btn: #33343e;
+  --code-btn-ink: #ffffff;
+  --code-track: rgba(255, 255, 255, 0.12);
+  --code-thumb: rgba(255, 255, 255, 0.35);
   /* Accent text on the ink fill of toasts and tooltips (the dark fill inverts, so it flips). */
   --on-btn-accent: #9fb0ff;
 
@@ -155,6 +162,18 @@
   --shadow-drawer: -1px 0 0 rgba(40, 48, 90, 0.04), -24px 0 48px -24px rgba(40, 48, 90, 0.28);
   --shadow-panel: 0 1px 2px rgba(40, 48, 90, 0.08), 0 32px 80px -24px rgba(40, 48, 90, 0.45);
   --focus-ring: 0 0 0 2px var(--accent);
+  /* The gap between a control and its focus ring, the page tone behind it. */
+  --ring-gap: #ffffff;
+  /* A focused field: lifted to the surface in light, the ring drawn inside in dark. */
+  --field-focus-bg: var(--surface-0);
+  --field-focus-ring: 0 0 0 2px var(--accent);
+  --field-error-ring: 0 0 0 0 transparent;
+  /* Text of a disabled field or quiet button, and a placeholder. */
+  --ink-off: #80859a;
+  --ink-placeholder: var(--ink-4);
+  --seg-on: var(--surface-0);
+  --switch-disabled-track: color-mix(in srgb, var(--ink-5) 40%, var(--surface-3));
+  --switch-disabled-knob: var(--surface-0);
   /* Ink at 16% behind a sheet and 24% behind a blocking dialog. */
   --scrim-sheet: rgba(27, 29, 42, 0.16);
   --scrim-dialog: rgba(27, 29, 42, 0.24);
@@ -278,7 +297,10 @@
     --btn: #ecedf3;
     --btn-ink: #101118;
     --btn-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
-    --secondary-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+    --secondary-bg: var(--surface-2);
+    --secondary-hover: var(--surface-3);
+    --secondary-press: #34374a;
+    --secondary-shadow: none;
     --danger-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
     --danger-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
     --code: #0b0c11;
@@ -289,6 +311,10 @@
     --code-hl: #f4a6bf;
     --code-ok: #a6e3b8;
     --code-warn: #f4c98a;
+    --code-btn: #33343e;
+    --code-btn-ink: #ffffff;
+    --code-track: rgba(255, 255, 255, 0.12);
+    --code-thumb: rgba(255, 255, 255, 0.35);
     /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
     --on-btn-accent: #3a55d6;
 
@@ -395,6 +421,15 @@
     --shadow-drawer: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
     --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
     --focus-ring: 0 0 0 2px var(--accent);
+    --ring-gap: #101118;
+    --field-focus-bg: var(--surface-1);
+    --field-focus-ring: inset 0 0 0 1.5px var(--accent);
+    --field-error-ring: inset 0 0 0 1.5px var(--crit-solid);
+    --ink-off: #5e6377;
+    --ink-placeholder: var(--ink-4);
+    --seg-on: var(--surface-3);
+    --switch-disabled-track: color-mix(in srgb, var(--btn) 40%, var(--surface-0));
+    --switch-disabled-knob: color-mix(in srgb, var(--btn-ink) 40%, var(--surface-0));
     --scrim-sheet: rgba(0, 0, 0, 0.4);
     --scrim-dialog: rgba(0, 0, 0, 0.55);
   }
@@ -422,7 +457,10 @@
   --btn: #ecedf3;
   --btn-ink: #101118;
   --btn-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
-  --secondary-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+  --secondary-bg: var(--surface-2);
+  --secondary-hover: var(--surface-3);
+  --secondary-press: #34374a;
+  --secondary-shadow: none;
   --danger-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
   --danger-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
   --code: #0b0c11;
@@ -433,6 +471,10 @@
   --code-hl: #f4a6bf;
   --code-ok: #a6e3b8;
   --code-warn: #f4c98a;
+  --code-btn: #33343e;
+  --code-btn-ink: #ffffff;
+  --code-track: rgba(255, 255, 255, 0.12);
+  --code-thumb: rgba(255, 255, 255, 0.35);
   /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
   --on-btn-accent: #3a55d6;
 
@@ -539,6 +581,15 @@
   --shadow-drawer: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
   --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
   --focus-ring: 0 0 0 2px var(--accent);
+  --ring-gap: #101118;
+  --field-focus-bg: var(--surface-1);
+  --field-focus-ring: inset 0 0 0 1.5px var(--accent);
+  --field-error-ring: inset 0 0 0 1.5px var(--crit-solid);
+  --ink-off: #5e6377;
+  --ink-placeholder: var(--ink-4);
+  --seg-on: var(--surface-3);
+  --switch-disabled-track: color-mix(in srgb, var(--btn) 40%, var(--surface-0));
+  --switch-disabled-knob: color-mix(in srgb, var(--btn-ink) 40%, var(--surface-0));
   --scrim-sheet: rgba(0, 0, 0, 0.4);
   --scrim-dialog: rgba(0, 0, 0, 0.55);
 }

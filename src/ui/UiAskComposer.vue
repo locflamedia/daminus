@@ -103,9 +103,10 @@ function onKeydown(event: KeyboardEvent) {
   transition: background-color var(--dur-color) var(--ease-state);
 }
 
-.composer:focus-within {
-  background: var(--surface-0);
-  box-shadow: var(--focus-ring);
+.composer:focus-within,
+.composer-wrap[data-force='focus'] .composer {
+  background: var(--field-focus-bg);
+  box-shadow: var(--field-focus-ring);
 }
 
 .area {

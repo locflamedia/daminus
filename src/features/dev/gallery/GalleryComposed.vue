@@ -77,6 +77,9 @@ const groups = computed<PaletteGroup[]>(() => [
 // --- composer -----------------------------------------------------------------------------------
 
 const ask = ref('')
+const typed = ref(
+  'Why is the events table growing so fast, and is it safe to prune rows older than 30 days?',
+)
 const sentText = ref('')
 
 // --- thread -------------------------------------------------------------------------------------
@@ -325,6 +328,12 @@ const cardBase = computed(() => ({
           >
             <template #note>{{ k('composer.note') }}</template>
           </UiAskComposer>
+          <UiAskComposer
+            v-model="typed"
+            data-force="focus"
+            :label="k('composer.label')"
+            :placeholder="k('composer.placeholder')"
+          />
           <p v-if="sentText" class="note" role="status">
             {{ k('composer.sent', { text: sentText }) }}
           </p>

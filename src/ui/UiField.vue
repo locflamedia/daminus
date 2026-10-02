@@ -112,12 +112,13 @@ function onInput(event: Event) {
 
 .control:focus-within,
 .field[data-force='focus'] .control {
-  background: var(--surface-0);
-  box-shadow: var(--focus-ring);
+  background: var(--field-focus-bg);
+  box-shadow: var(--field-focus-ring);
 }
 
 .control.invalid {
   background: var(--crit-soft);
+  box-shadow: var(--field-error-ring);
 }
 
 .input {
@@ -136,7 +137,7 @@ function onInput(event: Event) {
 }
 
 .input::placeholder {
-  color: var(--ink-3);
+  color: var(--ink-placeholder);
 }
 
 .note {
@@ -156,18 +157,15 @@ function onInput(event: Event) {
 
 .off .label,
 .off .note {
-  color: var(--ink-4);
+  color: var(--ink-off);
 }
 
 .off .control {
   background: var(--surface-1);
 }
 
-.off .input {
-  color: var(--ink-4);
-}
-
+.off .input,
 .off .input::placeholder {
-  color: var(--ink-4);
+  color: var(--ink-off);
 }
 </style>

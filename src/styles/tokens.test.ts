@@ -355,10 +355,60 @@ describe('theme blocks', () => {
   })
 })
 
+describe('dark controls', () => {
+  it('draws a focused field inside in dark and outside in light, on the surface of the field', () => {
+    expect(light.get('--field-focus-ring')).toBe('0 0 0 2px var(--accent)')
+    expect(light.get('--field-focus-bg')).toBe('var(--surface-0)')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--field-focus-ring')).toBe('inset 0 0 0 1.5px var(--accent)')
+      expect(dark.get('--field-focus-bg')).toBe('var(--surface-1)')
+      expect(dark.get('--field-error-ring')).toBe('inset 0 0 0 1.5px var(--crit-solid)')
+    }
+    expect(light.get('--field-error-ring')).toBe('0 0 0 0 transparent')
+  })
+
+  it('gives disabled text, placeholders, the segment, the focus gap and the secondary button their dark values', () => {
+    expect(light.get('--ink-off')).toBe('#80859a')
+    expect(light.get('--ink-placeholder')).toBe('var(--ink-4)')
+    expect(light.get('--ring-gap')).toBe('#ffffff')
+    expect(light.get('--secondary-bg')).toBe('var(--surface-0)')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--ink-off')).toBe('#5e6377')
+      expect(dark.get('--ink-placeholder')).toBe('var(--ink-4)')
+      expect(dark.get('--ring-gap')).toBe('#101118')
+      expect(dark.get('--seg-on')).toBe('var(--surface-3)')
+      expect(dark.get('--secondary-bg')).toBe('var(--surface-2)')
+      expect(dark.get('--secondary-hover')).toBe('var(--surface-3)')
+      expect(dark.get('--secondary-press')).toBe('#34374a')
+      expect(dark.get('--secondary-shadow')).toBe('none')
+    }
+  })
+
+  it('keeps the dark switch that is on and disabled readable, with a dark knob', () => {
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--switch-disabled-track')).toBe(
+        'color-mix(in srgb, var(--btn) 40%, var(--surface-0))',
+      )
+      expect(dark.get('--switch-disabled-knob')).toBe(
+        'color-mix(in srgb, var(--btn-ink) 40%, var(--surface-0))',
+      )
+    }
+  })
+
+  it('draws the scroll bar of dark code as a faint track with a lighter thumb, in both themes', () => {
+    for (const set of [light, darkAttr, darkMedia]) {
+      expect(set.get('--code-track')).toBe('rgba(255, 255, 255, 0.12)')
+      expect(set.get('--code-thumb')).toBe('rgba(255, 255, 255, 0.35)')
+      expect(set.get('--code-btn')).toBe('#33343e')
+    }
+  })
+})
+
 describe('token usage', () => {
   // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; the
   // two knobs of UiCard that a caller sets on the element for a denser or looser board; and the
-  // swatch colour and column count a chart passes down from its data.
+  // swatch colour and column count a chart passes down from its data; and the colour a code block
+  // hands to the copy button it holds, so the fade behind the button matches the block.
   const RUNTIME = new Set([
     '--d',
     '--hold',
@@ -367,6 +417,7 @@ describe('token usage', () => {
     '--swatch',
     '--cols',
     '--mark',
+    '--copy-fade',
   ])
 
   it('only references tokens that are defined', () => {

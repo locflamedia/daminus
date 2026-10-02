@@ -106,7 +106,7 @@ function onKeydown(event: KeyboardEvent, index: number) {
 }
 
 .segment.on {
-  background: var(--surface-0);
+  background: var(--seg-on);
   color: var(--ink);
   box-shadow: var(--shadow-seg);
 }

@@ -123,7 +123,7 @@ onBeforeUnmount(cancel)
 
 .hold:focus-visible {
   box-shadow:
-    0 0 0 2px var(--surface-0),
+    0 0 0 2px var(--ring-gap),
     0 0 0 4px var(--accent);
 }
 
