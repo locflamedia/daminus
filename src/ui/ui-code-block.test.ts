@@ -74,21 +74,22 @@ describe('UiCodeBlock', () => {
     expect(wrapper!.get('.block').classes()).toContain('tone-light')
   })
 
-  it('copies the cleaned snippet, says Copied for 1.5 s, then goes back', async () => {
+  it('copies the cleaned snippet, says Copied for 1.6 s, then goes back', async () => {
     make({ code: `a${ESC}b\nc`, language: 'plain' })
-    const button = wrapper!.get('button.copy')
-    expect(button.attributes('aria-label')).toBe('Copy')
-    await button.trigger('click')
+    const faces = () => wrapper!.findAll('.face').map((f) => f.attributes('data-on'))
+    expect(wrapper!.get('button.copy').attributes('aria-label')).toBe('Copy')
+    expect(faces()).toEqual(['true', 'false', 'false'])
+    await wrapper!.get('button.copy').trigger('click')
     await nextTick()
     expect(copyText).toHaveBeenCalledWith('ab\nc')
-    expect(button.attributes('aria-label')).toBe('Copied')
+    expect(faces()).toEqual(['false', 'true', 'false'])
     expect(wrapper!.get('[role="status"]').text()).toBe('Copied')
-    vi.advanceTimersByTime(1499)
+    vi.advanceTimersByTime(1599)
     await nextTick()
-    expect(button.attributes('aria-label')).toBe('Copied')
+    expect(faces()).toEqual(['false', 'true', 'false'])
     vi.advanceTimersByTime(1)
     await nextTick()
-    expect(button.attributes('aria-label')).toBe('Copy')
+    expect(faces()).toEqual(['true', 'false', 'false'])
   })
 
   it('says so when the clipboard refuses', async () => {
@@ -96,7 +97,17 @@ describe('UiCodeBlock', () => {
     make({ code: 'ls' })
     await wrapper!.get('button.copy').trigger('click')
     await nextTick()
-    expect(wrapper!.get('button.copy').attributes('aria-label')).toBe('Could not copy')
+    expect(wrapper!.get('button.copy').classes()).toContain('failed')
+    expect(wrapper!.get('[role="status"]').text()).toBe('Could not copy')
+    expect(wrapper!.get('.code').text()).toBe('ls')
+  })
+
+  it('keeps the scroll bar on the code, except when the lines wrap', () => {
+    make({ code: 'x'.repeat(300) })
+    expect(wrapper!.get('.code').classes()).toContain('code-scroll')
+    wrapper!.unmount()
+    make({ code: 'x', wrap: true })
+    expect(wrapper!.get('.code').classes()).not.toContain('code-scroll')
   })
 
   it('has no copy button when it is not copyable', () => {

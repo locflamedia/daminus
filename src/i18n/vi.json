@@ -312,15 +312,25 @@
     "copy": "Sao chép",
     "copied": "Đã chép",
     "copyFailed": "Không sao chép được",
+    "copyFailedHint": "Không sao chép được. Hãy chọn văn bản rồi nhấn ⌘C.",
     "command": {
       "name": "Lệnh",
       "removed": "Đã bỏ {n} ký tự ẩn hoặc ký tự điều khiển.",
-      "riskTitle": "Kiểm tra trước khi chạy",
+      "riskTitle": "Đọc kỹ trước khi chạy lệnh này",
       "risk": {
-        "pipeToShell": "Lệnh này chạy đoạn văn bản do một lệnh khác tạo ra, ví dụ thứ tải về được đưa thẳng vào shell, nên bạn không thấy được cái gì sẽ chạy.",
-        "base64Decode": "Lệnh này giải mã một đoạn văn bản ẩn. Xem đoạn đó biến thành gì trước khi chạy.",
-        "remove": "Lệnh này xoá file. Kiểm tra đường dẫn trước khi chạy.",
-        "destructive": "Lệnh này có thể ghi đè một ổ đĩa hoặc đổi chủ sở hữu và quyền trên cả một thư mục. Kiểm tra đối tượng trước khi chạy."
+        "pipeToShell": {
+          "lead": "Đưa thẳng vào shell",
+          "rest": "chạy mọi thứ URL gửi về mà bạn không thấy"
+        },
+        "base64Decode": {
+          "lead": "Giải mã base64",
+          "rest": "nội dung thật bị ẩn; hãy giải mã và đọc trước"
+        },
+        "remove": { "lead": "Chạy rm", "rest": "xoá tệp; kiểm tra đường dẫn" },
+        "destructive": {
+          "lead": "Ghi đè một ổ đĩa hoặc cả một thư mục",
+          "rest": "có thể ghi vào thiết bị hoặc đổi chủ sở hữu và quyền trên cả cây thư mục; kiểm tra đối tượng"
+        }
       }
     },
     "failed": "Lỗi",

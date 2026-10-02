@@ -102,3 +102,44 @@ html.cross-fading *::after {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/*
+  A thin sideways scroll bar on dark code, always drawn (an overlay bar that hides itself would
+  leave a long command looking cut off): a 4 px track with a lighter thumb, as the canvas
+  draws it. The bar's height, the space above and under the strip and the inset at both ends
+  are set by the code that uses it, through the custom properties below.
+*/
+.code-scroll {
+  --scroll-h: 12px;
+  --scroll-top: 0px;
+  --scroll-bottom: 8px;
+  --scroll-inset: 12px;
+}
+
+.code-scroll::-webkit-scrollbar {
+  height: var(--scroll-h);
+}
+
+.code-scroll::-webkit-scrollbar-button:horizontal {
+  display: block;
+  width: var(--scroll-inset);
+  height: var(--scroll-h);
+  background: transparent;
+}
+
+.code-scroll::-webkit-scrollbar-track,
+.code-scroll::-webkit-scrollbar-thumb {
+  border-style: solid;
+  border-color: transparent;
+  border-width: var(--scroll-top) 0 var(--scroll-bottom);
+  border-radius: 4px;
+  background-clip: padding-box;
+}
+
+.code-scroll::-webkit-scrollbar-track {
+  background-color: var(--code-track);
+}
+
+.code-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--code-thumb);
+}
