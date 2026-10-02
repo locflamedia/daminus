@@ -531,14 +531,18 @@ describe('UiHeatStrip and UiHeatmap', () => {
     const wrapper = mount(UiHeatmap, { props: heat })
     const states = wrapper
       .findAll('.cell')
-      .map((c) => [c.classes().find((k) => k.startsWith('state-')), c.find('svg').exists()])
+      .map((c) => [
+        c.classes().find((k) => k.startsWith('state-')),
+        c.text(),
+        c.find('svg').exists(),
+      ])
     expect(states).toEqual([
-      ['state-ok', false],
-      ['state-warn', true],
-      ['state-expected', true],
-      ['state-none', true],
-      ['state-crit', true],
-      ['state-ok', false],
+      ['state-ok', '', false],
+      ['state-warn', '!', false],
+      ['state-expected', '', true],
+      ['state-none', '–', false],
+      ['state-crit', '×', false],
+      ['state-ok', '', false],
     ])
   })
 

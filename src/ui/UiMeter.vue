@@ -100,6 +100,7 @@ const spoken = computed(() =>
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  line-height: normal;
 }
 
 .head {

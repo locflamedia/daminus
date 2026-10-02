@@ -64,6 +64,13 @@ const run = ref(0)
 const range = ref('14')
 const hovered = ref<number | null>(10)
 
+// The server table writes the load per core to two decimals (1.55, 0.20), the thresholds to one.
+const fixed = (v: number, digits: number) =>
+  new Intl.NumberFormat(settings.language, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(v)
+const fixed2 = (v: number) => fixed(v, 2)
 const gb = (v: number) => fmt.measure(v, 'GB').text
 const pct = (v: number) => fmt.measure(v, '%').text
 const k = (key: string, params: Record<string, unknown> = {}) => t(`gallery.charts.${key}`, params)
@@ -257,7 +264,7 @@ const tableRows = computed(() => {
       meters: [
         meter('disk', pct(92), `${fmt.number(73.6)} / 80 GB`, 92, 'crit'),
         meter('memory', pct(81), `${fmt.number(3.2)} / 4 GB`, 81, 'warn'),
-        meter('load', fmt.number(1.55), '3.1 / 2', 100, 'warn'),
+        meter('load', fixed2(1.55), '3.1 / 2', 100, 'warn'),
         meter('io', pct(12), k('table.avg'), 12, 'warn'),
       ],
       sec: k('table.sec1'),
@@ -270,7 +277,7 @@ const tableRows = computed(() => {
       meters: [
         meter('disk', pct(64), `${fmt.number(25.6)} / 40 GB`, 64, 'ok'),
         meter('memory', pct(47), `${fmt.number(0.94)} / 2 GB`, 47, 'ok'),
-        meter('load', fmt.number(0.2), '0.4 / 2', 20, 'ok'),
+        meter('load', fixed2(0.2), '0.4 / 2', 20, 'ok'),
         meter('io', pct(1), k('table.avg'), 2, 'ok'),
       ],
       sec: k('table.sec2'),
@@ -296,7 +303,7 @@ const thresholds = computed(() => [
   ['t1', pct(80), pct(90)],
   ['t2', pct(80), pct(90)],
   ['t3', k('table.left15'), k('table.left5')],
-  ['t4', fmt.number(1), fmt.number(2)],
+  ['t4', fixed(1, 1), fixed(2, 1)],
   ['t5', pct(10), pct(25)],
   ['t6', '14', '3'],
   ['t7', '1 s', '3 s'],
@@ -407,6 +414,38 @@ const single: TopologyInput[] = [
   { id: 'db', label: 'DB', host: 'vps-sg-1', state: 'crit' },
 ]
 const moreLabel = (n: number) => k('topology.more', { n })
+
+// The Project card board's three forms: one server, split across two, and three or more.
+const byServer: { id: string; caption: string; items: TopologyInput[] }[] = [
+  {
+    id: 'one',
+    caption: 'one',
+    items: [
+      { id: 'fe', label: 'FE', host: 'vps-hn-3', state: 'ok' },
+      { id: 'be', label: 'BE', host: 'vps-hn-3', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'vps-hn-3', state: 'ok' },
+    ],
+  },
+  {
+    id: 'split',
+    caption: 'split',
+    items: [
+      { id: 'fe', label: 'FE', host: 'vps-sg-1', state: 'ok' },
+      { id: 'be', label: 'BE', host: 'vps-sg-2', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'vps-sg-2', state: 'ok' },
+    ],
+  },
+  {
+    id: 'many',
+    caption: 'many',
+    items: [
+      { id: 'app', label: 'APP', host: 'vps-sg-2', state: 'ok' },
+      { id: 'worker', label: 'WORKER', host: 'vps-sg-2', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'db-main', state: 'ok' },
+      { id: 'cache', label: 'CACHE', host: 'cache-1', state: 'ok' },
+    ],
+  },
+]
 
 // --- Issues per scan --------------------------------------------------------------------
 
@@ -720,7 +759,7 @@ const issueLegend = computed(() => [
           <b>{{ k('table.thresholds') }}</b>
           <UiRowList :label="k('table.thresholds')">
             <UiRow as="li" header columns="minmax(0, 1fr) 80px 80px">
-              <span>{{ k('table.thresholds') }}</span>
+              <span>{{ k('table.metric') }}</span>
               <span>{{ k('table.warnFrom') }}</span>
               <span>{{ k('table.critFrom') }}</span>
             </UiRow>
@@ -739,7 +778,7 @@ const issueLegend = computed(() => [
         </div>
       </GalleryFrame>
 
-      <div class="two">
+      <div class="two even">
         <GalleryFrame :title="k('parts.title')" :text="k('parts.text')">
           <div class="parts">
             <UiRowList :label="k('parts.table')">
@@ -791,69 +830,36 @@ const issueLegend = computed(() => [
         />
       </GalleryFrame>
 
-      <div class="two">
+      <div class="two even">
         <GalleryFrame
-          :title="k('topology.title')"
-          :text="k('topology.text')"
-          spec="24 · r6 · dot 6 · 11 px · link dashed 4"
+          :title="k('byServer.title')"
+          :text="k('byServer.text')"
+          spec="row 40 · node 24 r6 · letters 10/600 mono"
         >
-          <div class="nodes">
-            <div class="node-case">
-              <UiTopologyNode
-                label="FE"
-                caption="vps-sg-1"
-                state="ok"
-                :state-label="topologyStates.ok"
-              />
-              <span class="muted">{{ k('topology.healthy') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode
-                label="BE"
-                :caption="k('topology.compose')"
-                state="warn"
-                :state-label="topologyStates.warn"
-              />
-              <span class="muted">{{ k('topology.warning') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode
-                label="DB"
-                caption="vps-sg-1"
-                state="crit"
-                :state-label="topologyStates.crit"
-              />
-              <span class="muted">{{ k('topology.critical') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode
-                label="Worker"
-                caption="pm2"
-                state="unknown"
-                :state-label="topologyStates.unknown"
-              />
-              <span class="muted">{{ k('topology.unknown') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode label="+2" :state-label="moreLabel(2)" />
-              <span class="muted">{{ k('topology.overflow') }}</span>
-            </div>
+          <div v-for="form in byServer" :key="form.id" class="by-server">
+            <UiTopology
+              mode="servers"
+              :list="false"
+              :components="form.items"
+              :url-label="k('topology.url')"
+              :states="topologyStates"
+              :more-label="moreLabel"
+              :label="k(`byServer.${form.id}`)"
+            />
+            <span class="muted">{{ k(`byServer.${form.id}`) }}</span>
           </div>
-          <UiTopology
-            :components="single"
-            :url-label="k('topology.url')"
-            :states="topologyStates"
-            :more-label="moreLabel"
-            :label="k('topology.aria')"
-          />
-          <UiTopology
-            :components="split"
-            :url-label="k('topology.url')"
-            :states="topologyStates"
-            :more-label="moreLabel"
-            :label="k('topology.full')"
-          />
-          <span class="muted">{{ k('topology.full') }}</span>
+          <div class="by-server">
+            <UiTopology
+              mode="servers"
+              list
+              :components="byServer[2]?.items ?? []"
+              :url-label="k('topology.url')"
+              :states="topologyStates"
+              :more-label="moreLabel"
+              :label="k('byServer.list')"
+            />
+            <span class="muted">{{ k('byServer.list') }}</span>
+          </div>
         </GalleryFrame>
 
         <GalleryFrame
@@ -861,14 +867,78 @@ const issueLegend = computed(() => [
           :text="k('issues.text')"
           spec="16 px an issue · column 22 · r5 · gap 6 · bars 120"
         >
-          <UiIssueColumns
-            :scans="issueScans"
-            :compared="['11', '12']"
-            :legend="issueLegend"
-            :label="k('issues.aria')"
-          />
+          <div class="ct">
+            <UiIcon name="clock" class="muted-icon" />
+            {{ k('issues.title') }}
+            <UiChartLegend class="push" size="small" :items="issueLegend" />
+          </div>
+          <UiIssueColumns :scans="issueScans" :compared="['11', '12']" :label="k('issues.aria')" />
         </GalleryFrame>
       </div>
+
+      <GalleryFrame
+        :title="k('topology.title')"
+        :text="k('topology.text')"
+        spec="24 · r6 · dot 6 · 11 px · link dashed 4"
+      >
+        <div class="nodes">
+          <div class="node-case">
+            <UiTopologyNode
+              label="FE"
+              caption="vps-sg-1"
+              state="ok"
+              :state-label="topologyStates.ok"
+            />
+            <span class="muted">{{ k('topology.healthy') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode
+              label="BE"
+              :caption="k('topology.compose')"
+              state="warn"
+              :state-label="topologyStates.warn"
+            />
+            <span class="muted">{{ k('topology.warning') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode
+              label="DB"
+              caption="vps-sg-1"
+              state="crit"
+              :state-label="topologyStates.crit"
+            />
+            <span class="muted">{{ k('topology.critical') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode
+              label="Worker"
+              caption="pm2"
+              state="unknown"
+              :state-label="topologyStates.unknown"
+            />
+            <span class="muted">{{ k('topology.unknown') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode label="+2" :state-label="moreLabel(2)" />
+            <span class="muted">{{ k('topology.overflow') }}</span>
+          </div>
+        </div>
+        <UiTopology
+          :components="single"
+          :url-label="k('topology.url')"
+          :states="topologyStates"
+          :more-label="moreLabel"
+          :label="k('topology.aria')"
+        />
+        <UiTopology
+          :components="split"
+          :url-label="k('topology.url')"
+          :states="topologyStates"
+          :more-label="moreLabel"
+          :label="k('topology.full')"
+        />
+        <span class="muted">{{ k('topology.full') }}</span>
+      </GalleryFrame>
 
       <GalleryFrame
         :title="k('gauges.ring')"
@@ -964,6 +1034,10 @@ const issueLegend = computed(() => [
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
 }
 
+.two.even {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .three {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -973,6 +1047,7 @@ const issueLegend = computed(() => [
 @media (max-width: 1100px) {
   .two,
   .two.wide,
+  .two.even,
   .three {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1029,6 +1104,25 @@ const issueLegend = computed(() => [
 
 .ttl .good {
   color: var(--ok-ink);
+}
+
+.by-server {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.muted-icon {
+  color: var(--ink-3);
+}
+
+.ct {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 20px;
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
 }
 
 .push {
@@ -1212,7 +1306,7 @@ const issueLegend = computed(() => [
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-xs);
+  border-radius: 8px;
   background: var(--surface-0);
   box-shadow: var(--shadow-node);
   color: var(--ink-3);
@@ -1222,6 +1316,7 @@ const issueLegend = computed(() => [
   display: flex;
   flex-direction: column;
   min-width: 0;
+  line-height: normal;
 }
 
 .host-text b {

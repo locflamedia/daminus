@@ -657,6 +657,25 @@ describe('UiTopology forms', () => {
     expect(wrapper!.find('.link').exists()).toBe(false)
   })
 
+  it('folds past two servers into +N with a tooltip that names them, and a list folds none', () => {
+    const many: TopologyInput[] = [
+      { id: 'app', label: 'APP', host: 'vps-sg-2', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'db-main', state: 'ok' },
+      { id: 'cache', label: 'CACHE', host: 'cache-1', state: 'crit' },
+      { id: 'queue', label: 'QUEUE', host: 'queue-1', state: 'ok' },
+    ]
+    make(UiTopology, { ...common, components: many, mode: 'servers' })
+    const nodes = wrapper!.findAll('.node')
+    expect(nodes.map((n) => n.text())).toEqual([
+      'APPvps-sg-2Healthy',
+      'DBdb-mainHealthy',
+      '+2and 2 more',
+    ])
+    expect(nodes[2]?.attributes('title')).toBe('cache-1, queue-1')
+    make(UiTopology, { ...common, components: many, mode: 'servers', list: true })
+    expect(wrapper!.findAll('.node')).toHaveLength(4)
+  })
+
   it('reads out the state of each node', () => {
     make(UiTopology, { ...common, mode: 'servers' })
     expect(wrapper!.findAll('.sr-only').map((s) => s.text())).toEqual(['Healthy', 'Warning'])

@@ -142,7 +142,8 @@ watch(laid, () => void nextTick(measure))
   padding: var(--space-3);
   border-radius: 12px;
   background: var(--tile);
-  color: var(--ink);
+  color: var(--tile-ink);
+  line-height: normal;
 }
 
 .tone-tile-1 {
@@ -158,17 +159,26 @@ watch(laid, () => void nextTick(measure))
 }
 
 .tone-other {
-  --tile: var(--surface-2);
+  --tile: var(--tile-other);
+
+  background: var(--tile-other-hatch), var(--tile-other);
 }
 
 .tone-grow {
   --tile: var(--tile-grow);
 
+  color: var(--tile-grow-ink);
   box-shadow: inset 0 0 0 2px var(--warn-solid);
 }
 
+/* A size that is left out stays in the layout tree (it is measured) but not in the flow. */
 .form-name .size,
-.form-none .size,
+.form-none .size {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .form-none .name {
   visibility: hidden;
 }

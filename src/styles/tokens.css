@@ -123,6 +123,11 @@
   --tile-2: #c5cdf7;
   --tile-3: #dce3ff;
   --tile-grow: #f6d2a0;
+  /* The text on a tile, the grower's own text, and the "other" tile: plain grey in light. */
+  --tile-ink: var(--ink);
+  --tile-grow-ink: var(--ink);
+  --tile-other: var(--surface-2);
+  --tile-other-hatch: none;
   --heat-ok: #bfe3cf;
   --heat-warn: #f2cf96;
   --heat-crit: #efa8bf;
@@ -390,6 +395,14 @@
     --tile-2: #2e2a4a;
     --tile-3: #2a2d3b;
     --tile-grow: #3b2a1a;
+    --tile-ink: var(--ink-2);
+    --tile-grow-ink: var(--warn-ink);
+    --tile-other: #222431;
+    --tile-other-hatch: repeating-linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.08) 0 4px,
+      transparent 4px 8px
+    );
     --heat-ok: #1e4a35;
     --heat-warn: #5a4319;
     --heat-crit: #5c2a3b;
@@ -555,6 +568,14 @@
   --tile-2: #2e2a4a;
   --tile-3: #2a2d3b;
   --tile-grow: #3b2a1a;
+  --tile-ink: var(--ink-2);
+  --tile-grow-ink: var(--warn-ink);
+  --tile-other: #222431;
+  --tile-other-hatch: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.08) 0 4px,
+    transparent 4px 8px
+  );
   --heat-ok: #1e4a35;
   --heat-warn: #5a4319;
   --heat-crit: #5c2a3b;

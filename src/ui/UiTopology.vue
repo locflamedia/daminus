@@ -6,8 +6,9 @@
     order with its own state dot. Up to four components show; the rest fold into "+N", the
     healthiest first, so a failing part is never hidden. A server name appears on a node only
     where the server changes;
-  - `servers` (the Overview boards): one node per run of components on the same server, the
-    roles in their own colours, no URL node.
+  - `servers` (the Overview and Project card boards): one node per run of components on the
+    same server, the roles in their own colours, no URL node. Nodes keep discovery order; more
+    than two servers fold into "+N", whose tooltip names them.
 
   Below 1080 px ("Narrow window": topology diagrams become a list) the strip becomes a column
   of the same nodes, one per line, with no links; `list` forces either form. Names come from
@@ -15,7 +16,13 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { layoutServers, layoutTopology, type NodeState, type TopologyInput } from '@/lib/topology'
+import {
+  layoutServers,
+  layoutTopology,
+  type NodeState,
+  type ServerGroup,
+  type TopologyInput,
+} from '@/lib/topology'
 import { useLayoutRange } from '@/lib/viewport'
 import UiTopologyNode from './UiTopologyNode.vue'
 
@@ -40,7 +47,12 @@ const range = useLayoutRange()
 const asList = computed(() => props.list ?? range.value === 'narrow')
 
 const view = computed(() => layoutTopology(props.components))
-const servers = computed(() => layoutServers(props.components))
+// A list has room for every server, so it folds none.
+const servers = computed(() =>
+  asList.value ? layoutServers(props.components, Infinity) : layoutServers(props.components),
+)
+const hostsOf = (groups: readonly ServerGroup[]) =>
+  groups.map((g) => g.host ?? g.roles.map((r) => r.label).join(' ')).join(', ')
 </script>
 
 <template>
@@ -56,7 +68,11 @@ const servers = computed(() => layoutServers(props.components))
       </template>
       <template v-if="servers.hidden > 0">
         <span v-if="!asList" class="link" aria-hidden="true" />
-        <UiTopologyNode :label="`+${servers.hidden}`" :state-label="moreLabel(servers.hidden)" />
+        <UiTopologyNode
+          :label="`+${servers.hidden}`"
+          :state-label="moreLabel(servers.hidden)"
+          :hint="hostsOf(servers.folded)"
+        />
       </template>
     </template>
     <template v-else>

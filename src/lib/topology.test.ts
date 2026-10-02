@@ -90,27 +90,28 @@ describe('layoutServers', () => {
   })
 
   it('starts a new node where the server changes back', () => {
-    const view = layoutServers([
-      node('fe', 'ok', 'a'),
-      node('be', 'ok', 'b'),
-      node('db', 'ok', 'a'),
-    ])
+    const view = layoutServers(
+      [node('fe', 'ok', 'a'), node('be', 'ok', 'b'), node('db', 'ok', 'a')],
+      Infinity,
+    )
     expect(view.groups.map((g) => g.host)).toEqual(['a', 'b', 'a'])
   })
 
-  it('folds the healthiest servers past four, never a failing one', () => {
+  it('shows the first two servers in discovery order and folds the rest into +N', () => {
     const view = layoutServers([
       node('a', 'ok', '1'),
       node('b', 'ok', '2'),
       node('c', 'crit', '3'),
       node('d', 'ok', '4'),
-      node('e', 'warn', '5'),
-      node('f', 'ok', '6'),
     ])
+    expect(view.groups.map((g) => g.host)).toEqual(['1', '2'])
     expect(view.hidden).toBe(2)
-    expect(view.groups.map((g) => g.host)).toEqual(
-      ['1', '3', '5', '2'].sort((x, y) => Number(x) - Number(y)),
-    )
-    expect(view.groups.some((g) => g.state === 'crit')).toBe(true)
+    expect(view.folded.map((g) => g.host)).toEqual(['3', '4'])
+  })
+
+  it('does not fold two servers, and shows every server when asked for a list', () => {
+    const three = [node('a', 'ok', '1'), node('b', 'ok', '2'), node('c', 'ok', '3')]
+    expect(layoutServers(three.slice(0, 2)).hidden).toBe(0)
+    expect(layoutServers(three, Infinity).groups).toHaveLength(3)
   })
 })
