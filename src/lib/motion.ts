@@ -37,6 +37,14 @@ export function playOnce(key: string): boolean {
   return true
 }
 
+/**
+ * Whether a chart should play its arrival: always when it has no key (it is new on screen),
+ * and only the first time for a key, so a card that returns to view shows its final state.
+ */
+export function shouldPlay(key?: string): boolean {
+  return key === undefined ? true : playOnce(key)
+}
+
 /** Forgets what has played (tests, and a full reset of the window). */
 export function resetPlayed(): void {
   played.clear()
