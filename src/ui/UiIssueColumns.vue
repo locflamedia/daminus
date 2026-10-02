@@ -3,8 +3,10 @@
   the bottom), warning and info, 16 px an issue with 2 px between, 22 px wide and radius 5, in
   a 120 px well. The scans being compared are solid and the rest faded; each scan's number
   sits under its column. Each column's description (what the segments add up to) is for
-  screen readers and the hover title, so the heights are never the only signal. Columns rise
-  from their base, 40 ms apart, the first time the chart appears.
+  screen readers and the hover title, so the heights are never the only signal. Given a card
+  per scan the chart takes keyboard focus (see `UiColumnStage`): the card opens on the focused
+  column, its number turns ink and the same words are announced. Columns rise from their base,
+  40 ms apart, the first time the chart appears.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -12,6 +14,8 @@ import { issueColumns, type IssueCounts } from '@/lib/chart-layout'
 import { shouldPlay } from '@/lib/motion'
 import { COLOR_VAR } from './chart-colors'
 import UiChartLegend, { type LegendItem } from './UiChartLegend.vue'
+import type { ChartTip } from './UiChartTip.vue'
+import UiColumnStage from './UiColumnStage.vue'
 
 export interface IssueScan extends IssueCounts {
   id: string
@@ -19,6 +23,8 @@ export interface IssueScan extends IssueCounts {
   label: string
   /** "2 critical, 4 warnings": what the column adds up to. */
   description: string
+  /** The card and the announced sentence; with one per scan the chart can take focus. */
+  tip?: ChartTip
 }
 
 const props = withDefaults(
@@ -33,9 +39,25 @@ const props = withDefaults(
   { compared: () => [], legend: () => [], once: undefined },
 )
 
+const hovered = defineModel<number | null>('hovered', { default: null })
+
 const play = shouldPlay(props.once)
 const picked = computed(() => new Set(props.compared))
 const columns = computed(() => issueColumns(props.scans))
+const tips = computed(() => {
+  const all = props.scans.map((scan) => scan.tip)
+  return all.every((tip) => tip !== undefined) ? (all as ChartTip[]) : []
+})
+const WELL = 120
+const GAP = 2
+const LABEL = 20
+const anchors = computed(() =>
+  columns.value.map((segments, i) => {
+    const stack =
+      segments.reduce((sum, s) => sum + s.height, 0) + GAP * Math.max(0, segments.length - 1)
+    return { x: ((i + 0.5) / props.scans.length) * 100, y: ((WELL - stack) / (WELL + LABEL)) * 100 }
+  }),
+)
 const TONE = {
   crit: COLOR_VAR['issue-crit'],
   warn: COLOR_VAR['issue-warn'],
@@ -45,30 +67,40 @@ const TONE = {
 
 <template>
   <div class="issues">
-    <ul class="bars" role="list" :aria-label="label">
-      <li
-        v-for="(scan, i) in scans"
-        :key="scan.id"
-        class="column"
-        :class="{ faded: compared.length > 0 && !picked.has(scan.id) }"
-        :title="`${scan.label}: ${scan.description}`"
-      >
-        <span class="sr-only">{{ scan.label }}: {{ scan.description }}</span>
-        <i
-          v-for="segment in columns[i]"
-          :key="segment.tone"
-          class="segment"
-          :class="{ 'm-bar': play }"
-          :style="{
-            height: `${segment.height}px`,
-            background: TONE[segment.tone],
-            '--d': `${i * 40}ms`,
-          }"
-          aria-hidden="true"
-        />
-        <span class="num" aria-hidden="true">{{ scan.label }}</span>
-      </li>
-    </ul>
+    <UiColumnStage
+      v-model:hovered="hovered"
+      class="well"
+      :label="label"
+      :tips="tips"
+      :anchors="anchors"
+    >
+      <template #default="{ hovered: at }">
+        <ul class="bars" role="list" :aria-label="tips.length > 0 ? undefined : label">
+          <li
+            v-for="(scan, i) in scans"
+            :key="scan.id"
+            class="column"
+            :class="{ faded: compared.length > 0 && !picked.has(scan.id) }"
+            :title="`${scan.label}: ${scan.description}`"
+          >
+            <span class="sr-only">{{ scan.label }}: {{ scan.description }}</span>
+            <i
+              v-for="segment in columns[i]"
+              :key="segment.tone"
+              class="segment"
+              :class="{ 'm-bar': play }"
+              :style="{
+                height: `${segment.height}px`,
+                background: TONE[segment.tone],
+                '--d': `${i * 40}ms`,
+              }"
+              aria-hidden="true"
+            />
+            <span class="num" :class="{ now: at === i }" aria-hidden="true">{{ scan.label }}</span>
+          </li>
+        </ul>
+      </template>
+    </UiColumnStage>
     <UiChartLegend v-if="legend.length > 0" :items="legend" size="small" />
   </div>
 </template>
@@ -81,12 +113,19 @@ const TONE = {
   min-width: 0;
 }
 
+.well {
+  --cursor-top: 0;
+  --cursor-bottom: 20px;
+
+  padding-bottom: 20px;
+}
+
 .bars {
   display: flex;
   align-items: flex-end;
   gap: 6px;
   height: 120px;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -125,5 +164,9 @@ const TONE = {
 
 .faded .num {
   color: var(--ink-3);
+}
+
+.num.now {
+  color: var(--ink);
 }
 </style>

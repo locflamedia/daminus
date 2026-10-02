@@ -372,6 +372,7 @@ describe('dark controls', () => {
     expect(light.get('--ink-off')).toBe('#80859a')
     expect(light.get('--ink-placeholder')).toBe('var(--ink-4)')
     expect(light.get('--ring-gap')).toBe('#ffffff')
+    expect(light.get('--control-ring')).toBe('0 0 0 2px var(--ring-gap), 0 0 0 4px var(--accent)')
     expect(light.get('--secondary-bg')).toBe('var(--surface-0)')
     for (const dark of [darkAttr, darkMedia]) {
       expect(dark.get('--ink-off')).toBe('#5e6377')
@@ -408,8 +409,10 @@ describe('dark controls', () => {
 describe('token usage', () => {
   // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; the
   // two knobs of UiCard that a caller sets on the element for a denser or looser board; and the
-  // swatch colour and column count a chart passes down from its data; and the colour a code block
-  // hands to the copy button it holds, so the fade behind the button matches the block.
+  // swatch colour and column count a chart passes down from its data; the colour a code block
+  // hands to the copy button it holds, so the fade behind the button matches the block; and the
+  // scale a history chart gives its hover card, the ends a column chart gives its cursor line, and the
+  // padding a gallery section gives its frames.
   const RUNTIME = new Set([
     '--d',
     '--hold',
@@ -419,6 +422,10 @@ describe('token usage', () => {
     '--cols',
     '--mark',
     '--copy-fade',
+    '--k',
+    '--frame-pad',
+    '--cursor-top',
+    '--cursor-bottom',
   ])
 
   it('only references tokens that are defined', () => {

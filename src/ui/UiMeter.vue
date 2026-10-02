@@ -147,6 +147,7 @@ const spoken = computed(() =>
   gap: var(--space-3);
   align-items: center;
   font-size: var(--text-12);
+  line-height: normal;
 }
 
 .shape-row.band-warn {

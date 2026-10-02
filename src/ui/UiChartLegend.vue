@@ -39,6 +39,7 @@ withDefaults(defineProps<{ items: readonly LegendItem[]; size?: 'default' | 'sma
   gap: var(--space-1) var(--space-4);
   color: var(--ink-2);
   font-size: var(--text-12);
+  line-height: normal;
   margin: 0;
   padding: 0;
   list-style: none;

@@ -169,6 +169,8 @@
   --focus-ring: 0 0 0 2px var(--accent);
   /* The gap between a control and its focus ring, the page tone behind it. */
   --ring-gap: #ffffff;
+  /* The ring around a focused control or chart: the gap tone, then 2 px of accent. */
+  --control-ring: 0 0 0 2px var(--ring-gap), 0 0 0 4px var(--accent);
   /* A focused field: lifted to the surface in light, the ring drawn inside in dark. */
   --field-focus-bg: var(--surface-0);
   --field-focus-ring: 0 0 0 2px var(--accent);

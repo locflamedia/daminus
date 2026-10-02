@@ -36,7 +36,7 @@ defineProps<{ title: string; text?: string; spec?: string }>()
   flex-direction: column;
   gap: var(--space-4);
   min-width: 0;
-  padding: var(--space-4);
+  padding: var(--frame-pad, var(--space-4));
   border-radius: var(--radius-md);
   background: var(--surface-0);
 }

@@ -177,10 +177,13 @@ const empty = computed(() => props.pct === null)
   fill: var(--chart-knob);
 }
 
-/* The number sits in the open ring: its block starts 37 % down and is centred. */
+/*
+  The number sits in the open ring. On the board the block is 84 px tall, pulled up over the
+  drawing by its own height, so its top is 80 px above the foot of the drawing.
+*/
 .centre {
   position: absolute;
-  top: 36.9%;
+  top: calc(100% - 80px);
   right: 0;
   left: 0;
   display: flex;
@@ -199,10 +202,13 @@ const empty = computed(() => props.pct === null)
 .caption {
   color: var(--ink-3);
   font-size: var(--text-11);
+  line-height: normal;
 }
 
+/* The board's tile has two 4 px gaps between the drawing and the label (the number's block between). */
 .foot {
   display: inline-flex;
+  margin-top: var(--space-1);
   align-items: center;
   gap: 6px;
   font-size: var(--text-12);

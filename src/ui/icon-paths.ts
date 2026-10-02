@@ -54,8 +54,9 @@ export const ICON_PATHS = {
   trash:
     'M2.8 4.5h10.4 M6.3 4.5V3h3.4v1.5 M4.2 4.5l.6 8.3c.1.8.7 1.2 1.4 1.2h3.6c.7 0 1.3-.4 1.4-1.2l.6-8.3',
   cart: 'M1.8 2.5h2l1.6 7.5h7l1.4-5.5H4.6 M6.5 11.8a1 1 0 1 1 0 2a1 1 0 1 1 0-2z M11.5 11.8a1 1 0 1 1 0 2a1 1 0 1 1 0-2z',
-  // Charts and history: the response-time pulse, the uptime globe line and a file.
+  // Charts and history: the response-time pulse, a rising line, the uptime globe line and a file.
   pulse: 'M2 12h2.5l2-6 3 8 2-5H14',
+  trend: 'M2.5 12.5 6 8l3 2.5 4.5-6',
   uptime: CIRCLE + 'M2 8h12',
   file: 'M4 2h5l3 3v9H4z M9 2v3h3',
 } as const

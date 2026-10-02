@@ -12,7 +12,7 @@ import { useI18n } from 'vue-i18n'
 import DiskRing from '@/layout/DiskRing.vue'
 import { useFormat } from '@/composables/use-format'
 import { bandOf, type Band } from '@/lib/chart-bands'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatDateLong } from '@/lib/format'
 import type { TopologyInput } from '@/lib/topology'
 import { useSettingsStore } from '@/stores/settings'
 import UiBarChart from '@/ui/UiBarChart.vue'
@@ -26,6 +26,7 @@ import UiHeatStrip from '@/ui/UiHeatStrip.vue'
 import UiHistoryChart, { type HistoryTip } from '@/ui/UiHistoryChart.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiIssueColumns from '@/ui/UiIssueColumns.vue'
+import UiKbd from '@/ui/UiKbd.vue'
 import UiMeter from '@/ui/UiMeter.vue'
 import UiRow from '@/ui/UiRow.vue'
 import UiRowList from '@/ui/UiRowList.vue'
@@ -44,9 +45,11 @@ import {
   HEAT_ROWS,
   HEAT_STATE,
   ISSUES,
+  ISSUE_DAYS,
   MEMORY_ONE,
   MEMORY_TWO,
   SCAN_DURATION,
+  SCAN_FIRST,
   SPARKS,
   STRIPS,
   STRIP_STATE,
@@ -72,11 +75,24 @@ const dayOf = (days: number) => new Date(base.getFullYear(), base.getMonth(), ba
 const dateLabel = (days: number) => formatDate(dayOf(days), settings.language)
 
 const historyTips = computed<HistoryTip[]>(() =>
-  DB_SIZE.map((value, i) => ({
-    title: k('history.scanTitle', { date: dateLabel(DB_DAYS[i] ?? 0), n: DB_FIRST_SCAN + i }),
-    value: gb(value),
-    delta: i === 0 ? undefined : fmt.delta(value - (DB_SIZE[i - 1] ?? value), 'GB').value,
-  })),
+  DB_SIZE.map((value, i) => {
+    const delta = i === 0 ? undefined : fmt.delta(value - (DB_SIZE[i - 1] ?? value), 'GB')
+    return {
+      title: k('history.scanTitle', { date: dateLabel(DB_DAYS[i] ?? 0), n: DB_FIRST_SCAN + i }),
+      value: gb(value),
+      delta: delta?.value,
+      spoken: [
+        k('history.spoken', {
+          n: DB_FIRST_SCAN + i,
+          date: formatDateLong(dayOf(DB_DAYS[i] ?? 0), settings.language),
+        }),
+        gb(value),
+        delta?.text,
+      ]
+        .filter(Boolean)
+        .join(', '),
+    }
+  }),
 )
 const historyXLabels = computed(() => [
   { index: 0, text: dateLabel(0) },
@@ -99,6 +115,17 @@ const diskBand = (v: number): Band => bandOf(v, { warn: 80, crit: 90 })
 const bandWord = (band: Band) => k(`table.${band}`)
 const chipTone = (band: Band): ChipTone =>
   band === 'crit' ? 'crit' : band === 'warn' ? 'warn' : 'ok'
+
+const durationTips = computed(() =>
+  SCAN_DURATION.map((value, i) => {
+    const n = SCAN_FIRST + i
+    return {
+      title: k('bars.scanTitle', { n }),
+      value: fmt.measure(value, 's').text,
+      spoken: `${k('bars.spoken', { n })}, ${fmt.measure(value, 's').text}`,
+    }
+  }),
+)
 
 const miniMeters = computed(() => [
   { id: 'load', label: k('gauges.load'), value: fmt.number(1.55), pct: 78, band: 'warn' as Band },
@@ -309,6 +336,7 @@ const treemapTiles = computed<TreemapTile[]>(() => [
     delta: fmt.delta(0.9, 'GB').text,
     deltaTone: 'warn',
     grow: true,
+    growth: 0.9,
   },
   {
     id: 'app',
@@ -383,13 +411,46 @@ const moreLabel = (n: number) => k('topology.more', { n })
 // --- Issues per scan --------------------------------------------------------------------
 
 const issueScans = computed(() =>
-  ISSUES.map((s, i) => ({
-    ...s,
-    id: String(i + 1),
-    label: `#${i + 1}`,
-    description: k('issues.of', s),
-  })),
+  ISSUES.map((s, i) => {
+    const n = i + 1
+    const day = new Date(2026, 8, ISSUE_DAYS[i] ?? 1)
+    const total = s.crit + s.warn + s.info
+    const count = t('gallery.charts.issues.count', { n: total }, { plural: total })
+    const description = k('issues.of', s)
+    return {
+      ...s,
+      id: String(n),
+      label: `#${n}`,
+      description,
+      tip: {
+        title: k('issues.cardTitle', { n, date: formatDate(day, settings.language) }),
+        value: count,
+        spoken: [
+          k('issues.spoken', { n, date: formatDateLong(day, settings.language) }),
+          count,
+          description,
+        ].join(', '),
+      },
+    }
+  }),
 )
+// --- Chart focus ------------------------------------------------------------------------
+
+const focusScans = computed(() => issueScans.value.slice(4))
+const focusAt = ref<number | null>(5)
+const focusReads = computed(() =>
+  focusAt.value === null ? '' : (focusScans.value[focusAt.value]?.tip.spoken ?? ''),
+)
+const focusCells = ['ok', 'ok', 'warn', 'ok', 'crit', 'crit', 'ok'] as const
+const focusCellTitles = computed(() =>
+  focusCells.map((state, i) =>
+    k('strips.cell', {
+      n: 5 + i,
+      state: k(`strips.${{ ok: 'healthy', warn: 'warning', crit: 'critical' }[state]}`),
+    }),
+  ),
+)
+
 const issueLegend = computed(() => [
   { color: 'issue-crit' as const, text: k('issues.critical') },
   { color: 'issue-warn' as const, text: k('issues.warning') },
@@ -515,6 +576,7 @@ const issueLegend = computed(() => [
           <UiBarChart
             :values="SCAN_DURATION"
             :labels="{ first: '#29', last: '#42' }"
+            :tips="durationTips"
             :label="k('bars.aria')"
             :legend="[
               { color: 'accent', text: k('bars.latest') },
@@ -541,6 +603,13 @@ const issueLegend = computed(() => [
         </GalleryFrame>
 
         <GalleryFrame :title="k('strips.title')" :text="k('strips.sub')">
+          <div class="head">
+            <span class="tile ok"><UiIcon name="shield" /></span>
+            <span class="ttl"
+              ><b>{{ k('strips.title') }}</b
+              ><span>{{ k('strips.sub') }}</span></span
+            >
+          </div>
           <div class="stripes">
             <UiHeatStrip
               v-for="s in strips"
@@ -566,7 +635,7 @@ const issueLegend = computed(() => [
       <div class="two wide">
         <GalleryFrame :title="k('memory.title')" :text="k('memory.text')">
           <div class="head">
-            <span class="tile"><UiIcon name="pulse" /></span>
+            <span class="tile"><UiIcon name="trend" /></span>
             <span class="ttl"
               ><b>{{ k('memory.title') }}</b
               ><span>{{ k('memory.sub') }}</span></span
@@ -814,12 +883,52 @@ const issueLegend = computed(() => [
           <DiskRing :pct="64" dim />
         </div>
       </GalleryFrame>
+
+      <GalleryFrame :title="k('focus.title')" :text="k('focus.text')">
+        <div class="focus">
+          <UiIssueColumns
+            v-model:hovered="focusAt"
+            :scans="focusScans"
+            :compared="['11', '12']"
+            :label="k('focus.aria')"
+          />
+          <div class="focus-side">
+            <span class="reads">{{ k('focus.reads') }}: “{{ focusReads }}”</span>
+            <span class="keys">
+              <span class="key"><UiKbd>← →</UiKbd>{{ k('focus.move') }}</span>
+              <span class="key"><UiKbd>Home End</UiKbd>{{ k('focus.ends') }}</span>
+              <span class="key"><UiKbd>esc</UiKbd>{{ k('focus.leave') }}</span>
+            </span>
+          </div>
+        </div>
+        <b class="muted">{{ k('focus.cells') }}</b>
+        <UiHeatStrip
+          :name="k('focus.stripName')"
+          :summary="k('focus.stripSummary')"
+          :cells="focusCells"
+          :titles="focusCellTitles"
+        />
+        <div class="notes">
+          <p>
+            <b>{{ k('focus.ringHead') }}</b> {{ k('focus.ring') }}
+          </p>
+          <p>
+            <b>{{ k('focus.readingHead') }}</b> {{ k('focus.reading') }}
+          </p>
+          <p>
+            <b>{{ k('focus.tabHead') }}</b> {{ k('focus.tab') }}
+          </p>
+        </div>
+      </GalleryFrame>
     </div>
   </div>
 </template>
 
 <style scoped>
 .charts {
+  /* The Charts board's cards are padded 20 px; every frame here takes the same. */
+  --frame-pad: 20px;
+
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -886,6 +995,11 @@ const issueLegend = computed(() => [
   color: var(--ink-3);
 }
 
+.tile.ok {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
+}
+
 .tile.accent {
   background: var(--accent-soft);
   color: var(--accent-ink);
@@ -913,7 +1027,7 @@ const issueLegend = computed(() => [
   text-align: right;
 }
 
-.good {
+.ttl .good {
   color: var(--ok-ink);
 }
 
@@ -925,6 +1039,11 @@ const issueLegend = computed(() => [
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
+}
+
+/* A chip normally sits at the top of its row; here it follows the number's baseline. */
+.figure :deep(.chip) {
+  align-self: baseline;
 }
 
 .big {
@@ -943,6 +1062,65 @@ const issueLegend = computed(() => [
 .muted {
   color: var(--ink-3);
   font-size: var(--text-12);
+}
+
+.focus {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Room above the chart for the card, which opens over the focused column. */
+.focus > :first-child {
+  padding-top: 56px;
+}
+
+.focus-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reads {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.notes p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.notes b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
 }
 
 .gauges {
@@ -974,8 +1152,9 @@ const issueLegend = computed(() => [
   flex-direction: column;
   gap: var(--space-1);
   padding: 10px var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   background: var(--surface-1);
+  line-height: normal;
 }
 
 .spark-head {

@@ -3,10 +3,13 @@ import {
   barLayout,
   clampPercent,
   defaultRows,
+  diskTreemap,
   donutSegments,
   gaugeGeometry,
   issueColumns,
+  orderTreemap,
   stackShares,
+  tileForm,
   treemapRows,
 } from './chart-layout'
 
@@ -69,6 +72,96 @@ describe('treemapRows', () => {
   it('is empty when there is nothing to size', () => {
     expect(treemapRows([])).toEqual([])
     expect(treemapRows([{ value: 0 }])).toEqual([])
+  })
+})
+
+describe('orderTreemap', () => {
+  const folders = [
+    { id: 'logs', value: 0.9, grow: true, growth: 0.9 },
+    { id: 'uploads', value: 2.6, grow: true, growth: 0.04 },
+    { id: 'other', value: 0.4, other: true },
+    { id: 'app', value: 1.1 },
+    { id: 'git', value: 0.4 },
+  ]
+
+  it('sorts by size, pulls the fastest grower behind the largest and keeps the rest last', () => {
+    expect(orderTreemap(folders).map((f) => f.id)).toEqual([
+      'uploads',
+      'logs',
+      'app',
+      'git',
+      'other',
+    ])
+  })
+
+  it('keeps the largest first when it is also the fastest grower', () => {
+    const ids = orderTreemap([
+      { id: 'a', value: 3, grow: true, growth: 2 },
+      { id: 'b', value: 2, grow: true, growth: 1 },
+      { id: 'c', value: 1 },
+    ]).map((f) => f.id)
+    expect(ids).toEqual(['a', 'b', 'c'])
+  })
+
+  it('leaves the order by size alone when nothing grew, and drops empty folders', () => {
+    const ids = orderTreemap([
+      { id: 'a', value: 1 },
+      { id: 'b', value: 3 },
+      { id: 'z', value: 0 },
+    ]).map((f) => f.id)
+    expect(ids).toEqual(['b', 'a'])
+  })
+})
+
+describe('diskTreemap', () => {
+  const folders = [
+    { id: 'uploads', value: 2.6 },
+    { id: 'logs', value: 0.9, grow: true, growth: 0.9 },
+    { id: 'app', value: 1.1 },
+    { id: 'git', value: 0.4 },
+    { id: 'other', value: 0.4, other: true },
+  ]
+
+  it('takes half the tiles, rounded down, for row one and two thirds of the height', () => {
+    const tiles = diskTreemap(folders)
+    expect(tiles.map((t) => [t.item.id, t.rect.row])).toEqual([
+      ['uploads', 0],
+      ['logs', 0],
+      ['app', 1],
+      ['git', 1],
+      ['other', 1],
+    ])
+    expect(tiles[0]?.rect.h).toBeCloseTo(2 / 3, 9)
+    expect(tiles[2]?.rect.y).toBeCloseTo(2 / 3, 9)
+    expect(tiles[2]?.rect.h).toBeCloseTo(1 / 3, 9)
+  })
+
+  it('makes a tile as wide as its share of the row', () => {
+    const tiles = diskTreemap(folders)
+    expect(tiles[0]?.rect.w).toBeCloseTo(2.6 / 3.5, 9)
+    expect(tiles[1]?.rect.x).toBeCloseTo(2.6 / 3.5, 9)
+    expect(tiles[3]?.rect.x).toBeCloseTo(1.1 / 1.9, 9)
+  })
+
+  it('gives a single folder the whole box', () => {
+    const [only] = diskTreemap([{ value: 4 }])
+    expect(only?.rect).toEqual({ x: 0, y: 0, w: 1, h: 1, row: 0 })
+  })
+})
+
+describe('tileForm', () => {
+  it('shows name and size when both fit', () => {
+    expect(tileForm(200, 100, 60)).toBe('full')
+  })
+
+  it('shows the name alone when the size does not fit the width or the height', () => {
+    expect(tileForm(70, 100, 62)).toBe('name')
+    expect(tileForm(200, 50, 60)).toBe('name')
+  })
+
+  it('shows nothing under 40 px wide', () => {
+    expect(tileForm(39, 100, 0)).toBe('none')
+    expect(tileForm(40, 100, 0)).toBe('full')
   })
 })
 
