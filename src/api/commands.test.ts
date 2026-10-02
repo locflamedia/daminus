@@ -30,6 +30,12 @@ describe('IPC command list', () => {
     const ids = cap.permissions.map((p) => (typeof p === 'string' ? p : p.identifier))
     const own = ids.filter((id) => !id.includes(':'))
     expect(sorted(own)).toEqual(sorted(COMMANDS.map((c) => `allow-${c.replaceAll('_', '-')}`)))
+    // The overlay title bar: dragging by the strip, zoom on a double click, full-screen state.
+    expect(ids.filter((id) => id.startsWith('core:window:'))).toEqual([
+      'core:window:allow-start-dragging',
+      'core:window:allow-internal-toggle-maximize',
+      'core:window:allow-is-fullscreen',
+    ])
     // No shell, file system or HTTP plugin; opener only for https; clipboard write only.
     expect(ids.some((id) => /^(shell|fs|http):/.test(id))).toBe(false)
     expect(ids.filter((id) => id.startsWith('clipboard-manager:'))).toEqual([

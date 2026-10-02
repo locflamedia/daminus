@@ -15,6 +15,9 @@ const route = useRoute()
 const DevSwitch = import.meta.env.DEV
   ? defineAsyncComponent(() => import('@/features/dev/DevSwitch.vue'))
   : null
+const DevTrafficLights = import.meta.env.DEV
+  ? defineAsyncComponent(() => import('@/features/dev/DevTrafficLights.vue'))
+  : null
 
 // One subscription for the whole window: the sidebar and the Overview both follow it.
 onMounted(() => void scan.init())
@@ -34,5 +37,6 @@ onBeforeUnmount(() => scan.dispose())
     <RouterView />
   </AppWindow>
   <component :is="DevSwitch" v-if="DevSwitch && route.meta.bare !== true" />
+  <component :is="DevTrafficLights" v-if="DevTrafficLights && route.meta.bare !== true" />
   <UiToastHost />
 </template>

@@ -81,6 +81,7 @@ const overviewTip = computed(() =>
 <template>
   <nav ref="root" class="rail" :aria-label="t('nav.primary')">
     <div class="scroll">
+      <span class="lights" aria-hidden="true" />
       <span class="ri brand">
         <img :src="brandMark" alt="" width="22" height="22" />
       </span>
@@ -207,6 +208,15 @@ const overviewTip = computed(() =>
   padding: var(--space-4) 0;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+.lights {
+  flex: none;
+  height: var(--lights-row-rail);
+}
+
+:global(:root[data-fullscreen='true']) .lights {
+  display: none;
 }
 
 .ri {

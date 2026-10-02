@@ -244,6 +244,14 @@
   --sidebar-w-medium: 216px;
   --rail-w: 64px;
   --gutter: var(--space-5);
+  /* Overlay title bar: the row the traffic lights take at the top of the sidebar, the same in
+     the rail, and the sidebar's top padding in full screen, where the lights are hidden. */
+  --traffic-close: #f26b61;
+  --traffic-min: #f4be4f;
+  --traffic-zoom: #5bc45c;
+  --lights-row: 16px;
+  --lights-row-rail: 18px;
+  --side-top-fullscreen: 18px;
 
   /* Easing. Entering ease-out, moving ease-in-out, growing spring. Custom curves live here. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);

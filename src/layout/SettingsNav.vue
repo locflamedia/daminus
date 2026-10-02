@@ -40,6 +40,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <nav class="settings-nav" :aria-label="t('settingsNav.title')">
+    <span class="lights" aria-hidden="true" />
     <button type="button" class="back" @click="leave">
       <UiIcon name="chevron-left" />
       <b>{{ t('settingsNav.title') }}</b>
@@ -72,6 +73,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   padding: var(--space-4);
   overflow-y: auto;
   background: linear-gradient(165deg, var(--side-1), var(--side-2) 58%, var(--side-3));
+  line-height: normal;
+}
+
+.lights {
+  flex: none;
+  height: var(--lights-row);
+}
+
+:global(:root[data-fullscreen='true']) .lights {
+  display: none;
+}
+
+:global(:root[data-fullscreen='true']) .settings-nav {
+  padding-top: var(--side-top-fullscreen);
 }
 
 .back {

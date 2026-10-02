@@ -1,6 +1,7 @@
 export * from './clipboard'
 export * from './commands'
 export * from './events'
+export * from './window'
 export type { AppError } from './bindings/AppError'
 export type { Counts } from './bindings/Counts'
 export type { HostOutcome } from './bindings/HostOutcome'

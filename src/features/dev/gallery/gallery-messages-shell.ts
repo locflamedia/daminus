@@ -65,6 +65,12 @@ export const shellGalleryMessages = {
           spec: 'The same tile on the well tone, inside a white card.',
         },
       },
+      titlebar: {
+        title: 'Title bar',
+        lede: 'The title bar is an overlay: the window buttons sit in the first row of the sidebar. The top 40 px of the sidebar and of the page drag the window and a double click zooms it; buttons and fields inside that strip stay clickable. In full screen the buttons are gone and the sidebar keeps 18 px of top padding.',
+        spec: 'buttons at x 16, y 18 · row 16 + gap 20 · drag strip 40 · full screen: top padding 18',
+        strip: 'drag region, top 40 px',
+      },
       tabs: {
         title: 'Project tab menu',
         lede: 'From 900 to 959 px the tabs fold into one button naming the open tab. The menu lists every tab with its status dot and its shortcut.',
@@ -129,6 +135,12 @@ export const shellGalleryMessages = {
         issues: { name: 'Ô trên thanh gọn', spec: 'Nghiêm trọng, cảnh báo, ổn, chưa có màu.' },
         active: { name: 'Dự án đang mở', spec: 'Vòng màu của dự án; trên 99 hiện 99+.' },
         well: { name: 'Đầu trang dự án', spec: 'Cùng ô đó trên nền well, trong thẻ trắng.' },
+      },
+      titlebar: {
+        title: 'Thanh tiêu đề',
+        lede: 'Thanh tiêu đề là lớp phủ: ba nút cửa sổ nằm ở hàng đầu của sidebar. 40 px trên cùng của sidebar và của trang kéo được cửa sổ, bấm đúp để phóng to; nút và ô nhập trong dải đó vẫn bấm được. Ở chế độ toàn màn hình nút biến mất và sidebar giữ padding trên 18 px.',
+        spec: 'nút ở x 16, y 18 · hàng 16 + khoảng cách 20 · dải kéo 40 · toàn màn hình: padding trên 18',
+        strip: 'vùng kéo, 40 px trên cùng',
       },
       tabs: {
         title: 'Menu tab dự án',

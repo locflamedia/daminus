@@ -7,15 +7,18 @@
 import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppRail from '@/layout/AppRail.vue'
+import PageHeader from '@/layout/PageHeader.vue'
 import AppSidebar from '@/layout/AppSidebar.vue'
 import ProjectTile from '@/layout/ProjectTile.vue'
 import SettingsNav from '@/layout/SettingsNav.vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { shellProjects, shellReport } from '@/testing/shell-fixture'
+import UiButton from '@/ui/UiButton.vue'
 import UiMenu from '@/ui/UiMenu.vue'
 import GalleryAtom from './GalleryAtom.vue'
 import GalleryFrame from './GalleryFrame.vue'
+import GalleryLights from './GalleryLights.vue'
 import GalleryRange from './GalleryRange.vue'
 
 const { t } = useI18n()
@@ -51,22 +54,26 @@ const open = ref(true)
       <div class="frames">
         <GalleryAtom :name="k('full.name')" :spec="k('full.spec')" plain class="col">
           <div class="frame" style="width: 248px; height: 600px">
+            <GalleryLights />
             <GalleryRange range="wide"><AppSidebar /></GalleryRange>
           </div>
         </GalleryAtom>
         <GalleryAtom :name="k('medium.name')" :spec="k('medium.spec')" plain class="col">
           <div class="frame" style="width: 216px; height: 600px">
+            <GalleryLights />
             <GalleryRange range="medium"><AppSidebar /></GalleryRange>
           </div>
         </GalleryAtom>
         <GalleryAtom :name="k('rail.name')" :spec="k('rail.spec')" plain class="col">
           <div class="frame" style="width: 64px; height: 600px">
+            <GalleryLights rail />
             <GalleryRange range="narrow"><AppRail /></GalleryRange>
           </div>
         </GalleryAtom>
         <div class="stack">
           <GalleryAtom :name="k('settings.name')" :spec="k('settings.spec')" plain class="col">
             <div class="frame" style="width: 248px; height: 330px">
+              <GalleryLights />
               <GalleryRange range="wide"><SettingsNav /></GalleryRange>
             </div>
           </GalleryAtom>
@@ -77,9 +84,39 @@ const open = ref(true)
             class="col"
           >
             <div class="frame" style="width: 216px; height: 330px">
+              <GalleryLights />
               <GalleryRange range="narrow"><SettingsNav /></GalleryRange>
             </div>
           </GalleryAtom>
+        </div>
+      </div>
+    </GalleryFrame>
+
+    <GalleryFrame
+      :title="k('titlebar.title')"
+      :text="k('titlebar.lede')"
+      :spec="k('titlebar.spec')"
+    >
+      <div class="titlebar">
+        <div class="frame" style="width: 248px; height: 132px">
+          <GalleryLights />
+          <GalleryRange range="wide"><AppSidebar /></GalleryRange>
+          <span class="hatch" aria-hidden="true" />
+        </div>
+        <div class="frame page" style="width: 420px; height: 132px">
+          <span class="hatch" aria-hidden="true" />
+          <GalleryRange range="wide">
+            <PageHeader
+              :title="t('nav.overview')"
+              :meta="t('toolbar.scanMeta', { seq: 12, when: '13:42' })"
+            >
+              <template #actions>
+                <UiButton variant="primary" shortcut="⌘R">{{ t('toolbar.scanAll') }}</UiButton>
+              </template>
+            </PageHeader>
+          </GalleryRange>
+
+          <code class="strip-label">{{ k('titlebar.strip') }}</code>
         </div>
       </div>
     </GalleryFrame>
@@ -146,8 +183,39 @@ const open = ref(true)
 }
 
 .frame {
+  position: relative;
   overflow: hidden;
   border-radius: var(--radius-md);
+}
+
+.titlebar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.page {
+  padding: 0 var(--space-6);
+  background: var(--page);
+}
+
+.hatch {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 40px;
+  background: repeating-linear-gradient(135deg, var(--hatch-1) 0 6px, transparent 6px 12px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.strip-label {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-11);
 }
 
 .marks {
