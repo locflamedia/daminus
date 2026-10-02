@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Report, ScanEvent, ScanEventBody, ScanRun } from '@/api'
 import { clearMocks, emitScanEvent, mockCommands } from '@/api/testing'
+import { useReportStore } from './report'
 import { useScanStore } from './scan'
 
 const STARTED_AT = '2026-09-26T13:42:00Z'
@@ -104,7 +105,7 @@ describe('useScanStore', () => {
     const store = useScanStore()
     await store.init()
     expect(store.scanning).toBe(false)
-    expect(store.report?.seq).toBeUndefined()
+    expect(useReportStore().latest?.seq).toBeUndefined()
 
     await store.start()
     expect(store.run?.scan_id).toBe(backend.id)
@@ -142,7 +143,7 @@ describe('useScanStore', () => {
     await flush()
     expect(store.scanning).toBe(false)
     expect(store.lastEnd).toBe('done')
-    expect(store.report?.seq).toBe(1)
+    expect(useReportStore().latest?.seq).toBe(1)
   })
 
   it('hydrates after a reload mid-scan and skips events already counted', async () => {

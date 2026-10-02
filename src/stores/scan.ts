@@ -1,23 +1,22 @@
-// The one scan store. Hydrates from `scan_status()` on mount or reload, then
-// follows `scan://event`: events of an ended or unknown scan are dropped,
-// events already folded into the hydrated status (`seq < next_seq`) are
-// skipped, and a gap in `seq` triggers a fresh hydrate.
+// The one scan store (the report lives in `useReportStore`). Hydrates from `scan_status()`
+// on mount or reload, then follows `scan://event`: events of an ended or unknown scan are
+// dropped, events already folded into the hydrated status (`seq < next_seq`) are skipped,
+// and a gap in `seq` triggers a fresh hydrate.
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref } from 'vue'
 import {
   type AppError,
   type HostProgress,
-  type Report,
   type ScanEvent,
   type ScanRun,
   type ScanScope,
   isAppError,
   onScanEvent,
-  reportLatest,
   scanStart,
   scanStatus,
   scanStop,
 } from '@/api'
+import { useReportStore } from './report'
 
 export type ScanEnd = 'done' | 'cancelled' | 'failed'
 
@@ -61,8 +60,8 @@ function isFinal(e: ScanEvent): boolean {
 }
 
 export const useScanStore = defineStore('scan', () => {
+  const reports = useReportStore()
   const run = ref<ScanRun | null>(null)
-  const report = shallowRef<Report | null>(null)
   const error = ref<AppError | null>(null)
   const lastEnd = ref<ScanEnd | null>(null)
   const scanning = computed(() => run.value !== null)
@@ -77,20 +76,12 @@ export const useScanStore = defineStore('scan', () => {
     if (!isAppError(e)) console.error(e)
   }
 
-  async function loadReport() {
-    try {
-      report.value = await reportLatest()
-    } catch (e) {
-      fail(e)
-    }
-  }
-
   function finish(e: ScanEvent) {
     ended.add(e.scan_id)
     if (run.value?.scan_id === e.scan_id) run.value = null
     if (e.kind === 'done') {
       lastEnd.value = 'done'
-      void loadReport()
+      void reports.loadLatest()
     } else if (e.kind === 'cancelled') {
       lastEnd.value = 'cancelled'
     } else if (e.kind === 'failed') {
@@ -147,7 +138,7 @@ export const useScanStore = defineStore('scan', () => {
   /** Subscribes once, then reads the live scan and the saved report. */
   async function init() {
     if (!unlisten) unlisten = await onScanEvent((e) => handle(e))
-    await Promise.all([hydrate(), loadReport()])
+    await Promise.all([hydrate(), reports.loadLatest()])
   }
 
   function dispose() {
@@ -177,5 +168,5 @@ export const useScanStore = defineStore('scan', () => {
     await hydrate()
   }
 
-  return { run, report, error, lastEnd, scanning, init, dispose, hydrate, start, stop, loadReport }
+  return { run, error, lastEnd, scanning, init, dispose, hydrate, start, stop }
 })
