@@ -109,6 +109,13 @@ describe('light tokens match the canvas', () => {
     ).toEqual(['18px', '22px', '28px', '32px', '40px', '44px', '56px'])
   })
 
+  it('keeps the control motion durations of the Motion board', () => {
+    expect(light.get('--dur-press')).toBe('140ms')
+    expect(light.get('--dur-track')).toBe('150ms')
+    expect(light.get('--dur-check')).toBe('180ms')
+    expect(light.get('--dur-knob')).toBe('220ms')
+  })
+
   it('keeps the easing curves of the Motion boards', () => {
     expect(light.get('--ease-out')).toBe('cubic-bezier(0.23, 1, 0.32, 1)')
     expect(light.get('--ease-in-out')).toBe('cubic-bezier(0.65, 0, 0.35, 1)')
@@ -167,7 +174,7 @@ describe('theme blocks', () => {
 
 describe('token usage', () => {
   // Set from script on the element itself (see lib/motion.ts), so not declared in CSS.
-  const RUNTIME = new Set(['--d'])
+  const RUNTIME = new Set(['--d', '--hold'])
 
   it('only references tokens that are defined', () => {
     const defined = new Set([...light.keys(), ...darkAttr.keys()])
@@ -183,5 +190,22 @@ describe('token usage', () => {
       }
     }
     expect([...used]).toEqual([])
+  })
+})
+
+describe('primitives', () => {
+  // Colour comes from tokens. The flag artwork (src/ui/flags.ts) is brand art, kept in script.
+  const COLOUR = /#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(/
+
+  it('hard-code no colour in their styles', () => {
+    const offenders: string[] = []
+    for (const dir of ['ui', 'features/dev/gallery']) {
+      for (const file of files(join(SRC, dir), /\.vue$/)) {
+        const text = readFileSync(file, 'utf8')
+        const style = [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1] ?? '')
+        if (style.some((css) => COLOUR.test(css))) offenders.push(file)
+      }
+    }
+    expect(offenders).toEqual([])
   })
 })

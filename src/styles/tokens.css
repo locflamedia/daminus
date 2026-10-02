@@ -159,6 +159,10 @@
   --dur-resort: 350ms;
   --dur-enter: 560ms;
   --dur-draw: 600ms;
+  --dur-track: 150ms;
+  --dur-check: 180ms;
+  --dur-knob: 220ms;
+  --dur-menu-close: 120ms;
   --dur-gauge: 700ms;
   --dur-theme: 200ms;
   --stagger: 80ms;
@@ -329,6 +333,10 @@
     --dur-resort: 0ms;
     --dur-enter: 0ms;
     --dur-draw: 0ms;
+    --dur-track: var(--dur-color);
+    --dur-check: 0ms;
+    --dur-knob: 0ms;
+    --dur-menu-close: var(--dur-color);
     --dur-gauge: 0ms;
     --dur-theme: 0ms;
     --stagger: 0ms;
