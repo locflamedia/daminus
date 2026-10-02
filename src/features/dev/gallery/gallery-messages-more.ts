@@ -43,15 +43,25 @@ export const moreGalleryMessages = {
       },
       keyboardHint: {
         name: 'Keyboard hint',
-        spec: '18 · r5 · white on surface-1 · one key per cap, 3 px apart.',
+        spec: '18 · r5 · surface-2, flat (same on white and grey) · one key per cap, 3 px apart.',
       },
       monogram: {
         name: 'Monogram tile',
-        spec: '18 r6 · 24 r8 · 36 r10. A two-stop tint; an icon or the first letter, white.',
+        spec: '18 r6 · 24 r8 · 36 r10 · 40 r12. 8 tints; an icon or the first letter, white.',
+      },
+      tints: {
+        title: 'Project tints and marks',
+        lede: 'Eight tints, one colour per project, and when a mark or a monogram is used.',
+        text: 'Each tint is one pair. The end stop is the project colour everywhere: the swatch in the edit sheet (8 swatches, same order), the sidebar dot, the active ring on the rail, and the 6 px dot on a tag with no mark. Order of first pick: blue, lilac, rose, amber, green, teal, coral, slate; the next unused one is given to a new project.',
+        marks: 'Technology marks',
+        markNote: 'mark when thesvg has one; else a 6 px dot in the project colour',
+        tile: 'Logo tile 40 r12 when the main framework is known (Overview card, project header); otherwise the gradient monogram tile at the same size. Rail 32 r10 follows the same rule.',
+        bundled:
+          'Marks are bundled SVG files from thesvg, never fetched at run time, never recoloured; too-dark marks get a lift in dark mode only. Each bundled mark and its licence is listed in THIRD_PARTY before release; a mark without a clear licence falls back to the dot.',
       },
       techTag: {
         name: 'Tech tag',
-        spec: 'Tag 22 · r6 · a 6 px swatch in the technology’s own colour.',
+        spec: 'Tag 22 · r6 · the technology’s mark 14 px when one is bundled; else a 6 px dot in the project colour.',
         more: '+2',
       },
       severityTile: {
@@ -391,15 +401,25 @@ export const moreGalleryMessages = {
       },
       keyboardHint: {
         name: 'Gợi ý phím',
-        spec: '18 · bo 5 · trắng trên surface-1 · mỗi phím một nắp, cách 3 px.',
+        spec: '18 · bo 5 · surface-2, phẳng (như nhau trên nền trắng và xám) · mỗi phím một nắp, cách 3 px.',
       },
       monogram: {
         name: 'Ô chữ cái',
-        spec: '18 bo 6 · 24 bo 8 · 36 bo 10. Màu hai điểm; icon hoặc chữ cái đầu, màu trắng.',
+        spec: '18 bo 6 · 24 bo 8 · 36 bo 10 · 40 bo 12. 8 màu; icon hoặc chữ cái đầu, màu trắng.',
+      },
+      tints: {
+        title: 'Màu và logo của dự án',
+        lede: 'Tám màu, mỗi dự án một màu, và khi nào dùng logo hay monogram.',
+        text: 'Mỗi màu là một cặp. Điểm cuối là màu của dự án ở mọi nơi: ô màu trong sheet sửa (8 ô, cùng thứ tự), chấm ở sidebar, vòng active trên rail, và chấm 6 px trên thẻ công nghệ không có logo. Thứ tự chọn đầu: blue, lilac, rose, amber, green, teal, coral, slate; màu chưa dùng kế tiếp được giao cho dự án mới.',
+        marks: 'Logo công nghệ',
+        markNote: 'logo khi thesvg có; nếu không thì chấm 6 px màu dự án',
+        tile: 'Ô logo 40 bo 12 khi biết framework chính (thẻ Tổng quan, đầu trang dự án); nếu không thì ô monogram chuyển sắc cùng cỡ. Rail 32 bo 10 theo cùng quy tắc.',
+        bundled:
+          'Logo là file SVG đóng gói sẵn từ thesvg, không tải lúc chạy, không đổi màu; logo quá tối chỉ được làm sáng ở chế độ tối. Mỗi logo đóng gói và giấy phép của nó được ghi trong THIRD_PARTY trước khi phát hành; logo không rõ giấy phép thì dùng chấm.',
       },
       techTag: {
         name: 'Thẻ công nghệ',
-        spec: 'Thẻ 22 · bo 6 · một chấm 6 px đúng màu của công nghệ.',
+        spec: 'Thẻ 22 · bo 6 · logo công nghệ 14 px khi đã đóng gói; nếu không thì chấm 6 px màu dự án.',
         more: '+2',
       },
       severityTile: {
