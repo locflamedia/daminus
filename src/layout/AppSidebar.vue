@@ -93,6 +93,7 @@ const serverRows = computed(() =>
           :level="p.level"
           :unreachable="p.unreachable_hosts.length > 0"
           :reading="projectReading(p.id)"
+          :color="projects.color(p.id)"
         />
         <span class="name">{{ p.id }}</span>
         <span v-if="issueCount(p) > 0" class="count strong" :class="projectCountTone(p.level)">

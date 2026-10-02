@@ -51,8 +51,8 @@ describe('ProjectHeader tabs', () => {
   it('opens the menu with every tab and goes to the one picked', async () => {
     const router = await make(900)
     await wrapper!.get('[aria-haspopup="menu"]').trigger('click')
-    const items = [...document.querySelectorAll('[role="menuitem"]')]
-    expect(items.map((i) => i.textContent?.trim())).toEqual([
+    const items = [...document.querySelectorAll('[role="menuitemradio"]')]
+    expect(items.map((i) => i.querySelector('.label')?.textContent?.trim())).toEqual([
       'Overview',
       'Disk',
       'Database',
@@ -60,8 +60,45 @@ describe('ProjectHeader tabs', () => {
       'Security',
       'History',
     ])
+    expect(items.map((i) => i.querySelector('.hint')?.textContent)).toEqual([
+      '⌘1',
+      '⌘2',
+      '⌘3',
+      '⌘4',
+      '⌘5',
+      '⌘6',
+    ])
+    // The open tab is ticked, and the one with something to look at carries its dot.
+    expect(items.map((i) => i.getAttribute('aria-checked'))).toEqual([
+      'false',
+      'true',
+      'false',
+      'false',
+      'false',
+      'false',
+    ])
+    expect(items[1]?.querySelector('.mark.warn')).not.toBeNull()
     ;(items[4] as HTMLElement).click()
     await new Promise((r) => setTimeout(r, 0))
     expect(router.currentRoute.value.params.tab).toBe('security')
+  })
+})
+
+describe('ProjectHeader keys', () => {
+  it('opens the tabs in order with ⌘1 to ⌘6, strip or menu', async () => {
+    for (const width of [1280, 900]) {
+      const router = await make(width)
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: '5', metaKey: true }))
+      await new Promise((r) => setTimeout(r, 0))
+      expect(router.currentRoute.value.params.tab).toBe('security')
+      wrapper!.unmount()
+    }
+  })
+
+  it('ignores the number key without ⌘', async () => {
+    const router = await make(1280)
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(router.currentRoute.value.params.tab).toBe('disk')
   })
 })

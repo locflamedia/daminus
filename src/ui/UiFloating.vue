@@ -24,6 +24,8 @@ const props = withDefaults(
     trap?: boolean
     initialFocus?: (root: HTMLElement) => HTMLElement | null | undefined
     minWidth?: string
+    /** Corner radius of the surface, so the shadow and the fill follow the content's corners. */
+    radius?: string
     /** Draw it in the flow where it is placed, closed to nothing: for documentation pages. */
     inline?: boolean
   }>(),
@@ -34,6 +36,7 @@ const props = withDefaults(
     trap: true,
     initialFocus: undefined,
     minWidth: undefined,
+    radius: 'var(--radius-md)',
     inline: false,
   },
 )
@@ -83,7 +86,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside, tru
     class="floating is-inline"
     :role="role"
     :aria-label="label"
-    :style="minWidth ? { minWidth } : undefined"
+    :style="[{ borderRadius: radius }, minWidth ? { minWidth } : undefined]"
   >
     <slot />
   </div>
@@ -93,7 +96,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onOutside, tru
         v-if="open"
         ref="el"
         class="floating"
-        :style="[style, minWidth ? { minWidth } : undefined]"
+        :style="[style, { borderRadius: radius }, minWidth ? { minWidth } : undefined]"
         :role="role"
         :aria-label="label"
         @keydown="onKeydown"

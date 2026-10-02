@@ -26,12 +26,19 @@ const meta = computed(() => {
     report?.seq != null && report.scanned_at
       ? t('project.scanMeta', { seq: report.seq, time: fmt.clock(report.scanned_at) })
       : ''
-  return [hosts.join(' + '), scanned].filter(Boolean).join(' · ')
+  return [projects.domain(id.value), hosts.join(' + '), scanned].filter(Boolean).join(' · ')
 })
 
 const levels = computed(() => tabLevels(reports.latest?.items ?? [], id.value))
 </script>
 
 <template>
-  <ProjectHeader :id="id" :meta="meta" :tab="tab" :level="rollup?.level" :tab-levels="levels" />
+  <ProjectHeader
+    :id="id"
+    :meta="meta"
+    :tab="tab"
+    :level="rollup?.level"
+    :tab-levels="levels"
+    :color="projects.color(id)"
+  />
 </template>

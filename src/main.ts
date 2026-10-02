@@ -16,4 +16,13 @@ app.use(pinia).use(i18n).use(createAppRouter())
 // Theme and language are applied before the first paint, so there is no flash of the wrong one.
 useSettingsStore(pinia).init()
 
-app.mount('#app')
+// A development aid: `?mock` answers the commands with a fixed report (see api/dev-mock.ts).
+async function start() {
+  if (import.meta.env.DEV && new URLSearchParams(location.search).has('mock')) {
+    const { installDevMock } = await import('./api/dev-mock')
+    installDevMock()
+  }
+  app.mount('#app')
+}
+
+void start()

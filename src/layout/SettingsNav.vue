@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
+import { useLayoutRange } from '@/lib/viewport'
 import { useSettingsStore } from '@/stores/settings'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiKbd from '@/ui/UiKbd.vue'
@@ -10,12 +11,19 @@ import { SETTINGS_SECTIONS } from './settings-sections'
 const { t } = useI18n()
 const router = useRouter()
 const settings = useSettingsStore()
+const range = useLayoutRange()
 
-/** Right-hand hint of an item: the current value, where the app already knows it. */
-const hints = computed<Record<string, string>>(() => ({
-  general: t(`language.${settings.language}`),
-  appearance: t(`theme.${settings.theme}`),
-}))
+/**
+ * Right-hand hint of an item: the current value, where the app already knows it. Below 1080 px
+ * the column keeps its labels and drops the values.
+ */
+const hints = computed((): Record<string, string> => {
+  if (range.value === 'narrow') return {}
+  return {
+    general: t(`language.${settings.language}`),
+    appearance: t(`theme.${settings.theme}`),
+  }
+})
 
 function leave() {
   void router.push('/')

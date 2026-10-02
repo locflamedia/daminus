@@ -37,3 +37,40 @@ describe('useProjectsStore', () => {
     expect(store.project('nope')).toBeUndefined()
   })
 })
+
+describe('useProjectsStore details', () => {
+  const saved = (id: string, color: string | null, urls: string[] = []) => ({
+    id,
+    name: id,
+    color,
+    urls,
+    components: [],
+  })
+
+  it('gives the colour of a project only when it is a plain #rrggbb', () => {
+    const store = useProjectsStore()
+    store.details = [
+      saved('a', '#E0649A'),
+      saved('b', 'red'),
+      saved('c', 'url(javascript:alert(1))'),
+      saved('d', null),
+    ]
+    expect(store.color('a')).toBe('#E0649A')
+    expect(store.color('b')).toBeNull()
+    expect(store.color('c')).toBeNull()
+    expect(store.color('d')).toBeNull()
+    expect(store.color('missing')).toBeNull()
+  })
+
+  it('gives the host of the first URL for the project header', () => {
+    const store = useProjectsStore()
+    store.details = [
+      saved('a', null, ['https://khohang.vn/app', 'https://other.vn']),
+      saved('b', null, ['not a url']),
+      saved('c', null),
+    ]
+    expect(store.domain('a')).toBe('khohang.vn')
+    expect(store.domain('b')).toBeNull()
+    expect(store.domain('c')).toBeNull()
+  })
+})

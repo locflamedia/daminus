@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import type { Level } from '@/api'
 import { useViewportWidth } from '@/lib/viewport'
-import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiMenu from '@/ui/UiMenu.vue'
-import ProjectDot from './ProjectDot.vue'
+import ProjectTile from './ProjectTile.vue'
 import { PROJECT_TABS, type ProjectTab } from './project-tabs'
 
 const props = defineProps<{
@@ -16,6 +15,8 @@ const props = defineProps<{
   meta?: string
   tab: ProjectTab
   level?: Level
+  /** The project's own colour, `#rrggbb`, already checked. */
+  color?: string | null
   /** Tabs with something inside that needs a look get a 6 px status dot. */
   tabLevels?: Partial<Record<ProjectTab, Level>>
 }>()
@@ -30,21 +31,41 @@ const MENU_BELOW = 960
 const width = useViewportWidth()
 const asMenu = computed(() => width.value < MENU_BELOW)
 const items = computed(() =>
-  PROJECT_TABS.map((name) => ({
+  PROJECT_TABS.map((name, i) => ({
     id: name,
     label: t(`project.tabs.${name}`),
+    checked: name === props.tab,
+    mark: dotOf(name),
+    markLabel: t('project.needsLook'),
+    hint: `⌘${i + 1}`,
   })),
 )
+
+function dotOf(name: ProjectTab): 'warn' | 'crit' | undefined {
+  const level = dots.value[name]
+  return level === 'warn' || level === 'crit' ? level : undefined
+}
+
 function pick(id: string) {
   void router.push({ name: 'project', params: { id: props.id, tab: id } })
 }
+
+// ⌘1 to ⌘6 open the tabs in order, whether they are drawn as a strip or as the menu.
+function onKeydown(e: KeyboardEvent) {
+  if (!e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return
+  const tab = PROJECT_TABS[Number(e.key) - 1]
+  if (!tab) return
+  e.preventDefault()
+  pick(tab)
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
   <header class="project-header">
-    <span class="tile" aria-hidden="true">
-      <ProjectDot :level="level ?? 'ok'" />
-    </span>
+    <ProjectTile :color="color" :level="level ?? 'ok'" aria-hidden="true" />
     <div class="titles">
       <RouterLink to="/" class="crumb">
         {{ t('project.breadcrumb') }}
@@ -61,17 +82,16 @@ function pick(id: string) {
       :items="items"
       :label="t('project.tabsLabel')"
       placement="bottom-end"
+      compact
       @select="pick"
     >
-      <template #trigger="{ attrs, toggle }">
-        <UiButton v-bind="attrs" variant="secondary" trailing-icon="chevron-down" @click="toggle">
+      <template #trigger="{ attrs, toggle, open }">
+        <button v-bind="attrs" type="button" class="trigger" :class="{ open }" @click="toggle">
           {{ t(`project.tabs.${tab}`) }}
-          <span
-            v-if="dots[tab] === 'warn' || dots[tab] === 'crit'"
-            class="mark"
-            :class="dots[tab]"
-          />
-        </UiButton>
+          <span v-if="dotOf(tab)" class="mark" :class="dotOf(tab)" aria-hidden="true" />
+          <span v-if="dotOf(tab)" class="sr-only">{{ t('project.needsLook') }}</span>
+          <UiIcon name="chevron-down" :size="14" />
+        </button>
       </template>
     </UiMenu>
     <div v-else class="tabs" role="tablist" :aria-label="t('project.tabsLabel')">
@@ -105,17 +125,6 @@ function pick(id: string) {
   gap: var(--space-3);
   flex: none;
   height: 72px;
-}
-
-.tile {
-  display: grid;
-  flex: none;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--surface-0);
-  box-shadow: var(--shadow-lift);
 }
 
 .titles {
@@ -171,6 +180,33 @@ function pick(id: string) {
   padding: 3px;
   border-radius: var(--radius-sm);
   background: var(--seg-track);
+}
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 9px;
+  background: var(--surface-1);
+  color: var(--ink);
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+  transition: box-shadow var(--dur-color) var(--ease-state);
+}
+
+.trigger .icon {
+  color: var(--ink-3);
+}
+
+.trigger.open {
+  box-shadow: 0 0 0 2px var(--accent-mid);
+}
+
+.trigger:focus-visible {
+  box-shadow: var(--focus-ring);
 }
 
 .tab {

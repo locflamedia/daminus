@@ -1,4 +1,5 @@
 import { moreGalleryMessages } from './gallery-messages-more'
+import { shellGalleryMessages } from './gallery-messages-shell'
 
 // Sample copy for the dev gallery, in both languages. It is merged into the app's messages
 // only when the gallery opens, so it never reaches the production bundle.
@@ -1037,6 +1038,6 @@ const baseMessages = {
 }
 
 export const galleryMessages = {
-  en: { ...baseMessages.en, ...moreGalleryMessages.en },
-  vi: { ...baseMessages.vi, ...moreGalleryMessages.vi },
+  en: { ...baseMessages.en, ...moreGalleryMessages.en, ...shellGalleryMessages.en },
+  vi: { ...baseMessages.vi, ...moreGalleryMessages.vi, ...shellGalleryMessages.vi },
 }

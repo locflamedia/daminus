@@ -13,9 +13,11 @@ import GalleryActions from './GalleryActions.vue'
 import GalleryCharts from './GalleryCharts.vue'
 import GalleryComposed from './GalleryComposed.vue'
 import GalleryDisplay from './GalleryDisplay.vue'
+import GalleryFoundations from './GalleryFoundations.vue'
 import GalleryInputs from './GalleryInputs.vue'
 import GalleryMicro from './GalleryMicro.vue'
 import GalleryOverlays from './GalleryOverlays.vue'
+import GalleryShell from './GalleryShell.vue'
 import { galleryMessages } from './gallery-messages'
 
 for (const locale of LOCALES) {
@@ -55,6 +57,11 @@ const languages = computed(() => LOCALES.map((value) => ({ value, label: t(`lang
     </header>
 
     <section class="group">
+      <h2 class="group-title">{{ t('gallery.foundations.title') }}</h2>
+      <GalleryFoundations />
+    </section>
+
+    <section class="group">
       <h2 class="group-title">{{ t('gallery.actions.title') }}</h2>
       <p class="group-lede">{{ t('gallery.actions.lede') }}</p>
       <GalleryActions />
@@ -85,6 +92,12 @@ const languages = computed(() => LOCALES.map((value) => ({ value, label: t(`lang
     <section class="group">
       <h2 class="group-title">{{ t('gallery.charts.title') }}</h2>
       <GalleryCharts />
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">{{ t('gallery.shell.title') }}</h2>
+      <p class="group-lede">{{ t('gallery.shell.lede') }}</p>
+      <GalleryShell />
     </section>
 
     <section class="group">
