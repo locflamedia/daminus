@@ -14,7 +14,9 @@
 ## TypeScript / Vue
 
 - Only `src/api/` imports `@tauri-apps/*` (enforced by ESLint).
-- `v-html` is forbidden (`vue/no-v-html: error`); server and AI output are always text.
+- `v-html` is forbidden (`vue/no-v-html: error`), and so are `innerHTML`, `outerHTML`, `insertAdjacentHTML`, `createContextualFragment` and `document.write` (ESLint, plus a test over the sources); server and AI output are always text.
+- Colours, sizes, radii, shadows, easing and durations come from `src/styles/tokens.css` (`var(--…)`), never literals in a component; user-visible text comes from `src/i18n` and numbers, units and times from `src/lib/format.ts`.
+- Motion uses the utilities in `src/styles/motion.css` and `src/lib/motion.ts`; only transform and opacity move, and every kind has a reduced-motion fallback.
 - Generated bindings in `src/api/bindings/` are never edited by hand. Regenerate with `scripts/check-bindings.sh`.
 - Gates: `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`.
 
@@ -29,7 +31,7 @@
 
 - Rust files: `snake_case.rs`.
 - TypeScript files: `kebab-case.ts`.
-- Vue single-file components: `PascalCase.vue`.
+- Vue single-file components: `PascalCase.vue`, at least two words (`Ui…` for primitives in `src/ui/`, `App…` for the window frame in `src/layout/`).
 - Shell scripts: `kebab-case.sh`; check scripts follow their check id (`disk_fs.sh`).
 
 ## Commits
