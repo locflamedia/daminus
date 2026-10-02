@@ -323,6 +323,81 @@
         "destructive": "It can overwrite a disk or change owners and permissions across a whole folder. Check the target before you run it."
       }
     },
-    "failed": "Failed"
+    "failed": "Failed",
+    "copyPath": "Copy path",
+    "copyText": "Copy {text}",
+    "openInBrowser": "Open {site} in the browser",
+    "ssl": "SSL {days}",
+    "sslExpired": "SSL expired",
+    "scanNumber": "Scan #{seq}",
+    "moreActions": "More actions",
+    "emptyNone": "No value",
+    "emptyPermission": "Needs permission",
+    "emptyNotSetUp": "Not set up",
+    "progress": "{n}% done",
+    "unreachable": "Unreachable",
+    "search": "Search",
+    "clear": "Clear",
+    "send": "Send",
+    "sending": "Sending",
+    "palette": {
+      "label": "Search projects, servers and commands",
+      "projects": "Projects",
+      "servers": "Servers",
+      "commands": "Commands",
+      "empty": "No match for \"{query}\"",
+      "open": "open",
+      "hint": "Type to search"
+    },
+    "scanStep": {
+      "done": "Done",
+      "running": "Running",
+      "waiting": "Waiting",
+      "skipped": "Skipped",
+      "failed": "Failed"
+    },
+    "thread": {
+      "you": "You",
+      "ai": "Daminus AI"
+    },
+    "finding": {
+      "critical": "Critical",
+      "warning": "Needs a look",
+      "info": "Note",
+      "newIn": "new in #{seq}",
+      "evidence": "Evidence",
+      "fix": "Fix",
+      "explaining": "Explaining",
+      "known": "Known",
+      "resolved": "Resolved",
+      "expand": "Show details",
+      "collapse": "Hide details"
+    },
+    "payload": {
+      "redacted": "{n} value redacted | {n} values redacted",
+      "sentTo": "to {provider}",
+      "label": "The exact JSON that is sent"
+    },
+    "provider": {
+      "connected": "Connected"
+    },
+    "card": {
+      "healthy": "Healthy",
+      "scanning": "Scanning",
+      "open": "Open",
+      "passed": "{ok} of {all} passed",
+      "allPassed": "All {n} checks passed",
+      "more": "+{n}"
+    },
+    "metric": {
+      "normal": "Normal",
+      "warning": "Warning",
+      "stale": "Stale",
+      "needsPermission": "Needs permission",
+      "scanning": "Reading"
+    },
+    "empty": {
+      "title": "Nothing here yet"
+    }
   }
 }

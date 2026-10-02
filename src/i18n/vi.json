@@ -323,6 +323,81 @@
         "destructive": "Lệnh này có thể ghi đè một ổ đĩa hoặc đổi chủ sở hữu và quyền trên cả một thư mục. Kiểm tra đối tượng trước khi chạy."
       }
     },
-    "failed": "Lỗi"
+    "failed": "Lỗi",
+    "copyPath": "Sao chép đường dẫn",
+    "copyText": "Sao chép {text}",
+    "openInBrowser": "Mở {site} trong trình duyệt",
+    "ssl": "SSL {days}",
+    "sslExpired": "SSL đã hết hạn",
+    "scanNumber": "Lần quét #{seq}",
+    "moreActions": "Thêm thao tác",
+    "emptyNone": "Không có giá trị",
+    "emptyPermission": "Cần cấp quyền",
+    "emptyNotSetUp": "Chưa thiết lập",
+    "progress": "Xong {n}%",
+    "unreachable": "Không kết nối được",
+    "search": "Tìm kiếm",
+    "clear": "Xoá",
+    "send": "Gửi",
+    "sending": "Đang gửi",
+    "palette": {
+      "label": "Tìm dự án, máy chủ và lệnh",
+      "projects": "Dự án",
+      "servers": "Máy chủ",
+      "commands": "Lệnh",
+      "empty": "Không có kết quả cho \"{query}\"",
+      "open": "mở",
+      "hint": "Gõ để tìm"
+    },
+    "scanStep": {
+      "done": "Xong",
+      "running": "Đang chạy",
+      "waiting": "Đang chờ",
+      "skipped": "Bỏ qua",
+      "failed": "Lỗi"
+    },
+    "thread": {
+      "you": "Bạn",
+      "ai": "Daminus AI"
+    },
+    "finding": {
+      "critical": "Nghiêm trọng",
+      "warning": "Cần xem",
+      "info": "Ghi chú",
+      "newIn": "mới ở #{seq}",
+      "evidence": "Bằng chứng",
+      "fix": "Cách sửa",
+      "explaining": "Đang giải thích",
+      "known": "Đã biết",
+      "resolved": "Đã xử lý",
+      "expand": "Xem chi tiết",
+      "collapse": "Ẩn chi tiết"
+    },
+    "payload": {
+      "redacted": "{n} giá trị đã được che",
+      "sentTo": "tới {provider}",
+      "label": "Đúng đoạn JSON sẽ được gửi"
+    },
+    "provider": {
+      "connected": "Đã kết nối"
+    },
+    "card": {
+      "healthy": "Bình thường",
+      "scanning": "Đang quét",
+      "open": "Mở",
+      "passed": "Đạt {ok} trên {all}",
+      "allPassed": "Cả {n} kiểm tra đều đạt",
+      "more": "+{n}"
+    },
+    "metric": {
+      "normal": "Bình thường",
+      "warning": "Cảnh báo",
+      "stale": "Cũ",
+      "needsPermission": "Cần cấp quyền",
+      "scanning": "Đang đọc"
+    },
+    "empty": {
+      "title": "Chưa có gì ở đây"
+    }
   }
 }

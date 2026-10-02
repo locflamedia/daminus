@@ -139,6 +139,15 @@ export function formatDate(value: DateLike, locale: Locale = currentLocale()): s
   return new Intl.DateTimeFormat(locale, options).format(toDate(value))
 }
 
+/** The full date and time for a tooltip: `26 Sep 2026, 11:58`. */
+export function formatDateTime(value: DateLike, locale: Locale = currentLocale()): string {
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    hourCycle: 'h23',
+  }).format(toDate(value))
+}
+
 function startOfDay(d: Date): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatClock,
   formatDate,
+  formatDateTime,
   formatDelta,
   formatDuration,
   formatMeasure,
@@ -129,5 +130,13 @@ describe('formatWhen', () => {
   it('counts calendar days, not 24-hour blocks', () => {
     const lateNow = new Date(2026, 8, 26, 0, 10)
     expect(formatWhen(new Date(2026, 8, 25, 22, 0), lateNow, 'en')).toBe('yesterday 22:00')
+  })
+})
+
+describe('formatDateTime', () => {
+  it('writes the date and a 24-hour time for a tooltip', () => {
+    const t = new Date(2026, 8, 26, 11, 58)
+    expect(formatDateTime(t, 'en')).toMatch(/Sep 26, 2026.*11:58/)
+    expect(formatDateTime(t, 'vi')).toMatch(/11:58/)
   })
 })

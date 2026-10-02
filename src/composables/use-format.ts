@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/stores/settings'
 import {
   type WhenOptions,
   formatClock,
+  formatDateTime,
   formatDelta,
   formatDuration,
   formatMeasure,
@@ -19,6 +20,7 @@ export function useFormat() {
     delta: (value: number, unit?: string | null) => formatDelta(value, unit, settings.language),
     duration: (ms: number) => formatDuration(ms, settings.language),
     clock: (when: string | number | Date) => formatClock(when, settings.language),
+    dateTime: (when: string | number | Date) => formatDateTime(when, settings.language),
     when: (when: string | number | Date, options?: WhenOptions) =>
       formatWhen(when, Date.now(), settings.language, options),
   }

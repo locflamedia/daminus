@@ -68,6 +68,8 @@
   --card-wash-ok: var(--ok-soft);
 
   /* Roles on a topology node (FE, BE, DB, worker), as the Overview boards colour them. */
+  /* White on a solid status fill or a tint (count badge, project tile). */
+  --on-solid: #ffffff;
   --role-fe: #3a55d6;
   --role-be: #6a4fc4;
   --role-db: #146b40;
@@ -300,6 +302,7 @@
     --card-wash-crit: #2a1820;
     --card-wash-warn: #2a2116;
     --card-wash-info: #1c2033;
+    --on-solid: #ffffff;
     --role-fe: #a3b2ff;
     --role-be: #bba7ff;
     --role-db: #7bdcac;
@@ -436,6 +439,7 @@
   --card-wash-crit: #2a1820;
   --card-wash-warn: #2a2116;
   --card-wash-info: #1c2033;
+  --on-solid: #ffffff;
   --role-fe: #a3b2ff;
   --role-be: #bba7ff;
   --role-db: #7bdcac;
