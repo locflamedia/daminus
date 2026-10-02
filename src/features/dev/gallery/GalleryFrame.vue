@@ -43,9 +43,10 @@ defineProps<{ title: string; text?: string; spec?: string }>()
 
 .head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-1) var(--space-4);
 }
 
 .titles {
@@ -68,7 +69,6 @@ defineProps<{ title: string; text?: string; spec?: string }>()
 }
 
 .spec {
-  flex: none;
   color: var(--ink-3);
   font-size: var(--text-11);
 }

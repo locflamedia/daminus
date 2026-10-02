@@ -10,7 +10,9 @@ import { THEMES, type Theme } from '@/lib/theme'
 import { useSettingsStore } from '@/stores/settings'
 import UiSeg from '@/ui/UiSeg.vue'
 import GalleryActions from './GalleryActions.vue'
+import GalleryDisplay from './GalleryDisplay.vue'
 import GalleryInputs from './GalleryInputs.vue'
+import GalleryOverlays from './GalleryOverlays.vue'
 import { galleryMessages } from './gallery-messages'
 
 for (const locale of LOCALES) {
@@ -59,6 +61,18 @@ const languages = computed(() => LOCALES.map((value) => ({ value, label: t(`lang
       <h2 class="group-title">{{ t('gallery.inputs.title') }}</h2>
       <p class="group-lede">{{ t('gallery.inputs.lede') }}</p>
       <GalleryInputs />
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">{{ t('gallery.display.title') }}</h2>
+      <p class="group-lede">{{ t('gallery.display.lede') }}</p>
+      <GalleryDisplay />
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">{{ t('gallery.overlays.title') }}</h2>
+      <p class="group-lede">{{ t('gallery.overlays.lede') }}</p>
+      <GalleryOverlays />
     </section>
   </main>
 </template>
