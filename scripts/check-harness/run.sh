@@ -33,10 +33,12 @@ mkdir -p "$work/config"
 # PM2_HOME, and three databases: MySQL read with DB_*, Postgres with a
 # DATABASE_URL, and MySQL inside the container the docker shim knows (its
 # credentials come from MYSQL_* in a CRLF file). The large-files floor drops to
-# 1 MB for the 2 MiB upload.
+# 1 MB for the 2 MiB upload. A second project folder has a backslash and a
+# quote in its name (JSON-escaped here).
 cat >"$work/config/projects.json" <<'EOF'
 {"version": 1, "projects": [{"id": "shop", "name": "shop", "components": [
   {"role": "fe", "host": "harness", "kind": "path", "path": "/home/daminus/app"},
+  {"role": "fe", "host": "harness", "kind": "path", "path": "/home/daminus/old\\shop \"x\""},
   {"role": "be", "host": "harness", "kind": "compose", "project": "shop"},
   {"role": "be", "host": "harness", "kind": "compose", "project": "gone"},
   {"role": "worker", "host": "harness", "kind": "pm2", "app": "api"},
@@ -165,6 +167,19 @@ expect() {
 	if ! jq -e -s "$@" "$filter" "$file" >/dev/null; then
 		problem "$label"
 	fi
+}
+
+# The project folder named with a backslash and a quote: each check that walks
+# it reports it under its own name, and the names inside come back whole.
+# shellcheck disable=SC2016 # the filters are jq programs, not shell
+check_odd_folder() { # distro file
+	expect "$1 disk.path, sec.upload_php: a folder named with a backslash and a quote" "$2" '
+		"/home/daminus/old\\shop \"x\"" as $p
+		| ([.[] | select(.check == "disk.path" and .target == $p)] | length) == 1
+		and ([.[] | select(.check == "disk.path" and .target == $p)][0]
+			| (.unknown | not) and .data.top[0][0] == "sub\\dir"
+			and (.data.files | map(. == ["sub\\dir/big.bin", 2097152]) | any))
+		and ([.[] | select(.check == "sec.upload_php" and .target == ($p + "/uploads/s\\h.php"))] | length) == 1'
 }
 
 # What the security checks must find in the planted (infected) container. A
@@ -315,6 +330,7 @@ for distro in ubuntu:24.04 debian:12; do
 		problem "$distro: the whole bundle took ${took} s, over the ${budget_s} s budget"
 	fi
 	check_infected "$distro" "$work/all.ndjson" "$lib"
+	check_odd_folder "$distro" "$work/all.ndjson"
 
 	# The same security checks on a clean server (a folder with no PHP in its
 	# uploads, nothing planted): every one must say "looked, found none".

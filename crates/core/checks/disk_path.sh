@@ -52,13 +52,21 @@ for path in ${DAMINUS_PATHS-}; do
 	[ "$rc" -eq 0 ] || partial=true
 
 	# Prints: total TAB other TAB top, top being a JSON list of [name, bytes].
-	line=$(printf '%s\n' "$sizes" | awk -v root="$path" '
-		# A JSON string without escapes: quotes and backslashes become ?,
-		# control characters are dropped (awk escaping is not portable).
-		function jstr(s) {
-			gsub(/[\\"]/, "?", s); gsub(/[[:cntrl:]]/, "", s)
-			return "\"" s "\""
+	# The folder is the first input line: awk -v would decode its backslashes.
+	line=$({ printf '%s\n' "$path"; printf '%s\n' "$sizes"; } | awk '
+		# A JSON string: control characters are dropped, a backslash and a
+		# quote are escaped (character by character: gsub escapes differ).
+		function jstr(s,    o, i, c) {
+			gsub(/[[:cntrl:]]/, "", s)
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c == "\\" || c == "\"") o = o "\\"
+				o = o c
+			}
+			return "\"" o "\""
 		}
+		NR == 1 { root = $0; next }
 		{
 			tab = index($0, "\t")
 			if (!tab) next
@@ -119,11 +127,17 @@ for path in ${DAMINUS_PATHS-}; do
 	# Sized, but with no time left the large files are not listed.
 	[ "$left" -ge 2 ] || partial=true
 	[ "$left" -lt 2 ] || files=$(run_for "$left" find "$path" -xdev "$@" -type f -size "+${mb}M" -printf '%s\t%P\n' | awk '
-		# A JSON string without escapes: quotes and backslashes become ?,
-		# control characters are dropped (awk escaping is not portable).
-		function jstr(s) {
-			gsub(/[\\"]/, "?", s); gsub(/[[:cntrl:]]/, "", s)
-			return "\"" s "\""
+		# A JSON string: control characters are dropped, a backslash and a
+		# quote are escaped (character by character: gsub escapes differ).
+		function jstr(s,    o, i, c) {
+			gsub(/[[:cntrl:]]/, "", s)
+			o = ""
+			for (i = 1; i <= length(s); i++) {
+				c = substr(s, i, 1)
+				if (c == "\\" || c == "\"") o = o "\\"
+				o = o c
+			}
+			return "\"" o "\""
 		}
 		{
 			tab = index($0, "\t")

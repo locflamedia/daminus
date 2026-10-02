@@ -45,6 +45,10 @@ RUN cd /home/daminus/app \
     && echo 'APP_KEY=CANARY_env_sample_7b7b' >.env.sample \
     && echo 'APP_KEY=CANARY_env_quote_8c8c' >'.env.q"uote' \
     && echo 'APP_KEY=CANARY_env_slash_9d9d' >'.env.back\slash' \
+    && odd='/home/daminus/old\shop "x"' \
+    && mkdir -p "$odd/sub\\dir" "$odd/uploads" \
+    && head -c 2097152 /dev/zero >"$odd/sub\\dir/big.bin" \
+    && echo '<?php echo "x";' >"$odd/uploads/s\\h.php" \
     && mkdir -p /home/daminus/clean/public/uploads \
     && echo photo >/home/daminus/clean/public/uploads/photo.jpg \
     && echo '<html></html>' >/home/daminus/clean/index.html \

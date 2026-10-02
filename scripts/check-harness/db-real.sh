@@ -47,6 +47,9 @@ pg_pw=CANARY_dbreal_pg_77aa
 odd_pw='CANARY_odd#"\x $HOME `id`'
 # shellcheck disable=SC2016 # the text is literal on purpose
 odd_my='CANARY_odd#"\\x $HOME `id`'
+# odd_dq is odd_pw as a dotenv double-quoted value (`\\` and `\"` escaped).
+# shellcheck disable=SC2016 # the text is literal on purpose
+odd_dq='CANARY_odd#\"\\x $HOME `id`'
 wrong_pw=CANARY_wrong_0000
 # The Postgres login a .env without POSTGRES_USER stands for: the role
 # `postgres` (the servers' own superuser here is `shop`).
@@ -349,10 +352,19 @@ case_run native my-odd mysql shop "" "export DB_HOST=$my
 export DB_USERNAME=shop2
 export DB_PASSWORD='$odd_pw'
 " ok
+case_run native my-odd-dq mysql shop "" "DB_HOST=$my
+DB_USERNAME=shop2
+DB_PASSWORD=\"$odd_dq\"
+" ok
 case_run native pg-url postgres shop "" "DATABASE_URL=postgresql://shop:$pg_pw@$pg:5432/shop
 " ok
 case_run native pg-odd postgres shop "" "POSTGRES_USER=shop2
 POSTGRES_PASSWORD='$odd_pw'
+POSTGRES_HOST=$pg
+POSTGRES_PORT=5432
+" ok
+case_run native pg-odd-dq postgres shop "" "POSTGRES_USER=shop2
+POSTGRES_PASSWORD=\"$odd_dq\"
 POSTGRES_HOST=$pg
 POSTGRES_PORT=5432
 " ok
@@ -394,6 +406,9 @@ MYSQL_PASSWORD=$my_pw
 " ok
 case_run exec x-my-odd mysql shop "$my" "MYSQL_USER=shop2
 MYSQL_PASSWORD='$odd_pw'
+" ok
+case_run exec x-my-odd-dq mysql shop "$my" "MYSQL_USER=shop2
+MYSQL_PASSWORD=\"$odd_dq\"
 " ok
 case_run exec x-pg postgres shop "$pg" "POSTGRES_USER=shop
 POSTGRES_PASSWORD=$pg_pw
