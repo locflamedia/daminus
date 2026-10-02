@@ -13,8 +13,19 @@ import type { ChipTone } from './UiChip.vue'
 import type { IconName } from './icon-paths'
 
 const props = withDefaults(
-  defineProps<{ tone?: ChipTone; icon?: IconName; busy?: boolean; label: string }>(),
-  { tone: 'neutral', icon: undefined, busy: false },
+  defineProps<{
+    tone?: ChipTone
+    icon?: IconName
+    busy?: boolean
+    label: string
+    /** A 6 px dot in the tone's solid colour, hollow for the neutral tone. */
+    dot?: boolean
+    /** The critical halo on the dot: three pulses, then still. */
+    pulse?: boolean
+    /** The 24 px chip of a project card head, with 10 px of padding. */
+    large?: boolean
+  }>(),
+  { tone: 'neutral', icon: undefined, busy: false, dot: false, pulse: false, large: false },
 )
 
 const sizer = ref<HTMLElement>()
@@ -33,7 +44,7 @@ onMounted(async () => {
 })
 
 watch(
-  () => [props.label, props.icon, props.busy],
+  () => [props.label, props.icon, props.busy, props.dot],
   () => nextTick(measure),
 )
 </script>
@@ -41,15 +52,17 @@ watch(
 <template>
   <span
     class="chip"
-    :class="[`chip-${tone}`, { ready }]"
+    :class="[`chip-${tone}`, { ready, large }]"
     :style="width ? { width: `${width}px` } : undefined"
   >
     <span ref="sizer" class="sizer" aria-hidden="true">
+      <span v-if="dot && !busy" class="lead" :class="{ 'm-halo': pulse && tone === 'crit' }" />
       <UiSpinner v-if="busy" :size="12" />
       <UiIcon v-else-if="icon" :name="icon" :size="12" />{{ label }}
     </span>
     <Transition name="face">
-      <span :key="`${label}|${icon ?? ''}|${busy}`" class="face">
+      <span :key="`${label}|${icon ?? ''}|${busy}|${dot}`" class="face">
+        <span v-if="dot && !busy" class="lead" :class="{ 'm-halo': pulse && tone === 'crit' }" />
         <UiSpinner v-if="busy" :size="12" />
         <UiIcon v-else-if="icon" :name="icon" :size="12" />{{ label }}
       </span>
@@ -93,6 +106,42 @@ watch(
   left: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* The large chip of a card head: 24 tall, 10 of padding, 6 between the dot and the word. */
+.large {
+  height: 24px;
+}
+
+.large .sizer,
+.large .face {
+  gap: 6px;
+  padding: 0 10px;
+}
+
+.lead {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentcolor;
+}
+
+.chip-crit .lead {
+  background: var(--crit-solid);
+}
+
+.chip-warn .lead {
+  background: var(--warn-solid);
+}
+
+.chip-ok .lead {
+  background: var(--ok-solid);
+}
+
+.chip-neutral .lead {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--ink-4);
 }
 
 .face {

@@ -124,7 +124,7 @@ const haloKey = ref(0)
           <UiMonogram name="api-booking" tint="blue" :size="24" />
           <UiMonogram icon="file" tint="lilac" :size="36" />
           <UiMonogram icon="cart" tint="rose" :size="36" />
-          <UiMonogram name="noibo-crm" tint="grey" :size="24" />
+          <UiMonogram name="noibo-crm" tint="slate" :size="24" />
         </GalleryAtom>
 
         <GalleryAtom :name="k('techTag.name')" :spec="k('techTag.spec')">

@@ -382,7 +382,7 @@ describe('dark controls', () => {
       expect(dark.get('--secondary-bg')).toBe('var(--surface-2)')
       expect(dark.get('--secondary-hover')).toBe('var(--surface-3)')
       expect(dark.get('--secondary-press')).toBe('#34374a')
-      expect(dark.get('--secondary-shadow')).toBe('none')
+      expect(dark.get('--secondary-shadow')).toBe('0 0 0 0 transparent')
     }
   })
 
@@ -402,6 +402,26 @@ describe('dark controls', () => {
       expect(set.get('--code-track')).toBe('rgba(255, 255, 255, 0.12)')
       expect(set.get('--code-thumb')).toBe('rgba(255, 255, 255, 0.35)')
       expect(set.get('--code-btn')).toBe('#33343e')
+    }
+  })
+})
+
+describe('project card tokens', () => {
+  it('has the eight project tints as pairs, in both themes', () => {
+    for (const name of ['blue', 'lilac', 'rose', 'amber', 'green', 'teal', 'coral', 'slate']) {
+      for (const set of [light, darkAttr, darkMedia]) {
+        expect(set.get(`--tint-${name}-1`), name).toMatch(/^#[0-9a-f]{6}$/)
+        expect(set.get(`--tint-${name}-2`), name).toMatch(/^#[0-9a-f]{6}$/)
+      }
+    }
+    expect(light.get('--tint-rose-1')).toBe('#f5b3cf')
+    expect(light.has('--tint-grey-1')).toBe(false)
+  })
+
+  it('lifts a critical card with rose in light and crit at 35 % in dark', () => {
+    expect(light.get('--shadow-card-crit')).toContain('rgba(210, 67, 106, 0.55)')
+    for (const set of [darkAttr, darkMedia]) {
+      expect(set.get('--shadow-card-crit')).toContain('rgba(255, 110, 150, 0.35)')
     }
   })
 })

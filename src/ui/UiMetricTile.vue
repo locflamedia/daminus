@@ -10,6 +10,13 @@
   - scanning: the value and the line blur and dim while the host is read, the layout holds;
   - needs permission: an em dash with a padlock, no line, the reason on hover.
 
+  `form="note"` is the tile of a project card (board "Project card"): padding 8 10, no
+  sparkline (trends live on the project page), and one note line under the value that says
+  what changed, "no change", or what to do. The note is grey, 500 weight for a delta, amber
+  past a threshold, amber at 400 for an old result or a missing permission, rose when critical;
+  a value that is not set up is written in grey, and while the host is read the value and the
+  note give way to two skeleton bars of their final heights.
+
   The value rolls when it changes (never on first draw). Every word is plain text.
 -->
 <script setup lang="ts">
@@ -17,10 +24,15 @@ import { computed } from 'vue'
 import UiEmptyValue from './UiEmptyValue.vue'
 import UiIcon from './UiIcon.vue'
 import UiRoll from './UiRoll.vue'
+import UiSkeleton from './UiSkeleton.vue'
 import UiSparkline, { type SparkTone } from './UiSparkline.vue'
 import type { IconName } from './icon-paths'
 
-export type MetricState = 'normal' | 'warn' | 'crit' | 'stale' | 'scanning' | 'needs-permission'
+export type MetricState =
+  'normal' | 'warn' | 'crit' | 'stale' | 'scanning' | 'needs-permission' | 'not-set-up'
+
+/** How the note line of the card form reads: plain, a delta, past a threshold, or old. */
+export type NoteTone = 'plain' | 'delta' | 'warn' | 'crit' | 'old'
 
 const props = withDefaults(
   defineProps<{
@@ -41,6 +53,10 @@ const props = withDefaults(
     headroom?: number
     /** When set, the line draws only the first time this key is seen. */
     once?: string
+    /** `note` is the tile of a project card: no sparkline, one note line under the value. */
+    form?: 'trend' | 'note'
+    /** How the note reads in the card form; follows the state when not given. */
+    noteTone?: NoteTone
   }>(),
   {
     icon: undefined,
@@ -53,6 +69,8 @@ const props = withDefaults(
     reason: undefined,
     headroom: 0.1,
     once: undefined,
+    form: 'trend',
+    noteTone: undefined,
   },
 )
 
@@ -67,10 +85,37 @@ const tone = computed<SparkTone>(() =>
 )
 const deltaClass = computed(() => `delta-${props.state}`)
 const missing = computed(() => props.state === 'needs-permission' || props.value === undefined)
+const noteClass = computed(() => {
+  if (props.noteTone) return `note-${props.noteTone}`
+  if (props.state === 'warn') return 'note-warn'
+  if (props.state === 'crit') return 'note-crit'
+  if (props.state === 'stale' || props.state === 'needs-permission') return 'note-old'
+  return 'note-plain'
+})
 </script>
 
 <template>
-  <div class="tile" :class="`state-${state}`" :data-state="state">
+  <div v-if="form === 'note'" class="tile tile-note" :class="`state-${state}`" :data-state="state">
+    <span class="line">
+      <span class="label"> <UiIcon v-if="icon" :name="icon" :size="12" />{{ label }} </span>
+    </span>
+    <template v-if="state === 'scanning'">
+      <UiSkeleton class="sk-value" width="70%" height="16px" />
+      <span v-if="note" class="note" :class="noteClass">{{ note }}</span>
+      <UiSkeleton v-else class="sk-note" width="45%" height="10px" />
+    </template>
+    <template v-else>
+      <span class="value" :class="{ muted: state === 'not-set-up' }">
+        <span v-if="state === 'needs-permission' || value === undefined" aria-hidden="true">—</span>
+        <template v-else>
+          <UiRoll :text="value" />
+          <span v-if="unit" class="unit">{{ ` ${unit}` }}</span>
+        </template>
+      </span>
+      <span v-if="note" class="note" :class="noteClass">{{ note }}</span>
+    </template>
+  </div>
+  <div v-else class="tile" :class="`state-${state}`" :data-state="state">
     <span class="line">
       <span class="label"> <UiIcon v-if="icon" :name="icon" :size="12" />{{ label }} </span>
       <span v-if="delta" class="delta" :class="deltaClass">{{ delta }}</span>
@@ -174,6 +219,49 @@ const missing = computed(() => props.state === 'needs-permission' || props.value
 }
 
 /* Reading: the value blurs in place and the shape holds. */
+.tile-note {
+  padding: var(--space-2) 10px;
+}
+
+.value.muted {
+  color: var(--ink-3);
+}
+
+.sk-value {
+  margin-top: 3px;
+}
+
+.sk-note {
+  margin-top: 4px;
+}
+
+.tile-note :is(.line, .value, .note) {
+  line-height: normal;
+}
+
+.tile-note .note-plain {
+  color: var(--ink-3);
+}
+
+.tile-note .note-delta {
+  color: var(--ink-3);
+  font-weight: var(--weight-medium);
+}
+
+.tile-note .note-warn {
+  color: var(--warn-ink);
+  font-weight: var(--weight-medium);
+}
+
+.tile-note .note-crit {
+  color: var(--crit-ink);
+  font-weight: var(--weight-medium);
+}
+
+.tile-note .note-old {
+  color: var(--warn-ink);
+}
+
 .state-scanning .value,
 .state-scanning .spark {
   opacity: 0.3;

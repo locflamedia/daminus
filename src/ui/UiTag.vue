@@ -1,6 +1,6 @@
 <!--
   Tag, from the board "Components": a 22 px, radius 6 label for a fact about a project
-  (Laravel 11, Postgres 16, pm2), where a chip is a state. An optional 6 px swatch before
+  (Laravel 11, Postgres 16, pm2), where a chip is a state. An optional 6 px dot before
   the word carries the technology's own colour, passed as a CSS colour by the caller (brand
   colours are data, not tokens). `mono` is for keys and names you could paste (DB_HOST);
   `plain` is the white tag for use on a grey well.
@@ -51,6 +51,6 @@ withDefaults(defineProps<{ swatch?: string; mono?: boolean; plain?: boolean }>()
   flex: none;
   width: 6px;
   height: 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-full);
 }
 </style>
