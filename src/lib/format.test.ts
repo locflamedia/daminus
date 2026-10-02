@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatClock,
   formatDate,
+  formatDateLong,
   formatDateTime,
   formatDelta,
   formatDuration,
@@ -62,7 +63,7 @@ describe('formatMeasure', () => {
 describe('formatDelta', () => {
   it('always signs a change', () => {
     expect(formatDelta(1.1 * GB, 'bytes', 'en').text).toBe('+1.1 GB')
-    expect(formatDelta(-0.4 * GB, 'bytes', 'en').text).toBe('-410 MB')
+    expect(formatDelta(-0.4 * GB, 'bytes', 'en').text).toBe('\u2212410 MB')
     expect(formatDelta(3, 'count', 'en').text).toBe('+3')
     expect(formatDelta(0, 'count', 'en').text).toBe('0')
   })
@@ -94,8 +95,13 @@ describe('dates and clock time', () => {
   })
 
   it('writes a day per language', () => {
-    expect(formatDate(at, 'en')).toBe('Sep 26')
+    expect(formatDate(at, 'en')).toBe('26 Sep')
     expect(formatDate(at, 'vi')).toBe('26/9')
+  })
+
+  it('spells the month out for a sentence read aloud', () => {
+    expect(formatDateLong(at, 'en')).toBe('26 September')
+    expect(formatDateLong(at, 'vi')).toBe('26 tháng 9')
   })
 
   it('accepts an ISO timestamp from the core', () => {
