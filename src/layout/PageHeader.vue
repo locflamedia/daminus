@@ -1,0 +1,67 @@
+<script setup lang="ts">
+defineProps<{
+  title: string
+  /** Scan number and age, e.g. `Scan #12 · today 13:42`. */
+  meta?: string
+}>()
+</script>
+
+<template>
+  <header class="page-header">
+    <div class="titles">
+      <b class="title">{{ title }}</b>
+      <span v-if="meta" class="meta">{{ meta }}</span>
+    </div>
+    <span class="grow" />
+    <slot name="actions" />
+  </header>
+</template>
+
+<style scoped>
+.page-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: none;
+  height: 72px;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.title {
+  font-size: var(--text-15);
+  font-weight: var(--weight-medium);
+}
+
+.meta {
+  color: var(--ink-3);
+  font-size: var(--text-12);
+  white-space: nowrap;
+}
+
+.grow {
+  flex-grow: 1;
+}
+
+/* Narrow window: a shorter bar with the title and its meta on one line. */
+[data-range='narrow'] .page-header {
+  height: 64px;
+}
+
+[data-range='narrow'] .titles {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 10px;
+}
+
+[data-range='narrow'] .title {
+  font-size: 18px;
+  letter-spacing: var(--track-20);
+}
+</style>
