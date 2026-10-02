@@ -1,23 +1,22 @@
-// The one scan store. Hydrates from `scan_status()` on mount or reload, then
-// follows `scan://event`: events of an ended or unknown scan are dropped,
-// events already folded into the hydrated status (`seq < next_seq`) are
-// skipped, and a gap in `seq` triggers a fresh hydrate.
+// The one scan store (the report lives in `useReportStore`). Hydrates from `scan_status()`
+// on mount or reload, then follows `scan://event`: events of an ended or unknown scan are
+// dropped, events already folded into the hydrated status (`seq < next_seq`) are skipped,
+// and a gap in `seq` triggers a fresh hydrate.
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef } from 'vue'
+import { computed, ref } from 'vue'
 import {
   type AppError,
   type HostProgress,
-  type Report,
   type ScanEvent,
   type ScanRun,
   type ScanScope,
   isAppError,
   onScanEvent,
-  reportLatest,
   scanStart,
   scanStatus,
   scanStop,
 } from '@/api'
+import { useReportStore } from './report'
 
 export type ScanEnd = 'done' | 'cancelled' | 'failed'
 
@@ -61,8 +60,8 @@ function isFinal(e: ScanEvent): boolean {
 }
 
 export const useScanStore = defineStore('scan', () => {
+  const reports = useReportStore()
   const run = ref<ScanRun | null>(null)
-  const report = shallowRef<Report | null>(null)
   const error = ref<AppError | null>(null)
   const lastEnd = ref<ScanEnd | null>(null)
   const scanning = computed(() => run.value !== null)
@@ -70,6 +69,8 @@ export const useScanStore = defineStore('scan', () => {
   const ended = new Set<string>()
   /** Events that arrived while a hydrate was in flight, replayed after it. */
   let buffered: ScanEvent[] | null = null
+  /** The read in flight: a second caller waits for the same answer instead of returning early. */
+  let reading: Promise<void> | null = null
   let unlisten: (() => void) | null = null
 
   function fail(e: unknown) {
@@ -77,20 +78,12 @@ export const useScanStore = defineStore('scan', () => {
     if (!isAppError(e)) console.error(e)
   }
 
-  async function loadReport() {
-    try {
-      report.value = await reportLatest()
-    } catch (e) {
-      fail(e)
-    }
-  }
-
   function finish(e: ScanEvent) {
     ended.add(e.scan_id)
     if (run.value?.scan_id === e.scan_id) run.value = null
     if (e.kind === 'done') {
       lastEnd.value = 'done'
-      void loadReport()
+      void reports.loadLatest()
     } else if (e.kind === 'cancelled') {
       lastEnd.value = 'cancelled'
     } else if (e.kind === 'failed') {
@@ -100,22 +93,28 @@ export const useScanStore = defineStore('scan', () => {
   }
 
   /** Reads the scan in progress; events arriving meanwhile (and `pending`)
-   * are replayed after it. */
-  async function hydrate(pending: ScanEvent[] = []) {
-    if (buffered) {
-      buffered.push(...pending)
-      return
+   * are replayed after it. A call made while a read is in flight joins that read, so every
+   * caller resumes only once the status is known. */
+  function hydrate(pending: ScanEvent[] = []): Promise<void> {
+    if (reading) {
+      buffered?.push(...pending)
+      return reading
     }
     buffered = pending
-    try {
-      const status = await scanStatus()
-      run.value = status && !ended.has(status.scan_id) ? status : null
-    } catch (e) {
-      fail(e)
-    }
-    const replay = buffered
-    buffered = null
-    for (const e of replay) handle(e, true)
+    reading = (async () => {
+      try {
+        const status = await scanStatus()
+        run.value = status && !ended.has(status.scan_id) ? status : null
+      } catch (e) {
+        fail(e)
+      }
+      // Cleared before the replay: an event that needs another read must be able to start one.
+      reading = null
+      const replay = buffered ?? []
+      buffered = null
+      for (const e of replay) handle(e, true)
+    })()
+    return reading
   }
 
   function handle(e: ScanEvent, replaying = false) {
@@ -147,7 +146,7 @@ export const useScanStore = defineStore('scan', () => {
   /** Subscribes once, then reads the live scan and the saved report. */
   async function init() {
     if (!unlisten) unlisten = await onScanEvent((e) => handle(e))
-    await Promise.all([hydrate(), loadReport()])
+    await Promise.all([hydrate(), reports.loadLatest()])
   }
 
   function dispose() {
@@ -177,5 +176,5 @@ export const useScanStore = defineStore('scan', () => {
     await hydrate()
   }
 
-  return { run, report, error, lastEnd, scanning, init, dispose, hydrate, start, stop, loadReport }
+  return { run, error, lastEnd, scanning, init, dispose, hydrate, start, stop }
 })

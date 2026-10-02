@@ -19,7 +19,16 @@ export default defineConfig({
     host: 'localhost',
     watch: { ignored: ['**/src-tauri/**', '**/crates/**', '**/target/**'] },
   },
+  // vue-i18n's feature flags, set explicitly so the bundle does not warn about them. Message
+  // compilation is JIT without `eval`, which the strict CSP (no unsafe-eval) requires.
+  define: {
+    __VUE_I18N_FULL_INSTALL__: true,
+    __VUE_I18N_LEGACY_API__: false,
+    __INTLIFY_PROD_DEVTOOLS__: false,
+  },
   build: {
     target: 'safari16',
+    // Never inline assets as data: URIs; the CSP allows `font-src 'self'` only.
+    assetsInlineLimit: 0,
   },
 })

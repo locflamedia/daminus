@@ -1,0 +1,158 @@
+<!--
+  Chip morph, from the board "Motion": the chip of a project's state changes ("Scanning" to
+  "Needs a look") by growing or shrinking its width and changing its fill in 250 ms while the
+  two labels cross-fade in 200 ms. It looks like `UiChip`; use it where a chip's word changes
+  in place. The first draw sets the width without animating, and Reduce Motion keeps the
+  fade but drops the width change. A hidden copy of the label measures the natural width.
+-->
+<script setup lang="ts">
+import { nextTick, onMounted, ref, watch } from 'vue'
+import UiIcon from './UiIcon.vue'
+import UiSpinner from './UiSpinner.vue'
+import type { ChipTone } from './UiChip.vue'
+import type { IconName } from './icon-paths'
+
+const props = withDefaults(
+  defineProps<{ tone?: ChipTone; icon?: IconName; busy?: boolean; label: string }>(),
+  { tone: 'neutral', icon: undefined, busy: false },
+)
+
+const sizer = ref<HTMLElement>()
+const width = ref<number>()
+const ready = ref(false)
+
+function measure() {
+  const w = sizer.value?.offsetWidth
+  if (w) width.value = w
+}
+
+onMounted(async () => {
+  measure()
+  await nextTick()
+  ready.value = true
+})
+
+watch(
+  () => [props.label, props.icon, props.busy],
+  () => nextTick(measure),
+)
+</script>
+
+<template>
+  <span
+    class="chip"
+    :class="[`chip-${tone}`, { ready }]"
+    :style="width ? { width: `${width}px` } : undefined"
+  >
+    <span ref="sizer" class="sizer" aria-hidden="true">
+      <UiSpinner v-if="busy" :size="12" />
+      <UiIcon v-else-if="icon" :name="icon" :size="12" />{{ label }}
+    </span>
+    <Transition name="face">
+      <span :key="`${label}|${icon ?? ''}|${busy}`" class="face">
+        <UiSpinner v-if="busy" :size="12" />
+        <UiIcon v-else-if="icon" :name="icon" :size="12" />{{ label }}
+      </span>
+    </Transition>
+  </span>
+</template>
+
+<style scoped>
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: var(--h-chip);
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.chip.ready {
+  transition:
+    width var(--dur-slide) var(--ease-out),
+    background-color var(--dur-slide) var(--ease-out),
+    color var(--dur-slide) var(--ease-out);
+}
+
+.sizer,
+.face {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0 var(--space-2);
+}
+
+/* The measuring copy takes no space of its own: the chip's width is the measured one. */
+.sizer {
+  position: absolute;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.face {
+  position: absolute;
+  left: 0;
+  height: 100%;
+}
+
+.face-enter-active,
+.face-leave-active {
+  transition:
+    opacity var(--dur-state) var(--ease-state),
+    filter var(--dur-state) var(--ease-state);
+}
+
+.face-enter-from,
+.face-leave-to {
+  opacity: 0;
+  filter: blur(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .face-enter-from,
+  .face-leave-to {
+    filter: none;
+  }
+}
+
+.chip-ok {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
+}
+
+.chip-warn {
+  background: var(--warn-soft);
+  color: var(--warn-ink);
+}
+
+.chip-crit {
+  background: var(--crit-soft);
+  color: var(--crit-ink);
+}
+
+.chip-info {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.chip-neutral {
+  background: var(--surface-1);
+  color: var(--ink-3);
+}
+
+.chip-plain {
+  background: var(--surface-0);
+  color: var(--ink-3);
+}
+
+.chip-plain-ok {
+  background: var(--surface-0);
+  color: var(--ok-ink);
+}
+</style>

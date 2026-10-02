@@ -3,6 +3,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Report, ScanEvent, ScanEventBody, ScanRun } from '@/api'
 import { clearMocks, emitScanEvent, mockCommands } from '@/api/testing'
+import { useReportStore } from './report'
 import { useScanStore } from './scan'
 
 const STARTED_AT = '2026-09-26T13:42:00Z'
@@ -104,7 +105,7 @@ describe('useScanStore', () => {
     const store = useScanStore()
     await store.init()
     expect(store.scanning).toBe(false)
-    expect(store.report?.seq).toBeUndefined()
+    expect(useReportStore().latest?.seq).toBeUndefined()
 
     await store.start()
     expect(store.run?.scan_id).toBe(backend.id)
@@ -142,7 +143,7 @@ describe('useScanStore', () => {
     await flush()
     expect(store.scanning).toBe(false)
     expect(store.lastEnd).toBe('done')
-    expect(store.report?.seq).toBe(1)
+    expect(useReportStore().latest?.seq).toBe(1)
   })
 
   it('hydrates after a reload mid-scan and skips events already counted', async () => {
@@ -210,6 +211,26 @@ describe('useScanStore', () => {
     await Promise.all([store.start(), store.start()])
     expect(backend.starts).toBe(2)
     expect(store.run?.scan_id).toBe(backend.id)
+  })
+
+  it('a second hydrate waits for the read already in flight', async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    backend.status = queuedRun(backend.id, ['vps-a'])
+    mockCommands(async (cmd) => {
+      if (cmd === 'scan_status') await gate
+      return backend.handler(cmd)
+    })
+    const store = useScanStore()
+    void store.hydrate()
+    let joined = false
+    const second = store.hydrate().then(() => (joined = true))
+    await flush()
+    expect(joined).toBe(false)
+    expect(store.scanning).toBe(false)
+    release()
+    await second
+    expect(store.scanning).toBe(true)
   })
 
   it('keeps an AppError from a rejected command', async () => {

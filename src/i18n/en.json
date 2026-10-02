@@ -113,5 +113,291 @@
     "scanNow": "Scan now",
     "open": "Open Daminus",
     "quit": "Quit"
+  },
+  "app": {
+    "name": "Daminus"
+  },
+  "nav": {
+    "search": "Search",
+    "overview": "Overview",
+    "history": "Scan history",
+    "projects": "Projects",
+    "servers": "Servers",
+    "issues": "{n} issue | {n} issues",
+    "unreachable": "Unreachable",
+    "settings": "Settings",
+    "back": "Back",
+    "foldSidebar": "Fold the sidebar",
+    "unfoldSidebar": "Unfold the sidebar",
+    "primary": "Main navigation"
+  },
+  "settingsNav": {
+    "title": "Settings",
+    "general": "General",
+    "appearance": "Appearance",
+    "scan": "Scan",
+    "hosts": "Hosts",
+    "ai": "AI providers",
+    "data": "Data",
+    "about": "About"
+  },
+  "theme": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "label": "Language"
+  },
+  "project": {
+    "breadcrumb": "Projects",
+    "tabs": {
+      "overview": "Overview",
+      "disk": "Disk",
+      "database": "Database",
+      "containers": "Containers",
+      "security": "Security",
+      "history": "History"
+    },
+    "tabsLabel": "Project sections",
+    "needsLook": "Needs a look",
+    "scanMeta": "scan #{seq}, {time}"
+  },
+  "server": {
+    "breadcrumb": "Servers"
+  },
+  "toolbar": {
+    "scanAll": "Scan all",
+    "stop": "Stop",
+    "scanMeta": "Scan #{seq} · {when}",
+    "scanMetaRunning": "Scan #{seq} · running · {elapsed}",
+    "noScan": "No scans yet",
+    "hostsOf": "{done} of {total} hosts",
+    "urlChecks": "URL checks",
+    "orderHolds": "Card order holds until the scan ends",
+    "scan": "Scan"
+  },
+  "overview": {
+    "summary": "{issues} across {projects} and {servers}",
+    "clear": "No issues across {projects} and {servers}",
+    "projectCount": "{n} project | {n} projects",
+    "serverCount": "{n} server | {n} servers",
+    "crit": "{n} critical",
+    "warn": "{n} warning | {n} warnings",
+    "expected": "{n} expected",
+    "reviewDue": "{n} review due",
+    "firstScan": "No scans yet. Press Scan all to read your servers.",
+    "results": "Results",
+    "hosts": "Hosts"
+  },
+  "scanHost": {
+    "queued": "queued",
+    "connecting": "connecting…",
+    "agent_wait": "waiting for your SSH agent…",
+    "running": "reading…",
+    "reached": "done",
+    "partial": "partial",
+    "unreachable": "unreachable",
+    "auth_failed": "key refused",
+    "host_key_unknown": "host key unknown",
+    "host_key_changed": "host key changed",
+    "timeout": "timed out"
+  },
+  "severity": {
+    "crit": "Critical",
+    "warn": "Warning",
+    "info": "Info",
+    "ok": "All clear",
+    "expected": "Expected",
+    "stale": "Not re-checked since #{seq}"
+  },
+  "unknown": {
+    "needs_perm": "Needs permission",
+    "timeout": "Timed out",
+    "unreachable": "Unreachable",
+    "missing": "Not found",
+    "unsupported": "Not supported"
+  },
+  "delta": {
+    "new": "New",
+    "fixed": "Fixed",
+    "still": "Open for {n} scans",
+    "changed": "Changed"
+  },
+  "time": {
+    "justNow": "just now",
+    "minAgo": "{n} min ago",
+    "today": "today {time}",
+    "yesterday": "yesterday {time}",
+    "daysAgo": "{n} d ago"
+  },
+  "units": {
+    "ms": "ms",
+    "s": "s",
+    "min": "min",
+    "h": "h",
+    "d": "d",
+    "files": "files"
+  },
+  "issue": {
+    "sys": {
+      "load": "CPU load is {value}",
+      "mem": "Only {value} of memory is free",
+      "swap": "Swap is {value} full",
+      "psi": "Processes are waiting for CPU, memory or disk",
+      "oom": "{n} process was killed for lack of memory | {n} processes were killed for lack of memory"
+    },
+    "disk": {
+      "fs": "Disk {target} is running full",
+      "path": "{target} takes {value}"
+    },
+    "logs": {
+      "big": "Large log file {target}"
+    },
+    "docker": {
+      "df": "Docker uses {value}",
+      "compose": "Containers of {target} need a look"
+    },
+    "pm2": {
+      "app": "pm2 app {target} needs a look"
+    },
+    "db": {
+      "size": "Database {target} is {value}"
+    },
+    "sec": {
+      "miner": "Possible crypto miner: {target}",
+      "upload_php": "PHP file in uploads: {target}",
+      "tmp_exec": "Executable in temp: {target}",
+      "preload": "ld.so.preload has content",
+      "ports": "Port {target} is open to the internet",
+      "recent_change": "Code files changed recently in {target}"
+    },
+    "url": {
+      "http": "{target} is not answering as expected",
+      "tls": "The certificate of {target} expires in {value}",
+      "exposed": "{target} serves a private file"
+    },
+    "fallback": "{check} needs a look"
+  },
+  "error": {
+    "ssh_auth": "SSH did not accept your key. Make sure it is loaded in your agent and added on the server.",
+    "ssh_host_key_unknown": "This server is not in known_hosts yet. Check its fingerprint, then connect once from Terminal to trust it.",
+    "ssh_host_key_changed": "The server's host key changed. Do not continue until you know why.",
+    "ssh_unreachable": "Couldn’t reach the server over SSH. Check the address and your network.",
+    "timeout": "The server did not answer in time.",
+    "scan_in_progress": "A scan is already running.",
+    "nothing_to_scan": "There is nothing to scan. Add a host or a project first.",
+    "local_network_down": "This Mac looks offline. Check your network and scan again.",
+    "config_invalid": "Couldn’t read {path}. Fix the file or move it aside.",
+    "config_invalid_at": "Couldn’t read {path} at line {line}. Fix the file or move it aside.",
+    "config_from_newer_version": "{path} was written by a newer Daminus (version {version}). Update Daminus to edit it.",
+    "config_changed_on_disk": "{path} changed on disk. Reload it before saving.",
+    "store_busy": "Daminus is busy with another operation. Try again in a moment.",
+    "io": "Couldn’t read or write {path}.",
+    "secret_access_denied": "Daminus has no access to the key stored in Keychain.",
+    "provider_auth": "The AI provider rejected the key. Check it in Settings.",
+    "provider_rate_limit": "The AI provider is limiting requests. Try again in a minute.",
+    "provider_unavailable": "The AI provider is not reachable right now.",
+    "schema_invalid": "The AI answer was not in the expected format.",
+    "internal": "Something went wrong inside Daminus. The log has the details."
+  },
+  "tooltip": {
+    "issues": "{name} · {count}"
+  },
+  "ui": {
+    "close": "Close",
+    "dismiss": "Dismiss",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "command": {
+      "name": "Command",
+      "removed": "{n} hidden or control character was removed. | {n} hidden or control characters were removed.",
+      "riskTitle": "Check before you run it",
+      "risk": {
+        "pipeToShell": "It runs text that another command produces, such as a download piped into a shell, so you never see what runs.",
+        "base64Decode": "It decodes hidden text. Check what the text turns into before you run it.",
+        "remove": "It deletes files. Check the path before you run it.",
+        "destructive": "It can overwrite a disk or change owners and permissions across a whole folder. Check the target before you run it."
+      }
+    },
+    "failed": "Failed",
+    "copyPath": "Copy path",
+    "copyText": "Copy {text}",
+    "openInBrowser": "Open {site} in the browser",
+    "ssl": "SSL {days}",
+    "sslExpired": "SSL expired",
+    "scanNumber": "Scan #{seq}",
+    "moreActions": "More actions",
+    "emptyNone": "No value",
+    "emptyPermission": "Needs permission",
+    "emptyNotSetUp": "Not set up",
+    "progress": "{n}% done",
+    "unreachable": "Unreachable",
+    "search": "Search",
+    "clear": "Clear",
+    "send": "Send",
+    "sending": "Sending",
+    "palette": {
+      "label": "Search projects, servers and commands",
+      "projects": "Projects",
+      "servers": "Servers",
+      "commands": "Commands",
+      "empty": "No match for \"{query}\"",
+      "open": "open",
+      "hint": "Type to search"
+    },
+    "scanStep": {
+      "done": "Done",
+      "running": "Running",
+      "waiting": "Waiting",
+      "skipped": "Skipped",
+      "failed": "Failed"
+    },
+    "thread": {
+      "you": "You",
+      "ai": "Daminus AI"
+    },
+    "finding": {
+      "critical": "Critical",
+      "warning": "Needs a look",
+      "info": "Note",
+      "newIn": "new in #{seq}",
+      "evidence": "Evidence",
+      "fix": "Fix",
+      "explaining": "Explaining",
+      "known": "Known",
+      "resolved": "Resolved",
+      "expand": "Show details",
+      "collapse": "Hide details"
+    },
+    "payload": {
+      "redacted": "{n} value redacted | {n} values redacted",
+      "sentTo": "to {provider}",
+      "label": "The exact JSON that is sent"
+    },
+    "provider": {
+      "connected": "Connected"
+    },
+    "card": {
+      "healthy": "Healthy",
+      "scanning": "Scanning",
+      "open": "Open",
+      "passed": "{ok} of {all} passed",
+      "allPassed": "All {n} checks passed",
+      "more": "+{n}"
+    },
+    "metric": {
+      "normal": "Normal",
+      "warning": "Warning",
+      "stale": "Stale",
+      "needsPermission": "Needs permission",
+      "scanning": "Reading"
+    },
+    "empty": {
+      "title": "Nothing here yet"
+    }
   }
 }

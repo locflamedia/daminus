@@ -1,0 +1,563 @@
+/*
+ * Design tokens. Every value comes from the canvas boards Color, Color · Dark, Typography,
+ * Space, shape and layout, and Motion; components reference tokens only.
+ * Light is the default. Dark applies for [data-theme='dark'], and for the system setting
+ * (no data-theme, or 'system') when the OS prefers dark. The dark set appears twice (media
+ * query and attribute) and a test keeps the two copies identical.
+ */
+:root {
+  color-scheme: light;
+
+  /* Ink, ranked by how much reading they carry. Below ink-4 is never text. */
+  --ink: #1b1d2a;
+  --ink-2: #3f4356;
+  --ink-3: #5f6478;
+  --ink-4: #80859a;
+  --ink-5: #a3a7b9;
+
+  /* Surfaces. card = surface-0, well = surface-1, well-2 = surface-2. */
+  --surface-0: #ffffff;
+  --surface-1: #f4f5fa;
+  --surface-2: #eceef6;
+  --surface-3: #e6e8f1;
+  --base: #eceef8;
+  --page: #f8f8fc;
+  --page-sheet: #f2f3f8;
+  --btn: #1c1d24;
+  --btn-ink: #ffffff;
+  /* Hover and pressed fills of the buttons, as drawn on the board "Actions". */
+  --btn-hover: #33343e;
+  --secondary-hover: #f9fafc;
+  --danger-hover: #f8d8e3;
+  --danger-press: #f4cbd9;
+  --code: #1c1d24;
+  --code-ink: #c9cee0;
+  --code-dim: #80859a;
+  --code-key: #9fb0ff;
+  --code-str: #f4b5cb;
+  --code-hl: #f4a6bf;
+  --code-ok: #a6e3b8;
+  --code-warn: #f4c98a;
+  /* Accent text on the ink fill of toasts and tooltips (the dark fill inverts, so it flips). */
+  --on-btn-accent: #9fb0ff;
+
+  /* Accent: focus ring, active nav mark, running scans, meters, chart lines. */
+  --accent: #4f6bed;
+  --accent-ink: #3a55d6;
+  --accent-ink-hover: #2b43b5;
+  --accent-soft: #e9edfe;
+  --accent-mid: #b9c5fa;
+
+  /* Status triads: solid (dots, bars, icons), ink (text), soft (fill behind text). */
+  --ok-solid: #1c8f55;
+  --ok-ink: #146b40;
+  --ok-soft: #e3f5eb;
+  --warn-solid: #b96c0b;
+  --warn-ink: #8f5207;
+  --warn-soft: #fdf0dc;
+  --crit-solid: #d2436a;
+  --crit-ink: #b42f57;
+  --crit-soft: #fce7ef;
+  --info-ink: var(--accent-ink);
+  --info-soft: var(--accent-soft);
+  --crit-halo: rgba(210, 67, 106, 0.45);
+  /* The first 88 px of a finding or status card fades from its severity into the card. */
+  --card-wash-crit: #fff1f5;
+  --card-wash-warn: #fff7ec;
+  --card-wash-info: #f3f5ff;
+  --card-wash-ok: var(--ok-soft);
+
+  /* Roles on a topology node (FE, BE, DB, worker), as the Overview boards colour them. */
+  /* White on a solid status fill or a tint (count badge, project tile). */
+  --on-solid: #ffffff;
+  --role-fe: #3a55d6;
+  --role-be: #6a4fc4;
+  --role-db: #146b40;
+  --role-worker: #b0487a;
+  --node-bg: var(--surface-0);
+  /* The project tile: a two-stop tint at 135 degrees, white mark on top. */
+  --tint-amber-1: #f5c572;
+  --tint-amber-2: #c98416;
+  --tint-blue-1: #9db0ff;
+  --tint-blue-2: #4f6bed;
+  --tint-lilac-1: #c9b6f7;
+  --tint-lilac-2: #8b6fe0;
+  --tint-rose-1: #f28ba8;
+  --tint-rose-2: #d2436a;
+  --tint-grey-1: #d6d9e4;
+  --tint-grey-2: #9ea3b7;
+
+  /* Ambient ground: three soft washes under a glass tray, then a white card. */
+  --wash-1: #a9b9f5;
+  --wash-2: #d2c2f4;
+  --wash-3: #f4c9dc;
+  --chart-accent-70: #8fa2ff;
+  --chart-lilac: #b9a6f2;
+  --chart-lilac-soft: #c9b6f7;
+  --chart-blush: #f2a7c3;
+  --chart-grey: #d6d9e4;
+  --chart-grey-soft: #e2e4ee;
+  --chart-amber: #c98416;
+  --chart-amber-soft: #f6d9a8;
+  --chart-rose-soft: #f3b8c9;
+  --chart-bar-old: #c9d2fa;
+  --chart-bar-top: #6f87f2;
+  --chart-issue-warn: #e9a23b;
+  --chart-issue-info: #a9b9f5;
+  --chart-knob: #ffffff;
+  --tile-1: #d2c2f4;
+  --tile-2: #c5cdf7;
+  --tile-3: #dce3ff;
+  --tile-grow: #f6d2a0;
+  --heat-ok: #c9ebd7;
+  --heat-warn: #f6d9a8;
+  --heat-crit: #f2b8ca;
+  --heat-none: #eceef6;
+  --strip-ok: #bfe3cf;
+  --strip-warn: #f2cf96;
+  --strip-crit: #efa8bf;
+  --strip-none: #e6e8f1;
+  --hatch-1: #e6e8f1;
+  --hatch-2: #f7f8fc;
+  --side-1: #dfe4fb;
+  --side-2: #efe6f9;
+  --side-3: #f6e4ec;
+  --tray: rgba(255, 255, 255, 0.5);
+  --blob: rgba(210, 194, 244, 0.45);
+  --side-search: rgba(255, 255, 255, 0.75);
+  --side-hover: rgba(255, 255, 255, 0.5);
+  --side-card: rgba(255, 255, 255, 0.72);
+  --side-line: rgba(95, 100, 120, 0.18);
+  --seg-track: rgba(236, 238, 246, 0.9);
+  --kbd-bg: var(--surface-2);
+  --kbd-on-btn: rgba(255, 255, 255, 0.14);
+  --kbd-on-glass: rgba(255, 255, 255, 0.6);
+  --skeleton-1: #e6e8f1;
+  --skeleton-2: #f4f5fa;
+
+  /* Elevation: no borders; tone first, then a soft shadow tinted with the navy of ink. */
+  --shadow-none: none;
+  --shadow-lift: 0 1px 2px rgba(40, 48, 90, 0.08);
+  --shadow-node: 0 1px 2px rgba(40, 48, 90, 0.06);
+  --shadow-seg: 0 1px 2px rgba(40, 48, 90, 0.1);
+  --shadow-control: 0 1px 2px rgba(40, 48, 90, 0.08), 0 4px 12px -6px rgba(40, 48, 90, 0.14);
+  --shadow-card: 0 1px 2px rgba(40, 48, 90, 0.04), 0 12px 32px -16px rgba(40, 48, 90, 0.2);
+  --shadow-lift-hover: 0 2px 4px rgba(40, 48, 90, 0.06), 0 18px 32px -16px rgba(40, 48, 90, 0.32);
+  --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 20px 44px -28px rgba(40, 48, 90, 0.25);
+  --shadow-overlay: 0 2px 6px rgba(40, 48, 90, 0.08), 0 40px 90px -40px rgba(40, 48, 90, 0.45);
+  --shadow-primary: 0 1px 2px rgba(28, 29, 36, 0.2), 0 8px 20px -8px rgba(28, 29, 36, 0.45);
+  --shadow-pop: 0 2px 6px rgba(40, 48, 90, 0.08), 0 24px 48px -24px rgba(40, 48, 90, 0.35);
+  --shadow-drawer: -1px 0 0 rgba(40, 48, 90, 0.04), -24px 0 48px -24px rgba(40, 48, 90, 0.28);
+  --shadow-panel: 0 1px 2px rgba(40, 48, 90, 0.08), 0 32px 80px -24px rgba(40, 48, 90, 0.45);
+  --focus-ring: 0 0 0 2px var(--accent);
+  /* Ink at 16% behind a sheet and 24% behind a blocking dialog. */
+  --scrim-sheet: rgba(27, 29, 42, 0.16);
+  --scrim-dialog: rgba(27, 29, 42, 0.24);
+
+  /* Type: Geist for everything you read, Geist Mono for what you could paste into a terminal. */
+  --font-sans: 'Geist', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --text-28: 28px;
+  --text-20: 20px;
+  --text-15: 15px;
+  --text-13: 13px;
+  --text-12: 12px;
+  --text-11: 11px;
+  --lh-28: 36px;
+  --lh-20: 24px;
+  --lh-15: 20px;
+  --lh-13: 20px;
+  --lh-12: 16px;
+  --lh-11: 16px;
+  --track-28: -0.028em;
+  --track-20: -0.02em;
+  --track-15: -0.01em;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Space: one 4 px grid. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* Radii nest: outer = inner + gap. tray = card 14 + 6. */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+
+  /* Fixed heights, so every row shares a baseline. */
+  --h-kbd: 18px;
+  --h-chip: 22px;
+  --h-control-sm: 28px;
+  --h-control: 32px;
+  --h-row: 40px;
+  --h-composer: 44px;
+  --h-status-row: 56px;
+
+  /* Layout. */
+  --sidebar-w: 248px;
+  --sidebar-w-medium: 216px;
+  --rail-w: 64px;
+  --gutter: var(--space-5);
+
+  /* Easing. Entering ease-out, moving ease-in-out, growing spring. Custom curves live here. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-drawer: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-settle: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-state: ease;
+
+  /* Durations. Seen many times a day: 0-200 ms. UI motion stays under 300 ms. */
+  --dur-instant: 0ms;
+  --dur-color: 120ms;
+  --dur-press: 140ms;
+  --dur-popover: 150ms;
+  --dur-state: 200ms;
+  --dur-sheet: 200ms;
+  --dur-toast: 240ms;
+  --dur-slide: 250ms;
+  --dur-sidebar: 240ms;
+  --dur-drawer: 300ms;
+  --dur-resort: 350ms;
+  --dur-enter: 560ms;
+  --dur-draw: 600ms;
+  --dur-track: 150ms;
+  --dur-check: 180ms;
+  --dur-knob: 220ms;
+  --dur-menu-close: 120ms;
+  --dur-gauge: 700ms;
+  --dur-bar: 500ms;
+  --dur-tween: 300ms;
+  --dur-fade: 300ms;
+  --dur-theme: 200ms;
+  --dur-toast-out: 200ms;
+  --dur-roll: 400ms;
+  --dur-lift: 200ms;
+  --dur-word: 60ms;
+  --dur-sheen: 1600ms;
+  --delay-sheen: 400ms;
+  --delay-tooltip: 400ms;
+  --stagger: 80ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --ink: #ecedf3;
+    --ink-2: #c5c8d6;
+    --ink-3: #9ea3b8;
+    --ink-4: #80859a;
+    --ink-5: #5e6377;
+
+    --surface-0: #1a1c26;
+    --surface-1: #222431;
+    --surface-2: #2a2d3b;
+    --surface-3: #2f3242;
+    --base: #101118;
+    --page: #101118;
+    --page-sheet: #101118;
+    --btn: #ecedf3;
+    --btn-ink: #101118;
+    --btn-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
+    --secondary-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+    --danger-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
+    --danger-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
+    --code: #0b0c11;
+    --code-ink: #c9cee0;
+    --code-dim: #80859a;
+    --code-key: #9fb0ff;
+    --code-str: #f4b5cb;
+    --code-hl: #f4a6bf;
+    --code-ok: #a6e3b8;
+    --code-warn: #f4c98a;
+    /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
+    --on-btn-accent: #3a55d6;
+
+    --accent: #7b91ff;
+    --accent-ink: #a3b2ff;
+    --accent-ink-hover: #a3b2ff;
+    --accent-soft: #252b4c;
+    /* The canvas draws no dark accent-mid; meters use the dark accent until it does. */
+    --accent-mid: #7b91ff;
+
+    --ok-solid: #3cc585;
+    --ok-ink: #7bdcac;
+    --ok-soft: #153327;
+    --warn-solid: #f0a64a;
+    --warn-ink: #f5c27e;
+    --warn-soft: #382a16;
+    --crit-solid: #ff6e96;
+    --crit-ink: #ff97b3;
+    --crit-soft: #3b1d29;
+    --info-ink: var(--accent-ink);
+    --info-soft: var(--accent-soft);
+    --crit-halo: rgba(210, 67, 106, 0.45);
+    --card-wash-crit: #2a1820;
+    --card-wash-warn: #2a2116;
+    --card-wash-info: #1c2033;
+    --on-solid: #ffffff;
+    --role-fe: #a3b2ff;
+    --role-be: #bba7ff;
+    --role-db: #7bdcac;
+    --role-worker: #f2a0c6;
+    --node-bg: var(--surface-2);
+    --tint-amber-1: #f5c572;
+    --tint-amber-2: #c98416;
+    --tint-blue-1: #9db0ff;
+    --tint-blue-2: #4f6bed;
+    --tint-lilac-1: #c9b6f7;
+    --tint-lilac-2: #8b6fe0;
+    --tint-rose-1: #f28ba8;
+    --tint-rose-2: #d2436a;
+    --tint-grey-1: #d6d9e4;
+    --tint-grey-2: #9ea3b7;
+
+    --wash-1: #a9b9f5;
+    --wash-2: #d2c2f4;
+    --wash-3: #f4c9dc;
+    --chart-accent-70: #5568c9;
+    --chart-lilac: #a791ee;
+    --chart-lilac-soft: #7e6bc0;
+    --chart-blush: #e58fb0;
+    --chart-grey: #3a3d4f;
+    --chart-grey-soft: #343748;
+    --chart-amber: #f0a64a;
+    --chart-amber-soft: #6b5224;
+    --chart-rose-soft: #7a3350;
+    --chart-bar-old: #36407a;
+    --chart-bar-top: #8da0ff;
+    --chart-issue-warn: #f0a64a;
+    --chart-issue-info: #6b7dd6;
+    --chart-knob: #ffffff;
+    --tile-1: #3b3463;
+    --tile-2: #2f3868;
+    --tile-3: #272d52;
+    --tile-grow: #5a4219;
+    --heat-ok: #1f4d39;
+    --heat-warn: #54401c;
+    --heat-crit: #5e2639;
+    --heat-none: #2a2d3b;
+    --strip-ok: #1f4d39;
+    --strip-warn: #54401c;
+    --strip-crit: #5e2639;
+    --strip-none: #2f3242;
+    --hatch-1: #2f3242;
+    --hatch-2: #222431;
+    --side-1: #191c2e;
+    --side-2: #1d1a2c;
+    --side-3: #241b27;
+    --tray: rgba(255, 255, 255, 0.5);
+    --blob: rgba(210, 194, 244, 0.45);
+    --side-search: rgba(34, 36, 49, 0.9);
+    --side-hover: rgba(255, 255, 255, 0.05);
+    --side-card: rgba(34, 36, 49, 0.85);
+    --side-line: rgba(255, 255, 255, 0.08);
+    --seg-track: rgba(34, 36, 49, 0.9);
+    --kbd-bg: var(--surface-2);
+    --kbd-on-btn: rgba(16, 17, 24, 0.1);
+    --kbd-on-glass: rgba(255, 255, 255, 0.1);
+    --skeleton-1: #2a2d3b;
+    --skeleton-2: #34374a;
+
+    --shadow-none: none;
+    --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-node: none;
+    --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+    --shadow-lift-hover:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 32px -16px rgba(0, 0, 0, 0.7);
+    --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -28px rgba(0, 0, 0, 0.5);
+    --shadow-overlay: 0 2px 6px rgba(0, 0, 0, 0.2), 0 40px 90px -40px rgba(0, 0, 0, 0.7);
+    --shadow-primary: none;
+    --shadow-pop: 0 2px 6px rgba(0, 0, 0, 0.2), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+    --shadow-drawer: -1px 0 0 rgba(255, 255, 255, 0.04), -24px 0 48px -24px rgba(0, 0, 0, 0.6);
+    --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
+    --focus-ring: 0 0 0 2px var(--accent);
+    --scrim-sheet: rgba(0, 0, 0, 0.4);
+    --scrim-dialog: rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --ink: #ecedf3;
+  --ink-2: #c5c8d6;
+  --ink-3: #9ea3b8;
+  --ink-4: #80859a;
+  --ink-5: #5e6377;
+
+  --surface-0: #1a1c26;
+  --surface-1: #222431;
+  --surface-2: #2a2d3b;
+  --surface-3: #2f3242;
+  --base: #101118;
+  --page: #101118;
+  --page-sheet: #101118;
+  --btn: #ecedf3;
+  --btn-ink: #101118;
+  --btn-hover: color-mix(in srgb, var(--btn) 90%, var(--btn-ink));
+  --secondary-hover: color-mix(in srgb, var(--surface-0) 50%, var(--surface-1));
+  --danger-hover: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%);
+  --danger-press: color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%);
+  --code: #0b0c11;
+  --code-ink: #c9cee0;
+  --code-dim: #80859a;
+  --code-key: #9fb0ff;
+  --code-str: #f4b5cb;
+  --code-hl: #f4a6bf;
+  --code-ok: #a6e3b8;
+  --code-warn: #f4c98a;
+  /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
+  --on-btn-accent: #3a55d6;
+
+  --accent: #7b91ff;
+  --accent-ink: #a3b2ff;
+  --accent-ink-hover: #a3b2ff;
+  --accent-soft: #252b4c;
+  /* The canvas draws no dark accent-mid; meters use the dark accent until it does. */
+  --accent-mid: #7b91ff;
+
+  --ok-solid: #3cc585;
+  --ok-ink: #7bdcac;
+  --ok-soft: #153327;
+  --warn-solid: #f0a64a;
+  --warn-ink: #f5c27e;
+  --warn-soft: #382a16;
+  --crit-solid: #ff6e96;
+  --crit-ink: #ff97b3;
+  --crit-soft: #3b1d29;
+  --info-ink: var(--accent-ink);
+  --info-soft: var(--accent-soft);
+  --crit-halo: rgba(210, 67, 106, 0.45);
+  --card-wash-crit: #2a1820;
+  --card-wash-warn: #2a2116;
+  --card-wash-info: #1c2033;
+  --on-solid: #ffffff;
+  --role-fe: #a3b2ff;
+  --role-be: #bba7ff;
+  --role-db: #7bdcac;
+  --role-worker: #f2a0c6;
+  --node-bg: var(--surface-2);
+  --tint-amber-1: #f5c572;
+  --tint-amber-2: #c98416;
+  --tint-blue-1: #9db0ff;
+  --tint-blue-2: #4f6bed;
+  --tint-lilac-1: #c9b6f7;
+  --tint-lilac-2: #8b6fe0;
+  --tint-rose-1: #f28ba8;
+  --tint-rose-2: #d2436a;
+  --tint-grey-1: #d6d9e4;
+  --tint-grey-2: #9ea3b7;
+
+  --wash-1: #a9b9f5;
+  --wash-2: #d2c2f4;
+  --wash-3: #f4c9dc;
+  --chart-accent-70: #5568c9;
+  --chart-lilac: #a791ee;
+  --chart-lilac-soft: #7e6bc0;
+  --chart-blush: #e58fb0;
+  --chart-grey: #3a3d4f;
+  --chart-grey-soft: #343748;
+  --chart-amber: #f0a64a;
+  --chart-amber-soft: #6b5224;
+  --chart-rose-soft: #7a3350;
+  --chart-bar-old: #36407a;
+  --chart-bar-top: #8da0ff;
+  --chart-issue-warn: #f0a64a;
+  --chart-issue-info: #6b7dd6;
+  --chart-knob: #ffffff;
+  --tile-1: #3b3463;
+  --tile-2: #2f3868;
+  --tile-3: #272d52;
+  --tile-grow: #5a4219;
+  --heat-ok: #1f4d39;
+  --heat-warn: #54401c;
+  --heat-crit: #5e2639;
+  --heat-none: #2a2d3b;
+  --strip-ok: #1f4d39;
+  --strip-warn: #54401c;
+  --strip-crit: #5e2639;
+  --strip-none: #2f3242;
+  --hatch-1: #2f3242;
+  --hatch-2: #222431;
+  --side-1: #191c2e;
+  --side-2: #1d1a2c;
+  --side-3: #241b27;
+  --tray: rgba(255, 255, 255, 0.5);
+  --blob: rgba(210, 194, 244, 0.45);
+  --side-search: rgba(34, 36, 49, 0.9);
+  --side-hover: rgba(255, 255, 255, 0.05);
+  --side-card: rgba(34, 36, 49, 0.85);
+  --side-line: rgba(255, 255, 255, 0.08);
+  --seg-track: rgba(34, 36, 49, 0.9);
+  --kbd-bg: var(--surface-2);
+  --kbd-on-btn: rgba(16, 17, 24, 0.1);
+  --kbd-on-glass: rgba(255, 255, 255, 0.1);
+  --skeleton-1: #2a2d3b;
+  --skeleton-2: #34374a;
+
+  --shadow-none: none;
+  --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --shadow-node: none;
+  --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
+  --shadow-lift-hover:
+    0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 18px 32px -16px rgba(0, 0, 0, 0.7);
+  --shadow-tray: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 20px 44px -28px rgba(0, 0, 0, 0.5);
+  --shadow-overlay: 0 2px 6px rgba(0, 0, 0, 0.2), 0 40px 90px -40px rgba(0, 0, 0, 0.7);
+  --shadow-primary: none;
+  --shadow-pop: 0 2px 6px rgba(0, 0, 0, 0.2), 0 24px 48px -24px rgba(0, 0, 0, 0.7);
+  --shadow-drawer: -1px 0 0 rgba(255, 255, 255, 0.04), -24px 0 48px -24px rgba(0, 0, 0, 0.6);
+  --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.2), 0 32px 80px -24px rgba(0, 0, 0, 0.7);
+  --focus-ring: 0 0 0 2px var(--accent);
+  --scrim-sheet: rgba(0, 0, 0, 0.4);
+  --scrim-dialog: rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * Reduce motion is designed, not a global off: slides, draws, rolls and blur stop;
+ * colour and opacity changes stay at 120 ms so state is still clear.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-press: 0ms;
+    --dur-popover: var(--dur-color);
+    --dur-state: var(--dur-color);
+    --dur-sheet: var(--dur-color);
+    --dur-toast: var(--dur-color);
+    --dur-slide: 0ms;
+    --dur-sidebar: 0ms;
+    --dur-drawer: var(--dur-color);
+    --dur-resort: 0ms;
+    --dur-enter: 0ms;
+    --dur-draw: 0ms;
+    --dur-track: var(--dur-color);
+    --dur-check: 0ms;
+    --dur-knob: 0ms;
+    --dur-menu-close: var(--dur-color);
+    --dur-gauge: 0ms;
+    --dur-bar: 0ms;
+    --dur-tween: 0ms;
+    --dur-fade: var(--dur-color);
+    --dur-theme: 0ms;
+    --dur-toast-out: var(--dur-color);
+    --dur-roll: 0ms;
+    --dur-lift: var(--dur-color);
+    --dur-word: 0ms;
+    --stagger: 0ms;
+  }
+}

@@ -1,0 +1,315 @@
+/*
+ * Motion utilities, from the board "Motion in the app". Each one plays once, when its
+ * event happens (the element appears), never on a timer. Only transform and opacity move,
+ * plus stroke-dashoffset for drawings; blur appears only in the one-off reveal of new
+ * values. Durations are tokens, and reduced motion zeroes the ones that move (tokens.css),
+ * so these classes need no media query of their own except for loops.
+ */
+
+/* A card, row or block arrives: rise 8 px, unblur 3 px. Stagger with --d (see lib/motion.ts). */
+.m-enter {
+  animation: m-rise var(--dur-enter) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A host result lands: values unblur 3 px to 0 and rise 4 px in 200 ms. */
+.m-reveal {
+  animation: m-reveal var(--dur-state) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A chart line draws (needs pathLength="1" on the path); the area under it fades in. */
+.m-draw {
+  stroke-dasharray: 1;
+  animation: m-draw var(--dur-draw) var(--ease-in-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.m-fade-in {
+  animation: m-fade var(--dur-sheet) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Spinner: the scan's one loop, only on a host being read. */
+.m-spin {
+  transform-origin: center;
+  animation: m-spin 0.9s linear infinite;
+}
+
+/* Skeleton sheen while a value is awaited. */
+.m-shimmer {
+  background: linear-gradient(90deg, var(--skeleton-1), var(--skeleton-2), var(--skeleton-1));
+  background-size: 200% 100%;
+  animation: m-shimmer 1.3s ease-in-out infinite;
+}
+
+/* Critical dot: three halo pulses, then still. The only repeating motion on a card. */
+.m-halo {
+  animation: m-halo 2.2s var(--ease-out) 3;
+}
+
+/* A bar rises from its base (scaleY, 500 ms), 40 ms apart; --d carries the stagger. */
+.m-bar {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: m-bar var(--dur-bar) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A meter fill grows from its left edge. */
+.m-grow {
+  transform-origin: left;
+  animation: m-grow var(--dur-bar) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* The soft area under a drawn line fades in as the line finishes. */
+.m-fill {
+  animation: m-fade var(--dur-fade) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* An end dot or a gauge number settles after the line it belongs to. */
+.m-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: m-pop var(--dur-knob) var(--ease-pop) both;
+  animation-delay: var(--d, 0ms);
+}
+
+.m-late {
+  animation: m-late var(--dur-state) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/*
+ * AI thinking: a shimmer bar while the model works, then the words fade in 60 ms apart (set
+ * --d on each word, see lib/motion.ts wordDelay). Evidence rows follow the text.
+ */
+.m-think {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-soft) 0%,
+    var(--accent-mid) 40%,
+    var(--accent-soft) 80%
+  );
+  background-size: 200% 100%;
+  animation: m-shimmer 1.4s linear infinite;
+}
+
+.m-word {
+  display: inline-block;
+  animation: m-word var(--dur-state) var(--ease-out) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* A card that can be opened lifts 2 px on a pointer hover and its chevron nudges 3 px. */
+@media (hover: hover) {
+  .m-lift {
+    transition:
+      transform var(--dur-lift) var(--ease-out),
+      box-shadow var(--dur-lift) var(--ease-state);
+  }
+
+  .m-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift-hover);
+  }
+
+  .m-lift .m-nudge {
+    transition:
+      transform var(--dur-lift) var(--ease-out),
+      color var(--dur-lift) var(--ease-state);
+  }
+
+  .m-lift:hover .m-nudge {
+    transform: translateX(3px);
+    color: var(--ink);
+  }
+}
+
+/*
+ * Row actions: on a `.m-actions-host` (the row) the `.m-actions` inside it slide 4 px and
+ * fade in on hover, and are always shown while anything in the row has keyboard focus.
+ */
+.m-actions {
+  opacity: 0;
+  transform: translateX(4px);
+  transition:
+    opacity var(--dur-popover) var(--ease-state),
+    transform var(--dur-popover) var(--ease-out);
+}
+
+.m-actions-host:is(:hover, :focus-within) .m-actions {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes m-word {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes m-bar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes m-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes m-pop {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes m-late {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes m-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes m-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes m-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes m-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes m-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes m-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes m-halo {
+  0% {
+    box-shadow: 0 0 0 0 var(--crit-halo);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 7px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Blur and rise are off; the fade stays at the colour duration. */
+  .m-enter,
+  .m-reveal {
+    animation-name: m-fade;
+    animation-duration: var(--dur-color);
+    animation-delay: 0ms;
+  }
+
+  .m-draw {
+    animation: none;
+    stroke-dasharray: none;
+  }
+
+  /* Bars, fills and dots keep the end state; their durations are zero, the delay goes too. */
+  .m-bar,
+  .m-grow,
+  .m-fill,
+  .m-pop,
+  .m-late {
+    animation-delay: 0ms;
+  }
+
+  .m-spin,
+  .m-shimmer,
+  .m-think {
+    animation: none;
+  }
+
+  /* No slide, no blur: a quiet fade. */
+  .m-word {
+    animation-name: m-fade;
+    animation-delay: 0ms;
+  }
+
+  .m-actions {
+    transform: none;
+  }
+
+  .m-halo {
+    animation: none;
+    box-shadow: 0 0 0 3px var(--crit-halo);
+  }
+}

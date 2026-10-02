@@ -1,0 +1,222 @@
+<!--
+  Sheet, from the board "Feedback" (Sheet) and "Project sheet": for editing (add or edit a
+  project, settings, permission help). It rises over the window from the bottom edge: a glass
+  tray (radius 20 at the top) around a white card (14), the page behind dimmed by a 16 % ink
+  scrim. Header 56 (title 15/500, context 12 in ink-3, close 28), a body that scrolls while
+  header and footer stay, and a 64 px footer on surface-1: the destructive action on the left
+  (`footer-start`), cancel and save on the right (`footer-end`).
+
+  It does not close itself. Escape and the close button say `close` and the owner decides, so
+  a form with unsaved changes can ask once before it goes; a press on the scrim does nothing,
+  so a stray click never loses an edit. Focus moves in and stays in (Tab wraps) and returns to
+  where it was. It fills the nearest positioned ancestor (mount it at the window root).
+  200 ms: scale .98 and 8 px up with a fade; Reduce Motion keeps the fade.
+-->
+<script setup lang="ts">
+import { computed, ref, toRef, useId, useSlots } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useFocusTrap } from '@/lib/focus-trap'
+import UiIcon from './UiIcon.vue'
+
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    title: string
+    context?: string
+    /** A fixed, centred width (760px) instead of the full 88 % sheet. */
+    width?: string
+    closeLabel?: string
+  }>(),
+  { context: undefined, width: undefined, closeLabel: undefined },
+)
+
+const emit = defineEmits<{ close: [] }>()
+defineSlots<{
+  default?: () => unknown
+  'footer-start'?: () => unknown
+  'footer-end'?: () => unknown
+}>()
+
+const { t } = useI18n()
+const slots = useSlots()
+const titleId = useId()
+const panel = ref<HTMLElement>()
+
+useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
+
+const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'])
+</script>
+
+<template>
+  <Transition name="sheet" appear>
+    <div v-if="open" class="layer">
+      <div class="scrim" aria-hidden="true" />
+      <div
+        ref="panel"
+        class="tray"
+        :class="{ narrow: width }"
+        :style="width ? { width } : undefined"
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="titleId"
+      >
+        <div class="card">
+          <header class="head">
+            <h2 :id="titleId" class="title">{{ title }}</h2>
+            <span v-if="context" class="context">{{ context }}</span>
+            <button
+              type="button"
+              class="close"
+              :aria-label="closeLabel ?? t('ui.close')"
+              @click="emit('close')"
+            >
+              <UiIcon name="close" :size="14" />
+            </button>
+          </header>
+          <div class="body"><slot /></div>
+          <footer v-if="hasFooter" class="foot">
+            <slot name="footer-start" />
+            <span class="spacer" />
+            <slot name="footer-end" />
+          </footer>
+        </div>
+      </div>
+    </div>
+  </Transition>
+</template>
+
+<style scoped>
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim-sheet);
+}
+
+.tray {
+  position: absolute;
+  right: var(--space-8);
+  bottom: 0;
+  left: var(--space-8);
+  height: 88%;
+  padding: 6px 6px 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: color-mix(in srgb, var(--surface-0) 60%, transparent);
+  transform-origin: 50% 100%;
+}
+
+.tray.narrow {
+  right: auto;
+  left: 50%;
+  max-width: calc(100% - 2 * var(--space-8));
+  translate: -50% 0;
+}
+
+.tray:focus-visible {
+  box-shadow: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  background: var(--surface-0);
+}
+
+.head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--h-status-row);
+  padding: 0 var(--space-5);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--text-15);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--track-15);
+}
+
+.context {
+  color: var(--ink-3);
+  font-size: var(--text-12);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: var(--h-control-sm);
+  height: var(--h-control-sm);
+  margin-left: auto;
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--ink-3);
+  transition: background-color var(--dur-color) var(--ease-state);
+}
+
+.close:hover {
+  background: var(--surface-2);
+}
+
+.body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
+  padding: var(--space-2) var(--space-5);
+  overflow-y: auto;
+}
+
+.foot {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  height: 64px;
+  padding: 0 var(--space-5);
+  background: var(--surface-1);
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+/* Vue waits for the transition on the root element, so the fade lives there and carries the
+   scrim and the tray with it; the tray's own rise runs under it. */
+.sheet-enter-active,
+.sheet-leave-active {
+  transition: opacity var(--dur-sheet) var(--ease-out);
+}
+
+.sheet-enter-active .tray,
+.sheet-leave-active .tray {
+  transition: transform var(--dur-sheet) var(--ease-out);
+}
+
+.sheet-enter-from,
+.sheet-leave-to {
+  opacity: 0;
+}
+
+.sheet-enter-from .tray,
+.sheet-leave-to .tray {
+  transform: translateY(8px) scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-enter-from .tray,
+  .sheet-leave-to .tray {
+    transform: none;
+  }
+}
+</style>
