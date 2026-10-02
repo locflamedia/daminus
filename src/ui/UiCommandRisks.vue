@@ -16,6 +16,7 @@ const KEYS: Record<CommandRisk, string> = {
   'pipe-to-shell': 'pipeToShell',
   'base64-decode': 'base64Decode',
   remove: 'remove',
+  destructive: 'destructive',
 }
 </script>
 

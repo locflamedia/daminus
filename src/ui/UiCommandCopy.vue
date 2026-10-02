@@ -49,13 +49,15 @@ async function onCopy() {
         type="button"
         class="copy"
         :class="{ done: state === 'copied', failed: state === 'failed' }"
+        :aria-label="t('ui.copy')"
         @click="onCopy"
       >
-        <span class="face" :aria-hidden="state !== 'idle'">{{ t('ui.copy') }}</span>
-        <span class="face face-done" :aria-hidden="state !== 'copied'">
+        <!-- One name for the button; the status region below is the only announcer. -->
+        <span class="face" :data-on="state === 'idle'" aria-hidden="true">{{ t('ui.copy') }}</span>
+        <span class="face face-done" :data-on="state === 'copied'" aria-hidden="true">
           <UiIcon name="check" :size="12" :stroke="2" />{{ t('ui.copied') }}
         </span>
-        <span class="face" :aria-hidden="state !== 'failed'" :title="t('ui.copyFailed')">{{
+        <span class="face" :data-on="state === 'failed'" aria-hidden="true">{{
           t('ui.failed')
         }}</span>
       </button>
@@ -158,7 +160,7 @@ async function onCopy() {
     filter var(--dur-state) var(--ease-state);
 }
 
-.face[aria-hidden='false'] {
+.face[data-on='true'] {
   opacity: 1;
   filter: none;
 }

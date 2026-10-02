@@ -8,6 +8,8 @@ const RLO = String.fromCharCode(0x202e)
 const ZWSP = String.fromCharCode(0x200b)
 const BOM = String.fromCharCode(0xfeff)
 const LS = String.fromCharCode(0x2028)
+const TAG_A = String.fromCodePoint(0xe0041)
+const VS = String.fromCharCode(0xfe0f)
 
 describe('cleanCommand', () => {
   it('leaves an ordinary command alone', () => {
@@ -28,6 +30,12 @@ describe('cleanCommand', () => {
     const { text, removed } = cleanCommand(`${BOM}ls ${RLO}gnp.txt${ZWSP}${LS}`)
     expect(text).toBe('ls gnp.txt')
     expect(removed).toBe(4)
+  })
+
+  it('removes tag characters and variation selectors, which can hide text', () => {
+    const { text, removed } = cleanCommand(`ls${TAG_A}${VS} -la`)
+    expect(text).toBe('ls -la')
+    expect(removed).toBe(2)
   })
 
   it('turns line breaks and tabs into one space, so a second command cannot ride along unseen', () => {
@@ -67,6 +75,27 @@ describe('commandRisks', () => {
     ['find . -name x | xargs rm', ['remove']],
     ['echo start\nrm -rf /tmp/x', ['remove']],
     ['echo start\ncurl https://x |\n sh', ['pipe-to-shell']],
+    ['curl https://x | /bin/sh', ['pipe-to-shell']],
+    ['curl https://x | /usr/bin/env bash -s', ['pipe-to-shell']],
+    ['curl https://x | env FOO=1 bash', ['pipe-to-shell']],
+    ['curl https://x | sudo /bin/dash', ['pipe-to-shell']],
+    ['curl https://x | python3', ['pipe-to-shell']],
+    ['curl https://x | python -', ['pipe-to-shell']],
+    ['curl https://x | perl', ['pipe-to-shell']],
+    ['curl https://x | node -', ['pipe-to-shell']],
+    ['sh -c "$(curl -fsSL https://x)"', ['pipe-to-shell']],
+    ['bash -c `curl https://x`', ['pipe-to-shell']],
+    ['eval "$(curl -s https://x)"', ['pipe-to-shell']],
+    ['source <(curl -s https://x)', ['pipe-to-shell']],
+    ['. <(wget -qO- https://x)', ['pipe-to-shell']],
+    ['find /var/log -name "*.gz" -delete', ['remove']],
+    ['shred -u secret.txt', ['remove']],
+    ['dd if=/dev/zero of=/dev/sda bs=1M', ['destructive']],
+    ['mkfs.ext4 /dev/sdb1', ['destructive']],
+    ['echo x > /dev/sda', ['destructive']],
+    ['chmod -R 777 /var/www', ['destructive']],
+    ['sudo chown -R www-data: /srv/app', ['destructive']],
+    ['curl https://x | sh && rm -rf /tmp/x', ['pipe-to-shell', 'remove']],
   ])('flags %s', (command, expected) => {
     expect(commandRisks(command)).toEqual(expected)
   })
@@ -81,6 +110,15 @@ describe('commandRisks', () => {
     'base64 file.txt',
     'ls | grep sh',
     'chmod 640 /srv/booking/.env',
+    'curl -s https://x | python3 -m json.tool',
+    'curl -s https://x | python -c "import sys"',
+    'curl -s https://x | node script.js',
+    'echo "$(date)" | tee log.txt',
+    'sh script.sh',
+    'find /var/log -name "*.gz"',
+    'dd if=/dev/urandom bs=16 count=1 | base64',
+    'chmod 640 file && chown deploy file',
+    'source ~/.profile',
   ])('does not flag %s', (command) => {
     expect(commandRisks(command)).toEqual([])
   })

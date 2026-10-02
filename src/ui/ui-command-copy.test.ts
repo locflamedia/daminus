@@ -103,17 +103,30 @@ describe('UiCommandCopy', () => {
 
   it('goes through the clipboard wrapper, then reads Copied for 1.5 s and says copied', async () => {
     make('ssh-add ~/.ssh/id_ed25519')
-    const faces = () => wrapper!.findAll('.face').map((f) => f.attributes('aria-hidden'))
-    expect(faces()).toEqual(['false', 'true', 'true'])
+    const faces = () => wrapper!.findAll('.face').map((f) => f.attributes('data-on'))
+    expect(faces()).toEqual(['true', 'false', 'false'])
     await wrapper!.get('button.copy').trigger('click')
     await nextTick()
     expect(copyText).toHaveBeenCalledWith('ssh-add ~/.ssh/id_ed25519')
     expect(wrapper!.emitted('copied')).toEqual([['ssh-add ~/.ssh/id_ed25519']])
-    expect(faces()).toEqual(['true', 'false', 'true'])
+    expect(faces()).toEqual(['false', 'true', 'false'])
     expect(wrapper!.get('[role="status"]').text()).toBe('Copied')
     vi.advanceTimersByTime(1500)
     await nextTick()
-    expect(faces()).toEqual(['false', 'true', 'true'])
+    expect(faces()).toEqual(['true', 'false', 'false'])
+  })
+
+  it('has one accessible name in every state, and the status region is the only announcer', async () => {
+    make('ls')
+    const button = () => wrapper!.get('button.copy')
+    expect(button().attributes('aria-label')).toBe('Copy')
+    await button().trigger('click')
+    await nextTick()
+    expect(button().attributes('aria-label')).toBe('Copy')
+    expect(wrapper!.findAll('.face').every((f) => f.attributes('aria-hidden') === 'true')).toBe(
+      true,
+    )
+    expect(wrapper!.findAll('[role="status"]')).toHaveLength(1)
   })
 
   it('keeps its width: all three faces share one cell', () => {
