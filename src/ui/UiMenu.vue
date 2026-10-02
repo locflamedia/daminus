@@ -187,7 +187,7 @@ function apart(index: number): boolean {
         @click="pick(item)"
       >
         <span v-if="compact" class="tick">
-          <UiIcon v-if="item.checked" name="check" :size="14" />
+          <UiIcon v-if="item.checked" name="check" :size="14" :stroke="2" />
         </span>
         <UiIcon v-if="item.icon" :name="item.icon" :size="14" class="icon" />
         <span class="label">{{ item.label }}</span>
@@ -269,6 +269,10 @@ function apart(index: number): boolean {
 
 .compact .label {
   flex: 0 1 auto;
+}
+
+.tick .icon {
+  color: inherit;
 }
 
 .tick {

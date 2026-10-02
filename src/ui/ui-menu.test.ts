@@ -179,6 +179,8 @@ describe('UiMenu compact (project tabs)', () => {
     await open()
     expect(choices().map((r) => r.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true'])
     expect(choices()[2]?.querySelector('.tick .icon')).not.toBeNull()
+    // The tick is drawn at stroke 2, as the board "Narrow window" draws it.
+    expect(choices()[2]?.querySelector('.tick .icon')?.getAttribute('stroke-width')).toBe('2')
     expect(choices()[0]?.querySelector('.tick .icon')).toBeNull()
     expect(choices()[1]?.querySelector('.mark.warn')).not.toBeNull()
     expect(choices()[1]?.querySelector('.sr-only')?.textContent).toBe('Needs a look')

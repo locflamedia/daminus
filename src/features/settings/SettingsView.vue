@@ -1,28 +1,51 @@
-<!-- The Settings page frame: the section title, in the 20 px heading of the board. -->
+<!--
+  The Settings page frame: the section title in the 20 px heading of the board, and the line
+  under it that says what the section is for. The sections themselves are not built yet.
+-->
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { SETTINGS_SECTIONS } from '@/layout/settings-sections'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const route = useRoute()
 
 const section = computed(() => {
   const id = route.params.section
   return SETTINGS_SECTIONS.find((s) => s.id === id)?.id ?? 'general'
 })
+
+/** About has no line under its title on the boards. */
+const description = computed(() =>
+  te(`settingsNav.desc.${section.value}`) ? t(`settingsNav.desc.${section.value}`) : '',
+)
 </script>
 
 <template>
-  <h2 class="title">{{ t(`settingsNav.${section}`) }}</h2>
+  <header class="head">
+    <h2 class="title">{{ t(`settingsNav.${section}`) }}</h2>
+    <p v-if="description" class="sub">{{ description }}</p>
+  </header>
 </template>
 
 <style scoped>
-.title {
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   padding-top: 28px;
+  line-height: normal;
+}
+
+.title {
   font-size: var(--text-20);
   font-weight: var(--weight-medium);
   letter-spacing: var(--track-20);
+}
+
+.sub {
+  color: var(--ink-3);
+  font-size: var(--text-13);
 }
 </style>
