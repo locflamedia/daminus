@@ -69,6 +69,8 @@ export const useScanStore = defineStore('scan', () => {
   const ended = new Set<string>()
   /** Events that arrived while a hydrate was in flight, replayed after it. */
   let buffered: ScanEvent[] | null = null
+  /** The read in flight: a second caller waits for the same answer instead of returning early. */
+  let reading: Promise<void> | null = null
   let unlisten: (() => void) | null = null
 
   function fail(e: unknown) {
@@ -91,22 +93,28 @@ export const useScanStore = defineStore('scan', () => {
   }
 
   /** Reads the scan in progress; events arriving meanwhile (and `pending`)
-   * are replayed after it. */
-  async function hydrate(pending: ScanEvent[] = []) {
-    if (buffered) {
-      buffered.push(...pending)
-      return
+   * are replayed after it. A call made while a read is in flight joins that read, so every
+   * caller resumes only once the status is known. */
+  function hydrate(pending: ScanEvent[] = []): Promise<void> {
+    if (reading) {
+      buffered?.push(...pending)
+      return reading
     }
     buffered = pending
-    try {
-      const status = await scanStatus()
-      run.value = status && !ended.has(status.scan_id) ? status : null
-    } catch (e) {
-      fail(e)
-    }
-    const replay = buffered
-    buffered = null
-    for (const e of replay) handle(e, true)
+    reading = (async () => {
+      try {
+        const status = await scanStatus()
+        run.value = status && !ended.has(status.scan_id) ? status : null
+      } catch (e) {
+        fail(e)
+      }
+      // Cleared before the replay: an event that needs another read must be able to start one.
+      reading = null
+      const replay = buffered ?? []
+      buffered = null
+      for (const e of replay) handle(e, true)
+    })()
+    return reading
   }
 
   function handle(e: ScanEvent, replaying = false) {

@@ -108,6 +108,59 @@ describe('language switching', () => {
   })
 })
 
+describe('saving while a view transition defers the change', () => {
+  // The webviews of macOS and Windows run the update after the old state is captured, so the
+  // refs still hold the previous value when the choice is saved.
+  function deferTransitions() {
+    const pending: Array<() => void | Promise<void>> = []
+    Object.defineProperty(document, 'startViewTransition', {
+      configurable: true,
+      value: (update: () => void | Promise<void>) => {
+        pending.push(update)
+      },
+    })
+    return async () => {
+      for (const run of pending.splice(0)) await run()
+    }
+  }
+
+  afterEach(() => {
+    delete (document as unknown as Record<string, unknown>).startViewTransition
+  })
+
+  const saved = () => JSON.parse(localStorage.getItem('daminus.ui.v1') ?? '{}')
+
+  it('stores the theme that was chosen, not the one it replaces', async () => {
+    const flush = deferTransitions()
+    const store = fresh()
+    store.setTheme('dark')
+    expect(saved().theme).toBe('dark')
+    await flush()
+    store.setTheme('light')
+    expect(saved().theme).toBe('light')
+    await flush()
+  })
+
+  it('stores the language that was chosen, and keeps a theme chosen before it ran', async () => {
+    const flush = deferTransitions()
+    const store = fresh()
+    store.setTheme('dark')
+    store.setLanguage('vi')
+    expect(saved()).toMatchObject({ language: 'vi', theme: 'dark' })
+    await flush()
+    expect(store.language).toBe('vi')
+    expect(store.theme).toBe('dark')
+  })
+
+  it('opens in the saved choice after a restart', async () => {
+    const flush = deferTransitions()
+    fresh().setLanguage('vi')
+    await flush()
+    setI18nLocale('en')
+    expect(fresh().language).toBe('vi')
+  })
+})
+
 describe('sidebar fold', () => {
   it('is a rail only in the narrow range until the user chooses otherwise', () => {
     const store = fresh()

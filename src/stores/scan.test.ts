@@ -213,6 +213,26 @@ describe('useScanStore', () => {
     expect(store.run?.scan_id).toBe(backend.id)
   })
 
+  it('a second hydrate waits for the read already in flight', async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    backend.status = queuedRun(backend.id, ['vps-a'])
+    mockCommands(async (cmd) => {
+      if (cmd === 'scan_status') await gate
+      return backend.handler(cmd)
+    })
+    const store = useScanStore()
+    void store.hydrate()
+    let joined = false
+    const second = store.hydrate().then(() => (joined = true))
+    await flush()
+    expect(joined).toBe(false)
+    expect(store.scanning).toBe(false)
+    release()
+    await second
+    expect(store.scanning).toBe(true)
+  })
+
   it('keeps an AppError from a rejected command', async () => {
     mockCommands((cmd) => {
       if (cmd === 'scan_start') {

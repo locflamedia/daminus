@@ -28,14 +28,23 @@ export const useReportStore = defineStore('report', () => {
     return bySeq.get(seq)
   }
 
-  /** Reads the latest report from Rust; on failure the last good one stays. */
+  let requests = 0
+
+  /**
+   * Reads the latest report from Rust; on failure the last good one stays. When reads overlap
+   * (the first load at start-up and the one a finished scan asks for) only the one started
+   * last may set `latest`, so a slow older answer cannot replace a newer report.
+   */
   async function loadLatest() {
+    const mine = ++requests
     try {
       const report = await reportLatest()
       remember(report)
+      if (mine !== requests) return
       latest.value = report
       error.value = null
     } catch (e) {
+      if (mine !== requests) return
       if (isAppError(e)) error.value = e
       else console.error(e)
     }

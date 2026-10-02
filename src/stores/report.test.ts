@@ -50,6 +50,24 @@ describe('useReportStore', () => {
     expect(store.error).toBeNull()
   })
 
+  it('ignores an older read that finishes after a newer one', async () => {
+    const waiting: Array<(r: unknown) => void> = []
+    mockCommands((cmd) => {
+      if (cmd !== 'report_latest') throw new Error(`unexpected command ${cmd}`)
+      return new Promise((resolve) => waiting.push(resolve))
+    })
+    const store = useReportStore()
+    const older = store.loadLatest()
+    const newer = store.loadLatest()
+    await new Promise((r) => setTimeout(r, 0))
+    waiting[1]?.(report({ seq: 13 }))
+    await newer
+    waiting[0]?.(report({ seq: 12 }))
+    await older
+    expect(store.latest?.seq).toBe(13)
+    expect(store.cached(12)?.seq).toBe(12)
+  })
+
   it('forgets the oldest scans past its limit', () => {
     const store = useReportStore()
     for (let seq = 1; seq <= 30; seq++) store.remember(report({ seq }))

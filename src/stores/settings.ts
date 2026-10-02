@@ -22,9 +22,13 @@ export const useSettingsStore = defineStore('settings', () => {
   const theme = ref<Theme>('system')
   /** Sidebar fold the user chose, per width range; absent = follow the range's default. */
   const folded = ref<Partial<Record<SidebarRange, boolean>>>({})
+  // What the user last chose, kept apart from the refs: with View Transitions the refs change
+  // inside an async callback, after the choice is made, and saving them would store the
+  // previous value.
+  const chosen: { language: Locale; theme: Theme } = { language: DEFAULT_LOCALE, theme: 'system' }
 
   function persist() {
-    writeJson(KEY, { language: language.value, theme: theme.value, folded: folded.value })
+    writeJson(KEY, { language: chosen.language, theme: chosen.theme, folded: folded.value })
   }
 
   function applyLanguage(next: Locale) {
@@ -36,12 +40,12 @@ export const useSettingsStore = defineStore('settings', () => {
   /** Reads what was saved (or the OS language) and applies it, without a transition. */
   function init() {
     const stored = readJson<Stored>(KEY, {})
-    applyLanguage(
-      isLocale(stored.language)
-        ? stored.language
-        : localeFromTag(typeof navigator === 'undefined' ? undefined : navigator.language),
-    )
-    theme.value = isTheme(stored.theme) ? stored.theme : 'system'
+    chosen.language = isLocale(stored.language)
+      ? stored.language
+      : localeFromTag(typeof navigator === 'undefined' ? undefined : navigator.language)
+    chosen.theme = isTheme(stored.theme) ? stored.theme : 'system'
+    applyLanguage(chosen.language)
+    theme.value = chosen.theme
     applyTheme(theme.value)
     folded.value = {}
     for (const range of SIDEBAR_RANGES) {
@@ -51,13 +55,15 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   function setLanguage(next: Locale) {
-    if (next === language.value) return
+    if (next === chosen.language) return
+    chosen.language = next
     crossFade(() => applyLanguage(next))
     persist()
   }
 
   function setTheme(next: Theme) {
-    if (next === theme.value) return
+    if (next === chosen.theme) return
+    chosen.theme = next
     crossFade(() => {
       theme.value = next
       applyTheme(next)
