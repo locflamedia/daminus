@@ -113,5 +113,197 @@
     "scanNow": "Quét ngay",
     "open": "Mở Daminus",
     "quit": "Thoát"
+  },
+  "app": {
+    "name": "Daminus"
+  },
+  "nav": {
+    "search": "Tìm kiếm",
+    "overview": "Tổng quan",
+    "history": "Lịch sử quét",
+    "projects": "Dự án",
+    "servers": "Máy chủ",
+    "issues": "{n} vấn đề",
+    "unreachable": "Mất kết nối",
+    "settings": "Cài đặt",
+    "back": "Quay lại",
+    "foldSidebar": "Thu gọn thanh bên",
+    "unfoldSidebar": "Mở rộng thanh bên",
+    "primary": "Điều hướng chính"
+  },
+  "settingsNav": {
+    "title": "Cài đặt",
+    "general": "Chung",
+    "appearance": "Giao diện",
+    "scan": "Quét",
+    "hosts": "Máy chủ",
+    "ai": "Nhà cung cấp AI",
+    "data": "Dữ liệu",
+    "about": "Giới thiệu"
+  },
+  "theme": {
+    "system": "Hệ thống",
+    "light": "Sáng",
+    "dark": "Tối"
+  },
+  "language": {
+    "en": "English",
+    "vi": "Tiếng Việt",
+    "label": "Ngôn ngữ"
+  },
+  "project": {
+    "breadcrumb": "Dự án",
+    "tabs": {
+      "overview": "Tổng quan",
+      "disk": "Ổ đĩa",
+      "database": "CSDL",
+      "containers": "Container",
+      "security": "Bảo mật",
+      "history": "Lịch sử"
+    },
+    "tabsLabel": "Các mục của dự án",
+    "needsLook": "Cần xem",
+    "scanMeta": "lần quét #{seq}, {time}"
+  },
+  "server": {
+    "breadcrumb": "Máy chủ"
+  },
+  "toolbar": {
+    "scanAll": "Quét tất cả",
+    "stop": "Dừng",
+    "scanMeta": "Lần quét #{seq} · {when}",
+    "scanMetaRunning": "Lần quét #{seq} · đang chạy · {elapsed}",
+    "noScan": "Chưa quét lần nào",
+    "hostsOf": "{done} trên {total} máy chủ",
+    "urlChecks": "Kiểm tra URL",
+    "orderHolds": "Thứ tự thẻ giữ nguyên đến khi quét xong",
+    "scan": "Quét"
+  },
+  "overview": {
+    "summary": "{issues} trên {projects} và {servers}",
+    "clear": "Không có vấn đề trên {projects} và {servers}",
+    "projectCount": "{n} dự án",
+    "serverCount": "{n} máy chủ",
+    "crit": "{n} nghiêm trọng",
+    "warn": "{n} cảnh báo",
+    "expected": "{n} đã chấp nhận",
+    "reviewDue": "{n} cần xem lại",
+    "firstScan": "Chưa quét lần nào. Nhấn Quét tất cả để đọc các máy chủ.",
+    "results": "Kết quả",
+    "hosts": "Máy chủ"
+  },
+  "scanHost": {
+    "queued": "đang chờ",
+    "connecting": "đang kết nối…",
+    "agent_wait": "đợi SSH agent…",
+    "running": "đang đọc…",
+    "reached": "xong",
+    "partial": "một phần",
+    "unreachable": "mất kết nối",
+    "auth_failed": "khoá bị từ chối",
+    "host_key_unknown": "chưa biết khoá máy chủ",
+    "host_key_changed": "khoá máy chủ đã đổi",
+    "timeout": "hết thời gian"
+  },
+  "severity": {
+    "crit": "Nghiêm trọng",
+    "warn": "Cảnh báo",
+    "info": "Thông tin",
+    "ok": "Ổn cả",
+    "expected": "Đã chấp nhận",
+    "stale": "Chưa kiểm tra lại từ #{seq}"
+  },
+  "unknown": {
+    "needs_perm": "Cần quyền",
+    "timeout": "Hết thời gian",
+    "unreachable": "Mất kết nối",
+    "missing": "Không tìm thấy",
+    "unsupported": "Không hỗ trợ"
+  },
+  "delta": {
+    "new": "Mới",
+    "fixed": "Đã sửa",
+    "still": "Mở {n} lần quét",
+    "changed": "Đã đổi"
+  },
+  "time": {
+    "justNow": "vừa xong",
+    "minAgo": "{n} phút trước",
+    "today": "hôm nay {time}",
+    "yesterday": "hôm qua {time}",
+    "daysAgo": "{n} ngày trước"
+  },
+  "units": {
+    "ms": "ms",
+    "s": "giây",
+    "min": "phút",
+    "h": "giờ",
+    "d": "ngày",
+    "files": "file"
+  },
+  "issue": {
+    "sys": {
+      "load": "Tải CPU là {value}",
+      "mem": "RAM chỉ còn trống {value}",
+      "swap": "Swap đã dùng {value}",
+      "psi": "Tiến trình đang chờ CPU, RAM hoặc đĩa",
+      "oom": "{n} tiến trình bị tắt vì thiếu bộ nhớ"
+    },
+    "disk": {
+      "fs": "Ổ đĩa {target} sắp đầy",
+      "path": "{target} chiếm {value}"
+    },
+    "logs": {
+      "big": "File log lớn {target}"
+    },
+    "docker": {
+      "df": "Docker đang dùng {value}",
+      "compose": "Container của {target} cần xem"
+    },
+    "pm2": {
+      "app": "Ứng dụng pm2 {target} cần xem"
+    },
+    "db": {
+      "size": "Database {target} nặng {value}"
+    },
+    "sec": {
+      "miner": "Có thể là chương trình đào coin: {target}",
+      "upload_php": "File PHP trong uploads: {target}",
+      "tmp_exec": "File thực thi trong temp: {target}",
+      "preload": "ld.so.preload có nội dung",
+      "ports": "Cổng {target} đang mở ra internet",
+      "recent_change": "File code mới đổi trong {target}"
+    },
+    "url": {
+      "http": "{target} không phản hồi như mong đợi",
+      "tls": "Chứng chỉ của {target} hết hạn sau {value}",
+      "exposed": "{target} đang để lộ một file riêng tư"
+    },
+    "fallback": "{check} cần xem"
+  },
+  "error": {
+    "ssh_auth": "SSH không nhận khoá của bạn. Hãy chắc khoá đã nạp vào agent và đã thêm trên máy chủ.",
+    "ssh_host_key_unknown": "Máy chủ này chưa có trong known_hosts. Kiểm tra dấu vân tay, rồi kết nối một lần từ Terminal để tin cậy.",
+    "ssh_host_key_changed": "Khoá máy chủ đã đổi. Đừng tiếp tục khi chưa biết lý do.",
+    "ssh_unreachable": "Không kết nối được máy chủ qua SSH. Kiểm tra địa chỉ và mạng của bạn.",
+    "timeout": "Máy chủ không trả lời kịp.",
+    "scan_in_progress": "Đang có một lần quét chạy.",
+    "nothing_to_scan": "Chưa có gì để quét. Hãy thêm máy chủ hoặc dự án trước.",
+    "local_network_down": "Máy Mac này có vẻ đang mất mạng. Kiểm tra mạng rồi quét lại.",
+    "config_invalid": "Không đọc được {path}. Hãy sửa file hoặc dời nó đi.",
+    "config_invalid_at": "Không đọc được {path} ở dòng {line}. Hãy sửa file hoặc dời nó đi.",
+    "config_from_newer_version": "{path} do bản Daminus mới hơn ghi (phiên bản {version}). Hãy cập nhật Daminus để sửa.",
+    "config_changed_on_disk": "{path} đã đổi trên đĩa. Hãy tải lại trước khi lưu.",
+    "store_busy": "Daminus đang bận với thao tác khác. Thử lại sau giây lát.",
+    "io": "Không đọc hoặc ghi được {path}.",
+    "secret_access_denied": "Daminus không có quyền truy cập khoá trong Keychain.",
+    "provider_auth": "Nhà cung cấp AI từ chối khoá. Kiểm tra lại trong Cài đặt.",
+    "provider_rate_limit": "Nhà cung cấp AI đang giới hạn yêu cầu. Thử lại sau một phút.",
+    "provider_unavailable": "Hiện chưa kết nối được nhà cung cấp AI.",
+    "schema_invalid": "Câu trả lời của AI không đúng định dạng mong đợi.",
+    "internal": "Daminus gặp lỗi bên trong. Chi tiết có trong log."
+  },
+  "tooltip": {
+    "issues": "{name} · {count}"
   }
 }
