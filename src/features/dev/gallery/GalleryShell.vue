@@ -53,26 +53,26 @@ const open = ref(true)
     <GalleryFrame :title="k('frames')" :spec="k('spec')">
       <div class="frames">
         <GalleryAtom :name="k('full.name')" :spec="k('full.spec')" plain class="col">
-          <div class="frame" style="width: 248px; height: 600px">
+          <div class="frame" style="width: 248px; height: 700px">
             <GalleryLights />
             <GalleryRange range="wide"><AppSidebar /></GalleryRange>
           </div>
         </GalleryAtom>
         <GalleryAtom :name="k('medium.name')" :spec="k('medium.spec')" plain class="col">
-          <div class="frame" style="width: 216px; height: 600px">
+          <div class="frame" style="width: 216px; height: 700px">
             <GalleryLights />
             <GalleryRange range="medium"><AppSidebar /></GalleryRange>
           </div>
         </GalleryAtom>
         <GalleryAtom :name="k('rail.name')" :spec="k('rail.spec')" plain class="col">
-          <div class="frame" style="width: 64px; height: 600px">
+          <div class="frame" style="width: 64px; height: 700px">
             <GalleryLights rail />
             <GalleryRange range="narrow"><AppRail /></GalleryRange>
           </div>
         </GalleryAtom>
         <div class="stack">
           <GalleryAtom :name="k('settings.name')" :spec="k('settings.spec')" plain class="col">
-            <div class="frame" style="width: 248px; height: 330px">
+            <div class="frame" style="width: 248px; height: 400px">
               <GalleryLights />
               <GalleryRange range="wide"><SettingsNav /></GalleryRange>
             </div>
@@ -83,7 +83,7 @@ const open = ref(true)
             plain
             class="col"
           >
-            <div class="frame" style="width: 216px; height: 330px">
+            <div class="frame" style="width: 216px; height: 400px">
               <GalleryLights />
               <GalleryRange range="narrow"><SettingsNav /></GalleryRange>
             </div>
