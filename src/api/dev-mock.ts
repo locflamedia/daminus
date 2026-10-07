@@ -29,8 +29,7 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
     })
     return
   }
-  const bundle = (await import('@/testing/fixtures/results.json'))
-    .default as unknown as ResultsBundle
+  const bundle = await loadBundle(variant)
   const results = new ResultsMock(isResultsVariant(variant) ? variant : 'results', bundle, speed)
   mockCommands((cmd, args) => results.handle(cmd, args) ?? null)
 }
@@ -46,4 +45,19 @@ function emptyReport() {
     rules_due: [],
     counts: { crit: 0, warn: 0, expected: 0, needs_perm: 0, stale: 0, unknown: 0 },
   }
+}
+
+/**
+ * The timeline of the repository, or with `?mock=real` the scans of a fake server: a config
+ * folder made by `scripts/fake-server/real-data.sh` and exported as `local-real/bundle.json`
+ * (git-ignored), so the screens can be read against output the real checks produced.
+ */
+async function loadBundle(variant: string): Promise<ResultsBundle> {
+  if (variant === 'real') {
+    const res = await fetch('/local-real/bundle.json')
+    if (!res.ok)
+      throw new Error('local-real/bundle.json is missing: run scripts/fake-server/real-data.sh')
+    return (await res.json()) as ResultsBundle
+  }
+  return (await import('@/testing/fixtures/results.json')).default as unknown as ResultsBundle
 }

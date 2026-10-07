@@ -30,6 +30,7 @@ export const RESULTS_VARIANTS = [
   'first-scan',
   'groups-off',
   'states',
+  'real',
 ] as const
 
 /**
@@ -38,7 +39,7 @@ export const RESULTS_VARIANTS = [
  * `scan-live` plays one when Scan is pressed (`&speed=4` runs it faster) and `scan-failing`
  * plays one where a host times out. `loading` never answers, `error` fails every read,
  * `first-scan` has projects and no scan, `groups-off` switches the security group off in
- * Settings and `states` adds the rarer results (certificate states, partial miner check, a
+ * Settings, `real` serves scans made against a fake server (see below) and `states` adds the rarer results (certificate states, partial miner check, a
  * database that cannot be read, a cut findings list).
  */
 export type ResultsVariant = (typeof RESULTS_VARIANTS)[number]
@@ -62,8 +63,16 @@ export class ResultsMock {
     private speed = 1,
   ) {
     const stale = variant === 'stale'
-    const upTo = stale ? 9 : variant === 'scanning' ? 11 : 12
-    const ago = stale ? 4 * DAY + 3_600_000 : variant === 'scanning' ? 20 * 60_000 : 2 * 60_000
+    const newest = bundle.history.scans[bundle.history.scans.length - 1]
+    const real = variant === 'real' && newest !== undefined
+    const upTo = real ? newest.seq : stale ? 9 : variant === 'scanning' ? 11 : 12
+    const ago = real
+      ? Math.max(0, Date.now() - Date.parse(newest.finished_at))
+      : stale
+        ? 4 * DAY + 3_600_000
+        : variant === 'scanning'
+          ? 20 * 60_000
+          : 2 * 60_000
     this.data = bundleAsOf(bundle, upTo, ago)
     if (variant === 'groups-off') this.data = withGroupsOff(this.data)
     if (variant === 'states') this.data = withStates(this.data)

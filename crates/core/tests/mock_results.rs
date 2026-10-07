@@ -11,33 +11,15 @@
 // Integration tests are their own crate; panicking on a broken fixture is the point.
 #![allow(clippy::expect_used, clippy::unwrap_used)]
 
-use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use daminus_core::domain::host::HostRef;
 use daminus_core::domain::severity::Level;
-use daminus_core::scan::{history_facts, history_view, report_at};
+use daminus_core::scan::{history_bundle, history_facts, history_view, report_at};
 use daminus_core::store::FsStore;
-use serde_json::{Value, json};
 
 const OUT: &str = "../../src/testing/fixtures/results.json";
-
-/// The checks whose raw values the charts and tabs read across scans.
-const CHARTED: [&str; 12] = [
-    "disk.fs",
-    "disk.path",
-    "db.size",
-    "docker.compose",
-    "pm2.app",
-    "sys.load",
-    "sys.mem",
-    "sys.swap",
-    "url.http",
-    "url.tls",
-    "sec.upload_php",
-    "sec.tmp_exec",
-];
 
 fn copy_dir(from: &Path, to: &Path) {
     fs::create_dir_all(to).expect("mkdir");
@@ -59,35 +41,10 @@ fn store() -> (tempfile::TempDir, FsStore) {
     (tmp, store)
 }
 
-fn bundle(store: &FsStore) -> Value {
-    let history = history_view(store).expect("history");
-    let reports: BTreeMap<String, Value> = history
-        .scans
-        .iter()
-        .map(|s| {
-            let report = report_at(store, s.seq).expect("report");
-            (
-                s.seq.to_string(),
-                serde_json::to_value(report).expect("json"),
-            )
-        })
-        .collect();
-    let checks: Vec<String> = CHARTED.iter().map(|c| (*c).to_owned()).collect();
-    let facts = history_facts(store, &checks, 20).expect("facts");
-    let projects = store.load_projects().expect("projects").value;
-    json!({
-        "projects": projects.projects,
-        "rules": projects.rules,
-        "history": history,
-        "reports": reports,
-        "facts": facts,
-    })
-}
-
 #[test]
 fn committed_bundle_matches_the_core() {
     let (_tmp, store) = store();
-    let mut text = serde_json::to_string(&bundle(&store)).expect("json");
+    let mut text = serde_json::to_string(&history_bundle(&store).expect("bundle")).expect("json");
     text.push('\n');
     let out: PathBuf = Path::new(env!("CARGO_MANIFEST_DIR")).join(OUT);
     if std::env::var_os("DAMINUS_BLESS").is_some() {

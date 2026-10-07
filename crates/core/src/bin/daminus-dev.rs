@@ -112,6 +112,9 @@ enum Command {
     Snapshots,
     /// Print `evaluate` over the saved snapshots as JSON.
     Report,
+    /// Print what the history screens read (scan summaries, every past report, charted facts,
+    /// rules) as one JSON document, for the dev mock.
+    HistoryJson,
 }
 
 #[derive(Clone, Copy, clap::ValueEnum)]
@@ -178,6 +181,7 @@ fn main() -> ExitCode {
         ),
         Some(Command::Snapshots) => list_snapshots(&store),
         Some(Command::Report) => print_report(&store),
+        Some(Command::HistoryJson) => print_history_json(&store),
     }
 }
 
@@ -454,6 +458,19 @@ fn print_report(store: &FsStore) -> ExitCode {
         }
         Err(e) => {
             eprintln!("{e}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn print_history_json(store: &FsStore) -> ExitCode {
+    match daminus_core::scan::history_bundle(store) {
+        Ok(bundle) => {
+            println!("{bundle}");
+            ExitCode::SUCCESS
+        }
+        Err(e) => {
+            eprintln!("{e:?}");
             ExitCode::FAILURE
         }
     }

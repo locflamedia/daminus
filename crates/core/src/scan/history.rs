@@ -251,3 +251,39 @@ pub fn history_facts(
     }
     Ok(out)
 }
+
+/// The checks whose raw values the charts and tabs read across scans.
+pub const CHARTED_CHECKS: [&str; 12] = [
+    "disk.fs",
+    "disk.path",
+    "db.size",
+    "docker.compose",
+    "pm2.app",
+    "sys.load",
+    "sys.mem",
+    "sys.swap",
+    "url.http",
+    "url.tls",
+    "sec.upload_php",
+    "sec.tmp_exec",
+];
+
+/// Everything the history screens read, in one JSON document: what the dev mock serves in a
+/// browser, made from a config folder (the shared timeline, or scans of a fake server).
+pub fn history_bundle(store: &FsStore) -> Result<serde_json::Value, AppError> {
+    let history = history_view(store)?;
+    let mut reports = BTreeMap::new();
+    for scan in &history.scans {
+        reports.insert(scan.seq.to_string(), report_at(store, scan.seq)?);
+    }
+    let checks: Vec<String> = CHARTED_CHECKS.iter().map(|c| (*c).to_owned()).collect();
+    let facts = history_facts(store, &checks, MAX_FACT_SCANS)?;
+    let projects = store.load_projects()?.value;
+    Ok(serde_json::json!({
+        "projects": projects.projects,
+        "rules": projects.rules,
+        "history": history,
+        "reports": reports,
+        "facts": facts,
+    }))
+}
