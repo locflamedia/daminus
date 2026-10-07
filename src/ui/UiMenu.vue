@@ -30,6 +30,10 @@ export interface MenuItem {
   markLabel?: string
   danger?: boolean
   disabled?: boolean
+  /** A 8 px dot in this CSS colour before the label (a project's colour in a project list). */
+  dot?: string
+  /** The accent ink of an "add new" row. */
+  accent?: boolean
 }
 
 const props = withDefaults(
@@ -41,8 +45,10 @@ const props = withDefaults(
     inline?: boolean
     /** The choice-list form of the project tabs: 30 px rows, a tick slot, 220 px wide. */
     compact?: boolean
+    /** A quiet line above the rows ("Add metabase to"). */
+    heading?: string
   }>(),
-  { placement: 'bottom-start', inline: false, compact: false },
+  { placement: 'bottom-start', inline: false, compact: false, heading: undefined },
 )
 
 const open = defineModel<boolean>('open', { default: false })
@@ -174,6 +180,7 @@ function apart(index: number): boolean {
     @close="open = false"
   >
     <div :id="id" ref="list" class="menu" :class="{ compact }" @keydown="onKeydown">
+      <span v-if="heading" class="heading" aria-hidden="true">{{ heading }}</span>
       <button
         v-for="(item, index) in items"
         :key="item.id"
@@ -181,7 +188,7 @@ function apart(index: number): boolean {
         :role="compact ? 'menuitemradio' : 'menuitem'"
         :aria-checked="compact ? !!item.checked : undefined"
         class="item"
-        :class="{ danger: item.danger, apart: apart(index) }"
+        :class="{ danger: item.danger, accent: item.accent, apart: apart(index) }"
         :aria-disabled="item.disabled || undefined"
         tabindex="-1"
         @click="pick(item)"
@@ -190,6 +197,7 @@ function apart(index: number): boolean {
           <UiIcon v-if="item.checked" name="check" :size="14" :stroke="2" />
         </span>
         <UiIcon v-if="item.icon" :name="item.icon" :size="14" class="icon" />
+        <span v-if="item.dot" class="dot" :style="{ background: item.dot }" aria-hidden="true" />
         <span class="label">{{ item.label }}</span>
         <span v-if="item.mark" class="mark" :class="item.mark" aria-hidden="true" />
         <span v-if="item.mark && item.markLabel" class="sr-only">{{ item.markLabel }}</span>
@@ -307,6 +315,23 @@ function apart(index: number): boolean {
 
 .apart {
   margin-top: 6px;
+}
+
+.heading {
+  padding: var(--space-1) var(--space-2) var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-11);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.accent {
+  color: var(--accent-ink);
 }
 
 .danger {

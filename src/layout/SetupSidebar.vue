@@ -118,11 +118,16 @@ const RING = 2 * Math.PI * 14
     <div id="setup-rail" class="rail-slot" />
 
     <div class="saved">
-      <b><UiIcon name="lock" :size="16" />{{ t('setupShell.nothingSaved') }}</b>
+      <b
+        ><UiIcon name="lock" :size="16" />{{
+          t(screen === 'group' ? 'setupShell.noSecrets' : 'setupShell.nothingSaved')
+        }}</b
+      >
       <template v-if="screen === 'pick'">{{ t('setupShell.nothingSavedPick') }}</template>
       <template v-else-if="screen === 'discover'">{{
         t('setupShell.nothingSavedDiscover')
       }}</template>
+      <template v-else>{{ t('setupShell.noSecretsBody') }}</template>
     </div>
     <button type="button" class="cancel" @click="emit('cancel')">
       {{ t('setupShell.cancel') }}

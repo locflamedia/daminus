@@ -1,0 +1,140 @@
+{
+  "setupGroup": {
+    "title": "Confirm your projects",
+    "subtitle": "Grouped by domain and folder name. Rename, change a role, or move a part between projects.",
+    "newProject": "New project",
+    "list": "Suggested projects",
+    "card": {
+      "new": "New",
+      "servers": "{n} server | {n} servers",
+      "actions": "Actions for {name}",
+      "edit": "Edit",
+      "remove": "Remove",
+      "expand": "Show the parts of {name}",
+      "collapse": "Hide the parts of {name}",
+      "allOk": "no parts yet | all {n} part ok | all {n} parts ok",
+      "open": "Open",
+      "dropHere": "Drop to add to {name}"
+    },
+    "source": {
+      "path": "path",
+      "pm2": "pm2",
+      "compose": "compose",
+      "container": "container",
+      "engine": "engine"
+    },
+    "live": {
+      "pm2": "{status} · {n} instance | {status} · {n} instances",
+      "composeUp": "{n} service up | {n} services up",
+      "composePart": "{up} of {total} services up",
+      "site": "nginx site",
+      "sitePhp": "nginx site · PHP",
+      "dbEnv": ".env found · {engine}",
+      "dbEngine": "{engine}"
+    },
+    "pair": {
+      "beServes": "BE serves {url}",
+      "fePort": "FE on :{port}",
+      "dbSame": "DB on the same host",
+      "dbOn": "DB on {host}"
+    },
+    "db": {
+      "needsName": "Needs a name",
+      "engine": "engine",
+      "on": "on",
+      "container": "container",
+      "none": "none",
+      "noEnv": "No .env found",
+      "chooseEnv": "Choose .env",
+      "envPathLabel": "Absolute path of the .env file",
+      "envPathPlaceholder": "/var/www/app/.env",
+      "envPathBad": "Use an absolute path, starting with /",
+      "envPathUnchecked": "Daminus does not open the file; the server checks the path at scan time.",
+      "envLabel": ".env file · {n} found, pick the one this app uses",
+      "alsoFound": "Also found",
+      "nameLabel": "Database name · required",
+      "namePlaceholder": "booking_prod",
+      "nameHelp": "Daminus never reads your .env, so it cannot know the name. Type the value of DB_DATABASE.",
+      "nameSet": "Name set",
+      "saveAllowedLead": "Save is allowed.",
+      "saveAllowedBody": "{project} is saved; this database part is left out until it has a name, and its size shows Not set up."
+    },
+    "replaces": {
+      "chip": "Already saved · Save replaces it",
+      "id": "id {id} in projects.json",
+      "replaced": "Replaced",
+      "replacedBody": "name, {urls}, {parts}",
+      "urls": "{n} URL | {n} URLs",
+      "parts": "{n} part | {n} parts",
+      "kept": "Kept",
+      "keptBody": "colour, thresholds, Mark as expected rules, scan history",
+      "keepBoth": "Keep both",
+      "hint": "Keep both renames this suggestion to {id} and the badge goes away. Replacing is the normal case when setup runs a second time, so it never blocks."
+    },
+    "loose": {
+      "title": "Not in a project",
+      "titleCount": "Not in a project · {n}, by host and kind",
+      "fine": "Leaving them is fine; they are not scanned.",
+      "empty": "Nothing left over. Every find belongs to a project.",
+      "add": "Add to project",
+      "addTo": "Add {name} to",
+      "newProject": "+ New project…",
+      "drag": "Drag {name} onto a project",
+      "kind": {
+        "vhost": "Server block",
+        "compose": "Compose",
+        "pm2": "pm2 app",
+        "db": "Database server",
+        "env": ".env file",
+        "path": "Folder"
+      },
+      "no_domain": "no public domain",
+      "noSite": "{n} service, no matching site | {n} services, no matching site",
+      "runsFrom": "runs from {dir}",
+      "no_folder": "no folder known",
+      "container": "container {name}",
+      "process": "a process, no compose project",
+      "shared": ".env shared by several project folders, so it is suggested to none",
+      "by_hand": "added by hand"
+    },
+    "preview": {
+      "file": "projects.json",
+      "tag": "Preview",
+      "path": "~/Library/Application Support/dev.daminus.app/projects.json",
+      "note": "Plain JSON. Edit by hand any time; Daminus reloads it on launch.",
+      "label": "Preview of projects.json"
+    },
+    "check": {
+      "title": "Before you save",
+      "urls": "Every project has a URL to check uptime.",
+      "urlsMissing": "{n} project has no URL, so its uptime is not checked. | {n} projects have no URL, so their uptime is not checked.",
+      "roles": "Front end and back end set where both exist.",
+      "rolesMissing": "{n} project has no front end or back end part. | {n} projects have no front end or back end part.",
+      "databases": "Every database can report its size.",
+      "dbNoEnv": "{n} database has no .env yet. Optional; its size shows Not set up. | {n} databases have no .env yet. Optional; their size shows Not set up.",
+      "dbNoName": "{n} database has no name yet. Optional; its size shows Not set up. | {n} databases have no name yet. Optional; their size shows Not set up."
+    },
+    "foot": {
+      "projects": "{n} project | {n} projects",
+      "parts": "{n} part | {n} parts",
+      "servers": "{n} server | {n} servers",
+      "hint": "The first scan starts right after saving.",
+      "back": "Back",
+      "save": "Save and run first scan"
+    },
+    "result": {
+      "saved": "Saved {n} project | Saved {n} projects",
+      "warnings": "{n} warning | {n} warnings",
+      "savedWith": "{saved} with {warnings}",
+      "rejected": "Not saved: {n} thing to fix | Not saved: {n} things to fix",
+      "rejectedHint": "Nothing was written. Fix these, then save again.",
+      "failed": "Could not write projects.json"
+    },
+    "empty": {
+      "title": "Nothing to confirm yet",
+      "text": "Discovery found nothing to group on these servers. Go back to pick other servers, or start a project by hand.",
+      "back": "Back to discover"
+    },
+    "waiting": "Waiting for the suggestions"
+  }
+}
