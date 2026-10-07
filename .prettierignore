@@ -14,3 +14,4 @@ fixtures/timeline/snapshots/
 
 # Recorded tool output served by the check harness shims, kept as the tools print it
 scripts/check-harness/out/
+src/testing/fixtures/results.json

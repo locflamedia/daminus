@@ -6,6 +6,12 @@ import { useFormat } from '@/composables/use-format'
 import { isProjectTab } from '@/layout/project-tabs'
 import ProjectHeader from '@/layout/ProjectHeader.vue'
 import { tabLevels } from '@/lib/rollups'
+import ProjectContainersTab from './containers/ProjectContainersTab.vue'
+import ProjectDatabaseTab from './database/ProjectDatabaseTab.vue'
+import ProjectDiskTab from './disk/ProjectDiskTab.vue'
+import ProjectHistoryTab from './history/ProjectHistoryTab.vue'
+import ProjectOverviewTab from './overview/ProjectOverviewTab.vue'
+import ProjectSecurityTab from './security/ProjectSecurityTab.vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 
@@ -41,4 +47,10 @@ const levels = computed(() => tabLevels(reports.latest?.items ?? [], id.value))
     :tab-levels="levels"
     :color="projects.color(id)"
   />
+  <ProjectOverviewTab v-if="tab === 'overview'" :id="id" />
+  <ProjectDiskTab v-else-if="tab === 'disk'" :id="id" />
+  <ProjectDatabaseTab v-else-if="tab === 'database'" :id="id" />
+  <ProjectContainersTab v-else-if="tab === 'containers'" :id="id" />
+  <ProjectSecurityTab v-else-if="tab === 'security'" :id="id" />
+  <ProjectHistoryTab v-else :id="id" />
 </template>
