@@ -22,6 +22,7 @@ function base(): DraftProject {
     parts: [web, api],
     envFiles: [],
     isNew: false,
+    origin: '',
     idFollowsName: false,
   }
 }

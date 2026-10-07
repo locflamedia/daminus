@@ -41,6 +41,7 @@ const draft = (over: Partial<DraftProject> = {}): DraftProject => ({
   parts: [],
   envFiles: [],
   isNew: true,
+  origin: '',
   idFollowsName: false,
   ...over,
 })

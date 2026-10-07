@@ -316,10 +316,18 @@ export const useSetupStore = defineStore('setup', () => {
       return
     }
     try {
-      const started = await setupStart('discover', hosts)
+      let started = await setupStart('discover', hosts)
       await hydrate()
-      // The core joined a run of the other step it had already begun: wait for it to end.
-      if (started.joined && run.value?.step !== 'discover') pendingDiscover.value = [...hosts]
+      if (started.joined && run.value?.step !== 'discover') {
+        if (run.value) {
+          // A login test really is running: wait for it to end.
+          pendingDiscover.value = [...hosts]
+        } else {
+          // That run ended before the status came back: nothing is left to wake us, so ask once more.
+          started = await setupStart('discover', hosts)
+          await hydrate()
+        }
+      }
     } catch (e) {
       fail(e)
     }

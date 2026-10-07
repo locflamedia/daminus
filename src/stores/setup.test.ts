@@ -469,3 +469,27 @@ describe('discover while a login test is running', () => {
     expect(backend.starts[0]?.hosts).toEqual(['vps-a', 'vps-b', 'vps-c'])
   })
 })
+
+describe('discover when the core joins a run that has already ended', () => {
+  it('asks again once instead of parking with nothing to wake it', async () => {
+    const setup = await ready()
+    setup.tick('vps-a', true)
+    await settle()
+    await backend.reached('vps-a')
+    await backend.finishRun()
+    // The first answer says "joined" although the run is gone by the time the status is read.
+    const inner = backend.handler
+    let first = true
+    mockCommands((cmd, args) => {
+      if (cmd === 'setup_start' && args.step === 'discover' && first) {
+        first = false
+        backend.starts.push({ step: 'discover', hosts: args.hosts as string[], paths: [] })
+        return { setup_id: 'gone', joined: true }
+      }
+      return inner(cmd, args)
+    })
+    await setup.startDiscover(['vps-a'])
+    expect(setup.pendingDiscover).toBeNull()
+    expect(backend.status?.step).toBe('discover')
+  })
+})

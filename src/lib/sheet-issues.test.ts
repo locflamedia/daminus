@@ -25,6 +25,7 @@ const draft: DraftProject = {
   parts: [web, blankDb, api],
   envFiles: [],
   isNew: true,
+  origin: '',
   idFollowsName: true,
 }
 

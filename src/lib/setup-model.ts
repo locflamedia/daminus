@@ -66,6 +66,8 @@ export interface DraftProject {
   envFiles: string[]
   /** Not saved yet (the "New" tag). */
   isNew: boolean
+  /** The id of the suggestion this draft came from; sync matches on it, so renaming never duplicates. */
+  origin: string
   /** The id still follows the name (nothing was typed in the id field, nothing was saved). */
   idFollowsName: boolean
 }
@@ -137,6 +139,7 @@ export function draftFromProposed(p: ProposedProject, color: string | null): Dra
     parts: p.components.map((c) => fromProposed(c, envFiles)),
     envFiles,
     isNew: true,
+    origin: p.id,
     idFollowsName: false,
   }
 }
@@ -175,6 +178,7 @@ export function draftFromProject(p: Project): DraftProject {
       ...new Set(p.components.flatMap((c) => (c.kind === 'db' && c.env_file ? [c.env_file] : []))),
     ],
     isNew: false,
+    origin: p.id,
     idFollowsName: false,
   }
 }
@@ -190,6 +194,7 @@ export function emptyDraft(color: string | null): DraftProject {
     parts: [],
     envFiles: [],
     isNew: true,
+    origin: '',
     idFollowsName: true,
   }
 }

@@ -290,3 +290,15 @@ describe('a suggestion that grows as hosts finish', () => {
     expect(kho.parts).toHaveLength(2)
   })
 })
+
+describe('keep both and later syncs', () => {
+  it('does not make a second draft for a suggestion whose id was renamed', () => {
+    const { drafts } = stores()
+    const tiemtra = drafts.drafts[1]
+    if (!tiemtra) throw new Error('setup')
+    drafts.keepBoth(tiemtra.key)
+    expect(tiemtra.id).toBe('tiemtra-2')
+    drafts.sync()
+    expect(drafts.drafts.map((d) => d.id)).toEqual(['kho-hang', 'tiemtra-2'])
+  })
+})

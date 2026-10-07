@@ -132,7 +132,9 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
     if (!p) return
     const used = drafts.value.map((d) => d.color)
     for (const suggestion of p.projects) {
-      const existing = drafts.value.find((d) => d.id === suggestion.id)
+      const existing = drafts.value.find(
+        (d) => d.origin === suggestion.id || (d.origin === '' && d.id === suggestion.id),
+      )
       if (!existing) {
         const color = nextColor([...used, ...drafts.value.map((d) => d.color)])
         const draft = draftFromProposed(suggestion, color)
@@ -239,6 +241,7 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
       parts: [],
       envFiles: [],
       isNew: true,
+      origin: '',
       idFollowsName: true,
     }
     drafts.value = [...drafts.value, draft]

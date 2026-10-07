@@ -181,6 +181,7 @@ describe('blank parts and paths', () => {
       urls: [],
       envFiles: [],
       isNew: true,
+      origin: '',
       idFollowsName: true,
       parts: [web, newPart('folder', 'h'), newPart('database', 'h')],
     }

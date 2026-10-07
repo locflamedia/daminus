@@ -44,6 +44,7 @@ const EMPTY: DraftProject = {
   parts: [],
   envFiles: [],
   isNew: true,
+  origin: '',
   idFollowsName: true,
 }
 
