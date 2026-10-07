@@ -26,6 +26,8 @@ export const useHistoryStore = defineStore('history', () => {
   const view = shallowRef<HistoryView | null>(null)
   const rules = shallowRef<ExpectedRule[]>([])
   const error = ref<AppError | null>(null)
+  /** The last older report that could not be read (a scan the retention limit dropped). */
+  const reportError = ref<AppError | null>(null)
   const loading = ref(false)
   const facts = new Map<string, Promise<ScanFact[]>>()
   const factsNow = shallowRef<Map<string, ScanFact[]>>(new Map())
@@ -59,7 +61,8 @@ export const useHistoryStore = defineStore('history', () => {
       reports.remember(r)
       return r
     } catch (e) {
-      fail(e)
+      reportError.value = isAppError(e) ? e : null
+      if (!isAppError(e)) console.error(e)
       return null
     }
   }
@@ -101,5 +104,5 @@ export const useHistoryStore = defineStore('history', () => {
     { immediate: true },
   )
 
-  return { view, rules, error, loading, load, report, factsOf, factsNow }
+  return { view, rules, error, reportError, loading, load, report, factsOf, factsNow }
 })
