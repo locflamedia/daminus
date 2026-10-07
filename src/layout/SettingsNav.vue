@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
+import { LOCALES } from '@/i18n'
+import { useLayoutRange } from '@/lib/viewport'
 import { useSettingsStore } from '@/stores/settings'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiKbd from '@/ui/UiKbd.vue'
@@ -10,12 +12,19 @@ import { SETTINGS_SECTIONS } from './settings-sections'
 const { t } = useI18n()
 const router = useRouter()
 const settings = useSettingsStore()
+const range = useLayoutRange()
 
-/** Right-hand hint of an item: the current value, where the app already knows it. */
-const hints = computed<Record<string, string>>(() => ({
-  general: t(`language.${settings.language}`),
-  appearance: t(`theme.${settings.theme}`),
-}))
+/**
+ * Right-hand hint of an item: the current value, where the app already knows it. Below 1080 px
+ * the column keeps its labels and drops the values.
+ */
+const hints = computed((): Record<string, string> => {
+  if (range.value === 'narrow') return {}
+  return {
+    general: LOCALES.map((l) => l.toUpperCase()).join(' / '),
+    appearance: t(`theme.${settings.theme}`),
+  }
+})
 
 function leave() {
   void router.push('/')
@@ -31,6 +40,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 
 <template>
   <nav class="settings-nav" :aria-label="t('settingsNav.title')">
+    <span class="lights" aria-hidden="true" />
     <button type="button" class="back" @click="leave">
       <UiIcon name="chevron-left" />
       <b>{{ t('settingsNav.title') }}</b>
@@ -63,6 +73,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   padding: var(--space-4);
   overflow-y: auto;
   background: linear-gradient(165deg, var(--side-1), var(--side-2) 58%, var(--side-3));
+  line-height: normal;
+}
+
+.lights {
+  flex: none;
+  height: var(--lights-row);
+}
+
+:global(:root[data-fullscreen='true']) .lights {
+  display: none;
+}
+
+:global(:root[data-fullscreen='true']) .settings-nav {
+  padding-top: var(--side-top-fullscreen);
 }
 
 .back {

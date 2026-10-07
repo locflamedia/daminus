@@ -5,16 +5,25 @@
   another tooltip closed in the last 300 ms the next one opens at once ("instant for
   neighbours"); it leaves immediately, on pointer leave, click, blur, Escape or scroll.
   Keyboard focus shows it at once, since there is no pointer to wait for. While open it is
-  the trigger's `aria-describedby`. It wraps one element and adds no box of its own.
+  the trigger's `aria-describedby`. It wraps one element and adds no box of its own. `pinned`
+  opens it at once for a message the person is waiting for (a copy that failed); the usual
+  leave rules still close it.
 -->
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, useId } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, onUpdated, ref, useId, watch } from 'vue'
 import { useAnchored } from '@/lib/use-anchored'
 import UiKbd from './UiKbd.vue'
 
 const props = withDefaults(
-  defineProps<{ text: string; keys?: string[]; side?: 'top' | 'bottom'; disabled?: boolean }>(),
-  { keys: () => [], side: 'top', disabled: false },
+  defineProps<{
+    text: string
+    keys?: string[]
+    side?: 'top' | 'bottom'
+    disabled?: boolean
+    /** Opens at once and stays while true, for a message the person is waiting for. */
+    pinned?: boolean
+  }>(),
+  { keys: () => [], side: 'top', disabled: false, pinned: false },
 )
 
 /** Tooltips that close within this window let the next one open without the delay. */
@@ -86,13 +95,22 @@ function onKeydown(event: KeyboardEvent) {
   if (event.key === 'Escape') hide()
 }
 
+watch(
+  () => props.pinned,
+  (on) => (on ? show(true) : hide()),
+  { flush: 'post' },
+)
+
 // An icon-only button repeats its name as a native `title`; the tooltip replaces it, so the
 // system's own tip does not appear on top.
 function dropNativeTitle() {
   const el = root.value?.firstElementChild
   if (el?.getAttribute('title') === props.text) el.removeAttribute('title')
 }
-onMounted(dropNativeTitle)
+onMounted(() => {
+  dropNativeTitle()
+  if (props.pinned) show(true)
+})
 onUpdated(dropNativeTitle)
 onBeforeUnmount(hide)
 </script>

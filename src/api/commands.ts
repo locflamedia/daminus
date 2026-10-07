@@ -3,6 +3,7 @@
 // `generate_handler!` list, the build.rs permission list and the capability.
 import { invoke } from '@tauri-apps/api/core'
 import type { AppError } from './bindings/AppError'
+import type { Project } from './bindings/Project'
 import type { Report } from './bindings/Report'
 import type { ScanRun } from './bindings/ScanRun'
 import type { ScanScope } from './bindings/ScanScope'
@@ -13,6 +14,7 @@ export const COMMANDS = [
   'scan_stop',
   'scan_status',
   'report_latest',
+  'projects_list',
   'reveal_config_dir',
 ] as const
 
@@ -41,6 +43,11 @@ export function scanStatus(): Promise<ScanRun | null> {
 /** `evaluate` over the saved scans. */
 export function reportLatest(): Promise<Report> {
   return invoke<Report>('report_latest')
+}
+
+/** The saved projects: name, colour, URLs and components. */
+export function projectsList(): Promise<Project[]> {
+  return invoke<Project[]>('projects_list')
 }
 
 /** Shows the config folder in Finder. */

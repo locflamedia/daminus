@@ -21,6 +21,7 @@ import UiProviderRow from './UiProviderRow.vue'
 import UiRoll from './UiRoll.vue'
 import UiScanStep from './UiScanStep.vue'
 import UiSearchField from './UiSearchField.vue'
+import UiSparkline from './UiSparkline.vue'
 import UiTopology from './UiTopology.vue'
 
 vi.mock('@/api', () => ({ copyText: vi.fn().mockResolvedValue(undefined) }))
@@ -237,6 +238,14 @@ describe('UiCommandPalette', () => {
     return make(UiCommandPalette, { open: true, groups, label: 'Search', query: '', ...props })
   }
   const options = () => [...document.querySelectorAll('[role="option"]')].map((o) => o.textContent)
+
+  it('fades in over 150 ms, and with no motion at all when opened by the shortcut', () => {
+    open()
+    expect(wrapper!.html()).toContain('css="true"')
+    wrapper!.unmount()
+    open({ instant: true })
+    expect(wrapper!.html()).toContain('css="false"')
+  })
   const input = () => document.querySelector('input') as HTMLInputElement
 
   it('lists every group with its rows when the query is empty', () => {
@@ -657,9 +666,111 @@ describe('UiTopology forms', () => {
     expect(wrapper!.find('.link').exists()).toBe(false)
   })
 
+  it('folds past two servers into +N with a tooltip that names them, and a list folds none', () => {
+    const many: TopologyInput[] = [
+      { id: 'app', label: 'APP', host: 'vps-sg-2', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'db-main', state: 'ok' },
+      { id: 'cache', label: 'CACHE', host: 'cache-1', state: 'crit' },
+      { id: 'queue', label: 'QUEUE', host: 'queue-1', state: 'ok' },
+    ]
+    make(UiTopology, { ...common, components: many, mode: 'servers' })
+    const nodes = wrapper!.findAll('.node')
+    expect(nodes.map((n) => n.text())).toEqual([
+      'APPvps-sg-2Healthy',
+      'DBdb-mainHealthy',
+      '+2and 2 more',
+    ])
+    expect(nodes[2]?.attributes('title')).toBe('cache-1, queue-1')
+    make(UiTopology, { ...common, components: many, mode: 'servers', list: true })
+    expect(wrapper!.findAll('.node')).toHaveLength(4)
+  })
+
   it('reads out the state of each node', () => {
     make(UiTopology, { ...common, mode: 'servers' })
     expect(wrapper!.findAll('.sr-only').map((s) => s.text())).toEqual(['Healthy', 'Warning'])
+  })
+})
+
+describe('UiMetricTile, headroom', () => {
+  it('gives its sparkline 15 % headroom, as every chart does', () => {
+    make(UiMetricTile, { label: 'Latency', value: '1', series: [1, 2, 3, 4] })
+    expect(wrapper!.findComponent(UiSparkline).props('headroom')).toBe(0.15)
+  })
+})
+
+describe('UiMetricTile, card form', () => {
+  it('has no sparkline and puts the note under the value', () => {
+    make(UiMetricTile, {
+      form: 'note',
+      label: 'Disk',
+      value: '3.2',
+      unit: 'GB',
+      series: [1, 2, 3, 4],
+      note: '+0.4',
+      noteTone: 'warn',
+    })
+    expect(wrapper!.classes()).toContain('tile-note')
+    expect(wrapper!.find('.spark').exists()).toBe(false)
+    expect(wrapper!.get('.note').classes()).toContain('note-warn')
+    expect(wrapper!.get('.value').text()).toBe('3.2 GB')
+  })
+
+  it('reads the note from the state when no tone is given', () => {
+    const tones = { warn: 'note-warn', crit: 'note-crit', stale: 'note-old', normal: 'note-plain' }
+    for (const [state, cls] of Object.entries(tones)) {
+      make(UiMetricTile, { form: 'note', label: 'Disk', value: '1', note: 'n', state })
+      expect(wrapper!.get('.note').classes(), state).toContain(cls)
+      wrapper!.unmount()
+    }
+  })
+
+  it('writes a value that is not set up in grey, and a missing permission as a dash', () => {
+    make(UiMetricTile, {
+      form: 'note',
+      label: 'Database',
+      value: 'Not set up',
+      state: 'not-set-up',
+      note: 'add .env path',
+    })
+    expect(wrapper!.get('.value').classes()).toContain('muted')
+    wrapper!.unmount()
+    make(UiMetricTile, {
+      form: 'note',
+      label: 'Logs',
+      state: 'needs-permission',
+      note: 'needs permission',
+    })
+    expect(wrapper!.get('.value').text()).toBe('—')
+  })
+
+  it('gives way to two skeleton bars while the host is read, and keeps a given note', () => {
+    make(UiMetricTile, { form: 'note', label: 'Disk', state: 'scanning' })
+    expect(wrapper!.findAll('.skeleton')).toHaveLength(2)
+    wrapper!.unmount()
+    make(UiMetricTile, {
+      form: 'note',
+      label: 'Database',
+      state: 'scanning',
+      note: 'add .env path',
+    })
+    expect(wrapper!.findAll('.skeleton')).toHaveLength(1)
+    expect(wrapper!.get('.note').text()).toBe('add .env path')
+  })
+})
+
+describe('UiChipMorph, dot and large forms', () => {
+  it('draws a dot before the word, and a halo only on a critical one that pulses', () => {
+    make(UiChipMorph, { tone: 'crit', label: '2 critical', dot: true, pulse: true, large: true })
+    expect(wrapper!.classes()).toContain('large')
+    expect(wrapper!.get('.face .lead').classes()).toContain('m-halo')
+    wrapper!.unmount()
+    make(UiChipMorph, { tone: 'warn', label: '2 warnings', dot: true, pulse: true })
+    expect(wrapper!.get('.face .lead').classes()).not.toContain('m-halo')
+  })
+
+  it('swaps the dot for a spinner while busy', () => {
+    make(UiChipMorph, { tone: 'info', label: 'waiting', dot: true, busy: true })
+    expect(wrapper!.find('.face .lead').exists()).toBe(false)
   })
 })
 
@@ -667,8 +778,9 @@ describe('UiProjectCard', () => {
   const base = {
     name: 'kho-hang',
     domain: 'kho-hang.vn',
+    where: 'vps-sg-1',
     state: 'warn',
-    stateLabel: 'Needs a look',
+    stateLabel: '2 warnings',
     tags: [
       { label: 'Laravel 10' },
       { label: 'MySQL 8.0' },
@@ -677,17 +789,17 @@ describe('UiProjectCard', () => {
     ],
     topology: [
       { id: 'fe', label: 'FE', host: 'vps-sg-1', state: 'ok' },
-      { id: 'be', label: 'BE', host: 'vps-sg-1', state: 'warn' },
+      { id: 'be', label: 'BE', host: 'vps-sg-2', state: 'warn' },
     ] as TopologyInput[],
-    urlLabel: 'URL',
     nodeStates: { ok: 'Healthy', warn: 'Warning', crit: 'Critical', unknown: 'Unknown' },
     moreLabel: (n: number) => `and ${n} more`,
     topologyLabel: 'Request path',
-    status: { tone: 'warn', icon: 'database', title: 'Database grew 1.1 GB', chip: '2 issues' },
+    status: { tone: 'warn', icon: 'database', title: 'Database grew 1.1 GB' },
+    actionLabel: 'Open ›',
     metrics: [
-      { label: 'Latency', value: '312', unit: 'ms', series: [1, 2, 3, 4] },
-      { label: 'DB', value: '8.43', unit: 'GB', series: [1, 2, 3, 4], state: 'warn' },
-      { label: 'Files', value: '1.24', unit: 'GB', series: [1, 2, 3, 4] },
+      { label: 'Uptime', value: '200', unit: '· 212 ms', note: 'no change' },
+      { label: 'Disk', value: '5.4', unit: 'GB', note: '+0.9', noteTone: 'warn' },
+      { label: 'Database', value: '1.82', unit: 'GB', note: '+440 MB', noteTone: 'delta' },
     ],
     checkedAt: Date.now() - 60_000,
     passedLabel: '12 of 14 passed',
@@ -700,44 +812,102 @@ describe('UiProjectCard', () => {
     expect(order).toEqual(['head', 'tags', 'topology', 'row', 'metrics', 'foot'])
   })
 
-  it('shows the name, the domain and a morphing state chip for issues', () => {
+  it('shows the name, the domain with where it runs, and a state chip for every state', () => {
     make(UiProjectCard, base)
     expect(wrapper!.get('.name').text()).toBe('kho-hang')
     expect(wrapper!.get('.name').attributes('title')).toBe('kho-hang')
-    expect(wrapper!.get('.domain').text()).toContain('kho-hang.vn')
-    expect(wrapper!.get('.state .face').text()).toBe('Needs a look')
+    expect(wrapper!.get('.where').text()).toContain('kho-hang.vn')
+    expect(wrapper!.get('.where').text()).toContain('vps-sg-1')
+    const chip = wrapper!.get('.state')
+    expect(chip.classes()).toEqual(expect.arrayContaining(['chip-warn', 'large']))
+    expect(chip.get('.face').text()).toBe('2 warnings')
+    expect(chip.find('.lead').exists()).toBe(true)
   })
 
-  it('shows plain grey text when healthy, and an accent word while scanning', () => {
-    make(UiProjectCard, { ...base, state: 'ok', stateLabel: 'Healthy' })
-    expect(wrapper!.get('.state').classes()).toContain('word-ok')
-    wrapper!.unmount()
-    make(UiProjectCard, { ...base, state: 'scanning', stateLabel: 'Scanning' })
-    expect(wrapper!.get('.state').classes()).toContain('word-scanning')
+  it('draws the chip of each state as the board does', () => {
+    const tones = {
+      crit: 'chip-crit',
+      warn: 'chip-warn',
+      ok: 'chip-ok',
+      unreachable: 'chip-neutral',
+    }
+    for (const [state, tone] of Object.entries(tones)) {
+      make(UiProjectCard, { ...base, state, stateLabel: state })
+      expect(wrapper!.get('.state').classes(), state).toContain(tone)
+      wrapper!.unmount()
+    }
+    make(UiProjectCard, { ...base, state: 'scanning', stateLabel: 'waiting' })
+    expect(wrapper!.get('.state').classes()).toContain('chip-info')
+    expect(wrapper!.find('.state .lead').exists()).toBe(false)
     expect(wrapper!.attributes('aria-busy')).toBe('true')
-    expect(wrapper!.get('.status').classes()).toContain('blurred')
-    expect(
-      wrapper!.findAll('[data-state]').every((t) => t.attributes('data-state') === 'scanning'),
-    ).toBe(true)
   })
 
-  it('folds tags past the limit into +N, on one line', () => {
+  it('pulses the dot of a critical card and lifts it with the rose shadow, and no other', () => {
+    make(UiProjectCard, { ...base, state: 'crit', stateLabel: '2 critical' })
+    expect(wrapper!.get('.state .lead').classes()).toContain('m-halo')
+    expect(wrapper!.classes()).toContain('critical')
+    wrapper!.unmount()
     make(UiProjectCard, base)
+    expect(wrapper!.get('.state .lead').classes()).not.toContain('m-halo')
+    expect(wrapper!.classes()).not.toContain('critical')
+  })
+
+  it('folds tags past the limit into +N, on one line, with a dot in the project colour', () => {
+    make(UiProjectCard, { ...base, tint: 'teal' })
     const tags = wrapper!.findAll('.tags .tag').map((t) => t.text())
     expect(tags).toEqual(['Laravel 10', 'MySQL 8.0', 'compose', '+1'])
+    expect(wrapper!.classes()).toContain('tint-teal')
+    expect(wrapper!.get('.tags .swatch').attributes('style')).toContain('var(--mark)')
   })
 
-  it('shows the single most severe issue with its count chip, never stacked rows', () => {
+  it('draws the servers topology only: no URL node, one node per server', () => {
+    make(UiProjectCard, base)
+    expect(wrapper!.findAll('.topology .node')).toHaveLength(2)
+    expect(wrapper!.get('.topology').text()).not.toContain('URL')
+  })
+
+  it('shows the single most severe issue with one text action, never stacked rows', () => {
     make(UiProjectCard, base)
     expect(wrapper!.findAll('.status')).toHaveLength(1)
-    expect(wrapper!.get('.count').text()).toBe('2 issues')
+    expect(wrapper!.get('.status .action').text()).toBe('Open ›')
+    expect(wrapper!.find('.count').exists()).toBe(false)
   })
 
-  it('gives a critical card a Fix button that reports action', async () => {
-    make(UiProjectCard, { ...base, state: 'crit', actionLabel: 'Fix' })
-    await wrapper!.get('.status button').trigger('click')
+  it('reports action from the status row', async () => {
+    make(UiProjectCard, { ...base, state: 'crit' })
+    await wrapper!.get('.status .action').trigger('click')
     expect(wrapper!.emitted('action')).toHaveLength(1)
-    expect(wrapper!.find('.count').exists()).toBe(false)
+  })
+
+  it('draws the three tiles without a sparkline, each with its note', () => {
+    make(UiProjectCard, base)
+    const tiles = wrapper!.findAll('.metrics .tile')
+    expect(tiles).toHaveLength(3)
+    expect(wrapper!.find('.metrics svg.spark, .metrics .spark').exists()).toBe(false)
+    expect(tiles.map((t) => t.get('.note').text())).toEqual(['no change', '+0.9', '+440 MB'])
+  })
+
+  it('keeps the last result while one tile is read, and dims the tiles when unreachable', () => {
+    const metrics = [base.metrics[0], { label: 'Disk', state: 'scanning' }, base.metrics[2]]
+    make(UiProjectCard, { ...base, state: 'scanning', stateLabel: 'waiting', metrics })
+    const tiles = wrapper!.findAll('.metrics .tile')
+    expect(tiles[0]!.attributes('data-state')).toBe('normal')
+    expect(tiles[1]!.attributes('data-state')).toBe('scanning')
+    expect(wrapper!.get('.metrics').classes()).not.toContain('dim')
+    wrapper!.unmount()
+    make(UiProjectCard, { ...base, state: 'unreachable', stateLabel: 'Unreachable' })
+    expect(wrapper!.get('.metrics').classes()).toContain('dim')
+  })
+
+  it('says "this scan" in the foot without a time while the first read runs', () => {
+    make(UiProjectCard, {
+      ...base,
+      state: 'scanning',
+      checkedAt: undefined,
+      passedLabel: 'this scan · waiting',
+    })
+    expect(wrapper!.find('.when').exists()).toBe(false)
+    expect(wrapper!.get('.passed').text()).toBe('this scan · waiting')
   })
 
   it('opens from the Open button and from a press on the card, not from its other controls', async () => {
@@ -746,7 +916,7 @@ describe('UiProjectCard', () => {
     expect(wrapper!.emitted('open')).toHaveLength(1)
     await wrapper!.get('.head').trigger('click')
     expect(wrapper!.emitted('open')).toHaveLength(2)
-    await wrapper!.get('.domain a').trigger('click')
+    await wrapper!.get('.where a').trigger('click')
     expect(wrapper!.emitted('open')).toHaveLength(2)
     expect(wrapper!.emitted('open-domain')).toEqual([['https://kho-hang.vn']])
   })

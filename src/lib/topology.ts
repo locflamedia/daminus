@@ -89,16 +89,22 @@ export interface ServerGroupsView {
   groups: ServerGroup[]
   /** Servers folded into the "+N" node. */
   hidden: number
+  /** The folded servers themselves, for the node's tooltip. */
+  folded: ServerGroup[]
 }
+
+/** More than two servers fold: the first two show, the rest go behind "+N". */
+export const SERVER_NODES_MAX = 2
 
 /**
  * The Overview card's form: components that follow each other on the same server share one
- * node ("FE BE DB vps-hn-3"), and a node appears again only where the server changes. At
- * most `max` nodes show; past that the healthiest groups fold, so a failing part stays.
+ * node ("FE BE DB vps-hn-3"), and a node appears again only where the server changes. Nodes
+ * keep discovery order, front to back; past `max` the rest fold into "+N" (a list shows every
+ * server, so it passes `Infinity`).
  */
 export function layoutServers(
   components: readonly TopologyInput[],
-  max = TOPOLOGY_MAX,
+  max = SERVER_NODES_MAX,
 ): ServerGroupsView {
   const all: ServerGroup[] = []
   for (const c of components) {
@@ -112,12 +118,7 @@ export function layoutServers(
       all.push({ host, roles: [role], state: c.state })
     }
   }
-  if (all.length <= max) return { groups: all, hidden: 0 }
-  const kept = all
-    .map((group, index) => ({ group, index }))
-    .sort((a, b) => SEVERITY[b.group.state] - SEVERITY[a.group.state] || a.index - b.index)
-    .slice(0, max)
-    .sort((a, b) => a.index - b.index)
-    .map(({ group }) => group)
-  return { groups: kept, hidden: all.length - kept.length }
+  const groups = all.slice(0, max)
+  const folded = all.slice(max)
+  return { groups, hidden: folded.length, folded }
 }

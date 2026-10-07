@@ -40,6 +40,23 @@ function leave() {
 }
 
 describe('UiTooltip', () => {
+  it('opens at once while pinned, and leaves when the pointer leaves or the pin is dropped', async () => {
+    make({ pinned: false })
+    expect(tip()).toBeNull()
+    await wrapper!.setProps({ pinned: true })
+    await nextTick()
+    expect(tip()?.textContent).toContain('Scan all')
+    expect(trigger().getAttribute('aria-describedby')).toBe(tip()?.id)
+    await wrapper!.setProps({ pinned: false })
+    await nextTick()
+    expect(tip()).toBeNull()
+    await wrapper!.setProps({ pinned: true })
+    await nextTick()
+    leave()
+    await nextTick()
+    expect(tip()).toBeNull()
+  })
+
   it('removes a native title that repeats its words, so the system tip does not double it', () => {
     wrapper = mount(UiTooltip, {
       props: { text: 'Scan all' },

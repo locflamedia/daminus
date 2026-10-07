@@ -12,6 +12,7 @@ import UiEmptyValue from './UiEmptyValue.vue'
 import UiHostChip from './UiHostChip.vue'
 import UiInlineCode from './UiInlineCode.vue'
 import UiMonogram from './UiMonogram.vue'
+import { MONOGRAM_TINTS } from './monogram-tints'
 import UiPathChip from './UiPathChip.vue'
 import UiProgressRing from './UiProgressRing.vue'
 import UiSectionHeader from './UiSectionHeader.vue'
@@ -176,6 +177,30 @@ describe('UiMonogram', () => {
     make(UiMonogram, { icon: 'cart', size: 36 })
     expect(wrapper!.find('svg.icon').attributes('width')).toBe('18')
     expect(wrapper!.text()).toBe('')
+  })
+
+  it('draws the 40 px tile of a project card head with a 20 px glyph', () => {
+    make(UiMonogram, { icon: 'cart', size: 40, tint: 'teal' })
+    expect(wrapper!.classes()).toEqual(expect.arrayContaining(['size-40', 'tint-teal']))
+    expect(wrapper!.find('svg.icon').attributes('width')).toBe('20')
+  })
+
+  it('has one class and one token pair for each of the eight project colours', () => {
+    for (const tint of MONOGRAM_TINTS) {
+      make(UiMonogram, { name: 'x', tint })
+      expect(wrapper!.classes()).toContain(`tint-${tint}`)
+      wrapper!.unmount()
+    }
+    expect(MONOGRAM_TINTS).toEqual([
+      'blue',
+      'lilac',
+      'rose',
+      'amber',
+      'green',
+      'teal',
+      'coral',
+      'slate',
+    ])
   })
 
   it('takes the first character of a name written with accents or an emoji-free script', () => {

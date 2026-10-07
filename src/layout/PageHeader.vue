@@ -4,13 +4,16 @@ defineProps<{
   /** Scan number and age, e.g. `Scan #12 · today 13:42`. */
   meta?: string
 }>()
+// The `meta` slot replaces the text when part of it is set in the mono face (the elapsed time).
 </script>
 
 <template>
   <header class="page-header">
     <div class="titles">
       <b class="title">{{ title }}</b>
-      <span v-if="meta" class="meta">{{ meta }}</span>
+      <span v-if="meta || $slots.meta" class="meta">
+        <slot name="meta">{{ meta }}</slot>
+      </span>
     </div>
     <span class="grow" />
     <slot name="actions" />
@@ -25,6 +28,16 @@ defineProps<{
   gap: var(--space-3);
   flex: none;
   height: 72px;
+}
+
+/* The header sits over the page's drag strip: only its controls take the pointer, so the
+   blank space and the title still drag the window. */
+.page-header {
+  pointer-events: none;
+}
+
+.page-header > :not(.titles, .grow) {
+  pointer-events: auto;
 }
 
 .titles {
@@ -43,6 +56,10 @@ defineProps<{
   color: var(--ink-3);
   font-size: var(--text-12);
   white-space: nowrap;
+}
+
+.meta :deep(.mono) {
+  font-size: inherit;
 }
 
 .grow {

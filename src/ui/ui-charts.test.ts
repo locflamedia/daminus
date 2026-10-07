@@ -2,7 +2,7 @@
 import { mount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetPlayed } from '@/lib/motion'
 import UiBarChart from './UiBarChart.vue'
 import UiDonut from './UiDonut.vue'
@@ -185,6 +185,55 @@ describe('UiHistoryChart', () => {
     expect(wrapper.get('[aria-live]').text()).toBe('scan 4, 8.4 GB, +0.1')
   })
 
+  it('announces a sentence of its own when the tip has one', async () => {
+    const spoken = tips.map((t, i) => ({ ...t, spoken: `Scan ${i}, 24 September, ${t.value}` }))
+    const wrapper = mount(UiHistoryChart, { props: { ...base, tips: spoken } })
+    await wrapper.get('.stage').trigger('keydown', { key: 'End' })
+    expect(wrapper.get('[aria-live]').text()).toBe('Scan 4, 24 September, 8.4 GB')
+  })
+
+  it('marks the keyboard cursor with the ink crosshair and the ink label, not the pointer', async () => {
+    const wrapper = mount(UiHistoryChart, {
+      props: { ...base, xLabels: [{ index: 4, text: 'today' }], hovered: 4 },
+    })
+    expect(wrapper.get('.stage').classes()).not.toContain('keyboard')
+    await wrapper.get('.stage').trigger('keydown', { key: 'ArrowLeft' })
+    expect(wrapper.get('.stage').classes()).toContain('keyboard')
+    await wrapper.get('.stage').trigger('keydown', { key: 'End' })
+    expect(wrapper.get('.axis.now').text()).toBe('today')
+    await wrapper.get('.stage').trigger('blur')
+    expect(wrapper.get('.stage').classes()).not.toContain('keyboard')
+  })
+
+  it('is a single tab stop, with the card hidden from screen readers', async () => {
+    const wrapper = mount(UiHistoryChart, { props: base })
+    expect(wrapper.findAll('[tabindex="0"]')).toHaveLength(1)
+    await wrapper.get('.stage').trigger('keydown', { key: 'End' })
+    expect(wrapper.get('.tip').attributes('aria-hidden')).toBe('true')
+  })
+
+  it('places value and date labels where the board puts them, and lets a label pick its anchor', () => {
+    const wrapper = mount(UiHistoryChart, {
+      props: {
+        ...base,
+        domain: [6.5, 8.75] as const,
+        size: { width: 560, height: 190 },
+        plot: { left: 48, right: 12, top: 20, bottom: 40 },
+        axisGap: 8,
+        dateInset: 14,
+        xLabels: [
+          { index: 0, text: '18 Sep', anchor: 'middle' as const },
+          { index: 4, text: 'today' },
+        ],
+      },
+    })
+    const axis = wrapper.findAll('.axis')
+    expect(axis[0]?.attributes('x')).toBe('40')
+    const dates = axis.slice(-2)
+    expect(dates.map((d) => d.attributes('y'))).toEqual(['176', '176'])
+    expect(dates.map((d) => d.attributes('text-anchor'))).toEqual(['middle', 'end'])
+  })
+
   it('takes a pinned scan from its model', () => {
     const wrapper = mount(UiHistoryChart, { props: { ...base, hovered: 2 } })
     expect(wrapper.get('.tip').text()).toContain('scan 2')
@@ -230,6 +279,39 @@ describe('UiBarChart', () => {
     expect(bars.map((b) => b.classes().includes('latest'))).toEqual([false, false, true])
     expect(wrapper.findAll('.axis').map((a) => a.text())).toEqual(['#1', '#3'])
     expect(wrapper.attributes('role') ?? wrapper.get('svg').attributes('role')).toBe('img')
+  })
+
+  it('is one tab stop with a card for every bar when it is given tips', async () => {
+    const tips = [1, 2, 3].map((n) => ({
+      title: `Scan #${n}`,
+      value: `${n} s`,
+      spoken: `Scan ${n}, ${n} s`,
+    }))
+    const wrapper = mount(UiBarChart, {
+      props: { values: [1, 2, 3], label: 'Durations', labels: { first: '#1', last: '#3' }, tips },
+    })
+    const stage = wrapper.get('[role="group"]')
+    expect(stage.attributes('tabindex')).toBe('0')
+    expect(stage.attributes('aria-label')).toBe('Durations')
+    expect(wrapper.get('svg').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.findAll('title').map((t) => t.text())).toEqual([
+      'Scan 1, 1 s',
+      'Scan 2, 2 s',
+      'Scan 3, 3 s',
+    ])
+    await stage.trigger('keydown', { key: 'Home' })
+    expect(wrapper.get('.tip').text()).toContain('Scan #1')
+    expect(wrapper.get('[aria-live]').text()).toBe('Scan 1, 1 s')
+    expect(wrapper.find('.cursor').exists()).toBe(true)
+    expect(wrapper.findAll('.axis')[0]?.classes()).toContain('now')
+    await stage.trigger('keydown', { key: 'Escape' })
+    expect(wrapper.find('.tip').exists()).toBe(false)
+  })
+
+  it('without tips it stays a plain picture', () => {
+    const wrapper = mount(UiBarChart, { props: { values: [1, 2], label: 'Durations' } })
+    expect(wrapper.find('[tabindex]').exists()).toBe(false)
+    expect(wrapper.get('svg').attributes('role')).toBe('img')
   })
 
   it('staggers the rise 40 ms apart', () => {
@@ -318,27 +400,68 @@ describe('UiTreemap', () => {
 
   it('outlines the grower, greys the rest and tints the others by size', () => {
     const wrapper = mount(UiTreemap, { props: { tiles, label: 'Folders' } })
+    // Largest first, the grower pulled up behind it, the rest bucket last.
     expect(
-      wrapper.findAll('li').map((l) => l.classes().find((c) => c.startsWith('tone-'))),
-    ).toEqual(['tone-tile-1', 'tone-grow', 'tone-tile-2', 'tone-other'])
+      wrapper
+        .findAll('li')
+        .map((l) => [l.attributes('data-tile'), l.classes().find((c) => c.startsWith('tone-'))]),
+    ).toEqual([
+      ['a', 'tone-tile-1'],
+      ['b', 'tone-grow'],
+      ['c', 'tone-tile-2'],
+      ['d', 'tone-other'],
+    ])
   })
 
-  it('places tiles in rows by bytes with a 3 px inset', () => {
-    const wrapper = mount(UiTreemap, {
-      props: { tiles, rows: [2, 2], height: 300, label: 'Folders' },
-    })
-    const first = wrapper.findAll('li')[0]?.attributes('style') ?? ''
+  it('puts half the tiles in row one, two thirds of the height, with a 3 px inset', () => {
+    const wrapper = mount(UiTreemap, { props: { tiles, height: 300, label: 'Folders' } })
+    const [first, second, third] = wrapper.findAll('li').map((l) => l.attributes('style') ?? '')
     expect(first).toContain('left: calc(0% + 3px)')
     expect(first).toContain('top: 3px')
-    // Row one is 3.5 of 5 GB of 300 px.
-    expect(first).toContain(`height: ${(3.5 / 5) * 300 - 6}px`)
+    expect(first).toContain(`height: ${(2 / 3) * 300 - 6}px`)
+    // Two of the four tiles are in the first row, side by side; the rest sit below it.
+    expect(second).toContain('top: 3px')
+    expect(third).toContain(`top: ${(2 / 3) * 300 + 3}px`)
+    expect(third).toContain(`height: ${(1 / 3) * 300 - 6}px`)
+  })
+
+  it('reads every tile as its name, size and change, in its title and its accessible name', () => {
+    const wrapper = mount(UiTreemap, { props: { tiles, label: 'Folders' } })
+    const first = wrapper.findAll('li')[0]
+    expect(first?.attributes('title')).toBe('public/uploads, 2.6 GB, +40 MB')
+    expect(first?.attributes('aria-label')).toBe('public/uploads, 2.6 GB, +40 MB')
   })
 
   it('stagger the rise in reading order, a step more for each row', () => {
-    const wrapper = mount(UiTreemap, { props: { tiles, rows: [2, 2], label: 'Folders' } })
+    const wrapper = mount(UiTreemap, { props: { tiles, label: 'Folders' } })
     expect(
       wrapper.findAll('li').map((l) => /--d: (\d+)ms/.exec(l.attributes('style') ?? '')?.[1]),
     ).toEqual(['0', '60', '180', '240'])
+  })
+
+  describe('small tiles', () => {
+    afterEach(() => vi.restoreAllMocks())
+
+    it('shows the name alone when the size does not fit, and nothing under 40 px', async () => {
+      const widths: Record<string, number> = { a: 200, b: 70, c: 30, d: 120 }
+      vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        if (this.dataset.tile) return widths[this.dataset.tile] ?? 0
+        return this.classList.contains('amount') ? 62 : 0
+      })
+      vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(100)
+      const wrapper = mount(UiTreemap, { props: { tiles, label: 'Folders' } })
+      await wrapper.vm.$nextTick()
+      const forms = Object.fromEntries(
+        wrapper
+          .findAll('li')
+          .map((l) => [l.attributes('data-tile'), l.classes().find((c) => c.startsWith('form-'))]),
+      )
+      expect(forms).toEqual({ a: 'form-full', b: 'form-name', c: 'form-none', d: 'form-full' })
+      // What a tile leaves out is still in its tooltip.
+      expect(wrapper.get('[data-tile="b"]').attributes('title')).toBe('storage/logs, 0.9 GB')
+    })
   })
 
   it('shows growth in amber only when told it is growth', () => {
@@ -361,6 +484,46 @@ describe('UiHeatStrip and UiHeatmap', () => {
     expect(wrapper.text()).toContain('2 warning')
     expect(wrapper.findAll('.cell')[0]?.attributes('title')).toBe('#1 ok')
     expect(wrapper.get('.cells').attributes('style')).toContain('repeat(4')
+  })
+
+  it('gives a warning cell a triangle and a critical one a cross, and ok none', () => {
+    const wrapper = mount(UiHeatStrip, {
+      props: { name: 'p', summary: 's', cells: ['ok', 'warn', 'crit', 'none'] },
+    })
+    expect(wrapper.findAll('.cell').map((c) => c.find('svg').exists())).toEqual([
+      false,
+      true,
+      true,
+      false,
+    ])
+  })
+
+  it('makes the strip one tab stop and walks its cells with the arrows', async () => {
+    const wrapper = mount(UiHeatStrip, {
+      attachTo: document.body,
+      props: {
+        name: 'p',
+        summary: 's',
+        cells: ['ok', 'warn', 'crit'],
+        titles: ['#1 · healthy', '#2 · warning', '#3 · critical'],
+      },
+    })
+    const cells = () => wrapper.findAll('.cell')
+    expect(cells().map((c) => c.attributes('tabindex'))).toEqual(['0', '-1', '-1'])
+    expect(cells()[1]?.attributes('aria-label')).toBe('#2 · warning')
+    await wrapper.get('.cells').trigger('keydown', { key: 'ArrowRight' })
+    expect(cells().map((c) => c.attributes('tabindex'))).toEqual(['-1', '0', '-1'])
+    expect(document.activeElement).toBe(cells()[1]?.element)
+    await wrapper.get('.cells').trigger('keydown', { key: 'End' })
+    expect(document.activeElement).toBe(cells()[2]?.element)
+    await wrapper.get('.cells').trigger('keydown', { key: 'Home' })
+    expect(document.activeElement).toBe(cells()[0]?.element)
+    wrapper.unmount()
+  })
+
+  it('has no tab stop in a strip without titles', () => {
+    const wrapper = mount(UiHeatStrip, { props: { name: 'p', summary: 's', cells: ['ok', 'ok'] } })
+    expect(wrapper.find('[tabindex]').exists()).toBe(false)
   })
 
   const heat = {
@@ -390,15 +553,47 @@ describe('UiHeatStrip and UiHeatmap', () => {
     const wrapper = mount(UiHeatmap, { props: heat })
     const states = wrapper
       .findAll('.cell')
-      .map((c) => [c.classes().find((k) => k.startsWith('state-')), c.find('svg').exists()])
+      .map((c) => [
+        c.classes().find((k) => k.startsWith('state-')),
+        c.text(),
+        c.find('svg').exists(),
+      ])
     expect(states).toEqual([
-      ['state-ok', false],
-      ['state-warn', true],
-      ['state-expected', true],
-      ['state-none', true],
-      ['state-crit', true],
-      ['state-ok', false],
+      ['state-ok', '', false],
+      ['state-warn', '!', false],
+      ['state-expected', '', true],
+      ['state-none', '–', false],
+      ['state-crit', '×', false],
+      ['state-ok', '', false],
     ])
+  })
+
+  it('is a grid of rows and cells, one tab stop, walked with the four arrows', async () => {
+    const titles = {
+      titles: ['a', 'b', 'c'] as const,
+    }
+    const wrapper = mount(UiHeatmap, {
+      attachTo: document.body,
+      props: { ...heat, rows: heat.rows.map((row) => ({ ...row, ...titles })) },
+    })
+    expect(wrapper.attributes('role')).toBe('grid')
+    expect(wrapper.findAll('[role="row"]')).toHaveLength(3)
+    expect(wrapper.findAll('[role="columnheader"]')).toHaveLength(3)
+    expect(wrapper.findAll('[role="rowheader"]')).toHaveLength(2)
+    const cells = () => wrapper.findAll('[role="gridcell"]')
+    expect(cells().filter((c) => c.attributes('tabindex') === '0')).toHaveLength(1)
+    await wrapper.trigger('keydown', { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(cells()[3]?.element)
+    await wrapper.trigger('keydown', { key: 'ArrowRight' })
+    expect(document.activeElement).toBe(cells()[4]?.element)
+    await wrapper.trigger('keydown', { key: 'ArrowUp' })
+    expect(document.activeElement).toBe(cells()[1]?.element)
+    wrapper.unmount()
+  })
+
+  it('does not make cells without a title focusable', () => {
+    const wrapper = mount(UiHeatmap, { props: heat })
+    expect(wrapper.find('[tabindex]').exists()).toBe(false)
   })
 
   it('rings the compared scans and marks their numbers', () => {
@@ -488,6 +683,40 @@ describe('UiIssueColumns', () => {
     expect(columns[1]?.find('.sr-only').text()).toBe('#2: 1 critical, 3 warning')
   })
 
+  it('can be focused once every scan has a card, and reads the same words it shows', async () => {
+    const withTips = scans.map((scan, i) => ({
+      ...scan,
+      tip: {
+        title: `Scan #${i + 1} · 24 Sep`,
+        value: '3 issues',
+        spoken: `Scan ${i + 1}, 24 September, 3 issues, ${scan.description}`,
+      },
+    }))
+    const wrapper = mount(UiIssueColumns, { props: { scans: withTips, label: 'Issues' } })
+    const stage = wrapper.get('[role="group"]')
+    expect(stage.attributes('tabindex')).toBe('0')
+    await stage.trigger('keydown', { key: 'ArrowLeft' })
+    expect(wrapper.get('.tip').text()).toContain('Scan #2 · 24 Sep')
+    expect(wrapper.get('[aria-live]').text()).toBe(
+      'Scan 2, 24 September, 3 issues, 1 critical, 3 warning',
+    )
+    expect(wrapper.findAll('.num').map((n) => n.classes().includes('now'))).toEqual([false, true])
+    await stage.trigger('keydown', { key: 'Home' })
+    expect(wrapper.findAll('.num').map((n) => n.classes().includes('now'))).toEqual([true, false])
+  })
+
+  it('stays a plain list while a scan has no card', () => {
+    const wrapper = mount(UiIssueColumns, { props: { scans, label: 'Issues' } })
+    expect(wrapper.find('[tabindex]').exists()).toBe(false)
+    expect(wrapper.get('ul').attributes('aria-label')).toBe('Issues')
+  })
+
+  it('numbers the scans in ink, and faded ones in ink-3 as the board does', () => {
+    const source = readFileSync(join(process.cwd(), 'src/ui/UiIssueColumns.vue'), 'utf8')
+    expect(source).toMatch(/\.num \{[^}]*color: var\(--ink\);/)
+    expect(source).toMatch(/\.faded \.num \{\s*color: var\(--ink-3\);/)
+  })
+
   it('fades the scans that are not being compared', () => {
     const wrapper = mount(UiIssueColumns, { props: { scans, compared: ['2'], label: 'Issues' } })
     expect(wrapper.findAll('.column').map((c) => c.classes().includes('faded'))).toEqual([
@@ -504,6 +733,8 @@ describe('chart sources', () => {
   const files = [
     'UiBarChart',
     'UiChartLegend',
+    'UiChartTip',
+    'UiColumnStage',
     'UiDonut',
     'UiGauge',
     'UiHeatStrip',

@@ -189,10 +189,11 @@ function onClick(event: MouseEvent) {
 }
 
 .btn-secondary {
-  --bg: var(--surface-0);
+  --bg: var(--secondary-bg);
   --bg-hover: var(--secondary-hover);
-  --bg-press: var(--surface-1);
-  --shadow: var(--shadow-control);
+  --bg-press: var(--secondary-press);
+  --shadow: var(--secondary-shadow);
+  --fg-off: var(--ink-off);
 }
 
 .btn-soft {
@@ -207,6 +208,7 @@ function onClick(event: MouseEvent) {
   --fg: var(--ink-3);
   --bg-hover: var(--surface-1);
   --bg-press: var(--surface-2);
+  --bg-off: transparent;
   --fg-off: var(--ink-5);
 }
 
@@ -266,7 +268,7 @@ function onClick(event: MouseEvent) {
 .btn:is(:focus-visible, [data-force='focus']) {
   box-shadow:
     var(--shadow),
-    0 0 0 2px var(--surface-0),
+    0 0 0 2px var(--ring-gap),
     0 0 0 4px var(--accent);
 }
 

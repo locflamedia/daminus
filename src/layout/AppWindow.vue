@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { watchFullscreen } from '@/api'
 import { prefersReducedMotion } from '@/lib/motion'
 import { LAYOUT_RANGE, rangeOf, useViewportWidth } from '@/lib/viewport'
 import { useSettingsStore } from '@/stores/settings'
@@ -48,22 +49,39 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+// The title bar is an overlay: the traffic lights sit in the sidebar's first row and are gone
+// in full screen, where the sidebar keeps only its top padding.
+let stopWatching: (() => void) | undefined
+let unmounted = false
+onMounted(async () => {
+  window.addEventListener('keydown', onKeydown)
+  const stop = await watchFullscreen((full) => {
+    document.documentElement.dataset.fullscreen = String(full)
+  })
+  if (unmounted) stop()
+  else stopWatching = stop
+})
 onBeforeUnmount(() => {
+  unmounted = true
   window.removeEventListener('keydown', onKeydown)
   window.clearTimeout(settleTimer)
+  stopWatching?.()
+  delete document.documentElement.dataset.fullscreen
 })
 </script>
 
 <template>
   <div class="window" :class="{ instant }" :data-column="column" :data-range="range">
     <aside class="side" :class="{ animating }">
+      <!-- The top 40 px of the sidebar and of the page drags the window; a double click zooms. -->
+      <span class="drag" data-tauri-drag-region aria-hidden="true" />
       <SettingsNav v-if="inSettings" />
       <AppRail v-else-if="folded" />
       <AppSidebar v-else />
     </aside>
     <main class="main">
       <span class="blob" aria-hidden="true" />
+      <span class="drag" data-tauri-drag-region aria-hidden="true" />
       <slot />
     </main>
   </div>
@@ -72,6 +90,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .window {
   --side-col: var(--sidebar-w);
+  --drag-strip: 40px;
 
   display: grid;
   grid-template-columns: var(--side-col) minmax(0, 1fr);
@@ -103,14 +122,35 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+.drag {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  height: var(--drag-strip);
+}
+
+/* In the page the strip stays at the top while the content scrolls and the controls of a header
+   (positioned, later in the tree) sit above it. */
+.main .drag {
+  position: sticky;
+  z-index: 0;
+  flex: none;
+  margin: 0 calc(-1 * var(--main-pad)) calc(-1 * (var(--drag-strip) + var(--main-gap)));
+}
+
 .main {
+  --main-pad: var(--space-8);
+  --main-gap: var(--space-4);
+
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--main-gap);
   min-width: 0;
   min-height: 0;
-  padding: 0 var(--space-8) var(--space-6);
+  padding: 0 var(--main-pad) var(--space-6);
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--page);
@@ -131,8 +171,8 @@ onBeforeUnmount(() => {
 }
 
 [data-range='narrow'] .main {
-  padding: 0 var(--space-6) var(--space-6);
-  gap: 14px;
+  --main-pad: var(--space-6);
+  --main-gap: 14px;
 }
 
 @media (prefers-reduced-motion: reduce) {

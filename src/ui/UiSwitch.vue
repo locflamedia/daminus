@@ -95,7 +95,7 @@ function onChange(event: Event) {
   height: 16px;
   border-radius: 50%;
   background: var(--surface-0);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-knob);
   transition: transform var(--dur-knob) var(--ease-settle);
 }
 
@@ -105,7 +105,7 @@ function onChange(event: Event) {
 
 .native:checked + .track .knob {
   background: var(--btn-ink);
-  box-shadow: none;
+  box-shadow: var(--shadow-knob-on);
   transform: translateX(16px);
 }
 
@@ -115,7 +115,7 @@ function onChange(event: Event) {
 
 .native:is(:focus-visible, [data-force='focus']) + .track {
   box-shadow:
-    0 0 0 2px var(--surface-0),
+    0 0 0 2px var(--ring-gap),
     0 0 0 4px var(--accent);
 }
 
@@ -125,10 +125,10 @@ function onChange(event: Event) {
 }
 
 .off .native:checked + .track {
-  background: color-mix(in srgb, var(--ink-5) 40%, var(--surface-3));
+  background: var(--switch-disabled-track);
 }
 
 .off .native:checked + .track .knob {
-  background: var(--surface-0);
+  background: var(--switch-disabled-knob);
 }
 </style>

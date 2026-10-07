@@ -1,15 +1,19 @@
 <!--
   Treemap of the board "Project · Disk" (where the space goes): the top folders sized by
   bytes in two rows, tinted from pale lilac and blue to grey "other"; the one that grew gets
-  an amber outline and its change. Each tile holds its name (mono, 12/500) and its size
-  (18/500) with the change beside it, always inside the tile, truncated before it overflows.
-  Tiles keep the order given. They rise in reading order the first time the chart appears.
+  an amber outline and its change. The order is the board's rule: largest first, the folder
+  that grew fastest pulled up to follow the largest, the rest last; row one takes half the
+  tiles (rounded down) and two thirds of the height, and a tile's width follows its size in
+  its row. Each tile holds its name (mono, 12/500) and its size (18/500) with the change
+  beside it, always inside the tile. A tile too narrow for its size shows the name alone, cut
+  with an ellipsis; under 40 px it shows nothing; either way its tooltip and its accessible
+  name carry the whole reading. Tiles rise in reading order the first time the chart appears.
   Names and amounts come from the caller and are rendered as text; the colours only help, as
   every tile says what it is.
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import { treemapRows } from '@/lib/chart-layout'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { diskTreemap, tileForm, type TileForm } from '@/lib/chart-layout'
 import { shouldPlay } from '@/lib/motion'
 
 export interface TreemapTile {
@@ -25,6 +29,8 @@ export interface TreemapTile {
   deltaTone?: 'warn' | 'neutral'
   /** The one that grew: amber outline. */
   grow?: boolean
+  /** By how much it grew, to tell which of several growers is the fastest. */
+  growth?: number
   /** Everything else: grey. */
   other?: boolean
 }
@@ -32,22 +38,23 @@ export interface TreemapTile {
 const props = withDefaults(
   defineProps<{
     tiles: readonly TreemapTile[]
-    /** Tiles per row; by default two rows. */
-    rows?: readonly number[]
     height?: number
     label: string
     once?: string
   }>(),
-  { rows: undefined, height: 300, once: undefined },
+  { height: 300, once: undefined },
 )
 
 const play = shouldPlay(props.once)
 const INSET = 3
 
+const root = ref<HTMLElement | null>(null)
+const forms = ref<Record<string, TileForm>>({})
+
 const laid = computed(() => {
-  const tiles = treemapRows(props.tiles, props.rows)
-  // Pale to deep by size among the ordinary tiles; grower and other have their own tints.
+  const tiles = diskTreemap(props.tiles)
   let rank = 0
+  // Pale to deep by size among the ordinary tiles; grower and other have their own tints.
   const ramp = ['tile-1', 'tile-2', 'tile-3']
   return tiles.map(({ item, rect }, i) => {
     const tone = item.grow
@@ -58,6 +65,7 @@ const laid = computed(() => {
     return {
       item,
       tone,
+      reading: [item.label, item.display, item.delta].filter(Boolean).join(', '),
       // Reading order: one step per tile, and one more for each row after the first.
       delay: `${(i + rect.row) * 60}ms`,
       style: {
@@ -69,16 +77,39 @@ const laid = computed(() => {
     }
   })
 })
+
+// The form of each tile depends on the room it really has, so it is read from the layout.
+function measure() {
+  const next: Record<string, TileForm> = {}
+  for (const el of root.value?.querySelectorAll<HTMLElement>('[data-tile]') ?? []) {
+    const amount = el.querySelector<HTMLElement>('.amount')?.offsetWidth ?? 0
+    next[el.dataset.tile ?? ''] = tileForm(el.offsetWidth, el.offsetHeight, amount)
+  }
+  forms.value = next
+}
+
+let watcher: ResizeObserver | undefined
+onMounted(() => {
+  measure()
+  if (!root.value || typeof ResizeObserver === 'undefined') return
+  watcher = new ResizeObserver(measure)
+  watcher.observe(root.value)
+})
+onBeforeUnmount(() => watcher?.disconnect())
+watch(laid, () => void nextTick(measure))
 </script>
 
 <template>
-  <ul class="treemap" :style="{ height: `${height}px` }" role="list" :aria-label="label">
+  <ul ref="root" class="treemap" :style="{ height: `${height}px` }" role="list" :aria-label="label">
     <li
       v-for="tile in laid"
       :key="tile.item.id"
       class="tile"
-      :class="[`tone-${tile.tone}`, { 'm-enter': play }]"
+      :class="[`tone-${tile.tone}`, `form-${forms[tile.item.id] ?? 'full'}`, { 'm-enter': play }]"
       :style="{ ...tile.style, '--d': tile.delay }"
+      :data-tile="tile.item.id"
+      :title="tile.reading"
+      :aria-label="tile.reading"
     >
       <span class="name">{{ tile.item.label }}</span>
       <span class="size">
@@ -111,7 +142,8 @@ const laid = computed(() => {
   padding: var(--space-3);
   border-radius: 12px;
   background: var(--tile);
-  color: var(--ink);
+  color: var(--tile-ink);
+  line-height: normal;
 }
 
 .tone-tile-1 {
@@ -127,13 +159,28 @@ const laid = computed(() => {
 }
 
 .tone-other {
-  --tile: var(--surface-2);
+  --tile: var(--tile-other);
+
+  background: var(--tile-other-hatch), var(--tile-other);
 }
 
 .tone-grow {
   --tile: var(--tile-grow);
 
+  color: var(--tile-grow-ink);
   box-shadow: inset 0 0 0 2px var(--warn-solid);
+}
+
+/* A size that is left out stays in the layout tree (it is measured) but not in the flow. */
+.form-name .size,
+.form-none .size {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.form-none .name {
+  visibility: hidden;
 }
 
 .name {

@@ -24,6 +24,7 @@ import UiProviderRow from '@/ui/UiProviderRow.vue'
 import UiRowList from '@/ui/UiRowList.vue'
 import UiScanStep from '@/ui/UiScanStep.vue'
 import UiSearchField from '@/ui/UiSearchField.vue'
+import UiTopology from '@/ui/UiTopology.vue'
 import GalleryFrame from './GalleryFrame.vue'
 
 const { t } = useI18n()
@@ -77,6 +78,9 @@ const groups = computed<PaletteGroup[]>(() => [
 // --- composer -----------------------------------------------------------------------------------
 
 const ask = ref('')
+const typed = ref(
+  'Why is the events table growing so fast, and is it safe to prune rows older than 30 days?',
+)
 const sentText = ref('')
 
 // --- thread -------------------------------------------------------------------------------------
@@ -117,11 +121,6 @@ const nodeStates = computed<Record<NodeState, string>>(() => ({
   unknown: t('gallery.charts.topology.unknown'),
 }))
 const moreLabel = (n: number) => t('gallery.charts.topology.more', { n })
-const web: TopologyInput[] = [
-  { id: 'fe', label: 'FE', host: 'vps-sg-1', state: 'ok' },
-  { id: 'be', label: 'BE', host: 'vps-sg-1', state: 'warn' },
-  { id: 'db', label: 'DB', host: 'vps-sg-1', state: 'warn' },
-]
 const split: TopologyInput[] = [
   { id: 'fe', label: 'FE', host: 'vps-sg-1', state: 'ok' },
   { id: 'be', label: 'BE', host: 'vps-sg-2', state: 'ok' },
@@ -129,43 +128,97 @@ const split: TopologyInput[] = [
 ]
 
 const NOW = Date.now()
-const cardMetrics = computed<ProjectCardMetric[]>(() => [
+const uptime = (ms: string): ProjectCardMetric => ({
+  label: k('card.uptime'),
+  icon: 'globe',
+  value: '200',
+  unit: `· ${ms} ms`,
+  note: k('card.noChange'),
+})
+const disk = (gb: string, delta: string, tone: 'warn' | 'normal'): ProjectCardMetric => ({
+  label: k('card.disk'),
+  icon: 'disk',
+  value: gb,
+  unit: 'GB',
+  note: delta,
+  noteTone: tone === 'warn' ? 'warn' : 'delta',
+})
+const db = (gb: string, delta: string, tone: 'warn' | 'normal'): ProjectCardMetric => ({
+  label: k('card.db'),
+  icon: 'database',
+  value: gb,
+  unit: 'GB',
+  note: delta,
+  noteTone: tone === 'warn' ? 'warn' : 'delta',
+})
+const notSetUp: ProjectCardMetric = {
+  label: k('card.db'),
+  icon: 'database',
+  value: k('card.notSetUp'),
+  state: 'not-set-up',
+  note: k('card.addEnv'),
+}
+
+/** The seven states a tile of the card can be in, each with its caption. */
+const tileStates = computed(() => [
+  { caption: k('card.stateNormal'), metric: { ...uptime('212'), icon: undefined } },
+  { caption: k('card.stateChanged'), metric: { ...disk('3.2', '+0.4', 'warn'), icon: undefined } },
   {
-    label: k('card.latency'),
-    icon: 'clock',
-    delta: 'p50',
-    value: '312',
-    unit: 'ms',
-    series: latency,
+    caption: k('card.stateOver'),
+    metric: {
+      label: k('card.disk'),
+      value: '87',
+      unit: '%',
+      state: 'warn' as const,
+      note: k('card.warnFrom', { n: 80 }),
+    },
+  },
+  { caption: k('card.stateNotSetUp'), metric: { ...notSetUp, icon: undefined } },
+  {
+    caption: k('card.statePermission'),
+    metric: {
+      label: k('card.logs'),
+      state: 'needs-permission' as const,
+      note: k('card.needsPermission'),
+    },
   },
   {
-    label: k('card.db'),
-    icon: 'database',
-    delta: '+1.1 GB',
-    value: '8.43',
-    unit: 'GB',
-    series: dbGrowth,
-    state: 'warn',
+    caption: k('card.stateOld'),
+    metric: {
+      label: k('card.db'),
+      value: '1.82',
+      unit: 'GB',
+      state: 'stale' as const,
+      note: k('card.fromDaysAgo', { n: 4 }),
+    },
   },
   {
-    label: k('card.files'),
-    icon: 'folder',
-    delta: '+38 MB',
-    value: '1.24',
-    unit: 'GB',
-    series: files,
+    caption: k('card.stateScanning'),
+    metric: { label: k('card.disk'), state: 'scanning' as const },
   },
 ])
-const cardTags = [
-  { label: 'Laravel 10', swatch: '#f05340' },
-  { label: 'MySQL 8.0', swatch: '#4f8fd6' },
-  { label: 'compose', swatch: '#2496ed' },
-  { label: 'Redis' },
+
+const oneServer: TopologyInput[] = [
+  { id: 'fe', label: 'FE', host: 'vps-hn-3', state: 'ok' },
+  { id: 'be', label: 'BE', host: 'vps-hn-3', state: 'ok' },
+  { id: 'db', label: 'DB', host: 'vps-hn-3', state: 'ok' },
 ]
+const workers: TopologyInput[] = [
+  { id: 'app', label: 'APP', host: 'vps-sg-2', state: 'ok' },
+  { id: 'worker', label: 'WORKER', host: 'vps-sg-2', state: 'ok' },
+  { id: 'db', label: 'DB', host: 'db-main', state: 'ok' },
+]
+const topologyForms = computed(() => [
+  { caption: k('card.topoOne'), components: oneServer },
+  { caption: k('card.topoSplit'), components: split },
+  {
+    caption: k('card.topoMany'),
+    components: [...workers, { id: 'cache', label: 'BE', host: 'cache-1', state: 'ok' as const }],
+  },
+])
 
 const cardBase = computed(() => ({
   topologyLabel: k('card.topology', { name: 'kho-hang' }),
-  urlLabel: 'URL',
   nodeStates: nodeStates.value,
   moreLabel,
   openLabel: k('card.open'),
@@ -325,6 +378,12 @@ const cardBase = computed(() => ({
           >
             <template #note>{{ k('composer.note') }}</template>
           </UiAskComposer>
+          <UiAskComposer
+            v-model="typed"
+            data-force="focus"
+            :label="k('composer.label')"
+            :placeholder="k('composer.placeholder')"
+          />
           <p v-if="sentText" class="note" role="status">
             {{ k('composer.sent', { text: sentText }) }}
           </p>
@@ -440,115 +499,170 @@ const cardBase = computed(() => ({
       </GalleryFrame>
     </div>
 
-    <GalleryFrame :title="k('card.name')" :spec="k('card.spec')">
-      <div class="cards">
-        <UiProjectCard
-          v-bind="cardBase"
-          name="kho-hang"
-          domain="kho-hang.vn"
-          tint="amber"
-          icon="cart"
-          state="warn"
-          :state-label="k('card.needsLook')"
-          :tags="cardTags"
-          :topology="web"
-          :status="{
-            tone: 'warn',
-            icon: 'database',
-            title: k('card.grew'),
-            meta: k('card.alsoRestarted'),
-            chip: k('card.issues'),
-          }"
-          :metrics="cardMetrics"
-          :checked-at="NOW - 20 * 60_000"
-          :passed-label="k('card.passed', { ok: 12, all: 14 })"
-        />
-        <UiProjectCard
-          v-bind="cardBase"
-          name="tiemtra-web"
-          domain="tiemtra.vn"
-          tint="rose"
-          icon="shield"
-          state="crit"
-          :state-label="k('card.critical')"
-          :tags="cardTags.slice(0, 2)"
-          :topology="split"
-          topology-mode="servers"
-          :status="{
-            tone: 'crit',
-            icon: 'lock',
-            title: k('card.envPublic'),
-            meta: k('card.envMeta'),
-          }"
-          :action-label="k('card.fix')"
-          :metrics="cardMetrics"
-          :checked-at="NOW - 5 * 3_600_000"
-          :passed-label="k('card.passed', { ok: 11, all: 14 })"
-        />
-        <UiProjectCard
-          v-bind="cardBase"
-          name="api-booking"
-          domain="api.datlich.io"
-          tint="blue"
-          icon="terminal"
-          state="ok"
-          :state-label="k('card.healthy')"
-          :tags="cardTags.slice(0, 2)"
-          :topology="split.map((c) => ({ ...c, state: 'ok' as const }))"
-          :status="{
-            tone: 'neutral',
-            icon: 'check-circle',
-            tileTone: 'ok' as const,
-            title: k('card.allPassed'),
-            meta: k('card.nothingChanged'),
-            chip: k('card.zeroIssues'),
-          }"
-          :metrics="cardMetrics.map((m) => ({ ...m, delta: undefined, state: 'normal' as const }))"
-          :checked-at="NOW - 3 * 24 * 3_600_000"
-          :passed-label="k('card.passed', { ok: 9, all: 9 })"
-        />
-        <UiProjectCard
-          v-bind="cardBase"
-          name="ghichu-blog"
-          domain="ghichu.dev"
-          tint="lilac"
-          icon="file"
-          state="scanning"
-          :state-label="k('card.scanning')"
-          :tags="cardTags.slice(0, 1)"
-          :topology="web.map((c) => ({ ...c, state: 'ok' as const }))"
-          :status="{
-            tone: 'neutral',
-            icon: 'check-circle',
-            tileTone: 'ok' as const,
-            title: k('card.allPassed'),
-            chip: k('card.zeroIssues'),
-          }"
-          :metrics="cardMetrics"
-          :checked-at="NOW - 20 * 60_000"
-          :passed-label="k('card.passed', { ok: 6, all: 6 })"
-        />
-        <UiProjectCard
-          v-bind="cardBase"
-          name="noibo-crm"
-          domain="crm.noibo.vn"
-          tint="grey"
-          icon="server"
-          state="unreachable"
-          :state-label="k('card.unreachable')"
-          :tags="cardTags.slice(0, 1)"
-          :topology="split.map((c) => ({ ...c, state: 'unknown' as const }))"
-          :status="{
-            tone: 'neutral',
-            icon: 'unreachable',
-            title: k('card.reach'),
-            meta: k('card.reachMeta'),
-          }"
-          :action-label="k('card.retry')"
-          :metrics="cardMetrics.map((m) => ({ ...m, delta: undefined, state: 'stale' as const }))"
-          :checked-at="NOW - 3 * 24 * 3_600_000"
-          :passed-label="k('card.passed', { ok: 0, all: 14 })"
-        />
+    <GalleryFrame :title="k('card.name')" :text="k('card.lede')" :spec="k('card.spec')">
+      <div class="card-stage">
+        <div class="tray-hero">
+          <UiProjectCard
+            v-bind="cardBase"
+            name="kho-hang"
+            domain="khohang.vn"
+            where="vps-hn-3"
+            tint="amber"
+            state="crit"
+            :state-label="k('card.chipCritical')"
+            :tags="[{ label: 'Laravel 11' }, { label: 'Vite' }, { label: 'MySQL 8.0' }]"
+            :topology="[...oneServer]"
+            :status="{
+              tone: 'crit',
+              icon: 'critical',
+              title: k('card.criticalFindings'),
+              meta: k('card.criticalMeta'),
+            }"
+            :action-label="k('card.toSecurity')"
+            :metrics="[uptime('212'), disk('3.2', '+0.4', 'warn'), notSetUp]"
+            :checked-at="NOW - 20 * 60_000"
+            :passed-label="k('card.passed', { ok: 11, all: 14 })"
+          />
+        </div>
+        <div class="cards">
+          <UiProjectCard
+            v-bind="cardBase"
+            name="tiemtra"
+            domain="tiemtra.vn"
+            :where="k('card.twoServers')"
+            tint="blue"
+            state="warn"
+            :state-label="k('card.chipWarnings')"
+            :max-tags="2"
+            :tags="[
+              { label: 'Next.js 15' },
+              { label: 'compose' },
+              { label: 'Redis' },
+              { label: 'S3' },
+            ]"
+            :topology="[...split]"
+            :status="{
+              tone: 'warn',
+              icon: 'warn',
+              title: k('card.workerRestarted'),
+              meta: k('card.workerMeta'),
+            }"
+            :action-label="k('card.openMore')"
+            :metrics="[uptime('142'), disk('5.4', '+0.9', 'warn'), db('1.82', '+440 MB', 'warn')]"
+            :checked-at="NOW - 20 * 60_000"
+            :passed-label="k('card.passed', { ok: 12, all: 14 })"
+          />
+          <UiProjectCard
+            v-bind="cardBase"
+            name="booking"
+            domain="booking.vn"
+            :where="k('card.twoServers')"
+            tint="lilac"
+            state="ok"
+            :state-label="k('card.chipClear')"
+            :tags="[{ label: 'Laravel 10' }, { label: 'compose' }, { label: 'MySQL 8.0' }]"
+            :topology="[...workers]"
+            :status="{
+              tone: 'ok',
+              icon: 'check-circle',
+              title: k('card.allFourteen'),
+              meta: k('card.allFourteenMeta'),
+            }"
+            :metrics="[uptime('180'), disk('6.1', '+0.1', 'normal'), db('2.4', '+12 MB', 'normal')]"
+            :checked-at="NOW - 20 * 60_000"
+            :passed-label="k('card.passed', { ok: 14, all: 14 })"
+          />
+          <UiProjectCard
+            v-bind="cardBase"
+            name="kho-hang"
+            domain="khohang.vn"
+            where="vps-hn-3"
+            tint="amber"
+            state="scanning"
+            :state-label="k('card.chipWaiting')"
+            :tags="[{ label: 'Laravel 11' }, { label: 'Vite' }, { label: 'MySQL 8.0' }]"
+            :topology="[...oneServer]"
+            :status="{
+              tone: 'neutral',
+              icon: 'search',
+              tileTone: 'info',
+              title: k('card.reading'),
+              meta: k('card.readingMeta'),
+            }"
+            :metrics="[
+              uptime('212'),
+              { ...disk('3.2', '', 'normal'), state: 'scanning', note: undefined },
+              { ...notSetUp, state: 'scanning', value: undefined },
+            ]"
+            :passed-label="k('card.thisScan')"
+          />
+          <UiProjectCard
+            v-bind="cardBase"
+            name="noibo-crm"
+            domain="crm.noibo.vn"
+            :where="k('card.twoServers')"
+            tint="slate"
+            state="unreachable"
+            :state-label="k('card.chipUnreachable')"
+            :tags="[{ label: 'Laravel 10' }, { label: 'compose' }, { label: 'MySQL 8.0' }]"
+            :topology="[...workers.map((c) => ({ ...c, state: 'unknown' as const }))]"
+            :status="{
+              tone: 'neutral',
+              icon: 'unreachable',
+              title: k('card.reach'),
+              meta: k('card.reachMeta'),
+            }"
+            :action-label="k('card.retry')"
+            :metrics="[uptime('180'), disk('6.1', '+0.1', 'normal'), db('2.4', '+12 MB', 'normal')]"
+            :checked-at="NOW - 3 * 24 * 3_600_000"
+            :passed-label="k('card.passed', { ok: 14, all: 14 })"
+          />
+        </div>
+        <ol class="blocks">
+          <li v-for="n in 6" :key="n">
+            <span class="num">{{ n }}</span>
+            <span
+              ><b>{{ k(`card.block${n}.name`) }}</b> {{ k(`card.block${n}.text`) }}</span
+            >
+          </li>
+        </ol>
+      </div>
+    </GalleryFrame>
+
+    <div class="two">
+      <GalleryFrame :title="k('card.tileName')" :spec="k('card.tileSpec')">
+        <div class="tile-states">
+          <div v-for="state in tileStates" :key="state.caption" class="tile-state">
+            <UiMetricTile form="note" v-bind="state.metric" />
+            <span class="caption">{{ state.caption }}</span>
+          </div>
+        </div>
+        <p class="para">{{ k('card.tileText') }}</p>
+      </GalleryFrame>
+      <GalleryFrame :title="k('card.topologyName')" :spec="k('card.topologySpec')">
+        <div class="topos">
+          <div v-for="form in topologyForms" :key="form.caption" class="topo-form">
+            <UiTopology
+              :components="form.components"
+              mode="servers"
+              url-label=""
+              :states="nodeStates"
+              :more-label="moreLabel"
+              :label="form.caption"
+              :list="false"
+            />
+            <span class="caption">{{ form.caption }}</span>
+          </div>
+        </div>
+        <p class="para">{{ k('card.topologyText') }}</p>
+      </GalleryFrame>
+    </div>
+
+    <GalleryFrame :title="k('card.rulesName')">
+      <div class="rules">
+        <span v-for="n in 4" :key="n"
+          ><b>{{ k(`card.rule${n}.name`) }}</b> {{ k(`card.rule${n}.text`) }}</span
+        >
       </div>
     </GalleryFrame>
 
@@ -681,11 +795,98 @@ const cardBase = computed(() => ({
   font-weight: var(--weight-medium);
 }
 
+.card-stage {
+  display: grid;
+  grid-template-columns: 412px minmax(0, 1fr);
+  gap: var(--space-8);
+  align-items: start;
+}
+
+.tray-hero {
+  padding: 6px;
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface-0) 55%, transparent);
+}
+
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
   align-items: start;
+}
+
+.blocks {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.blocks li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.blocks b {
+  font-weight: var(--weight-medium);
+}
+
+.num {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--crit-ink);
+  color: var(--on-solid);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+}
+
+.tile-states {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-2);
+}
+
+.tile-state,
+.topo-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.topos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.caption {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+}
+
+.para {
+  color: var(--ink-3);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.rules {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+  font-size: var(--text-13);
+  line-height: 1.45;
+}
+
+.rules b {
+  font-weight: var(--weight-medium);
 }
 
 .banners {

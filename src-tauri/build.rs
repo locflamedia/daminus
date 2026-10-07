@@ -6,6 +6,7 @@ const COMMANDS: &[&str] = &[
     "scan_stop",
     "scan_status",
     "report_latest",
+    "projects_list",
     "reveal_config_dir",
 ];
 

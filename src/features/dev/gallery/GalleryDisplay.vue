@@ -12,6 +12,7 @@ import UiCard from '@/ui/UiCard.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiCodeBlock from '@/ui/UiCodeBlock.vue'
 import UiCommandCopy from '@/ui/UiCommandCopy.vue'
+import UiCopyButton from '@/ui/UiCopyButton.vue'
 import UiRow, { type RowTone } from '@/ui/UiRow.vue'
 import UiRowList from '@/ui/UiRowList.vue'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
@@ -37,6 +38,7 @@ const SQL = [
 const SHELL = ['$ curl -fsSL https://get.example.dev/install | sh', '$ rm -rf /var/www/old'].join(
   '\n',
 )
+const SAFETY = `curl -fsSL https://get.example.dev/install.sh | sh && echo "ZXhwb3J0IFBBVEg9JFBBVEg6L29wdC9iaW4K" | base64 -d >> ~/.profile && rm -rf /tmp/build`
 const PAYLOAD = [
   '{',
   '  "project": "kho-hang",',
@@ -51,6 +53,9 @@ const RLO = String.fromCharCode(0x202e)
 const ZWSP = String.fromCharCode(0x200b)
 const HIDDEN = `ls ${ESC}[2J${ZWSP}-la ${RLO}gnp.txt`
 const LONG = `sudo rsync -aHAX --info=progress2 --exclude=node_modules --exclude=.git --exclude=storage/logs /srv/kho-hang/ deploy@vps-sg-2:/srv/kho-hang-backup/ && echo done`
+
+const FACES = ['idle', 'copied', 'failed'] as const
+const RULES = ['whole', 'cleaned', 'warn', 'faces'] as const
 
 type StateKind = 'chip' | 'plain-chip' | 'progress' | 'fix' | 'scan' | 'retry' | 'how' | 'path'
 interface StateRow {
@@ -367,7 +372,7 @@ const states = computed<StateRow[]>(() => [
     <GalleryFrame
       :title="t('gallery.display.code')"
       :text="t('gallery.display.codeLede')"
-      spec="r10 · Geist Mono 11 / 1.6 · pad 12 · copy 28 r8"
+      spec="r10 · Geist Mono 11 / 1.6 · pad 12 · copy 24 r7"
     >
       <div class="pair inner">
         <div class="stack">
@@ -410,6 +415,32 @@ const states = computed<StateRow[]>(() => [
           <span class="cap">{{ t('gallery.display.commandHidden') }}</span>
           <UiCommandCopy :command="HIDDEN" />
         </div>
+      </div>
+    </GalleryFrame>
+
+    <GalleryFrame
+      :title="t('gallery.display.safety')"
+      :text="t('gallery.display.safetyLede')"
+      spec="note 12 · r10 · pad 10 12 · title 12/500 · copy 24 r7 · Copied 1.6 s"
+    >
+      <div class="pair inner">
+        <div class="stack">
+          <UiCodeBlock :code="SAFETY" language="shell" :label="t('gallery.display.codeLabel')" />
+          <div class="faces">
+            <span v-for="face in FACES" :key="face" class="face-cell">
+              <span class="on-code"
+                ><UiCopyButton text="" variant="line" :force-state="face"
+              /></span>
+              <span class="cap">{{ t(`gallery.display.face.${face}`) }}</span>
+            </span>
+          </div>
+        </div>
+        <ul class="rules">
+          <li v-for="rule in RULES" :key="rule">
+            <b>{{ t(`gallery.display.rules.${rule}.name`) }}</b>
+            {{ t(`gallery.display.rules.${rule}.text`) }}
+          </li>
+        </ul>
       </div>
     </GalleryFrame>
   </div>
@@ -477,6 +508,45 @@ const states = computed<StateRow[]>(() => [
 .cap {
   color: var(--ink-3);
   font-size: var(--text-11);
+}
+
+.faces {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.face-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.on-code {
+  display: inline-flex;
+  align-items: center;
+  height: var(--h-control);
+  padding: 0 var(--space-2);
+  border-radius: 9px;
+  background: var(--code);
+}
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+  line-height: var(--lh-12);
+  list-style: none;
+}
+
+.rules b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
 }
 
 .stack {

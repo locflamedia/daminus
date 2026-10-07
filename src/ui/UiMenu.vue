@@ -20,6 +20,14 @@ export interface MenuItem {
   label: string
   icon?: IconName
   keys?: string[]
+  /** Plain mono text at the right edge instead of key caps (`⌘1`). */
+  hint?: string
+  /** The current choice: a tick in the leading slot (compact menus). */
+  checked?: boolean
+  /** A 6 px status dot after the label (compact menus). */
+  mark?: 'warn' | 'crit'
+  /** What the dot means, read out after the label. */
+  markLabel?: string
   danger?: boolean
   disabled?: boolean
 }
@@ -31,8 +39,10 @@ const props = withDefaults(
     placement?: Placement
     /** Draw the menu in the flow, open, for documentation pages. */
     inline?: boolean
+    /** The choice-list form of the project tabs: 30 px rows, a tick slot, 220 px wide. */
+    compact?: boolean
   }>(),
-  { placement: 'bottom-start', inline: false },
+  { placement: 'bottom-start', inline: false, compact: false },
 )
 
 const open = defineModel<boolean>('open', { default: false })
@@ -57,7 +67,7 @@ const attrs = computed(() => ({
 
 function enabled(): HTMLElement[] {
   return [
-    ...(list.value?.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled])') ?? []),
+    ...(list.value?.querySelectorAll<HTMLElement>('[role^="menuitem"]:not([aria-disabled])') ?? []),
   ]
 }
 
@@ -65,7 +75,7 @@ function enabled(): HTMLElement[] {
 let startOnLast = false
 
 function startItem(root: HTMLElement): HTMLElement | undefined {
-  const rows = [...root.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled])')]
+  const rows = [...root.querySelectorAll<HTMLElement>('[role^="menuitem"]:not([aria-disabled])')]
   const row = startOnLast ? rows.at(-1) : rows[0]
   startOnLast = false
   return row
@@ -159,25 +169,33 @@ function apart(index: number): boolean {
     :trap="false"
     :inline="inline"
     :initial-focus="startItem"
-    min-width="170px"
+    :min-width="compact ? '220px' : '170px'"
+    :radius="compact ? '12px' : undefined"
     @close="open = false"
   >
-    <div :id="id" ref="list" class="menu" @keydown="onKeydown">
+    <div :id="id" ref="list" class="menu" :class="{ compact }" @keydown="onKeydown">
       <button
         v-for="(item, index) in items"
         :key="item.id"
         type="button"
-        role="menuitem"
+        :role="compact ? 'menuitemradio' : 'menuitem'"
+        :aria-checked="compact ? !!item.checked : undefined"
         class="item"
         :class="{ danger: item.danger, apart: apart(index) }"
         :aria-disabled="item.disabled || undefined"
         tabindex="-1"
         @click="pick(item)"
       >
+        <span v-if="compact" class="tick">
+          <UiIcon v-if="item.checked" name="check" :size="14" :stroke="2" />
+        </span>
         <UiIcon v-if="item.icon" :name="item.icon" :size="14" class="icon" />
         <span class="label">{{ item.label }}</span>
+        <span v-if="item.mark" class="mark" :class="item.mark" aria-hidden="true" />
+        <span v-if="item.mark && item.markLabel" class="sr-only">{{ item.markLabel }}</span>
+        <span v-if="item.hint" class="hint">{{ item.hint }}</span>
         <span v-if="item.keys && item.keys.length > 0" class="keys">
-          <UiKbd v-for="key in item.keys" :key="key">{{ key }}</UiKbd>
+          <UiKbd v-for="key in item.keys" :key="key" tone="on-menu">{{ key }}</UiKbd>
         </span>
       </button>
     </div>
@@ -195,7 +213,7 @@ function apart(index: number): boolean {
   gap: 2px;
   padding: 6px;
   border-radius: var(--radius-md);
-  background: var(--surface-0);
+  background: var(--surface-pop);
 }
 
 .item {
@@ -205,7 +223,7 @@ function apart(index: number): boolean {
   width: 100%;
   height: var(--h-control);
   padding: 0 var(--space-2);
-  border-radius: var(--radius-xs);
+  border-radius: 8px;
   color: var(--ink);
   font-size: var(--text-13);
   text-align: left;
@@ -214,8 +232,9 @@ function apart(index: number): boolean {
 }
 
 .item:hover,
-.item:focus-visible {
-  background: var(--surface-1);
+.item:focus-visible,
+.item[aria-checked='true'] {
+  background: var(--menu-hover);
 }
 
 .item:focus-visible {
@@ -235,6 +254,55 @@ function apart(index: number): boolean {
   display: inline-flex;
   gap: 3px;
   margin-left: auto;
+}
+
+.compact {
+  border-radius: 12px;
+}
+
+.compact .item {
+  gap: var(--space-2);
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+}
+
+.compact .label {
+  flex: 0 1 auto;
+}
+
+.tick .icon {
+  color: inherit;
+}
+
+.tick {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 14px;
+  color: var(--accent-ink);
+}
+
+.mark {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+}
+
+.mark.warn {
+  background: var(--warn-solid);
+}
+
+.mark.crit {
+  background: var(--crit-solid);
+}
+
+.hint {
+  margin-left: auto;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
 }
 
 .apart {

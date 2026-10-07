@@ -1,15 +1,18 @@
 <!--
   Heatmap of the board "Project · History": one row per check group, one column per scan, 20 px
   cells (radius 5, 4 px apart). Each state has a glyph as well as a tint, so colour is never
-  the only signal: nothing for ok, "!" for a warning, "x" for critical, a dash for not run and
-  a tick on hatching for "expected" (a finding the user marked as known, never ok and never
-  hidden). The scans being compared are ringed and their numbers are accent and bold. The
-  cells pop in column by column the first time the chart appears (90 ms a column, 30 ms a
-  row). Labels and descriptions come from the caller.
+  the only signal: nothing for ok, a bold "!" for a warning, "×" for critical, a dash for not
+  run and a tick on hatching for "expected" (a finding the user marked as known, never ok and never
+  hidden). The scans being compared are ringed and their numbers are accent and bold. Given
+  titles, the cells can be focused: the map is one tab stop, the arrows walk the cells (Home
+  and End go to the ends of the row), and each focused cell takes the control ring and says
+  its title. The cells pop in column by column the first time the chart appears (90 ms a
+  column, 30 ms a row). Labels and descriptions come from the caller.
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { shouldPlay } from '@/lib/motion'
+import { moveInGrid } from '@/lib/roving-grid'
 import UiChartLegend, { type LegendItem } from './UiChartLegend.vue'
 import UiIcon from './UiIcon.vue'
 import type { IconName } from './icon-paths'
@@ -49,41 +52,65 @@ const props = withDefaults(
 const play = shouldPlay(props.once)
 const picked = computed(() => new Set(props.selected))
 
-/** Stroke paths of the glyph drawn in each state (10 px, 2 px stroke). */
-const GLYPH: Record<HeatState, string> = {
-  ok: '',
-  warn: 'M8 3.5v5.5 M8 12v.01',
-  crit: 'M4.5 4.5l7 7 M11.5 4.5l-7 7',
-  none: 'M4.5 8h7',
-  expected: 'm3.5 8.4 3 3L12.5 5',
+const root = ref<HTMLElement | null>(null)
+const tab = ref({ row: 0, col: 0 })
+const focusable = (row: HeatRow, c: number) => row.titles?.[c] !== undefined
+
+async function onKey(e: KeyboardEvent) {
+  const next = moveInGrid(e.key, tab.value, props.rows.length, props.columns.length, e.ctrlKey)
+  if (!next) return
+  e.preventDefault()
+  tab.value = next
+  await nextTick()
+  root.value?.querySelector<HTMLElement>(`[data-cell="${next.row}-${next.col}"]`)?.focus()
 }
+
+/** The mark each state carries as text, bold 10 px: "!" for a warning, "×" critical, "–" not run. */
+const MARK: Partial<Record<HeatState, string>> = { warn: '!', crit: '×', none: '–' }
+/** The tick drawn for "expected" (a finding the user marked as known), over its hatching. */
+const TICK = 'm3.5 8.4 3 3L12.5 5'
 </script>
 
 <template>
-  <div class="heatmap" role="img" :aria-label="label">
-    <div class="grid head" :style="{ '--cols': columns.length }">
-      <span />
+  <div ref="root" class="heatmap" role="grid" :aria-label="label" @keydown="onKey">
+    <div class="grid head" role="row" :style="{ '--cols': columns.length }">
+      <span aria-hidden="true" />
       <span
         v-for="column in columns"
         :key="column.id"
+        role="columnheader"
         class="col"
         :class="{ picked: picked.has(column.id) }"
       >
         {{ column.label }}
       </span>
     </div>
-    <div v-for="(row, r) in rows" :key="row.id" class="grid" :style="{ '--cols': columns.length }">
-      <span class="name"><UiIcon :name="row.icon" :size="14" />{{ row.label }}</span>
+    <div
+      v-for="(row, r) in rows"
+      :key="row.id"
+      class="grid"
+      role="row"
+      :style="{ '--cols': columns.length }"
+    >
+      <span class="name" role="rowheader"
+        ><UiIcon :name="row.icon" :size="14" />{{ row.label }}</span
+      >
       <span
         v-for="(state, c) in row.cells"
         :key="c"
         class="cell"
+        role="gridcell"
         :class="[`state-${state}`, { ringed: picked.has(columns[c]?.id ?? ''), 'm-pop': play }]"
         :style="{ '--d': `${c * 90 + r * 30}ms` }"
         :title="row.titles?.[c]"
+        :aria-label="row.titles?.[c]"
+        :data-cell="`${r}-${c}`"
+        :tabindex="focusable(row, c) ? (tab.row === r && tab.col === c ? 0 : -1) : undefined"
+        @focus="tab = { row: r, col: c }"
       >
-        <svg v-if="GLYPH[state]" class="glyph" viewBox="0 0 16 16" aria-hidden="true">
-          <path :d="GLYPH[state]" />
+        <template v-if="MARK[state]">{{ MARK[state] }}</template>
+        <svg v-else-if="state === 'expected'" class="glyph" viewBox="0 0 16 16" aria-hidden="true">
+          <path :d="TICK" />
         </svg>
       </span>
     </div>
@@ -144,6 +171,15 @@ const GLYPH: Record<HeatState, string> = {
   place-items: center;
   height: 20px;
   border-radius: 5px;
+  outline: none;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cell:focus-visible {
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--control-ring);
 }
 
 .ringed {
@@ -158,7 +194,7 @@ const GLYPH: Record<HeatState, string> = {
   overflow: visible;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.2;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

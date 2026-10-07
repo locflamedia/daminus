@@ -188,6 +188,11 @@ const flat = computed(() => props.header || props.tone !== 'neutral')
   font-size: var(--text-12);
 }
 
+/* The column-header row keeps its 11 px over the cells' 12. */
+.row-cells.row-header {
+  font-size: var(--text-11);
+}
+
 .tile {
   display: grid;
   place-items: center;

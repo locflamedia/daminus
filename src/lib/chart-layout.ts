@@ -27,13 +27,14 @@ export function defaultRows(count: number): number[] {
 
 /**
  * Slice-and-dice treemap in rows, as the Disk board draws it: tiles keep the order they are
- * given, a row takes a share of the height by the bytes in it, and a tile takes a share of
- * the row's width by its own bytes. Values at or under zero are left out; the result holds
- * one rect per kept item, in input order.
+ * given, a row takes a share of the height by the bytes in it (or by `heights`, one share
+ * for each row), and a tile takes a share of the row's width by its own bytes. Values at or
+ * under zero are left out; the result holds one rect per kept item, in input order.
  */
 export function treemapRows<T extends { value: number }>(
   items: readonly T[],
   rows?: readonly number[],
+  heights?: readonly number[],
 ): { item: T; rect: TreemapRect }[] {
   const kept = items.filter((item) => item.value > 0 && Number.isFinite(item.value))
   const total = kept.reduce((sum, item) => sum + item.value, 0)
@@ -52,7 +53,7 @@ export function treemapRows<T extends { value: number }>(
     cursor += count
     if (group.length === 0) return
     const rowTotal = group.reduce((sum, item) => sum + item.value, 0)
-    const h = rowTotal / total
+    const h = heights?.[row] ?? rowTotal / total
     let left = 0
     for (const item of group) {
       const w = item.value / rowTotal
@@ -62,6 +63,75 @@ export function treemapRows<T extends { value: number }>(
     top += h
   })
   return out
+}
+
+export interface DiskTile {
+  value: number
+  /** The rest of the folders, always last. */
+  other?: boolean
+  /** The folder grew since the last scan. */
+  grow?: boolean
+  /** By how much, to tell which of several growers grew fastest. */
+  growth?: number
+}
+
+/**
+ * The order of the Disk treemap: folders by size, largest first, the rest bucket last, and
+ * the folder that grew fastest since the last scan pulled up to follow the largest, so the
+ * change is seen first.
+ */
+export function orderTreemap<T extends DiskTile>(items: readonly T[]): T[] {
+  const kept = items.filter((item) => item.value > 0 && Number.isFinite(item.value))
+  const body = kept.filter((item) => !item.other).sort((a, b) => b.value - a.value)
+  const rest = kept.filter((item) => item.other)
+  let fastest: T | undefined
+  for (const item of body) {
+    if (item.grow && (!fastest || (item.growth ?? 0) > (fastest.growth ?? 0))) fastest = item
+  }
+  const from = fastest ? body.indexOf(fastest) : -1
+  if (fastest && from > 1) {
+    body.splice(from, 1)
+    body.splice(1, 0, fastest)
+  }
+  return [...body, ...rest]
+}
+
+/** Row one holds this much of the height when there are two rows. */
+const FIRST_ROW_SHARE = 2 / 3
+
+/**
+ * The Disk treemap: tiles in `orderTreemap` order, the first row taking half the tiles (rounded
+ * down) and two thirds of the height, the second the rest; a tile's width follows its size
+ * within its row.
+ */
+export function diskTreemap<T extends DiskTile>(
+  items: readonly T[],
+): { item: T; rect: TreemapRect }[] {
+  const ordered = orderTreemap(items)
+  const rows = defaultRows(ordered.length)
+  const heights = rows.length === 2 ? [FIRST_ROW_SHARE, 1 - FIRST_ROW_SHARE] : undefined
+  return treemapRows(ordered, rows, heights)
+}
+
+export type TileForm = 'full' | 'name' | 'none'
+
+/** Under this width (px) a treemap tile shows nothing and keeps its tooltip. */
+export const TILE_MIN_WIDTH = 40
+/** Height (px) the name line and the size line need, with the tile's padding. */
+export const TILE_FULL_HEIGHT = 62
+/** Space (px) a tile's padding takes from its width, both sides. */
+export const TILE_PAD_X = 24
+
+/**
+ * What a treemap tile of `width` by `height` px shows. Under 40 px wide, nothing; too narrow or
+ * too short for the size beside the name (`amount` is the width the size needs), the name
+ * alone, cut with an ellipsis; otherwise both. What is left out stays in the tile's tooltip
+ * and in the list under the chart.
+ */
+export function tileForm(width: number, height: number, amount: number): TileForm {
+  if (width < TILE_MIN_WIDTH) return 'none'
+  if (height < TILE_FULL_HEIGHT || amount > width - TILE_PAD_X) return 'name'
+  return 'full'
 }
 
 // ---------------------------------------------------------------------------------------

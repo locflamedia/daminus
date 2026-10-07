@@ -98,8 +98,8 @@ const id = useId()
 }
 
 .field:focus-within {
-  background: var(--surface-0);
-  box-shadow: var(--focus-ring);
+  background: var(--field-focus-bg);
+  box-shadow: var(--field-focus-ring);
 }
 
 .glyph {
@@ -123,7 +123,7 @@ const id = useId()
 }
 
 .input::placeholder {
-  color: var(--ink-3);
+  color: var(--ink-placeholder);
 }
 
 /* The browser's own clear control would draw a second one. */

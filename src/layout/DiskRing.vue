@@ -10,9 +10,11 @@ const props = withDefaults(
     reading?: boolean
     /** An unreachable host fades. */
     dim?: boolean
+    /** Old results: the ring stays in the accent, nothing is amber or red until a fresh scan. */
+    neutral?: boolean
     size?: number
   }>(),
-  { reading: false, dim: false, size: 16 },
+  { reading: false, dim: false, neutral: false, size: 16 },
 )
 
 // r = 7 in an 18-unit box: the circumference is 44, so the arc length is pct x 0.44.
@@ -22,7 +24,7 @@ const arc = computed(() =>
     ? CIRCUMFERENCE * 0.25
     : (Math.min(100, Math.max(0, props.pct ?? 0)) / 100) * CIRCUMFERENCE,
 )
-const tone = computed(() => (props.pct === null ? 'normal' : diskTone(props.pct)))
+const tone = computed(() => (props.pct === null || props.neutral ? 'normal' : diskTone(props.pct)))
 </script>
 
 <template>

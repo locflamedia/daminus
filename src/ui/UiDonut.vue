@@ -110,6 +110,7 @@ const legend = computed(() => [
   gap: var(--space-2);
   min-width: 0;
   font-size: var(--text-12);
+  line-height: normal;
   margin: 0;
   padding: 0;
   list-style: none;

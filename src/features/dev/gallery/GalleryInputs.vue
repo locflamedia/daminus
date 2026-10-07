@@ -52,6 +52,14 @@ const languages = computed<SelectOption[]>(() => [
 ])
 
 const confirmed = ref(0)
+
+// The three typed states of the language menu: nothing found, only dimmed rows, and the
+// arrow keys on the first row.
+const LANGUAGE_STATES = [
+  { key: 'empty', query: 'klingon', help: true },
+  { key: 'pending', query: 'fr', help: false },
+  { key: 'keyboard', query: 'e', help: false },
+] as const
 </script>
 
 <template>
@@ -154,7 +162,7 @@ const confirmed = ref(0)
       <GalleryFrame :title="t('gallery.inputs.checkbox')" :text="t('gallery.inputs.checkboxLede')">
         <div class="stack tight">
           <UiCheckbox
-            :model-value="false"
+            :model-value="hostCount === 3"
             filled
             :indeterminate="hostCount > 0 && hostCount < 3"
             :meta="t('gallery.inputs.twoOfFour')"
@@ -187,6 +195,7 @@ const confirmed = ref(0)
             :accessible-name="t('gallery.inputs.languageLabel')"
             :search-placeholder="t('gallery.inputs.searchLanguages')"
             :pending-label="t('gallery.inputs.notTranslated')"
+            :pending-hint="t('gallery.inputs.notTranslatedHint')"
             :help-label="t('gallery.inputs.helpTranslate')"
             :empty-label="t('gallery.inputs.noLanguage')"
             default-open
@@ -205,18 +214,72 @@ const confirmed = ref(0)
             <span class="on on-field"><UiKbd tone="on-field">⌘K</UiKbd></span>
           </div>
         </GalleryFrame>
-
-        <GalleryFrame :title="t('gallery.inputs.hold')" :text="t('gallery.inputs.holdLede')">
-          <UiHoldButton
-            :label="t('gallery.inputs.holdLabel')"
-            :hint="t('gallery.inputs.holdHint')"
-            @confirm="confirmed++"
-          />
-          <span class="mono spec">hold 1.5 s linear · release snaps back in 200 ms</span>
-          <span class="mono spec">confirm × {{ confirmed }}</span>
-        </GalleryFrame>
       </div>
     </div>
+
+    <GalleryFrame :title="t('gallery.inputs.hold')" :text="t('gallery.inputs.holdLede')">
+      <div class="hold-grid">
+        <div class="hold-panel">
+          <span class="cap">{{ t('gallery.inputs.holdA') }}</span>
+          <div class="hold-row">
+            <UiHoldButton
+              :label="t('gallery.inputs.holdLabel')"
+              :action-label="t('gallery.inputs.holdAction')"
+              @confirm="confirmed++"
+            />
+            <span class="note">{{ t('gallery.inputs.holdSpec') }}</span>
+          </div>
+          <span class="mono spec">confirm × {{ confirmed }}</span>
+        </div>
+        <div class="hold-panel">
+          <span class="cap">{{ t('gallery.inputs.holdB') }}</span>
+          <div class="hold-stage">
+            <UiHoldButton
+              contained
+              :label="t('gallery.inputs.holdLabel')"
+              :action-label="t('gallery.inputs.holdAction')"
+              :confirm-title="t('gallery.inputs.holdTitle')"
+              :confirm-body="t('gallery.inputs.holdBody')"
+              :confirm-label="t('gallery.inputs.holdAction')"
+              @confirm="confirmed++"
+            />
+          </div>
+        </div>
+        <div class="hold-notes">
+          <p v-for="n in 4" :key="n">
+            <b>{{ t(`gallery.inputs.holdNote${n}.name`) }}</b>
+            {{ t(`gallery.inputs.holdNote${n}.text`) }}
+          </p>
+        </div>
+      </div>
+    </GalleryFrame>
+
+    <GalleryFrame
+      :title="t('gallery.inputs.languageStates')"
+      :text="t('gallery.inputs.languageStatesLede')"
+    >
+      <div class="states">
+        <div v-for="state in LANGUAGE_STATES" :key="state.key" class="state">
+          <span class="cap">{{ t(`gallery.inputs.langState.${state.key}.name`) }}</span>
+          <div class="state-stage">
+            <UiSelect
+              :model-value="language"
+              variant="language"
+              :options="languages"
+              :accessible-name="t('gallery.inputs.languageLabel')"
+              :search-placeholder="t('gallery.inputs.searchLanguages')"
+              :pending-label="t('gallery.inputs.notTranslated')"
+              :pending-hint="t('gallery.inputs.notTranslatedHint')"
+              :help-label="state.help ? t('gallery.inputs.helpTranslate') : undefined"
+              :empty-label="t('gallery.inputs.noLanguage')"
+              :default-query="state.query"
+              default-open
+            />
+          </div>
+          <span class="cap">{{ t(`gallery.inputs.langState.${state.key}.text`) }}</span>
+        </div>
+      </div>
+    </GalleryFrame>
   </div>
 </template>
 
@@ -274,7 +337,81 @@ const confirmed = ref(0)
 }
 
 .language-stage {
-  min-height: 420px;
+  width: 280px;
+  min-height: 480px;
+  margin-left: auto;
+}
+
+.states {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.state-stage {
+  min-height: 340px;
+}
+
+.hold-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.hold-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-well);
+}
+
+.hold-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.hold-stage {
+  position: relative;
+  display: grid;
+  min-height: 188px;
+  padding: var(--space-5);
+  border-radius: 12px;
+}
+
+.note {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  line-height: 1.45;
+}
+
+.hold-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  color: var(--ink-2);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.hold-notes b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
 }
 
 .spec {

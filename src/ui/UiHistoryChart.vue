@@ -5,14 +5,18 @@
   series stays accent and warms to amber only across the segment past `threshold`; the second
   series is lilac, never a status colour; a soft band marks the warning zone instead of a hard
   line. Hovering (or the arrow keys on the focused chart) draws a dashed crosshair, a marker
-  and a card with the scan, the value and its change. The line draws once when it arrives
-  (600 ms) and the area fades in; Reduce Motion shows the final drawing.
+  and a card with the scan, the value and its change. The chart is one tab stop with the
+  control ring around the whole of it; keyboard focus opens the card on the newest scan, the
+  arrows, Home and End move it, Escape closes it, and the cursor turns to a dashed ink line
+  while the keyboard holds it. The card scales with the drawing, as the board's does. The
+  line draws once when it arrives (600 ms) and the area fades in; Reduce Motion shows the
+  final drawing.
 
   Values, labels and the description are given by the caller already formatted for the
   language; this component only places them.
 -->
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
 import {
   areaPath,
   gridValues,
@@ -22,8 +26,10 @@ import {
   scaleLinear,
   type Point,
 } from '@/lib/chart-geometry'
+import { focusedByKeyboard, stepCursor } from '@/lib/chart-cursor'
 import { shouldPlay } from '@/lib/motion'
 import UiChartLegend, { type LegendItem } from './UiChartLegend.vue'
+import UiChartTip, { type ChartTip } from './UiChartTip.vue'
 
 export interface HistorySeries {
   id: string
@@ -32,14 +38,8 @@ export interface HistorySeries {
   tone?: 'accent' | 'lilac'
 }
 
-export interface HistoryTip {
-  /** "22 Sep · scan #37". */
-  title: string
-  /** "7.28 GB". */
-  value: string
-  /** "+0.04", in the pill beside the value. */
-  delta?: string
-}
+/** The card for a scan: "22 Sep · scan #37", "7.28 GB", and "+0.04" in the pill beside it. */
+export type HistoryTip = ChartTip
 
 export interface HistoryBand {
   from: number
@@ -54,7 +54,7 @@ const props = withDefaults(
     /** Gridline labels, formatted by the caller ("7.5 GB"). */
     formatY: (value: number) => string
     /** Labels under the axis at scan positions; the first is left aligned, the last right. */
-    xLabels?: readonly { index: number; text: string }[]
+    xLabels?: readonly { index: number; text: string; anchor?: 'start' | 'middle' | 'end' }[]
     /** Value range; defaults to the data with 10 % headroom. */
     domain?: readonly [number, number]
     /** Gridline values; defaults to two to four round values inside the domain. */
@@ -71,6 +71,10 @@ const props = withDefaults(
     label: string
     size?: { width: number; height: number }
     plot?: { left: number; right: number; top: number; bottom: number }
+    /** Space between the value labels and the plot, 12 unless the board draws less. */
+    axisGap?: number
+    /** Distance of the date labels from the foot of the drawing, 4 unless the board draws more. */
+    dateInset?: number
     once?: string
   }>(),
   {
@@ -84,6 +88,8 @@ const props = withDefaults(
     legend: () => [],
     size: () => ({ width: 760, height: 236 }),
     plot: () => ({ left: 48, right: 20, top: 20, bottom: 32 }),
+    axisGap: 12,
+    dateInset: 4,
     once: undefined,
   },
 )
@@ -94,6 +100,21 @@ const hovered = defineModel<number | null>('hovered', { default: null })
 const uid = useId()
 const play = shouldPlay(props.once)
 const svg = ref<SVGSVGElement | null>(null)
+const stage = ref<HTMLElement | null>(null)
+// True while the keyboard holds the cursor: the ink crosshair and label are its marks.
+const keyboard = ref(false)
+// The drawing is scaled to the card; the hover card is HTML, so it takes the same scale.
+const scale = ref(1)
+let watcher: ResizeObserver | undefined
+onMounted(() => {
+  if (!stage.value || typeof ResizeObserver === 'undefined') return
+  watcher = new ResizeObserver(() => {
+    const width = stage.value?.clientWidth ?? 0
+    if (width > 0) scale.value = width / W.value
+  })
+  watcher.observe(stage.value)
+})
+onBeforeUnmount(() => watcher?.disconnect())
 
 const W = computed(() => props.size.width)
 const H = computed(() => props.size.height)
@@ -197,7 +218,7 @@ const xTicks = computed(() => {
   return props.xLabels.flatMap((l, k) => {
     const x = points[l.index]?.[0]
     if (x === undefined) return []
-    return [{ ...l, x, anchor: k === 0 ? 'start' : k === last ? 'end' : 'middle' }]
+    return [{ ...l, x, anchor: l.anchor ?? (k === 0 ? 'start' : k === last ? 'end' : 'middle') }]
   })
 })
 
@@ -214,6 +235,7 @@ const cursor = computed(() => {
 })
 
 function onPointer(e: PointerEvent) {
+  keyboard.value = false
   const el = svg.value
   if (!el || count.value === 0) return
   const rect = el.getBoundingClientRect()
@@ -225,24 +247,31 @@ function onPointer(e: PointerEvent) {
 }
 
 function onKey(e: KeyboardEvent) {
-  const n = count.value
-  if (n === 0) return
-  const at = hovered.value
-  let next: number | null | undefined
-  if (e.key === 'ArrowLeft') next = at === null ? n - 1 : Math.max(0, at - 1)
-  else if (e.key === 'ArrowRight') next = at === null ? n - 1 : Math.min(n - 1, at + 1)
-  else if (e.key === 'Home') next = 0
-  else if (e.key === 'End') next = n - 1
-  else if (e.key === 'Escape' && at !== null) next = null
-  if (next === undefined) return
+  const { next, handled } = stepCursor(e.key, hovered.value, count.value)
+  if (!handled) return
   e.preventDefault()
   if (e.key === 'Escape') e.stopPropagation()
+  keyboard.value = true
   hovered.value = next
+}
+
+/** Keyboard focus opens the card on the newest scan; a click that focuses does not. */
+function onFocus(e: FocusEvent) {
+  const el = e.currentTarget
+  if (!(el instanceof Element) || !focusedByKeyboard(el)) return
+  keyboard.value = true
+  if (hovered.value === null && count.value > 0) hovered.value = count.value - 1
+}
+
+function onBlur() {
+  keyboard.value = false
+  hovered.value = null
 }
 
 const spoken = computed(() => {
   const tip = cursor.value?.tip
-  return tip ? [tip.title, tip.value, tip.delta].filter(Boolean).join(', ') : ''
+  if (!tip) return ''
+  return tip.spoken ?? [tip.title, tip.value, tip.delta].filter(Boolean).join(', ')
 })
 const gid = (name: string) => `${name}-${uid}`
 </script>
@@ -250,15 +279,19 @@ const gid = (name: string) => `${name}-${uid}`
 <template>
   <div class="history">
     <div
+      ref="stage"
       class="stage"
+      :class="{ keyboard }"
       tabindex="0"
       role="group"
       aria-roledescription="chart"
       :aria-label="label"
+      :style="{ '--k': scale }"
       @pointermove="onPointer"
       @pointerleave="hovered = null"
       @keydown="onKey"
-      @blur="hovered = null"
+      @focus="onFocus"
+      @blur="onBlur"
     >
       <svg ref="svg" class="svg" :viewBox="`0 0 ${W} ${H}`" aria-hidden="true" focusable="false">
         <defs>
@@ -321,7 +354,7 @@ const gid = (name: string) => `${name}-${uid}`
           v-for="g in gridLines"
           :key="g.value"
           class="axis"
-          :x="box.x0 - 12"
+          :x="box.x0 - axisGap"
           :y="g.y + 4"
           text-anchor="end"
         >
@@ -421,29 +454,24 @@ const gid = (name: string) => `${name}-${uid}`
           v-for="t in xTicks"
           :key="t.index"
           class="axis"
+          :class="{ now: hovered === t.index }"
           :x="t.x"
-          :y="H - 4"
+          :y="H - dateInset"
           :text-anchor="t.anchor"
         >
           {{ t.text }}
         </text>
       </svg>
 
-      <div
+      <UiChartTip
         v-if="cursor?.tip"
-        class="tip"
+        class="place"
+        :tip="cursor.tip"
         :style="{
-          left: `clamp(0px, calc(${(cursor.x / W) * 100}% - 74px), calc(100% - 148px))`,
-          top: `clamp(0px, calc(${((cursor.markers[0]?.y ?? 0) / H) * 100}% - 76px), calc(100% - 56px))`,
+          left: `clamp(0px, calc(${(cursor.x / W) * 100}% - 74px * var(--k)), calc(100% - 148px * var(--k)))`,
+          top: `clamp(0px, calc(${((cursor.markers[0]?.y ?? 0) / H) * 100}% - 76px * var(--k)), calc(100% - 56px * var(--k)))`,
         }"
-        aria-hidden="true"
-      >
-        <span class="tip-title">{{ cursor.tip.title }}</span>
-        <span class="tip-row">
-          <b class="tip-value">{{ cursor.tip.value }}</b>
-          <span v-if="cursor.tip.delta" class="tip-delta">{{ cursor.tip.delta }}</span>
-        </span>
-      </div>
+      />
       <span class="sr-only" aria-live="polite">{{ spoken }}</span>
     </div>
     <UiChartLegend v-if="legend.length > 0 || $slots.default" :items="legend">
@@ -462,12 +490,12 @@ const gid = (name: string) => `${name}-${uid}`
 
 .stage {
   position: relative;
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   outline: none;
 }
 
 .stage:focus-visible {
-  box-shadow: var(--focus-ring);
+  box-shadow: var(--control-ring);
 }
 
 .svg {
@@ -483,6 +511,10 @@ const gid = (name: string) => `${name}-${uid}`
 .axis {
   fill: var(--ink-3);
   font-size: 11px;
+}
+
+.keyboard .axis.now {
+  fill: var(--ink);
 }
 
 .grid {
@@ -504,6 +536,12 @@ const gid = (name: string) => `${name}-${uid}`
   stroke: var(--ink-4);
 }
 
+.keyboard .crosshair {
+  stroke: var(--ink);
+  stroke-dasharray: 2 3;
+  stroke-width: 1.5;
+}
+
 .dot {
   fill: var(--chart-knob);
 }
@@ -520,51 +558,8 @@ const gid = (name: string) => `${name}-${uid}`
   font-weight: 500;
 }
 
-.tip {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: max-content;
-  min-width: 148px;
-  height: 56px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-0);
-  box-shadow: var(--shadow-pop);
-  pointer-events: none;
-}
-
-.tip-title {
-  color: var(--ink-3);
-  font-size: var(--text-11);
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.tip-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.tip-value {
-  font-size: var(--text-15);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
-}
-
-.tip-delta {
-  display: inline-flex;
-  align-items: center;
-  height: 18px;
-  padding: 0 var(--space-2);
-  border-radius: 9px;
-  background: var(--surface-1);
-  color: var(--ink-3);
-  font-size: var(--text-11);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
+.place {
+  transform: scale(var(--k));
+  transform-origin: 0 0;
 }
 </style>

@@ -1,7 +1,10 @@
 <script setup lang="ts">
-withDefaults(defineProps<{ tone?: 'default' | 'on-button' | 'on-glass' | 'on-field' }>(), {
-  tone: 'default',
-})
+withDefaults(
+  defineProps<{ tone?: 'default' | 'on-button' | 'on-glass' | 'on-field' | 'on-menu' }>(),
+  {
+    tone: 'default',
+  },
+)
 </script>
 
 <template>
@@ -26,6 +29,10 @@ withDefaults(defineProps<{ tone?: 'default' | 'on-button' | 'on-glass' | 'on-fie
 .kbd-on-button {
   background: var(--kbd-on-btn);
   color: color-mix(in srgb, var(--btn-ink) 75%, transparent);
+}
+
+.kbd-on-menu {
+  background: var(--kbd-on-menu);
 }
 
 .kbd-on-glass {

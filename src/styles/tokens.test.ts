@@ -50,6 +50,10 @@ describe('light tokens match the canvas', () => {
     '--surface-2': '#eceef6',
     '--surface-3': '#e6e8f1',
     '--base': '#eceef8',
+    '--surface-well': '#f7f8fc',
+    '--surface-pop': 'var(--surface-0)',
+    '--menu-hover': 'var(--surface-1)',
+    '--page': '#f8f8fc',
     '--page-sheet': '#f2f3f8',
     '--btn': '#1c1d24',
     '--btn-hover': '#33343e',
@@ -120,6 +124,21 @@ describe('light tokens match the canvas', () => {
     expect(light.get('--dur-knob')).toBe('220ms')
   })
 
+  it('keeps the surface durations of the Motion in the app table', () => {
+    expect(light.get('--dur-popover')).toBe('150ms')
+    expect(light.get('--dur-sheet')).toBe('200ms')
+    expect(light.get('--dur-drawer')).toBe('300ms')
+    expect(light.get('--dur-toast')).toBe('220ms')
+    expect(light.get('--dur-toast-out')).toBe('200ms')
+    expect(light.get('--dur-menu-close')).toBe('120ms')
+    expect(light.get('--dur-theme')).toBe('200ms')
+  })
+
+  it('draws the segmented track in surface-1 in both themes', () => {
+    expect(light.get('--seg-track')).toBe('var(--surface-1)')
+    expect(darkAttr.get('--seg-track')).toBe('var(--surface-1)')
+  })
+
   it('keeps the severity washes, scrims and code colours of the boards', () => {
     expect(light.get('--card-wash-crit')).toBe('#fff1f5')
     expect(light.get('--card-wash-warn')).toBe('#fff7ec')
@@ -127,7 +146,8 @@ describe('light tokens match the canvas', () => {
     expect(darkAttr.get('--card-wash-crit')).toBe('#2a1820')
     expect(darkAttr.get('--card-wash-warn')).toBe('#2a2116')
     expect(darkAttr.get('--card-wash-info')).toBe('#1c2033')
-    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.16)')
+    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.22)')
+    expect(light.get('--scrim-blur')).toBe('3px')
     expect(light.get('--scrim-dialog')).toBe('rgba(27, 29, 42, 0.24)')
     expect(light.get('--code-hl')).toBe('#f4a6bf')
     expect(light.get('--delay-tooltip')).toBe('400ms')
@@ -136,7 +156,9 @@ describe('light tokens match the canvas', () => {
 
   it('keeps the easing curves of the Motion boards', () => {
     expect(light.get('--ease-out')).toBe('cubic-bezier(0.23, 1, 0.32, 1)')
-    expect(light.get('--ease-in-out')).toBe('cubic-bezier(0.65, 0, 0.35, 1)')
+    // One curve for moving things: the drawer is the same token.
+    expect(light.get('--ease-in-out')).toBe('cubic-bezier(0.77, 0, 0.175, 1)')
+    expect(light.get('--ease-drawer')).toBe('var(--ease-in-out)')
     expect(light.get('--ease-settle')).toBe('cubic-bezier(0.34, 1.4, 0.64, 1)')
   })
 })
@@ -175,8 +197,8 @@ describe('chart tokens match the canvas', () => {
     '--chart-blush': '#f2a7c3',
     '--chart-grey': '#d6d9e4',
     '--chart-grey-soft': '#e2e4ee',
-    '--chart-amber': '#c98416',
-    '--chart-amber-soft': '#f6d9a8',
+    '--chart-amber': '#b96c0b',
+    '--chart-amber-soft': '#f2cf96',
     '--chart-rose-soft': '#f3b8c9',
     '--chart-bar-old': '#c9d2fa',
     '--chart-bar-top': '#6f87f2',
@@ -186,9 +208,9 @@ describe('chart tokens match the canvas', () => {
     '--tile-2': '#c5cdf7',
     '--tile-3': '#dce3ff',
     '--tile-grow': '#f6d2a0',
-    '--heat-ok': '#c9ebd7',
-    '--heat-warn': '#f6d9a8',
-    '--heat-crit': '#f2b8ca',
+    '--heat-ok': '#bfe3cf',
+    '--heat-warn': '#f2cf96',
+    '--heat-crit': '#efa8bf',
     '--heat-none': '#eceef6',
     '--strip-ok': '#bfe3cf',
     '--strip-warn': '#f2cf96',
@@ -207,6 +229,34 @@ describe('chart tokens match the canvas', () => {
       expect(darkAttr.get(name), name).toBeDefined()
       expect(darkAttr.get(name), name).not.toBe(light.get(name))
     }
+  })
+
+  it('ends the amber monogram gradient on the same warn amber', () => {
+    expect(light.get('--tint-amber-2')).toBe(light.get('--chart-amber'))
+  })
+
+  it('uses one tint set for the scan strips and the heatmap', () => {
+    for (const state of ['ok', 'warn', 'crit']) {
+      expect(light.get(`--heat-${state}`)).toBe(light.get(`--strip-${state}`))
+      expect(darkAttr.get(`--heat-${state}`)).toBe(darkAttr.get(`--strip-${state}`))
+    }
+  })
+
+  it('keeps the dark chart palette of the Components · Dark board', () => {
+    const dark: Record<string, string> = {
+      '--chart-lilac': '#a893f0',
+      '--chart-lilac-soft': '#3a3160',
+      '--chart-blush': '#5a2a3e',
+      '--chart-bar-old': '#34407a',
+      '--heat-ok': '#1e4a35',
+      '--heat-warn': '#5a4319',
+      '--heat-crit': '#5c2a3b',
+      '--chart-issue-warn': '#f0a64a',
+      '--tile-1': '#252b4c',
+      '--tile-2': '#2e2a4a',
+      '--tile-grow': '#3b2a1a',
+    }
+    for (const [name, value] of Object.entries(dark)) expect(darkAttr.get(name), name).toBe(value)
   })
 
   it('keeps the chart durations of the Motion board: bars 500 ms, tween and fade 300 ms', () => {
@@ -249,6 +299,45 @@ describe('dark tokens match the canvas', () => {
   })
 })
 
+describe('dark token gaps are filled with the values of the Components · Dark board', () => {
+  const expected: Record<string, string> = {
+    '--surface-well': '#20222d',
+    '--surface-pop': 'var(--surface-1)',
+    '--menu-hover': 'var(--surface-3)',
+    '--accent-mid': '#7b91ff',
+    '--accent-ink-hover': '#c2ccff',
+    '--side-hover': 'rgba(255, 255, 255, 0.05)',
+    '--kbd-on-glass': 'rgba(255, 255, 255, 0.08)',
+    '--shadow-tray': '0 1px 2px rgba(0, 0, 0, 0.4)',
+    '--shadow-overlay': '0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8)',
+    '--shadow-pop': '0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7)',
+    '--scrim-sheet': 'rgba(0, 0, 0, 0.4)',
+    '--scrim-dialog': 'rgba(0, 0, 0, 0.55)',
+    '--btn': '#ecedf3',
+    // The glass tray is the card tone at the light twin's opacity.
+    '--tray': 'rgba(26, 28, 38, 0.55)',
+  }
+  it.each(Object.entries(expected))('%s is %s', (name, value) => {
+    expect(darkAttr.get(name)).toBe(value)
+  })
+
+  it('leaves the ambient washes and blob as they are in light', () => {
+    for (const name of ['--wash-1', '--wash-2', '--wash-3', '--blob']) {
+      expect(darkAttr.get(name), name).toBe(light.get(name))
+    }
+  })
+
+  it('derives the dark button hovers from the tokens, not from picked colours', () => {
+    expect(darkAttr.get('--btn-hover')).toBe('color-mix(in srgb, var(--btn) 90%, var(--btn-ink))')
+    expect(darkAttr.get('--danger-hover')).toBe(
+      'color-mix(in srgb, var(--crit-soft), var(--crit-ink) 7%)',
+    )
+    expect(darkAttr.get('--danger-press')).toBe(
+      'color-mix(in srgb, var(--crit-soft), var(--crit-ink) 14%)',
+    )
+  })
+})
+
 describe('theme blocks', () => {
   it('apply the same dark values for [data-theme=dark] and for the system setting', () => {
     expect([...darkMedia.entries()]).toEqual([...darkAttr.entries()])
@@ -267,11 +356,97 @@ describe('theme blocks', () => {
   })
 })
 
+describe('dark controls', () => {
+  it('draws a focused field inside in dark and outside in light, on the surface of the field', () => {
+    expect(light.get('--field-focus-ring')).toBe('0 0 0 2px var(--accent)')
+    expect(light.get('--field-focus-bg')).toBe('var(--surface-0)')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--field-focus-ring')).toBe('inset 0 0 0 1.5px var(--accent)')
+      expect(dark.get('--field-focus-bg')).toBe('var(--surface-1)')
+      expect(dark.get('--field-error-ring')).toBe('inset 0 0 0 1.5px var(--crit-solid)')
+    }
+    expect(light.get('--field-error-ring')).toBe('0 0 0 0 transparent')
+  })
+
+  it('gives disabled text, placeholders, the segment, the focus gap and the secondary button their dark values', () => {
+    expect(light.get('--ink-off')).toBe('#80859a')
+    expect(light.get('--ink-placeholder')).toBe('var(--ink-4)')
+    expect(light.get('--ring-gap')).toBe('#ffffff')
+    expect(light.get('--control-ring')).toBe('0 0 0 2px var(--ring-gap), 0 0 0 4px var(--accent)')
+    expect(light.get('--secondary-bg')).toBe('var(--surface-0)')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--ink-off')).toBe('#5e6377')
+      expect(dark.get('--ink-placeholder')).toBe('var(--ink-4)')
+      expect(dark.get('--ring-gap')).toBe('#101118')
+      expect(dark.get('--seg-on')).toBe('var(--surface-3)')
+      expect(dark.get('--secondary-bg')).toBe('var(--surface-2)')
+      expect(dark.get('--secondary-hover')).toBe('var(--surface-3)')
+      expect(dark.get('--secondary-press')).toBe('#34374a')
+      expect(dark.get('--secondary-shadow')).toBe('0 0 0 0 transparent')
+    }
+  })
+
+  it('keeps the dark switch that is on and disabled readable, with a dark knob', () => {
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--switch-disabled-track')).toBe(
+        'color-mix(in srgb, var(--btn) 40%, var(--surface-0))',
+      )
+      expect(dark.get('--switch-disabled-knob')).toBe(
+        'color-mix(in srgb, var(--btn-ink) 40%, var(--surface-0))',
+      )
+    }
+  })
+
+  it('draws the scroll bar of dark code as a faint track with a lighter thumb, in both themes', () => {
+    for (const set of [light, darkAttr, darkMedia]) {
+      expect(set.get('--code-track')).toBe('rgba(255, 255, 255, 0.12)')
+      expect(set.get('--code-thumb')).toBe('rgba(255, 255, 255, 0.35)')
+      expect(set.get('--code-btn')).toBe('#33343e')
+    }
+  })
+})
+
+describe('project card tokens', () => {
+  it('has the eight project tints as pairs, in both themes', () => {
+    for (const name of ['blue', 'lilac', 'rose', 'amber', 'green', 'teal', 'coral', 'slate']) {
+      for (const set of [light, darkAttr, darkMedia]) {
+        expect(set.get(`--tint-${name}-1`), name).toMatch(/^#[0-9a-f]{6}$/)
+        expect(set.get(`--tint-${name}-2`), name).toMatch(/^#[0-9a-f]{6}$/)
+      }
+    }
+    expect(light.get('--tint-rose-1')).toBe('#f5b3cf')
+    expect(light.has('--tint-grey-1')).toBe(false)
+  })
+
+  it('lifts a critical card with rose in light and crit at 35 % in dark', () => {
+    expect(light.get('--shadow-card-crit')).toContain('rgba(210, 67, 106, 0.55)')
+    for (const set of [darkAttr, darkMedia]) {
+      expect(set.get('--shadow-card-crit')).toContain('rgba(255, 110, 150, 0.35)')
+    }
+  })
+})
+
 describe('token usage', () => {
   // Set from script on the element itself (see lib/motion.ts), so not declared in CSS; the
   // two knobs of UiCard that a caller sets on the element for a denser or looser board; and the
-  // swatch colour and column count a chart passes down from its data.
-  const RUNTIME = new Set(['--d', '--hold', '--card-gap', '--card-pad', '--swatch', '--cols'])
+  // swatch colour and column count a chart passes down from its data; the colour a code block
+  // hands to the copy button it holds, so the fade behind the button matches the block; and the
+  // scale a history chart gives its hover card, the ends a column chart gives its cursor line, and the
+  // padding a gallery section gives its frames.
+  const RUNTIME = new Set([
+    '--d',
+    '--hold',
+    '--card-gap',
+    '--card-pad',
+    '--swatch',
+    '--cols',
+    '--mark',
+    '--copy-fade',
+    '--k',
+    '--frame-pad',
+    '--cursor-top',
+    '--cursor-bottom',
+  ])
 
   it('only references tokens that are defined', () => {
     const defined = new Set([...light.keys(), ...darkAttr.keys()])
@@ -304,5 +479,43 @@ describe('primitives', () => {
       }
     }
     expect(offenders).toEqual([])
+  })
+})
+
+describe('overlay tokens follow the Components · Dark overlays', () => {
+  it('draws the toast and tooltip in the primary fill with the #3a55d6 action in dark', () => {
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--btn')).toBe('#ecedf3')
+      expect(dark.get('--btn-ink')).toBe('#101118')
+      expect(dark.get('--on-btn-accent')).toBe('#3a55d6')
+      expect(dark.get('--toast-ok-bg')).toBe('transparent')
+      expect(dark.get('--toast-ok-ink')).toBe('#146b40')
+    }
+    expect(light.get('--on-btn-accent')).toBe('#9fb0ff')
+    expect(light.get('--toast-ok-bg')).toBe('var(--ok-solid)')
+  })
+
+  it('dims with 22 % ink and a 3 px blur in light, 40 % and 55 % black in dark', () => {
+    expect(light.get('--scrim-sheet')).toBe('rgba(27, 29, 42, 0.22)')
+    expect(light.get('--scrim-blur')).toBe('3px')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--scrim-sheet')).toBe('rgba(0, 0, 0, 0.4)')
+      expect(dark.get('--scrim-dialog')).toBe('rgba(0, 0, 0, 0.55)')
+    }
+  })
+
+  it('draws both drawers in dark with the overlay shadow in black', () => {
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--shadow-drawer')).toBe(dark.get('--shadow-overlay'))
+      expect(dark.get('--shadow-panel')).toBe(dark.get('--shadow-overlay'))
+      expect(dark.get('--shadow-pop')).toBe(
+        '0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7)',
+      )
+    }
+  })
+
+  it('keeps the flat key on a menu surface-1 in light and the key tone in dark', () => {
+    expect(light.get('--kbd-on-menu')).toBe('var(--surface-1)')
+    expect(darkAttr.get('--kbd-on-menu')).toBe('var(--kbd-bg)')
   })
 })

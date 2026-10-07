@@ -103,13 +103,18 @@ export function formatMeasure(
   }
 }
 
-/** Like `formatMeasure`, always with a sign: `+1.1 GB`, `-0.4 GB`, `+3`. Zero stays unsigned. */
+/**
+ * Like `formatMeasure`, always with a sign: `+1.1 GB`, `−0.4 GB`, `+3`. Zero stays unsigned. A
+ * drop is written with a true minus sign, as the boards do, not the hyphen of the keyboard.
+ */
 export function formatDelta(
   value: number,
   unit: string | null | undefined,
   locale: Locale = currentLocale(),
 ): Measure {
-  return formatMeasure(value, unit, locale, { signDisplay: 'exceptZero' })
+  const measure = formatMeasure(value, unit, locale, { signDisplay: 'exceptZero' })
+  const minus = (text: string) => text.replace(/^-/, '\u2212')
+  return { ...measure, value: minus(measure.value), text: minus(measure.text) }
 }
 
 /** A duration the way the boards write it: `212 ms`, `0.8 s`, `14.8 s`, `37 min`, `41 d`. */
@@ -132,11 +137,25 @@ export function formatClock(value: DateLike, locale: Locale = currentLocale()): 
   }).format(toDate(value))
 }
 
-/** A day without a year: `Sep 26` in English, `26/9` in Vietnamese. */
+/** Day then month in English, built from parts: `en-GB` would spell September "Sept". */
+function dayMonth(date: Date, month: 'short' | 'long'): string {
+  const parts = new Intl.DateTimeFormat('en-US', { month, day: 'numeric' }).formatToParts(date)
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? ''
+  return `${part('day')} ${part('month')}`
+}
+
+/** A day without a year, day first as the boards write it: `26 Sep` in English, `26/9` in Vietnamese. */
 export function formatDate(value: DateLike, locale: Locale = currentLocale()): string {
-  const options: Intl.DateTimeFormatOptions =
-    locale === 'vi' ? { day: 'numeric', month: 'numeric' } : { month: 'short', day: 'numeric' }
-  return new Intl.DateTimeFormat(locale, options).format(toDate(value))
+  const date = toDate(value)
+  if (locale === 'en') return dayMonth(date, 'short')
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'numeric' }).format(date)
+}
+
+/** A day with its month in full, for a sentence read out: `24 September`, `24 tháng 9`. */
+export function formatDateLong(value: DateLike, locale: Locale = currentLocale()): string {
+  const date = toDate(value)
+  if (locale === 'en') return dayMonth(date, 'long')
+  return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long' }).format(date)
 }
 
 /** The full date and time for a tooltip: `26 Sep 2026, 11:58`. */
@@ -146,6 +165,15 @@ export function formatDateTime(value: DateLike, locale: Locale = currentLocale()
     timeStyle: 'short',
     hourCycle: 'h23',
   }).format(toDate(value))
+}
+
+/** Weekday, day, month and clock of an older scan: `Sun 22 Sep 21:10`. */
+export function formatWeekdayDateTime(value: DateLike, locale: Locale = currentLocale()): string {
+  const date = toDate(value)
+  const weekday = new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : locale, {
+    weekday: 'short',
+  }).format(date)
+  return `${weekday} ${formatDate(date, locale)} ${formatClock(date, locale)}`
 }
 
 function startOfDay(d: Date): number {

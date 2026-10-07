@@ -30,6 +30,21 @@ describe('UiToast', () => {
     expect(wrapper.find('.mark svg').exists()).toBe(true)
   })
 
+  it('sets a one-line confirmation in regular weight and a titled toast in medium', () => {
+    wrapper = mount(UiToast, { props: { tone: 'neutral', title: 'Fix copied to the clipboard' } })
+    expect(wrapper.get('.title').classes()).toContain('solo')
+    wrapper.unmount()
+    wrapper = mount(UiToast, { props: { title: 'Scan #43 finished', detail: '2 new issues' } })
+    expect(wrapper.get('.title').classes()).not.toContain('solo')
+  })
+
+  it('draws the tick on a 10 px grid, as the scan step does', () => {
+    wrapper = mount(UiToast, { props: { tone: 'ok', title: 'Done' } })
+    const tick = wrapper.get('.mark svg')
+    expect(tick.attributes('viewBox')).toBe('0 0 10 10')
+    expect(tick.get('path').attributes('d')).toBe('m2.2 5.2 1.8 1.8 3.8-4')
+  })
+
   it('draws a failure as a plain rose dot, with no tick', () => {
     wrapper = mount(UiToast, { props: { tone: 'crit', title: "Claude didn't answer" } })
     expect(wrapper.get('.mark').classes()).toContain('mark-crit')

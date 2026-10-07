@@ -9,7 +9,7 @@ import { useScanStore } from '@/stores/scan'
 import UiIcon from '@/ui/UiIcon.vue'
 import { badgeText } from '@/lib/micro'
 import DiskRing from './DiskRing.vue'
-import ProjectDot from './ProjectDot.vue'
+import ProjectTile from './ProjectTile.vue'
 
 const { t } = useI18n()
 const projects = useProjectsStore()
@@ -23,10 +23,6 @@ const reading = computed(
         .map(([host]) => host),
     ),
 )
-
-function badge(level: string): string {
-  return level === 'crit' ? 'crit' : level === 'warn' ? 'warn' : 'accent'
-}
 
 // A label appears after the pointer rests 300 ms, then instantly for the neighbours.
 const SHOW_AFTER_MS = 300
@@ -85,6 +81,7 @@ const overviewTip = computed(() =>
 <template>
   <nav ref="root" class="rail" :aria-label="t('nav.primary')">
     <div class="scroll">
+      <span class="lights" aria-hidden="true" />
       <span class="ri brand">
         <img :src="brandMark" alt="" width="22" height="22" />
       </span>
@@ -127,25 +124,20 @@ const overviewTip = computed(() =>
         <RouterLink
           v-for="p in projects.projects"
           :key="p.id"
+          v-slot="{ isActive }"
           :to="{ name: 'project', params: { id: p.id } }"
-          class="ri"
+          class="ri project"
           active-class="on"
           :aria-label="issuesLabel(p.id, issueCount(p))"
           @pointerenter="enter(issuesLabel(p.id, issueCount(p)), $event)"
           @pointerleave="leave"
         >
-          <span class="tile">
-            <ProjectDot
-              :level="p.level"
-              :unreachable="p.unreachable_hosts.length > 0"
-              :reading="
-                projects.servers.some((s) => s.used_by.includes(p.id) && reading.has(s.host))
-              "
-            />
-          </span>
-          <b v-if="badgeText(issueCount(p))" class="badge" :class="badge(p.level)">
-            {{ badgeText(issueCount(p)) }}
-          </b>
+          <ProjectTile
+            :color="projects.color(p.id)"
+            :level="p.level"
+            :count="issueCount(p)"
+            :active="isActive"
+          />
         </RouterLink>
       </template>
 
@@ -218,6 +210,15 @@ const overviewTip = computed(() =>
   overflow-y: auto;
 }
 
+.lights {
+  flex: none;
+  height: var(--lights-row-rail);
+}
+
+:global(:root[data-fullscreen='true']) .lights {
+  display: none;
+}
+
 .ri {
   position: relative;
   display: grid;
@@ -255,13 +256,14 @@ const overviewTip = computed(() =>
   display: block;
 }
 
-.tile {
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 8px;
-  background: var(--surface-0);
+.ri.project {
+  width: 40px;
+  height: 38px;
+}
+
+.ri.project.on {
+  background: none;
+  box-shadow: none;
 }
 
 .badge {
@@ -275,21 +277,14 @@ const overviewTip = computed(() =>
   height: 14px;
   padding: 0 3px;
   border-radius: 7px;
-  color: #fff;
+  color: var(--on-solid);
+  line-height: 1;
   font-size: 9px;
   font-weight: var(--weight-semibold);
 }
 
 .badge.accent {
   background: var(--accent);
-}
-
-.badge.warn {
-  background: var(--warn-solid);
-}
-
-.badge.crit {
-  background: var(--crit-solid);
 }
 
 .line {

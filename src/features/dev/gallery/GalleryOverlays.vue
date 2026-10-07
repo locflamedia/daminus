@@ -150,7 +150,7 @@ function pushUndo() {
     <GalleryFrame
       :title="t('gallery.overlays.toast')"
       :text="t('gallery.overlays.toastLede')"
-      spec="bottom right · 360 · r14 · 5 s · 2 px timer · in 12 px + fade 240 ms"
+      spec="bottom right · 360 · r14 · 5 s · 2 px timer · in 12 px + fade 220 ms"
     >
       <div class="toast-well">
         <UiToast
@@ -204,7 +204,7 @@ function pushUndo() {
               <span class="k">{{ t('gallery.overlays.dialogType') }}</span>
               <span class="mono">ED25519</span>
             </div>
-            <span class="pop-text">{{ t('gallery.overlays.dialogAdvice') }}</span>
+            <span class="advice">{{ t('gallery.overlays.dialogAdvice') }}</span>
             <template #footer>
               <UiButton variant="ghost" @click="dialogOpen = false">{{
                 t('gallery.overlays.dialogKeep')
@@ -221,20 +221,21 @@ function pushUndo() {
       <GalleryFrame
         :title="t('gallery.overlays.sheet')"
         :text="t('gallery.overlays.sheetLede')"
-        spec="scrim 16 % · 88 % high · header 56 · footer 64 on surface-1"
+        spec="760 centred · r20 · max 88 % · scrim 22 % + 3 px blur · header 56 · footer 64"
       >
         <UiButton variant="secondary" @click="sheetOpen = true">{{
           t('gallery.overlays.sheetOpen')
         }}</UiButton>
         <div class="stage">
           <span class="cap">{{ sheetOpen ? '' : t('gallery.overlays.stageClosed') }}</span>
+          <span class="backdrop" aria-hidden="true"><i v-for="n in 4" :key="n" /></span>
           <UiSheet
             :open="sheetOpen"
             :title="t('gallery.overlays.sheetTitle')"
             :context="t('gallery.overlays.sheetContext')"
             @close="sheetOpen = false"
           >
-            <UiRowList>
+            <UiRowList class="sheet-rows">
               <UiRow
                 v-for="n in 4"
                 :key="n"
@@ -387,6 +388,19 @@ function pushUndo() {
   background: var(--page-sheet);
 }
 
+.backdrop {
+  position: absolute;
+  inset: var(--space-4);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.backdrop i {
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+}
+
 .stage.tall {
   place-items: stretch;
 }
@@ -406,6 +420,11 @@ function pushUndo() {
   padding: var(--space-5);
 }
 
+/* Tall enough that the card reaches its 88 % cap, as the board draws it. */
+.sheet-rows {
+  min-height: 360px;
+}
+
 .fingerprints {
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr);
@@ -414,6 +433,13 @@ function pushUndo() {
   border-radius: var(--radius-sm);
   background: var(--surface-1);
   font-size: var(--text-11);
+  line-height: normal;
+}
+
+.advice {
+  color: var(--ink-3);
+  font-size: var(--text-12);
+  line-height: 1.45;
 }
 
 .k {

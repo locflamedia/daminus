@@ -11,6 +11,7 @@ export const ICON_PATHS = {
     CIRCLE + 'M2 8h12 M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14c-1.8-1.7-2.6-3.7-2.6-6S6.2 3.7 8 2z',
   database:
     'M3 3.8c0-1 2.2-1.8 5-1.8s5 .8 5 1.8-2.2 1.8-5 1.8-5-.8-5-1.8z M3 3.8v8.4c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V3.8 M3 8c0 1 2.2 1.8 5 1.8s5-.8 5-1.8',
+  disk: 'M3 3.8c0-1 2.2-1.8 5-1.8s5 .8 5 1.8-2.2 1.8-5 1.8-5-.8-5-1.8z M3 3.8v8.4c0 1 2.2 1.8 5 1.8s5-.8 5-1.8V3.8',
   container: 'M2.5 5 8 2l5.5 3v6L8 14l-5.5-3z M2.5 5 8 8l5.5-3 M8 8v6',
   folder:
     'M2 4.5c0-.8.7-1.5 1.5-1.5h3l1.5 1.5h4.5c.8 0 1.5.7 1.5 1.5v5.5c0 .8-.7 1.5-1.5 1.5h-9c-.8 0-1.5-.7-1.5-1.5z',
@@ -54,8 +55,9 @@ export const ICON_PATHS = {
   trash:
     'M2.8 4.5h10.4 M6.3 4.5V3h3.4v1.5 M4.2 4.5l.6 8.3c.1.8.7 1.2 1.4 1.2h3.6c.7 0 1.3-.4 1.4-1.2l.6-8.3',
   cart: 'M1.8 2.5h2l1.6 7.5h7l1.4-5.5H4.6 M6.5 11.8a1 1 0 1 1 0 2a1 1 0 1 1 0-2z M11.5 11.8a1 1 0 1 1 0 2a1 1 0 1 1 0-2z',
-  // Charts and history: the response-time pulse, the uptime globe line and a file.
+  // Charts and history: the response-time pulse, a rising line, the uptime globe line and a file.
   pulse: 'M2 12h2.5l2-6 3 8 2-5H14',
+  trend: 'M2.5 12.5 6 8l3 2.5 4.5-6',
   uptime: CIRCLE + 'M2 8h12',
   file: 'M4 2h5l3 3v9H4z M9 2v3h3',
 } as const

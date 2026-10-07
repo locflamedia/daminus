@@ -12,7 +12,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import type { ToastAction, ToastTone } from '@/stores/toasts'
-import UiIcon from './UiIcon.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -76,10 +75,12 @@ onBeforeUnmount(() => window.clearTimeout(timer))
     @focusout="onFocusOut"
   >
     <span class="mark" :class="`mark-${tone}`" aria-hidden="true">
-      <UiIcon v-if="tone !== 'crit'" name="check" :size="10" :stroke="2" />
+      <svg v-if="tone !== 'crit'" class="tick" viewBox="0 0 10 10" width="10" height="10">
+        <path d="m2.2 5.2 1.8 1.8 3.8-4" />
+      </svg>
     </span>
     <span class="texts">
-      <b class="title">{{ title }}</b>
+      <b class="title" :class="{ solo: !detail }">{{ title }}</b>
       <span v-if="detail" class="detail">{{ detail }}</span>
     </span>
     <button v-if="action" type="button" class="action" @click="runAction">
@@ -104,6 +105,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   border-radius: var(--radius-md);
   background: var(--btn);
   color: var(--btn-ink);
+  line-height: normal;
   box-shadow: var(--shadow-pop);
 }
 
@@ -116,9 +118,21 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   border-radius: var(--radius-full);
 }
 
+.tick {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .mark-ok {
-  background: var(--ok-solid);
-  color: var(--surface-0);
+  background: var(--toast-ok-bg);
+  color: var(--toast-ok-ink);
+}
+
+.mark-ok .tick {
+  scale: var(--toast-ok-glyph);
 }
 
 .mark-neutral {
@@ -140,11 +154,18 @@ onBeforeUnmount(() => window.clearTimeout(timer))
 .title {
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
+  line-height: normal;
+}
+
+/* A toast with one line only (a confirmation) is set in regular weight. */
+.title.solo {
+  font-weight: var(--weight-regular);
 }
 
 .detail {
-  color: color-mix(in srgb, var(--btn-ink) 72%, var(--btn));
+  color: var(--on-btn-ink-2);
   font-size: var(--text-12);
+  line-height: normal;
 }
 
 .action {
@@ -154,6 +175,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   color: var(--on-btn-accent);
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
+  line-height: normal;
 }
 
 .action:hover {

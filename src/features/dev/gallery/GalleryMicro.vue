@@ -5,7 +5,7 @@
   per-host progress and the critical halo.
 -->
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { wordDelay } from '@/lib/motion'
 import { deltaPill } from '@/lib/micro'
@@ -21,6 +21,7 @@ import UiIcon from '@/ui/UiIcon.vue'
 import UiInlineCode from '@/ui/UiInlineCode.vue'
 import UiKbd from '@/ui/UiKbd.vue'
 import UiMonogram from '@/ui/UiMonogram.vue'
+import { MONOGRAM_TINTS } from '@/ui/monogram-tints'
 import UiPathChip from '@/ui/UiPathChip.vue'
 import UiProgressBar from '@/ui/UiProgressBar.vue'
 import UiProgressRing from '@/ui/UiProgressRing.vue'
@@ -36,6 +37,19 @@ import GalleryFrame from './GalleryFrame.vue'
 
 const { t } = useI18n()
 const k = (key: string, params: Record<string, unknown> = {}) => t(`gallery.micro.${key}`, params)
+
+/** The hex of a tint's stop as the tokens declare it, read once the page is up. */
+const tintHexes = ref<Record<string, string>>({})
+onMounted(() => {
+  const style = getComputedStyle(document.documentElement)
+  for (const tint of MONOGRAM_TINTS) {
+    for (const stop of [1, 2]) {
+      const name = `--tint-${tint}-${stop}`
+      tintHexes.value[name] = style.getPropertyValue(name).trim().toUpperCase()
+    }
+  }
+})
+const tintHex = (tint: string, stop: 1 | 2) => tintHexes.value[`--tint-${tint}-${stop}`] ?? ''
 
 const HOUR = 3_600_000
 const recent = Date.now() - 2 * HOUR
@@ -124,7 +138,7 @@ const haloKey = ref(0)
           <UiMonogram name="api-booking" tint="blue" :size="24" />
           <UiMonogram icon="file" tint="lilac" :size="36" />
           <UiMonogram icon="cart" tint="rose" :size="36" />
-          <UiMonogram name="noibo-crm" tint="grey" :size="24" />
+          <UiMonogram name="noibo-crm" tint="slate" :size="24" />
         </GalleryAtom>
 
         <GalleryAtom :name="k('techTag.name')" :spec="k('techTag.spec')">
@@ -169,6 +183,34 @@ const haloKey = ref(0)
             />
           </div>
         </GalleryAtom>
+      </div>
+    </GalleryFrame>
+
+    <GalleryFrame :title="k('tints.title')" :text="k('tints.lede')">
+      <div class="tints">
+        <div v-for="tint in MONOGRAM_TINTS" :key="tint" class="tint" :class="`t-${tint}`">
+          <span class="tint-row">
+            <UiMonogram :name="tint" :tint="tint" :size="36" />
+            <span class="disc" />
+            <span class="dot" />
+          </span>
+          <span class="tint-name">{{ tint }}</span>
+          <span class="mono tint-pair">{{ tintHex(tint, 1) }} → {{ tintHex(tint, 2) }}</span>
+        </div>
+      </div>
+      <p class="para">{{ k('tints.text') }}</p>
+      <div class="marks">
+        <span class="cap">{{ k('tints.marks') }}</span>
+        <div class="marks-row">
+          <UiTag swatch="var(--tint-blue-2)" plain>Laravel 11</UiTag>
+          <UiTag swatch="var(--tint-rose-2)" plain>Phalcon 5</UiTag>
+          <span class="para">{{ k('tints.markNote') }}</span>
+        </div>
+        <div class="marks-row">
+          <UiMonogram name="kho-hang" tint="rose" :size="40" />
+          <span class="para">{{ k('tints.tile') }}</span>
+        </div>
+        <p class="para">{{ k('tints.bundled') }}</p>
       </div>
     </GalleryFrame>
 
@@ -378,5 +420,110 @@ const haloKey = ref(0)
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.tints {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.tint {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface-well);
+}
+
+.tint-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.t-blue {
+  --mark: var(--tint-blue-2);
+}
+
+.t-lilac {
+  --mark: var(--tint-lilac-2);
+}
+
+.t-rose {
+  --mark: var(--tint-rose-2);
+}
+
+.t-amber {
+  --mark: var(--tint-amber-2);
+}
+
+.t-green {
+  --mark: var(--tint-green-2);
+}
+
+.t-teal {
+  --mark: var(--tint-teal-2);
+}
+
+.t-coral {
+  --mark: var(--tint-coral-2);
+}
+
+.t-slate {
+  --mark: var(--tint-slate-2);
+}
+
+.disc {
+  background: var(--mark);
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+}
+
+.dot {
+  background: var(--mark);
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.tint-name {
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+
+.tint-pair {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+}
+
+.para {
+  color: var(--ink-2);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.marks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--surface-well);
+}
+
+.marks-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.cap {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
 }
 </style>

@@ -17,6 +17,9 @@ const props = withDefaults(
   { placement: 'bottom-start', width: '320px', inline: false },
 )
 
+/** The popover is a step tighter than a menu (12 against 14). */
+const RADIUS = '12px'
+
 const open = defineModel<boolean>('open', { default: false })
 defineSlots<{
   trigger?: (props: {
@@ -50,6 +53,7 @@ function toggle() {
     :anchor="anchor"
     :placement="props.placement"
     :inline="inline"
+    :radius="RADIUS"
     role="dialog"
     :label="label"
     @close="open = false"
@@ -71,10 +75,10 @@ function toggle() {
   gap: var(--space-2);
   max-width: 100%;
   padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: var(--surface-0);
+  border-radius: 12px;
+  background: var(--surface-pop);
   color: var(--ink);
   font-size: var(--text-12);
-  line-height: 1.45;
+  line-height: normal;
 }
 </style>

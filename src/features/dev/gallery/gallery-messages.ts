@@ -1,4 +1,5 @@
 import { moreGalleryMessages } from './gallery-messages-more'
+import { shellGalleryMessages } from './gallery-messages-shell'
 
 // Sample copy for the dev gallery, in both languages. It is merged into the app's messages
 // only when the gallery opens, so it never reaches the production bundle.
@@ -78,7 +79,7 @@ const baseMessages = {
       keysLede:
         'Key 18 px for shortcuts; on the dark button, on a filled field and on the sidebar glass.',
       hold: 'Hold to confirm',
-      holdLede: 'No dialog: the fill sweeps across while held; letting go early snaps back.',
+      holdLede: 'The hold stays; a click or assistive activation opens a confirmation.',
       model: 'Model',
       modelCustom: 'Type a model id…',
       modelDefault: 'default',
@@ -110,13 +111,54 @@ const baseMessages = {
       twoOfFour: '2 of 4',
       wildcard: 'Wildcard, skipped',
       search: 'Search',
-      holdLabel: 'Hold to delete history',
+      holdLabel: 'Hold to clear history',
       holdHint: 'Hold for 1.5 s. Letting go early cancels.',
+      holdA: 'A · Hold, as drawn',
+      holdB: 'B · A plain click, VoiceOver, Switch or Voice Control',
+      holdSpec:
+        'pointer, or Space / Enter held · 1.5 s fill, linear · release early = nothing happens',
+      holdAction: 'Clear history',
+      holdTitle: 'Clear scan history?',
+      holdBody:
+        'Deletes 12 saved scans on this Mac. Projects, settings and expected rules stay. This can’t be undone.',
+      holdNote1: {
+        name: 'Two ways, same result.',
+        text: 'Holding still confirms in place. A click that ends before the hold starts filling (under 300 ms), or any activation from assistive tech, opens the dialog instead of doing nothing.',
+      },
+      holdNote2: {
+        name: 'Dialog.',
+        text: '380 wide, scrim 22%. Title asks the question; body says what goes and what stays. Focus starts on Cancel; Esc cancels; the confirm button is crit solid with white text and names the action.',
+      },
+      holdNote3: {
+        name: 'Announced.',
+        text: 'The button reads “Clear history, button. Hold to confirm, or press to open a confirmation.”',
+      },
+      holdNote4: {
+        name: 'Where.',
+        text: 'Every action behind a hold: Clear history and Clear AI replies (Settings › Data), Remove project (edit sheet).',
+      },
       languageLabel: 'App language',
       searchLanguages: 'Search languages',
       notTranslated: 'Not translated yet',
+      notTranslatedHint: 'Not translated yet. Help translate →',
       helpTranslate: 'Help translate Daminus',
       noLanguage: 'No language found',
+      languageStates: 'Language menu, other states',
+      languageStatesLede: 'Flags are inline SVG; English uses the UK flag.',
+      langState: {
+        empty: {
+          name: 'Search with no match',
+          text: 'One grey line, no illustration. The help-translate link stays at the bottom when it was there.',
+        },
+        pending: {
+          name: 'Not translated yet · cannot be chosen',
+          text: 'Dimmed rows show their share. Click, Enter and arrow keys pass over them; a tooltip says why and links to help translate.',
+        },
+        keyboard: {
+          name: 'Keyboard',
+          text: '↑ ↓ move between languages you can pick · ⏎ chooses and switches the app at once · esc closes and keeps the current language · typing filters by native or English name and code',
+        },
+      },
     },
     display: {
       title: 'Display',
@@ -223,6 +265,27 @@ const baseMessages = {
       commandRemove: 'Removes files',
       commandLong: 'Long: scrolls, never cut',
       commandCopied: 'copied × {n}',
+      safety: 'Command safety',
+      safetyLede: 'Every command Daminus shows for copying, from Permission help or an AI answer.',
+      face: { idle: 'rest', copied: '1.6 s, then back', failed: 'until the next visit' },
+      rules: {
+        whole: {
+          name: 'Whole command, never an ellipsis.',
+          text: 'Long lines scroll sideways inside the block, with a thin scroll bar always visible; line breaks are joined with a space.',
+        },
+        cleaned: {
+          name: 'Cleaned before showing.',
+          text: 'Control and hidden characters (zero-width, bidi overrides, escape codes) are removed; what is shown is exactly what is copied.',
+        },
+        warn: {
+          name: 'Warn in view.',
+          text: 'An amber note under the block, one line per risk, when the command pipes into a shell, decodes base64 or runs rm. Copy stays enabled.',
+        },
+        faces: {
+          name: 'Copy has three faces.',
+          text: 'Copy, Copied, Failed. Failed never hides the text, so it can be selected by hand.',
+        },
+      },
     },
     overlays: {
       title: 'Overlays',
@@ -286,7 +349,7 @@ const baseMessages = {
       dialogTrust: 'Trust new key',
       sheet: 'Sheet',
       sheetLede:
-        'For editing. Rises from the bottom to 88 % of the window, the page dims to 16 %. Esc or Cancel asks to close; a press on the scrim does nothing.',
+        'For editing. A centred card, 760 wide (narrower windows keep 24 px margins), radius 20 on every corner, at most 88 % of the window high. The scrim is 22 % with a 3 px blur. It opens with scale .98 and 8 px up, 200 ms. Esc or Cancel asks to close; a press on the scrim does nothing.',
       sheetOpen: 'Open the sheet',
       sheetTitle: 'Edit kho-hang',
       sheetContext: '4 components',
@@ -328,10 +391,12 @@ const baseMessages = {
         hovered: 'Hovered: scan #{n}',
         today: 'today',
         scanTitle: '{date} · scan #{n}',
+        spoken: 'Scan {n}, {date}',
         compactTitle: 'End label',
         compactText:
           'The compact form of the Data display board: latest value and its change at the end, no legend for one series.',
         compactAria: 'Database size rose gently, then jumped to 8.43 GB in the latest scan',
+        compactSpec: 'monotone curve · dotted grid · gradient stroke · end marker',
       },
       memory: {
         title: 'Memory used',
@@ -373,6 +438,8 @@ const baseMessages = {
         latest: 'Latest, #42',
         earlier: 'Earlier scans',
         average: 'Dashed: average 2.7 s',
+        scanTitle: 'Scan #{n}',
+        spoken: 'Scan {n}',
         spec: 'rise 500 ms · 40 ms apart · latest last',
       },
       donut: {
@@ -444,6 +511,7 @@ const baseMessages = {
         ok: 'Normal',
         off: 'No reading',
         thresholds: 'Meter thresholds',
+        metric: 'Metric',
         warnFrom: 'Warn from',
         critFrom: 'Crit from',
         t1: 'Disk used',
@@ -492,8 +560,31 @@ const baseMessages = {
         cell: '{scan} · {group} · {state}',
         aria: 'Check groups across twelve scans: disk and containers turned to warnings in the last three scans, response time wobbled at scans 9 and 11',
       },
+      rules: {
+        title: 'Chart rules',
+        monotoneHead: 'Monotone curves.',
+        monotone:
+          'Smooth, but never above the highest or below the lowest real value. 2.5 stroke, round caps and joins.',
+        fillsHead: 'Soft fills.',
+        fills:
+          'Area fades from 22% to 0. Gridlines are dotted, horizontal only, three or four of them.',
+        numberHead: 'Say the number.',
+        number:
+          'The current value and delta sit above the chart in 28 px. The chart shows the shape, the text gives the figure.',
+        statusHead: 'Status by exception.',
+        status:
+          'Only the part past a threshold turns amber or rose. Everything else stays accent or lilac.',
+      },
+      byServer: {
+        title: 'Topology by server',
+        text: 'One node per server, its roles in their own colours, then its name; a dashed link between servers and no URL node. Nodes keep discovery order, and past two servers the rest fold into +N with a tooltip. Under 1080 the row becomes a list.',
+        one: 'One server',
+        split: 'Split across servers',
+        many: 'Three or more',
+        list: 'Under 1080: a list, no links',
+      },
       topology: {
-        title: 'Topology',
+        title: 'Request path',
         sub: 'URL, then each component in request order',
         text: 'Up to four components after the URL; the rest fold into +N, healthiest first. The server label appears only where the server changes.',
         url: 'URL',
@@ -516,6 +607,29 @@ const baseMessages = {
         info: 'info',
         of: '{crit} critical, {warn} warning, {info} info',
         aria: 'Issues in each of the last twelve scans',
+        cardTitle: 'Scan #{n} · {date}',
+        spoken: 'Scan {n}, {date}',
+        count: '{n} issue | {n} issues',
+      },
+      focus: {
+        title: 'Chart focus',
+        text: 'One tab stop for a chart; the arrows move inside it. The card opens on the focused column and the same words are announced.',
+        aria: 'Issues in scans 5 to 12',
+        reads: 'reads',
+        move: 'move',
+        ends: 'first, last',
+        leave: 'leave the chart',
+        cells:
+          'Strip and heat cells: each cell focusable in order, same ring; glyphs carry warn and crit',
+        stripName: 'kho-hang',
+        stripSummary: '5 healthy · 1 warning · 2 critical',
+        ringHead: 'Focus ring',
+        ring: 'is the control ring around the whole chart: 2 px white, then 2 px accent. The cursor is a dashed ink line on the focused point.',
+        readingHead: 'Reading',
+        reading:
+          'the hover card opens on the focused point and the same words are announced; the column label turns ink.',
+        tabHead: 'Tab',
+        tab: 'enters the chart once; arrows move inside it. Columns and cells have a title with the same text.',
       },
     },
   },
@@ -593,7 +707,7 @@ const baseMessages = {
       keys: 'Phím',
       keysLede: 'Phím 18 px cho phím tắt; trên nút tối, trong ô nền đặc và trên kính thanh bên.',
       hold: 'Giữ để xác nhận',
-      holdLede: 'Không hộp thoại: lớp màu quét ngang khi giữ; thả sớm sẽ co lại.',
+      holdLede: 'Vẫn là giữ; nhấp thường hoặc kích hoạt từ công nghệ hỗ trợ sẽ mở hộp xác nhận.',
       model: 'Mô hình',
       modelCustom: 'Nhập mã mô hình…',
       modelDefault: 'mặc định',
@@ -627,11 +741,52 @@ const baseMessages = {
       search: 'Tìm kiếm',
       holdLabel: 'Giữ để xoá lịch sử',
       holdHint: 'Giữ 1,5 giây. Thả sớm sẽ hủy.',
+      holdA: 'A · Giữ, như đã vẽ',
+      holdB: 'B · Nhấp thường, VoiceOver, Switch hoặc Voice Control',
+      holdSpec:
+        'chuột, hoặc giữ Space / Enter · lấp đầy 1,5 giây, tuyến tính · thả sớm = không có gì xảy ra',
+      holdAction: 'Xoá lịch sử',
+      holdTitle: 'Xoá lịch sử quét?',
+      holdBody:
+        'Xoá 12 lần quét đã lưu trên máy Mac này. Dự án, cài đặt và các quy tắc “dự kiến” vẫn giữ nguyên. Không thể hoàn tác.',
+      holdNote1: {
+        name: 'Hai cách, cùng kết quả.',
+        text: 'Giữ yên thì xác nhận ngay tại chỗ. Nhấp kết thúc trước khi lớp màu bắt đầu chạy (dưới 300 ms), hoặc mọi kích hoạt từ công nghệ hỗ trợ, sẽ mở hộp thoại thay vì không làm gì.',
+      },
+      holdNote2: {
+        name: 'Hộp thoại.',
+        text: 'Rộng 380, màn mờ 22%. Tiêu đề đặt câu hỏi; thân nói cái gì mất, cái gì còn. Focus bắt đầu ở Hủy; Esc để hủy; nút xác nhận màu crit đặc, chữ trắng và gọi đúng tên hành động.',
+      },
+      holdNote3: {
+        name: 'Đọc to.',
+        text: 'Nút đọc “Xoá lịch sử, nút. Giữ để xác nhận, hoặc nhấn để mở hộp xác nhận.”',
+      },
+      holdNote4: {
+        name: 'Áp dụng ở đâu.',
+        text: 'Mọi hành động sau một lần giữ: Xoá lịch sử và Xoá câu trả lời AI (Cài đặt › Dữ liệu), Xoá dự án (sheet sửa).',
+      },
       languageLabel: 'Ngôn ngữ ứng dụng',
       searchLanguages: 'Tìm ngôn ngữ',
       notTranslated: 'Chưa có bản dịch',
+      notTranslatedHint: 'Chưa có bản dịch. Giúp dịch →',
       helpTranslate: 'Giúp dịch Daminus',
       noLanguage: 'Không tìm thấy ngôn ngữ',
+      languageStates: 'Menu ngôn ngữ, các trạng thái khác',
+      languageStatesLede: 'Cờ là SVG nội tuyến; tiếng Anh dùng cờ Anh.',
+      langState: {
+        empty: {
+          name: 'Tìm không có kết quả',
+          text: 'Một dòng xám, không có hình minh hoạ. Liên kết giúp dịch vẫn nằm dưới cùng nếu trước đó có.',
+        },
+        pending: {
+          name: 'Chưa có bản dịch · không chọn được',
+          text: 'Dòng mờ hiện tỷ lệ đã dịch. Bấm, Enter và phím mũi tên bỏ qua chúng; chú thích nói lý do và dẫn tới trang giúp dịch.',
+        },
+        keyboard: {
+          name: 'Bàn phím',
+          text: '↑ ↓ di chuyển giữa các ngôn ngữ chọn được · ⏎ chọn và đổi ngôn ngữ ứng dụng ngay · esc đóng và giữ ngôn ngữ hiện tại · gõ để lọc theo tên gốc, tên tiếng Anh hoặc mã',
+        },
+      },
     },
     display: {
       title: 'Hiển thị',
@@ -738,6 +893,27 @@ const baseMessages = {
       commandRemove: 'Xoá file',
       commandLong: 'Dài: cuộn, không cắt',
       commandCopied: 'đã chép × {n}',
+      safety: 'An toàn của lệnh',
+      safetyLede: 'Mọi lệnh Daminus hiện để sao chép, từ trợ giúp quyền hoặc câu trả lời của AI.',
+      face: { idle: 'nghỉ', copied: '1,6 giây rồi quay lại', failed: 'đến lần ghé sau' },
+      rules: {
+        whole: {
+          name: 'Cả lệnh, không bao giờ cắt bằng dấu ba chấm.',
+          text: 'Dòng dài cuộn ngang trong khối, có thanh cuộn mảnh luôn hiện; xuống dòng được nối bằng dấu cách.',
+        },
+        cleaned: {
+          name: 'Làm sạch trước khi hiện.',
+          text: 'Ký tự điều khiển và ký tự ẩn (độ rộng bằng không, đảo chiều văn bản, mã escape) bị bỏ; thấy gì thì chép đúng nấy.',
+        },
+        warn: {
+          name: 'Cảnh báo ngay trong tầm nhìn.',
+          text: 'Một ghi chú màu hổ phách dưới khối, mỗi rủi ro một dòng, khi lệnh đưa vào shell, giải mã base64 hoặc chạy rm. Nút sao chép vẫn bật.',
+        },
+        faces: {
+          name: 'Nút sao chép có ba mặt.',
+          text: 'Sao chép, Đã chép, Lỗi. Lỗi không bao giờ giấu văn bản, nên vẫn chọn tay được.',
+        },
+      },
     },
     overlays: {
       title: 'Lớp phủ',
@@ -801,7 +977,7 @@ const baseMessages = {
       dialogTrust: 'Tin khoá mới',
       sheet: 'Sheet',
       sheetLede:
-        'Để chỉnh sửa. Trồi lên từ cạnh dưới đến 88 % cửa sổ, trang phía sau mờ còn 16 %. Esc hoặc Hủy là xin đóng; bấm vào lớp mờ không làm gì.',
+        'Để chỉnh sửa. Một thẻ ở giữa, rộng 760 (cửa sổ hẹp hơn giữ lề 24 px), bo 20 cả bốn góc, cao tối đa 88 % cửa sổ. Lớp mờ 22 % cùng blur 3 px. Mở bằng scale .98 và lên 8 px, 200 ms. Esc hoặc Hủy là xin đóng; bấm vào lớp mờ không làm gì.',
       sheetOpen: 'Mở sheet',
       sheetTitle: 'Sửa kho-hang',
       sheetContext: '4 thành phần',
@@ -843,10 +1019,12 @@ const baseMessages = {
         hovered: 'Đang rê: lần quét #{n}',
         today: 'hôm nay',
         scanTitle: '{date} · lần quét #{n}',
+        spoken: 'Lần quét {n}, {date}',
         compactTitle: 'Nhãn cuối đường',
         compactText:
           'Dạng gọn của board Hiển thị dữ liệu: giá trị mới nhất và mức thay đổi ở cuối đường, không chú giải khi chỉ có một chuỗi.',
         compactAria: 'Dung lượng cơ sở dữ liệu tăng nhẹ rồi nhảy lên 8,43 GB ở lần quét mới nhất',
+        compactSpec: 'đường monotone · lưới chấm · nét chuyển màu · điểm cuối',
       },
       memory: {
         title: 'Bộ nhớ đang dùng',
@@ -888,6 +1066,8 @@ const baseMessages = {
         latest: 'Mới nhất, #42',
         earlier: 'Các lần quét trước',
         average: 'Nét đứt: trung bình 2,7 giây',
+        scanTitle: 'Lần quét #{n}',
+        spoken: 'Lần quét {n}',
         spec: 'nhô lên 500 ms · cách nhau 40 ms · cột mới nhất cuối',
       },
       donut: {
@@ -959,6 +1139,7 @@ const baseMessages = {
         ok: 'Bình thường',
         off: 'Không có số đo',
         thresholds: 'Ngưỡng của thanh mức',
+        metric: 'Chỉ số',
         warnFrom: 'Cảnh báo từ',
         critFrom: 'Nghiêm trọng từ',
         t1: 'Ổ đĩa đã dùng',
@@ -1007,8 +1188,30 @@ const baseMessages = {
         cell: '{scan} · {group} · {state}',
         aria: 'Các nhóm kiểm tra qua mười hai lần quét: ổ đĩa và container chuyển sang cảnh báo trong ba lần quét gần nhất, thời gian phản hồi dao động ở lần quét 9 và 11',
       },
+      rules: {
+        title: 'Quy tắc biểu đồ',
+        monotoneHead: 'Đường cong monotone.',
+        monotone:
+          'Mượt nhưng không bao giờ cao hơn giá trị lớn nhất hay thấp hơn giá trị nhỏ nhất có thật. Nét 2,5, đầu và khớp bo tròn.',
+        fillsHead: 'Vùng dưới mềm.',
+        fills: 'Vùng dưới mờ dần từ 22% về 0. Đường lưới chấm, chỉ nằm ngang, ba hoặc bốn đường.',
+        numberHead: 'Nói ra con số.',
+        number:
+          'Giá trị hiện tại và mức thay đổi nằm trên biểu đồ, cỡ 28 px. Biểu đồ cho thấy hình dạng, chữ cho con số.',
+        statusHead: 'Trạng thái theo ngoại lệ.',
+        status:
+          'Chỉ đoạn vượt ngưỡng mới chuyển hổ phách hoặc hồng đậm. Mọi thứ khác giữ màu nhấn hoặc tím nhạt.',
+      },
+      byServer: {
+        title: 'Sơ đồ theo máy chủ',
+        text: 'Mỗi máy chủ một ô, các vai trò mang màu riêng rồi đến tên máy; giữa các máy là đường nối đứt, không có ô URL. Các ô giữ thứ tự phát hiện, quá hai máy chủ thì phần còn lại gộp vào +N kèm tooltip. Dưới 1080 hàng này thành danh sách.',
+        one: 'Một máy chủ',
+        split: 'Chia trên nhiều máy chủ',
+        many: 'Từ ba máy trở lên',
+        list: 'Dưới 1080: danh sách, không có đường nối',
+      },
       topology: {
-        title: 'Sơ đồ đường đi',
+        title: 'Đường đi yêu cầu',
         sub: 'URL, rồi từng thành phần theo thứ tự yêu cầu',
         text: 'Tối đa bốn thành phần sau URL; phần còn lại gộp vào +N, thành phần khỏe nhất gộp trước. Tên máy chủ chỉ hiện ở chỗ máy chủ thay đổi.',
         url: 'URL',
@@ -1031,12 +1234,35 @@ const baseMessages = {
         info: 'thông tin',
         of: '{crit} nghiêm trọng, {warn} cảnh báo, {info} thông tin',
         aria: 'Vấn đề của mười hai lần quét gần nhất',
+        cardTitle: 'Lần quét #{n} · {date}',
+        spoken: 'Lần quét {n}, {date}',
+        count: '{n} vấn đề',
+      },
+      focus: {
+        title: 'Tiêu điểm của biểu đồ',
+        text: 'Một điểm dừng Tab cho mỗi biểu đồ; phím mũi tên di chuyển bên trong. Thẻ mở ở cột đang chọn và cùng câu đó được đọc lên.',
+        aria: 'Vấn đề của các lần quét 5 đến 12',
+        reads: 'đọc',
+        move: 'di chuyển',
+        ends: 'đầu, cuối',
+        leave: 'rời biểu đồ',
+        cells:
+          'Ô của dải và bản đồ nhiệt: mỗi ô nhận tiêu điểm lần lượt, cùng một vòng; ký hiệu cho cảnh báo và nghiêm trọng',
+        stripName: 'kho-hang',
+        stripSummary: '5 bình thường · 1 cảnh báo · 2 nghiêm trọng',
+        ringHead: 'Vòng tiêu điểm',
+        ring: 'là vòng điều khiển quanh cả biểu đồ: 2 px trắng, rồi 2 px màu nhấn. Con trỏ là đường đứt nét màu mực tại điểm đang chọn.',
+        readingHead: 'Cách đọc',
+        reading:
+          'thẻ mở tại điểm đang chọn và cùng câu đó được đọc lên; nhãn cột chuyển sang màu mực.',
+        tabHead: 'Tab',
+        tab: 'vào biểu đồ một lần; phím mũi tên di chuyển bên trong. Cột và ô có title cùng nội dung.',
       },
     },
   },
 }
 
 export const galleryMessages = {
-  en: { ...baseMessages.en, ...moreGalleryMessages.en },
-  vi: { ...baseMessages.vi, ...moreGalleryMessages.vi },
+  en: { ...baseMessages.en, ...moreGalleryMessages.en, ...shellGalleryMessages.en },
+  vi: { ...baseMessages.vi, ...moreGalleryMessages.vi, ...shellGalleryMessages.vi },
 }

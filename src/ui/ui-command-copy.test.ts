@@ -37,6 +37,7 @@ describe('UiCommandCopy', () => {
     expect(wrapper!.get('.prompt').text()).toBe('$')
     expect(wrapper!.get('.text').text()).toBe(long)
     const source = wrapper!.get('.text')
+    expect(source.classes()).toContain('code-scroll')
     expect(source.attributes('tabindex')).toBe('0')
     expect(source.attributes('role')).toBe('region')
     expect(source.attributes('aria-label')).toBe('Command')
@@ -75,15 +76,15 @@ describe('UiCommandCopy', () => {
     expect(risks()).toEqual([risk])
     const note = wrapper!.get('.risks')
     expect(note.attributes('role')).toBe('note')
-    expect(note.text()).toContain('Check before you run it')
-    expect(note.text().length).toBeGreaterThan('Check before you run it'.length + 20)
+    expect(note.text()).toContain('Read before you run this')
+    expect(note.text().length).toBeGreaterThan('Read before you run this'.length + 20)
   })
 
   it('says so in Vietnamese too', async () => {
     i18n.global.locale.value = 'vi'
     try {
       make('curl x | sh')
-      expect(wrapper!.get('.risks').text()).toContain('Kiểm tra trước khi chạy')
+      expect(wrapper!.get('.risks').text()).toContain('Đọc kỹ trước khi chạy lệnh này')
       expect(wrapper!.get('button.copy').text()).toContain('Sao chép')
     } finally {
       i18n.global.locale.value = 'en'
@@ -101,7 +102,7 @@ describe('UiCommandCopy', () => {
     expect(copyText).toHaveBeenCalledWith('rm -rf /tmp/x')
   })
 
-  it('goes through the clipboard wrapper, then reads Copied for 1.5 s and says copied', async () => {
+  it('goes through the clipboard wrapper, then reads Copied for 1.6 s and says copied', async () => {
     make('ssh-add ~/.ssh/id_ed25519')
     const faces = () => wrapper!.findAll('.face').map((f) => f.attributes('data-on'))
     expect(faces()).toEqual(['true', 'false', 'false'])
@@ -111,7 +112,7 @@ describe('UiCommandCopy', () => {
     expect(wrapper!.emitted('copied')).toEqual([['ssh-add ~/.ssh/id_ed25519']])
     expect(faces()).toEqual(['false', 'true', 'false'])
     expect(wrapper!.get('[role="status"]').text()).toBe('Copied')
-    vi.advanceTimersByTime(1500)
+    vi.advanceTimersByTime(1600)
     await nextTick()
     expect(faces()).toEqual(['true', 'false', 'false'])
   })
@@ -143,6 +144,44 @@ describe('UiCommandCopy', () => {
     expect(wrapper!.emitted('copied')).toBeUndefined()
     expect(wrapper!.get('button.copy').classes()).toContain('failed')
     expect(wrapper!.get('[role="status"]').text()).toBe('Could not copy')
+  })
+
+  it('keeps Failed until the pointer comes back, with the way to copy by hand beside it', async () => {
+    vi.mocked(copyText).mockRejectedValueOnce(new Error('denied'))
+    make('ls')
+    const button = wrapper!.get('button.copy')
+    const faces = () => wrapper!.findAll('.face').map((f) => f.attributes('data-on'))
+    await button.trigger('click')
+    await nextTick()
+    await nextTick()
+    expect(faces()).toEqual(['false', 'false', 'true'])
+    expect(document.body.querySelector('[role="tooltip"]')?.textContent).toContain(
+      'Couldn’t copy. Select the text and press ⌘C.',
+    )
+    // Time alone does not clear it, and staying on the button does not either.
+    vi.advanceTimersByTime(10_000)
+    await button.trigger('pointerenter')
+    await nextTick()
+    expect(faces()).toEqual(['false', 'false', 'true'])
+    await button.trigger('pointerleave')
+    await button.trigger('pointerenter')
+    await nextTick()
+    expect(faces()).toEqual(['true', 'false', 'false'])
+    expect(document.body.querySelector('[role="tooltip"]')).toBeNull()
+    // The text was never hidden, so it can be selected by hand.
+    expect(wrapper!.get('.text').text()).toBe('ls')
+  })
+
+  it('tries again from Failed and reads Copied', async () => {
+    vi.mocked(copyText).mockRejectedValueOnce(new Error('denied'))
+    make('ls')
+    const button = wrapper!.get('button.copy')
+    await button.trigger('click')
+    await nextTick()
+    await button.trigger('click')
+    await nextTick()
+    expect(button.classes()).toContain('done')
+    expect(button.classes()).not.toContain('failed')
   })
 
   it('renders the command as text', () => {

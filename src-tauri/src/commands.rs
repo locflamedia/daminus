@@ -9,6 +9,7 @@ use std::time::Duration;
 
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
+use daminus_core::domain::project::Project;
 use daminus_core::scan::{ScanRun, ScanScope, Started};
 use tauri::{AppHandle, Runtime, State};
 
@@ -64,6 +65,20 @@ pub async fn report_latest(core: State<'_, AppCore>) -> Result<Report, AppError>
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "report_latest panicked");
+            AppError::from(ErrorCode::Internal)
+        })?
+}
+
+/// The saved projects (name, colour, URLs, components), for the marks in the
+/// sidebar, the rail and the project header. Only the projects: host settings
+/// and expected rules stay in Rust.
+#[tauri::command]
+pub async fn projects_list(core: State<'_, AppCore>) -> Result<Vec<Project>, AppError> {
+    let core = core.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || core.projects().map(|file| file.projects))
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "projects_list panicked");
             AppError::from(ErrorCode::Internal)
         })?
 }

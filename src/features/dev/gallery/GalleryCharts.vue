@@ -12,7 +12,7 @@ import { useI18n } from 'vue-i18n'
 import DiskRing from '@/layout/DiskRing.vue'
 import { useFormat } from '@/composables/use-format'
 import { bandOf, type Band } from '@/lib/chart-bands'
-import { formatDate } from '@/lib/format'
+import { formatDate, formatDateLong } from '@/lib/format'
 import type { TopologyInput } from '@/lib/topology'
 import { useSettingsStore } from '@/stores/settings'
 import UiBarChart from '@/ui/UiBarChart.vue'
@@ -26,6 +26,7 @@ import UiHeatStrip from '@/ui/UiHeatStrip.vue'
 import UiHistoryChart, { type HistoryTip } from '@/ui/UiHistoryChart.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiIssueColumns from '@/ui/UiIssueColumns.vue'
+import UiKbd from '@/ui/UiKbd.vue'
 import UiMeter from '@/ui/UiMeter.vue'
 import UiRow from '@/ui/UiRow.vue'
 import UiRowList from '@/ui/UiRowList.vue'
@@ -38,15 +39,18 @@ import UiTopologyNode from '@/ui/UiTopologyNode.vue'
 import UiTreemap, { type TreemapTile } from '@/ui/UiTreemap.vue'
 import GalleryFrame from './GalleryFrame.vue'
 import {
+  DB_COMPACT,
   DB_DAYS,
   DB_FIRST_SCAN,
   DB_SIZE,
   HEAT_ROWS,
   HEAT_STATE,
   ISSUES,
+  ISSUE_DAYS,
   MEMORY_ONE,
   MEMORY_TWO,
   SCAN_DURATION,
+  SCAN_FIRST,
   SPARKS,
   STRIPS,
   STRIP_STATE,
@@ -61,6 +65,13 @@ const run = ref(0)
 const range = ref('14')
 const hovered = ref<number | null>(10)
 
+// The server table writes the load per core to two decimals (1.55, 0.20), the thresholds to one.
+const fixed = (v: number, digits: number) =>
+  new Intl.NumberFormat(settings.language, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(v)
+const fixed2 = (v: number) => fixed(v, 2)
 const gb = (v: number) => fmt.measure(v, 'GB').text
 const pct = (v: number) => fmt.measure(v, '%').text
 const k = (key: string, params: Record<string, unknown> = {}) => t(`gallery.charts.${key}`, params)
@@ -72,11 +83,24 @@ const dayOf = (days: number) => new Date(base.getFullYear(), base.getMonth(), ba
 const dateLabel = (days: number) => formatDate(dayOf(days), settings.language)
 
 const historyTips = computed<HistoryTip[]>(() =>
-  DB_SIZE.map((value, i) => ({
-    title: k('history.scanTitle', { date: dateLabel(DB_DAYS[i] ?? 0), n: DB_FIRST_SCAN + i }),
-    value: gb(value),
-    delta: i === 0 ? undefined : fmt.delta(value - (DB_SIZE[i - 1] ?? value), 'GB').value,
-  })),
+  DB_SIZE.map((value, i) => {
+    const delta = i === 0 ? undefined : fmt.delta(value - (DB_SIZE[i - 1] ?? value), 'GB')
+    return {
+      title: k('history.scanTitle', { date: dateLabel(DB_DAYS[i] ?? 0), n: DB_FIRST_SCAN + i }),
+      value: gb(value),
+      delta: delta?.value,
+      spoken: [
+        k('history.spoken', {
+          n: DB_FIRST_SCAN + i,
+          date: formatDateLong(dayOf(DB_DAYS[i] ?? 0), settings.language),
+        }),
+        gb(value),
+        delta?.text,
+      ]
+        .filter(Boolean)
+        .join(', '),
+    }
+  }),
 )
 const historyXLabels = computed(() => [
   { index: 0, text: dateLabel(0) },
@@ -85,6 +109,15 @@ const historyXLabels = computed(() => [
   { index: 10, text: dateLabel(9) },
   { index: 13, text: k('history.today') },
 ])
+const compactLabels = computed(() => [
+  { index: 0, text: dateLabel(5), anchor: 'middle' as const },
+  { index: 4, text: dateLabel(9) },
+  { index: 8, text: k('history.today') },
+])
+const compactEnd = computed(() => ({
+  value: gb(8.43),
+  delta: fmt.delta(1.07, 'GB').text,
+}))
 const ranges = computed(() => [
   { value: '7', label: k('history.range7') },
   { value: '14', label: k('history.range14') },
@@ -99,6 +132,17 @@ const diskBand = (v: number): Band => bandOf(v, { warn: 80, crit: 90 })
 const bandWord = (band: Band) => k(`table.${band}`)
 const chipTone = (band: Band): ChipTone =>
   band === 'crit' ? 'crit' : band === 'warn' ? 'warn' : 'ok'
+
+const durationTips = computed(() =>
+  SCAN_DURATION.map((value, i) => {
+    const n = SCAN_FIRST + i
+    return {
+      title: k('bars.scanTitle', { n }),
+      value: fmt.measure(value, 's').text,
+      spoken: `${k('bars.spoken', { n })}, ${fmt.measure(value, 's').text}`,
+    }
+  }),
+)
 
 const miniMeters = computed(() => [
   { id: 'load', label: k('gauges.load'), value: fmt.number(1.55), pct: 78, band: 'warn' as Band },
@@ -230,7 +274,7 @@ const tableRows = computed(() => {
       meters: [
         meter('disk', pct(92), `${fmt.number(73.6)} / 80 GB`, 92, 'crit'),
         meter('memory', pct(81), `${fmt.number(3.2)} / 4 GB`, 81, 'warn'),
-        meter('load', fmt.number(1.55), '3.1 / 2', 100, 'warn'),
+        meter('load', fixed2(1.55), '3.1 / 2', 100, 'warn'),
         meter('io', pct(12), k('table.avg'), 12, 'warn'),
       ],
       sec: k('table.sec1'),
@@ -243,7 +287,7 @@ const tableRows = computed(() => {
       meters: [
         meter('disk', pct(64), `${fmt.number(25.6)} / 40 GB`, 64, 'ok'),
         meter('memory', pct(47), `${fmt.number(0.94)} / 2 GB`, 47, 'ok'),
-        meter('load', fmt.number(0.2), '0.4 / 2', 20, 'ok'),
+        meter('load', fixed2(0.2), '0.4 / 2', 20, 'ok'),
         meter('io', pct(1), k('table.avg'), 2, 'ok'),
       ],
       sec: k('table.sec2'),
@@ -269,7 +313,7 @@ const thresholds = computed(() => [
   ['t1', pct(80), pct(90)],
   ['t2', pct(80), pct(90)],
   ['t3', k('table.left15'), k('table.left5')],
-  ['t4', fmt.number(1), fmt.number(2)],
+  ['t4', fixed(1, 1), fixed(2, 1)],
   ['t5', pct(10), pct(25)],
   ['t6', '14', '3'],
   ['t7', '1 s', '3 s'],
@@ -309,6 +353,7 @@ const treemapTiles = computed<TreemapTile[]>(() => [
     delta: fmt.delta(0.9, 'GB').text,
     deltaTone: 'warn',
     grow: true,
+    growth: 0.9,
   },
   {
     id: 'app',
@@ -380,16 +425,81 @@ const single: TopologyInput[] = [
 ]
 const moreLabel = (n: number) => k('topology.more', { n })
 
+// The Project card board's three forms: one server, split across two, and three or more.
+const byServer: { id: string; caption: string; items: TopologyInput[] }[] = [
+  {
+    id: 'one',
+    caption: 'one',
+    items: [
+      { id: 'fe', label: 'FE', host: 'vps-hn-3', state: 'ok' },
+      { id: 'be', label: 'BE', host: 'vps-hn-3', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'vps-hn-3', state: 'ok' },
+    ],
+  },
+  {
+    id: 'split',
+    caption: 'split',
+    items: [
+      { id: 'fe', label: 'FE', host: 'vps-sg-1', state: 'ok' },
+      { id: 'be', label: 'BE', host: 'vps-sg-2', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'vps-sg-2', state: 'ok' },
+    ],
+  },
+  {
+    id: 'many',
+    caption: 'many',
+    items: [
+      { id: 'app', label: 'APP', host: 'vps-sg-2', state: 'ok' },
+      { id: 'worker', label: 'WORKER', host: 'vps-sg-2', state: 'ok' },
+      { id: 'db', label: 'DB', host: 'db-main', state: 'ok' },
+      { id: 'cache', label: 'CACHE', host: 'cache-1', state: 'ok' },
+    ],
+  },
+]
+
 // --- Issues per scan --------------------------------------------------------------------
 
 const issueScans = computed(() =>
-  ISSUES.map((s, i) => ({
-    ...s,
-    id: String(i + 1),
-    label: `#${i + 1}`,
-    description: k('issues.of', s),
-  })),
+  ISSUES.map((s, i) => {
+    const n = i + 1
+    const day = new Date(2026, 8, ISSUE_DAYS[i] ?? 1)
+    const total = s.crit + s.warn + s.info
+    const count = t('gallery.charts.issues.count', { n: total }, { plural: total })
+    const description = k('issues.of', s)
+    return {
+      ...s,
+      id: String(n),
+      label: `#${n}`,
+      description,
+      tip: {
+        title: k('issues.cardTitle', { n, date: formatDate(day, settings.language) }),
+        value: count,
+        spoken: [
+          k('issues.spoken', { n, date: formatDateLong(day, settings.language) }),
+          count,
+          description,
+        ].join(', '),
+      },
+    }
+  }),
 )
+// --- Chart focus ------------------------------------------------------------------------
+
+const focusScans = computed(() => issueScans.value.slice(4))
+const focusAt = ref<number | null>(5)
+const focusReads = computed(() =>
+  focusAt.value === null ? '' : (focusScans.value[focusAt.value]?.tip.spoken ?? ''),
+)
+const focusCells = ['ok', 'ok', 'warn', 'ok', 'crit', 'crit', 'ok'] as const
+const focusCellTitles = computed(() =>
+  focusCells.map((state, i) =>
+    k('strips.cell', {
+      n: 5 + i,
+      state: k(`strips.${{ ok: 'healthy', warn: 'warning', crit: 'critical' }[state]}`),
+    }),
+  ),
+)
+
 const issueLegend = computed(() => [
   { color: 'issue-crit' as const, text: k('issues.critical') },
   { color: 'issue-warn' as const, text: k('issues.warning') },
@@ -515,6 +625,7 @@ const issueLegend = computed(() => [
           <UiBarChart
             :values="SCAN_DURATION"
             :labels="{ first: '#29', last: '#42' }"
+            :tips="durationTips"
             :label="k('bars.aria')"
             :legend="[
               { color: 'accent', text: k('bars.latest') },
@@ -541,6 +652,13 @@ const issueLegend = computed(() => [
         </GalleryFrame>
 
         <GalleryFrame :title="k('strips.title')" :text="k('strips.sub')">
+          <div class="head">
+            <span class="tile ok"><UiIcon name="shield" /></span>
+            <span class="ttl"
+              ><b>{{ k('strips.title') }}</b
+              ><span>{{ k('strips.sub') }}</span></span
+            >
+          </div>
           <div class="stripes">
             <UiHeatStrip
               v-for="s in strips"
@@ -566,7 +684,7 @@ const issueLegend = computed(() => [
       <div class="two wide">
         <GalleryFrame :title="k('memory.title')" :text="k('memory.text')">
           <div class="head">
-            <span class="tile"><UiIcon name="pulse" /></span>
+            <span class="tile"><UiIcon name="trend" /></span>
             <span class="ttl"
               ><b>{{ k('memory.title') }}</b
               ><span>{{ k('memory.sub') }}</span></span
@@ -581,6 +699,7 @@ const issueLegend = computed(() => [
             :band="{ from: 85, to: 100, label: k('memory.band') }"
             :size="{ width: 640, height: 252 }"
             :plot="{ left: 44, right: 8, top: 16, bottom: 24 }"
+            :axis-gap="10"
             :label="k('memory.aria')"
           />
         </GalleryFrame>
@@ -606,6 +725,37 @@ const issueLegend = computed(() => [
               <UiSparkline :values="[210, 212]" />
             </div>
           </div>
+        </GalleryFrame>
+      </div>
+
+      <div class="two compact">
+        <GalleryFrame
+          :title="k('history.compactTitle')"
+          :text="k('history.compactText')"
+          :spec="k('history.compactSpec')"
+        >
+          <UiHistoryChart
+            :series="[{ id: 'size', values: DB_COMPACT }]"
+            :format-y="gb"
+            :x-labels="compactLabels"
+            :domain="[6.5, 8.685]"
+            :grid="[7, 8]"
+            :threshold="8"
+            :end-label="compactEnd"
+            :size="{ width: 560, height: 190 }"
+            :plot="{ left: 48, right: 12, top: 20, bottom: 40 }"
+            :axis-gap="8"
+            :date-inset="14"
+            :label="k('history.compactAria')"
+          />
+        </GalleryFrame>
+
+        <GalleryFrame :title="k('rules.title')">
+          <ul class="rules">
+            <li v-for="rule in ['monotone', 'fills', 'number', 'status']" :key="rule">
+              <b>{{ k(`rules.${rule}Head`) }}</b> {{ k(`rules.${rule}`) }}
+            </li>
+          </ul>
         </GalleryFrame>
       </div>
 
@@ -651,7 +801,7 @@ const issueLegend = computed(() => [
           <b>{{ k('table.thresholds') }}</b>
           <UiRowList :label="k('table.thresholds')">
             <UiRow as="li" header columns="minmax(0, 1fr) 80px 80px">
-              <span>{{ k('table.thresholds') }}</span>
+              <span>{{ k('table.metric') }}</span>
               <span>{{ k('table.warnFrom') }}</span>
               <span>{{ k('table.critFrom') }}</span>
             </UiRow>
@@ -670,7 +820,7 @@ const issueLegend = computed(() => [
         </div>
       </GalleryFrame>
 
-      <div class="two">
+      <div class="two even">
         <GalleryFrame :title="k('parts.title')" :text="k('parts.text')">
           <div class="parts">
             <UiRowList :label="k('parts.table')">
@@ -722,69 +872,36 @@ const issueLegend = computed(() => [
         />
       </GalleryFrame>
 
-      <div class="two">
+      <div class="two even">
         <GalleryFrame
-          :title="k('topology.title')"
-          :text="k('topology.text')"
-          spec="24 · r6 · dot 6 · 11 px · link dashed 4"
+          :title="k('byServer.title')"
+          :text="k('byServer.text')"
+          spec="row 40 · node 24 r6 · letters 10/600 mono"
         >
-          <div class="nodes">
-            <div class="node-case">
-              <UiTopologyNode
-                label="FE"
-                caption="vps-sg-1"
-                state="ok"
-                :state-label="topologyStates.ok"
-              />
-              <span class="muted">{{ k('topology.healthy') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode
-                label="BE"
-                :caption="k('topology.compose')"
-                state="warn"
-                :state-label="topologyStates.warn"
-              />
-              <span class="muted">{{ k('topology.warning') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode
-                label="DB"
-                caption="vps-sg-1"
-                state="crit"
-                :state-label="topologyStates.crit"
-              />
-              <span class="muted">{{ k('topology.critical') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode
-                label="Worker"
-                caption="pm2"
-                state="unknown"
-                :state-label="topologyStates.unknown"
-              />
-              <span class="muted">{{ k('topology.unknown') }}</span>
-            </div>
-            <div class="node-case">
-              <UiTopologyNode label="+2" :state-label="moreLabel(2)" />
-              <span class="muted">{{ k('topology.overflow') }}</span>
-            </div>
+          <div v-for="form in byServer" :key="form.id" class="by-server">
+            <UiTopology
+              mode="servers"
+              :list="false"
+              :components="form.items"
+              :url-label="k('topology.url')"
+              :states="topologyStates"
+              :more-label="moreLabel"
+              :label="k(`byServer.${form.id}`)"
+            />
+            <span class="muted">{{ k(`byServer.${form.id}`) }}</span>
           </div>
-          <UiTopology
-            :components="single"
-            :url-label="k('topology.url')"
-            :states="topologyStates"
-            :more-label="moreLabel"
-            :label="k('topology.aria')"
-          />
-          <UiTopology
-            :components="split"
-            :url-label="k('topology.url')"
-            :states="topologyStates"
-            :more-label="moreLabel"
-            :label="k('topology.full')"
-          />
-          <span class="muted">{{ k('topology.full') }}</span>
+          <div class="by-server">
+            <UiTopology
+              mode="servers"
+              list
+              :components="byServer[2]?.items ?? []"
+              :url-label="k('topology.url')"
+              :states="topologyStates"
+              :more-label="moreLabel"
+              :label="k('byServer.list')"
+            />
+            <span class="muted">{{ k('byServer.list') }}</span>
+          </div>
         </GalleryFrame>
 
         <GalleryFrame
@@ -792,14 +909,78 @@ const issueLegend = computed(() => [
           :text="k('issues.text')"
           spec="16 px an issue · column 22 · r5 · gap 6 · bars 120"
         >
-          <UiIssueColumns
-            :scans="issueScans"
-            :compared="['11', '12']"
-            :legend="issueLegend"
-            :label="k('issues.aria')"
-          />
+          <div class="ct">
+            <UiIcon name="clock" class="muted-icon" />
+            {{ k('issues.title') }}
+            <UiChartLegend class="push" size="small" :items="issueLegend" />
+          </div>
+          <UiIssueColumns :scans="issueScans" :compared="['11', '12']" :label="k('issues.aria')" />
         </GalleryFrame>
       </div>
+
+      <GalleryFrame
+        :title="k('topology.title')"
+        :text="k('topology.text')"
+        spec="24 · r6 · dot 6 · 11 px · link dashed 4"
+      >
+        <div class="nodes">
+          <div class="node-case">
+            <UiTopologyNode
+              label="FE"
+              caption="vps-sg-1"
+              state="ok"
+              :state-label="topologyStates.ok"
+            />
+            <span class="muted">{{ k('topology.healthy') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode
+              label="BE"
+              :caption="k('topology.compose')"
+              state="warn"
+              :state-label="topologyStates.warn"
+            />
+            <span class="muted">{{ k('topology.warning') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode
+              label="DB"
+              caption="vps-sg-1"
+              state="crit"
+              :state-label="topologyStates.crit"
+            />
+            <span class="muted">{{ k('topology.critical') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode
+              label="Worker"
+              caption="pm2"
+              state="unknown"
+              :state-label="topologyStates.unknown"
+            />
+            <span class="muted">{{ k('topology.unknown') }}</span>
+          </div>
+          <div class="node-case">
+            <UiTopologyNode label="+2" :state-label="moreLabel(2)" />
+            <span class="muted">{{ k('topology.overflow') }}</span>
+          </div>
+        </div>
+        <UiTopology
+          :components="single"
+          :url-label="k('topology.url')"
+          :states="topologyStates"
+          :more-label="moreLabel"
+          :label="k('topology.aria')"
+        />
+        <UiTopology
+          :components="split"
+          :url-label="k('topology.url')"
+          :states="topologyStates"
+          :more-label="moreLabel"
+          :label="k('topology.full')"
+        />
+        <span class="muted">{{ k('topology.full') }}</span>
+      </GalleryFrame>
 
       <GalleryFrame
         :title="k('gauges.ring')"
@@ -814,12 +995,52 @@ const issueLegend = computed(() => [
           <DiskRing :pct="64" dim />
         </div>
       </GalleryFrame>
+
+      <GalleryFrame :title="k('focus.title')" :text="k('focus.text')">
+        <div class="focus">
+          <UiIssueColumns
+            v-model:hovered="focusAt"
+            :scans="focusScans"
+            :compared="['11', '12']"
+            :label="k('focus.aria')"
+          />
+          <div class="focus-side">
+            <span class="reads">{{ k('focus.reads') }}: “{{ focusReads }}”</span>
+            <span class="keys">
+              <span class="key"><UiKbd>← →</UiKbd>{{ k('focus.move') }}</span>
+              <span class="key"><UiKbd>Home End</UiKbd>{{ k('focus.ends') }}</span>
+              <span class="key"><UiKbd>esc</UiKbd>{{ k('focus.leave') }}</span>
+            </span>
+          </div>
+        </div>
+        <b class="muted">{{ k('focus.cells') }}</b>
+        <UiHeatStrip
+          :name="k('focus.stripName')"
+          :summary="k('focus.stripSummary')"
+          :cells="focusCells"
+          :titles="focusCellTitles"
+        />
+        <div class="notes">
+          <p>
+            <b>{{ k('focus.ringHead') }}</b> {{ k('focus.ring') }}
+          </p>
+          <p>
+            <b>{{ k('focus.readingHead') }}</b> {{ k('focus.reading') }}
+          </p>
+          <p>
+            <b>{{ k('focus.tabHead') }}</b> {{ k('focus.tab') }}
+          </p>
+        </div>
+      </GalleryFrame>
     </div>
   </div>
 </template>
 
 <style scoped>
 .charts {
+  /* The Charts board's cards are padded 20 px; every frame here takes the same. */
+  --frame-pad: 20px;
+
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
@@ -855,6 +1076,14 @@ const issueLegend = computed(() => [
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
 }
 
+.two.compact {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.two.even {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .three {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -864,6 +1093,8 @@ const issueLegend = computed(() => [
 @media (max-width: 1100px) {
   .two,
   .two.wide,
+  .two.compact,
+  .two.even,
   .three {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -884,6 +1115,11 @@ const issueLegend = computed(() => [
   border-radius: var(--radius-sm);
   background: var(--surface-1);
   color: var(--ink-3);
+}
+
+.tile.ok {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
 }
 
 .tile.accent {
@@ -913,8 +1149,27 @@ const issueLegend = computed(() => [
   text-align: right;
 }
 
-.good {
+.ttl .good {
   color: var(--ok-ink);
+}
+
+.by-server {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.muted-icon {
+  color: var(--ink-3);
+}
+
+.ct {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 20px;
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
 }
 
 .push {
@@ -925,6 +1180,11 @@ const issueLegend = computed(() => [
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
+}
+
+/* A chip normally sits at the top of its row; here it follows the number's baseline. */
+.figure :deep(.chip) {
+  align-self: baseline;
 }
 
 .big {
@@ -943,6 +1203,82 @@ const issueLegend = computed(() => [
 .muted {
   color: var(--ink-3);
   font-size: var(--text-12);
+}
+
+.focus {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* Room above the chart for the card, which opens over the focused column. */
+.focus > :first-child {
+  padding-top: 56px;
+}
+
+.focus-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reads {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--surface-1);
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+}
+
+.rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: var(--text-13);
+  line-height: 1.5;
+  list-style: none;
+}
+
+.rules b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.notes p {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+  line-height: 1.45;
+}
+
+.notes b {
+  color: var(--ink);
+  font-weight: var(--weight-medium);
 }
 
 .gauges {
@@ -974,8 +1310,9 @@ const issueLegend = computed(() => [
   flex-direction: column;
   gap: var(--space-1);
   padding: 10px var(--space-3);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   background: var(--surface-1);
+  line-height: normal;
 }
 
 .spark-head {
@@ -1033,7 +1370,7 @@ const issueLegend = computed(() => [
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: var(--radius-xs);
+  border-radius: 8px;
   background: var(--surface-0);
   box-shadow: var(--shadow-node);
   color: var(--ink-3);
@@ -1043,6 +1380,7 @@ const issueLegend = computed(() => [
   display: flex;
   flex-direction: column;
   min-width: 0;
+  line-height: normal;
 }
 
 .host-text b {

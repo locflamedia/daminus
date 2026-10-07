@@ -8,7 +8,9 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { HostProgress, Item } from '@/api'
 import { useFormat } from '@/composables/use-format'
+import { useNow } from '@/composables/use-now'
 import { checkName, errorText, severityText } from '@/lib/issue-text'
+import { staleDays } from '@/lib/staleness'
 import { useLayoutRange } from '@/lib/viewport'
 import PageHeader from '@/layout/PageHeader.vue'
 import { useProjectsStore } from '@/stores/projects'
@@ -44,12 +46,28 @@ watch(
 )
 onBeforeUnmount(() => window.clearInterval(ticker))
 
+/** Time since the scan started, from `started_at`; the next scan number is not known until it is saved. */
+const elapsed = computed(() =>
+  scan.run ? fmt.duration(Math.max(0, now.value - Date.parse(scan.run.started_at))) : '',
+)
+
+/** Results over a day old: the toolbar gives the age first, in amber. */
+const clock = useNow()
+const oldDays = computed(() => staleDays(report.value?.scanned_at, clock.value))
+const lastScan = computed(() =>
+  oldDays.value === null || report.value?.seq == null || !report.value.scanned_at
+    ? null
+    : {
+        age: t('time.daysAgoLong', { n: oldDays.value }, oldDays.value),
+        rest: t('toolbar.lastScanRest', {
+          seq: report.value.seq,
+          when: fmt.weekdayDateTime(report.value.scanned_at),
+        }),
+      },
+)
+
 const meta = computed(() => {
   const seq = report.value?.seq
-  if (scan.run) {
-    const elapsed = Math.max(0, now.value - Date.parse(scan.run.started_at))
-    return t('toolbar.scanMetaRunning', { seq: (seq ?? 0) + 1, elapsed: fmt.duration(elapsed) })
-  }
   if (seq != null && report.value?.scanned_at) {
     return t('toolbar.scanMeta', {
       seq,
@@ -79,7 +97,21 @@ function chipTone(p: HostProgress): string {
   return p.state === 'queued' ? 'idle' : 'busy'
 }
 
+/** One of four words (an SSH agent waiting for approval says so); the cause stays in the tooltip. */
 function chipText(p: HostProgress): string {
+  if (p.state === 'queued') return t('scanChip.queued')
+  if (p.state === 'agent_wait') return t('scanHost.agent_wait')
+  if (p.state === 'finished') {
+    return t(
+      p.outcome.state === 'reached' || p.outcome.state === 'partial'
+        ? 'scanChip.done'
+        : 'scanChip.failed',
+    )
+  }
+  return t('scanChip.reading')
+}
+
+function chipTitle(p: HostProgress): string {
   return t(`scanHost.${p.state === 'finished' ? p.outcome.state : p.state}`)
 }
 
@@ -166,7 +198,13 @@ const scanLabel = computed(() => (narrow.value ? t('toolbar.scan') : `↳ ${t('t
   <div class="overview">
     <div v-if="scan.scanning" class="scan-line" aria-hidden="true"><i /></div>
 
-    <PageHeader :title="t('nav.overview')" :meta="meta">
+    <PageHeader :title="t('nav.overview')" :meta="scan.scanning || lastScan ? undefined : meta">
+      <template v-if="scan.scanning" #meta>
+        {{ t('toolbar.scanning') }} · <span class="mono">{{ elapsed }}</span>
+      </template>
+      <template v-else-if="lastScan" #meta>
+        {{ t('toolbar.lastScan') }} <b class="age">{{ lastScan.age }}</b> · {{ lastScan.rest }}
+      </template>
       <template #actions>
         <template v-if="scan.scanning">
           <span class="progress">
@@ -195,7 +233,13 @@ const scanLabel = computed(() => (narrow.value ? t('toolbar.scan') : `↳ ${t('t
     </p>
 
     <div v-if="scan.scanning" class="chips">
-      <span v-for="h in hosts" :key="h.host" class="host-chip" :class="chipTone(h.progress)">
+      <span
+        v-for="h in hosts"
+        :key="h.host"
+        class="host-chip"
+        :class="chipTone(h.progress)"
+        :title="chipTitle(h.progress)"
+      >
         <span class="mono">{{ h.host }}</span>
         <span class="state">{{ chipText(h.progress) }}</span>
       </span>
@@ -278,6 +322,11 @@ const scanLabel = computed(() => (narrow.value ? t('toolbar.scan') : `↳ ${t('t
   to {
     transform: translateX(340%);
   }
+}
+
+.age {
+  color: var(--warn-ink);
+  font-weight: var(--weight-medium);
 }
 
 .btn {
@@ -417,6 +466,7 @@ const scanLabel = computed(() => (narrow.value ? t('toolbar.scan') : `↳ ${t('t
 }
 
 .summary {
+  line-height: normal;
   display: flex;
   align-items: center;
   flex-wrap: wrap;

@@ -28,6 +28,8 @@ withDefaults(
     /** The server form: the roles running on `caption`. */
     roles?: ReadonlyArray<{ label: string; role: TopologyRole }>
     ring?: boolean
+    /** A tooltip: the servers an overflow node stands for. */
+    hint?: string
   }>(),
   {
     label: undefined,
@@ -37,12 +39,13 @@ withDefaults(
     url: false,
     roles: undefined,
     ring: false,
+    hint: undefined,
   },
 )
 </script>
 
 <template>
-  <span class="node" :class="{ ring }">
+  <span class="node" :class="{ ring }" :title="hint">
     <svg v-if="url" class="globe" viewBox="0 0 16 16" aria-hidden="true">
       <path
         d="M8 2a6 6 0 1 1 0 12A6 6 0 1 1 8 2z M2 8h12 M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14c-1.8-1.7-2.6-3.7-2.6-6S6.2 3.7 8 2z"

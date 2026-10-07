@@ -9,6 +9,7 @@ import {
   formatDuration,
   formatMeasure,
   formatNumber,
+  formatWeekdayDateTime,
   formatWhen,
 } from '@/lib/format'
 
@@ -21,6 +22,8 @@ export function useFormat() {
     duration: (ms: number) => formatDuration(ms, settings.language),
     clock: (when: string | number | Date) => formatClock(when, settings.language),
     dateTime: (when: string | number | Date) => formatDateTime(when, settings.language),
+    weekdayDateTime: (when: string | number | Date) =>
+      formatWeekdayDateTime(when, settings.language),
     when: (when: string | number | Date, options?: WhenOptions) =>
       formatWhen(when, Date.now(), settings.language, options),
   }

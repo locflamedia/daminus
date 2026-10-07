@@ -1,23 +1,28 @@
 <!--
-  Project card, from the board "Project card": the heart of Daminus. Six blocks in a fixed
-  order and height, so any two cards side by side line up block for block:
+  Project card, from the board "Project card" (drawn as on Overview): the heart of Daminus.
+  Six blocks in a fixed order and height, so any two cards side by side line up block for
+  block:
 
-  1. head, 36: the monogram tile, the name (15/500), the domain (12, ink-3, opens the
-     browser) and the state at the right: a chip only for issues (it morphs when the state
-     changes), a grey word when healthy, an accent word while scanning, grey when unreachable;
-  2. tags, 22: stack facts on one line; what does not fit collapses to "+N";
-  3. topology, 40: URL then each component, or the servers form;
-  4. status row, 56: the single most severe issue and a count chip if there are more, or
-     "All N checks passed"; Fix on a critical one, Retry on an unreachable one;
-  5. metrics, 72: three tiles with their sparkline;
+  1. head, 40: the project tile (40, radius 12: the monogram gradient, since no framework
+     mark is bundled), the name (15/500), the domain with where it runs, and the state chip at
+     the right: a dot and a word for every state. A critical chip carries the one pulsing dot;
+     scanning shows "waiting" with a spinner; unreachable a hollow dot;
+  2. tags, 22: stack facts on one line, each with a 6 px dot in the project colour when it has
+     no mark; what does not fit collapses to "+N";
+  3. topology, 40: one node per run of components on a server, the roles in colour, dashed
+     links between servers, no URL node (the URL is in the head);
+  4. status row, 56: the single most severe issue in its severity fill with one text action,
+     or "All N checks passed". While the host is read the last result stays, in grey;
+  5. metrics, 72: three tiles with a value and one note line, no sparkline. While the host is
+     read a tile that is being read shows two skeleton bars; an unreachable card dims them;
   6. foot, 32: when it was checked, how many checks passed, Open. The time turns warn-ink
      after 24 hours.
 
-  Padding 16, 12 between blocks (about 380 tall). While scanning, the values blur in place
-  and the layout holds. Several issues never stack rows. A name too long for one line is cut
-  with an ellipsis; the full name is the title. Missing data is a dash, never zero. On a
-  pointer hover the card lifts 2 px and the Open chevron nudges; a press on the card opens
-  it. Every string comes from the caller and is rendered as text.
+  Padding 16, 10 between blocks, radius 16. A critical card is lifted by a rose shadow. Several
+  issues never stack rows. A name too long for one line is cut with an ellipsis; the full name
+  is the title. Missing data is a dash, never zero. On a pointer hover the card lifts 2 px and
+  the Open chevron nudges; a press on the card opens it. Every string comes from the caller and
+  is rendered as text.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -27,7 +32,7 @@ import type { NodeState, TopologyInput } from '@/lib/topology'
 import UiButton from './UiButton.vue'
 import UiChipMorph from './UiChipMorph.vue'
 import UiDomainLink from './UiDomainLink.vue'
-import UiMetricTile, { type MetricState } from './UiMetricTile.vue'
+import UiMetricTile, { type MetricState, type NoteTone } from './UiMetricTile.vue'
 import UiMonogram, { type MonogramTint } from './UiMonogram.vue'
 import UiRow, { type RowTone } from './UiRow.vue'
 import UiTag from './UiTag.vue'
@@ -39,13 +44,12 @@ export type ProjectCardState = 'crit' | 'warn' | 'ok' | 'scanning' | 'unreachabl
 export interface ProjectCardMetric {
   label: string
   icon?: IconName
-  delta?: string
   value?: string
   unit?: string
-  series?: readonly number[]
   state?: MetricState
+  /** The line under the value: what changed, "no change", or what to do. */
   note?: string
-  reason?: string
+  noteTone?: NoteTone
 }
 
 export interface ProjectCardStatus {
@@ -55,8 +59,6 @@ export interface ProjectCardStatus {
   tileTone?: RowTone
   title: string
   meta?: string
-  /** The count chip ("2 issues", "0 issues"). */
-  chip?: string
 }
 
 const props = withDefaults(
@@ -68,39 +70,37 @@ const props = withDefaults(
     state: ProjectCardState
     /** The state in words: "Needs a look", "Critical", "Healthy", "Scanning", "Unreachable". */
     stateLabel: string
+    /** Where it runs: "vps-hn-3", "2 servers". Follows the domain. */
+    where?: string
     tags?: ReadonlyArray<{ label: string; swatch?: string }>
     /** How many tags show before "+N". */
     maxTags?: number
     topology: readonly TopologyInput[]
-    topologyMode?: 'components' | 'servers'
-    urlLabel: string
     nodeStates: Record<NodeState, string>
     moreLabel: (hidden: number) => string
     topologyLabel: string
     status: ProjectCardStatus
-    /** The button on the status row: "Fix" on a critical issue, "Retry" when unreachable. */
+    /** The text action of the status row: "Security ›", "Open ›", "Retry". */
     actionLabel?: string
     metrics: readonly ProjectCardMetric[]
-    /** When the project was last checked. */
-    checkedAt: string | number | Date
+    /** When the project was last checked; none while the first read of this scan runs. */
+    checkedAt?: string | number | Date
     /** "12 of 14 passed", already worded. */
     passedLabel: string
     openLabel: string
     /** The card lifts and a press opens it. */
     interactive?: boolean
-    /** When set, each sparkline draws only the first time its key is seen. */
-    once?: string
   }>(),
   {
     domain: undefined,
+    where: undefined,
     tint: 'blue',
     icon: undefined,
     tags: () => [],
     maxTags: 3,
-    topologyMode: 'components',
     actionLabel: undefined,
+    checkedAt: undefined,
     interactive: true,
-    once: undefined,
   },
 )
 
@@ -108,12 +108,18 @@ const emit = defineEmits<{ open: []; action: []; 'open-domain': [url: string] }>
 
 const fmt = useFormat()
 
-const chipTone = computed(() => (props.state === 'crit' ? 'crit' : 'warn'))
-const showChip = computed(() => props.state === 'crit' || props.state === 'warn')
+const CHIP_TONE = {
+  crit: 'crit',
+  warn: 'warn',
+  ok: 'ok',
+  scanning: 'info',
+  unreachable: 'neutral',
+} as const
+const chipTone = computed(() => CHIP_TONE[props.state])
 const shownTags = computed(() => props.tags.slice(0, props.maxTags))
 const hiddenTags = computed(() => Math.max(0, props.tags.length - props.maxTags))
-const checked = computed(() => fmt.when(props.checkedAt))
-const stale = computed(() => isStale(props.checkedAt))
+const checked = computed(() => (props.checkedAt === undefined ? '' : fmt.when(props.checkedAt)))
+const stale = computed(() => props.checkedAt !== undefined && isStale(props.checkedAt))
 const scanning = computed(() => props.state === 'scanning')
 
 function onCardClick(event: MouseEvent) {
@@ -126,29 +132,41 @@ function onCardClick(event: MouseEvent) {
 <template>
   <article
     class="card"
-    :class="{ 'm-lift': interactive, interactive }"
+    :class="[`tint-${tint}`, { 'm-lift': interactive, interactive, critical: state === 'crit' }]"
     :aria-busy="scanning || undefined"
     @click="onCardClick"
   >
     <header class="head">
-      <UiMonogram :name="name" :icon="icon" :tint="tint" :size="36" />
+      <UiMonogram :name="name" :icon="icon" :tint="tint" :size="40" />
       <span class="names">
         <b class="name" :title="name">{{ name }}</b>
-        <UiDomainLink v-if="domain" bare :domain="domain" @open="emit('open-domain', $event)" />
+        <span v-if="domain || where" class="where">
+          <UiDomainLink v-if="domain" bare :domain="domain" @open="emit('open-domain', $event)" />
+          <template v-if="domain && where"> · </template>{{ where }}
+        </span>
       </span>
-      <UiChipMorph v-if="showChip" class="state" :tone="chipTone" :label="stateLabel" />
-      <span v-else class="state word" :class="`word-${state}`">{{ stateLabel }}</span>
+      <UiChipMorph
+        class="state"
+        large
+        :dot="state !== 'scanning'"
+        :busy="scanning"
+        :pulse="state === 'crit'"
+        :tone="chipTone"
+        :label="stateLabel"
+      />
     </header>
 
     <div class="tags">
-      <UiTag v-for="tag in shownTags" :key="tag.label" :swatch="tag.swatch">{{ tag.label }}</UiTag>
-      <UiTag v-if="hiddenTags > 0">+{{ hiddenTags }}</UiTag>
+      <UiTag v-for="tag in shownTags" :key="tag.label" :swatch="tag.swatch ?? 'var(--mark)'">{{
+        tag.label
+      }}</UiTag>
+      <UiTag v-if="hiddenTags > 0" class="more">+{{ hiddenTags }}</UiTag>
     </div>
 
     <UiTopology
       :components="topology"
-      :mode="topologyMode"
-      :url-label="urlLabel"
+      mode="servers"
+      url-label=""
       :states="nodeStates"
       :more-label="moreLabel"
       :label="topologyLabel"
@@ -156,7 +174,6 @@ function onCardClick(event: MouseEvent) {
 
     <UiRow
       class="status"
-      :class="{ blurred: scanning }"
       size="status"
       :tone="status.tone"
       :tile="status.icon"
@@ -164,34 +181,29 @@ function onCardClick(event: MouseEvent) {
       :title="status.title"
       :meta="status.meta"
     >
-      <template v-if="status.chip || actionLabel" #trailing>
-        <span v-if="status.chip && !actionLabel" class="count" :class="`count-${status.tone}`">{{
-          status.chip
-        }}</span>
-        <UiButton
-          v-if="actionLabel"
-          :variant="state === 'crit' ? 'primary' : 'secondary'"
-          size="small"
+      <template v-if="actionLabel" #trailing>
+        <button
+          type="button"
+          class="action"
+          :class="`action-${status.tone}`"
           @click="emit('action')"
-          >{{ actionLabel }}</UiButton
         >
+          {{ actionLabel }}
+        </button>
       </template>
     </UiRow>
 
-    <div class="metrics">
-      <UiMetricTile
-        v-for="(metric, i) in metrics"
-        :key="i"
-        v-bind="metric"
-        :state="scanning ? 'scanning' : metric.state"
-        :once="once ? `${once}-${i}` : undefined"
-      />
+    <div class="metrics" :class="{ dim: state === 'unreachable' }">
+      <UiMetricTile v-for="(metric, i) in metrics" :key="i" form="note" v-bind="metric" />
     </div>
 
     <footer class="foot">
-      <span class="when" :class="{ stale }">{{ checked }}</span>
-      <span class="dot" aria-hidden="true">·</span>
-      <span>{{ passedLabel }}</span>
+      <span class="passed">
+        <template v-if="checked"
+          ><span class="when" :class="{ stale }">{{ checked }}</span> ·
+        </template>
+        {{ passedLabel }}
+      </span>
       <UiButton
         variant="link"
         size="small"
@@ -209,12 +221,49 @@ function onCardClick(event: MouseEvent) {
 .card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 10px;
   min-width: 0;
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
+}
+
+/* The project colour is the end stop of its tint: the dot of a tag that has no mark. */
+.tint-blue {
+  --mark: var(--tint-blue-2);
+}
+
+.tint-lilac {
+  --mark: var(--tint-lilac-2);
+}
+
+.tint-rose {
+  --mark: var(--tint-rose-2);
+}
+
+.tint-amber {
+  --mark: var(--tint-amber-2);
+}
+
+.tint-green {
+  --mark: var(--tint-green-2);
+}
+
+.tint-teal {
+  --mark: var(--tint-teal-2);
+}
+
+.tint-coral {
+  --mark: var(--tint-coral-2);
+}
+
+.tint-slate {
+  --mark: var(--tint-slate-2);
+}
+
+.card.critical {
+  box-shadow: var(--shadow-card-crit);
 }
 
 .interactive {
@@ -225,7 +274,7 @@ function onCardClick(event: MouseEvent) {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  height: 36px;
+  height: 40px;
   min-width: 0;
 }
 
@@ -245,19 +294,16 @@ function onCardClick(event: MouseEvent) {
   white-space: nowrap;
 }
 
-.state {
-  margin-left: auto;
-}
-
-.word {
-  flex: none;
+.where {
+  overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-12);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.word-scanning {
-  color: var(--accent-ink);
-  font-weight: var(--weight-medium);
+.state {
+  margin-left: auto;
 }
 
 .tags {
@@ -267,44 +313,40 @@ function onCardClick(event: MouseEvent) {
   overflow: hidden;
 }
 
-/* The count chip sits white on a tinted status row, in the band's own ink. */
-.count {
-  display: inline-flex;
-  align-items: center;
-  height: var(--h-chip);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--surface-0);
-  color: var(--ink-3);
-  font-size: var(--text-11);
-  font-weight: var(--weight-medium);
-  white-space: nowrap;
-}
-
-.count-warn {
-  color: var(--warn-ink);
-}
-
-.count-crit {
-  color: var(--crit-ink);
-}
-
 .status.tone-neutral {
   background: var(--surface-1);
 }
 
-.status.blurred {
-  opacity: 0.35;
-  filter: blur(2px);
-  transition:
-    opacity var(--dur-state) var(--ease-state),
-    filter var(--dur-state) var(--ease-state);
+/* The status row's one action is a word, in the band's own ink. */
+.action {
+  flex: none;
+  border-radius: var(--radius-xs);
+  color: var(--ink);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.action:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.action-warn {
+  color: var(--warn-ink);
+}
+
+.action-crit {
+  color: var(--crit-ink);
 }
 
 .metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-2);
+}
+
+.metrics.dim {
+  opacity: 0.5;
 }
 
 .foot {
@@ -337,11 +379,5 @@ function onCardClick(event: MouseEvent) {
 
 .open :deep(.icon) {
   transition: transform var(--dur-lift) var(--ease-out);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .status.blurred {
-    filter: none;
-  }
 }
 </style>

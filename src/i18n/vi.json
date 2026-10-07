@@ -125,6 +125,8 @@
     "servers": "Máy chủ",
     "issues": "{n} vấn đề",
     "unreachable": "Mất kết nối",
+    "stale": "cũ {n} ngày",
+    "scanning": "đang quét",
     "settings": "Cài đặt",
     "back": "Quay lại",
     "foldSidebar": "Thu gọn thanh bên",
@@ -139,7 +141,15 @@
     "hosts": "Máy chủ",
     "ai": "Nhà cung cấp AI",
     "data": "Dữ liệu",
-    "about": "Giới thiệu"
+    "about": "Giới thiệu",
+    "desc": {
+      "general": "Ngôn ngữ, định dạng và những gì xảy ra khi mở Daminus.",
+      "appearance": "Giao diện, chuyển động và những điều nhỏ cho vui. Mọi thứ ở đây chỉ là bề ngoài; không gì thay đổi những gì được kiểm tra.",
+      "scan": "Một lần quét đọc gì, chờ bao lâu và khi nào lên tiếng.",
+      "hosts": "Đọc từ ssh config của bạn. Khoá ở lại trong ssh-agent; Daminus không bao giờ lưu chúng.",
+      "ai": "AI là tuỳ chọn. Nó chỉ giải thích kết quả quét; không bao giờ chạy lệnh.",
+      "data": "Mọi thứ nằm trên máy Mac này. Đây là ý nghĩa của điều đó, và cách mang nó đi hoặc xoá nó."
+    }
   },
   "theme": {
     "system": "Hệ thống",
@@ -172,7 +182,9 @@
     "scanAll": "Quét tất cả",
     "stop": "Dừng",
     "scanMeta": "Lần quét #{seq} · {when}",
-    "scanMetaRunning": "Lần quét #{seq} · đang chạy · {elapsed}",
+    "scanning": "Đang quét",
+    "lastScan": "Lần quét cuối",
+    "lastScanRest": "lần quét #{seq} · {when}",
     "noScan": "Chưa quét lần nào",
     "hostsOf": "{done} trên {total} máy chủ",
     "urlChecks": "Kiểm tra URL",
@@ -191,6 +203,12 @@
     "firstScan": "Chưa quét lần nào. Nhấn Quét tất cả để đọc các máy chủ.",
     "results": "Kết quả",
     "hosts": "Máy chủ"
+  },
+  "scanChip": {
+    "queued": "đang chờ",
+    "reading": "đang đọc…",
+    "done": "xong",
+    "failed": "lỗi"
   },
   "scanHost": {
     "queued": "đang chờ",
@@ -231,7 +249,8 @@
     "minAgo": "{n} phút trước",
     "today": "hôm nay {time}",
     "yesterday": "hôm qua {time}",
-    "daysAgo": "{n} ngày trước"
+    "daysAgo": "{n} ngày trước",
+    "daysAgoLong": "{n} ngày trước"
   },
   "units": {
     "ms": "ms",
@@ -307,20 +326,32 @@
     "issues": "{name} · {count}"
   },
   "ui": {
+    "cancel": "Hủy",
+    "holdAnnounce": "Giữ để xác nhận, hoặc nhấn để mở hộp xác nhận.",
     "close": "Đóng",
     "dismiss": "Bỏ qua",
     "copy": "Sao chép",
     "copied": "Đã chép",
     "copyFailed": "Không sao chép được",
+    "copyFailedHint": "Không sao chép được. Hãy chọn văn bản rồi nhấn ⌘C.",
     "command": {
       "name": "Lệnh",
       "removed": "Đã bỏ {n} ký tự ẩn hoặc ký tự điều khiển.",
-      "riskTitle": "Kiểm tra trước khi chạy",
+      "riskTitle": "Đọc kỹ trước khi chạy lệnh này",
       "risk": {
-        "pipeToShell": "Lệnh này chạy đoạn văn bản do một lệnh khác tạo ra, ví dụ thứ tải về được đưa thẳng vào shell, nên bạn không thấy được cái gì sẽ chạy.",
-        "base64Decode": "Lệnh này giải mã một đoạn văn bản ẩn. Xem đoạn đó biến thành gì trước khi chạy.",
-        "remove": "Lệnh này xoá file. Kiểm tra đường dẫn trước khi chạy.",
-        "destructive": "Lệnh này có thể ghi đè một ổ đĩa hoặc đổi chủ sở hữu và quyền trên cả một thư mục. Kiểm tra đối tượng trước khi chạy."
+        "pipeToShell": {
+          "lead": "Đưa thẳng vào shell",
+          "rest": "chạy mọi thứ URL gửi về mà bạn không thấy"
+        },
+        "base64Decode": {
+          "lead": "Giải mã base64",
+          "rest": "nội dung thật bị ẩn; hãy giải mã và đọc trước"
+        },
+        "remove": { "lead": "Chạy rm", "rest": "xoá tệp; kiểm tra đường dẫn" },
+        "destructive": {
+          "lead": "Ghi đè một ổ đĩa hoặc cả một thư mục",
+          "rest": "có thể ghi vào thiết bị hoặc đổi chủ sở hữu và quyền trên cả cây thư mục; kiểm tra đối tượng"
+        }
       }
     },
     "failed": "Lỗi",

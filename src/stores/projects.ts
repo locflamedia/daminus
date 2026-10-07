@@ -1,8 +1,8 @@
 // Projects and servers as the sidebar and the cards list them, taken from the latest
 // report's rollups. Sorting happens when a report arrives, so order holds during a scan.
 import { defineStore } from 'pinia'
-import { computed } from 'vue'
-import type { ProjectRollup, ServerRollup } from '@/api'
+import { computed, shallowRef } from 'vue'
+import { type Project, type ProjectRollup, type ServerRollup, projectsList } from '@/api'
 import { diskPercent, issueCount, sortProjects, sortServers } from '@/lib/rollups'
 import { useReportStore } from './report'
 
@@ -11,6 +11,35 @@ export const useProjectsStore = defineStore('projects', () => {
 
   const projects = computed<ProjectRollup[]>(() => sortProjects(report.latest?.projects ?? []))
   const servers = computed<ServerRollup[]>(() => sortServers(report.latest?.servers ?? []))
+  /** The saved projects (name, colour, URLs): what the rollups do not carry. */
+  const details = shallowRef<Project[]>([])
+
+  /** Reads `projects.json` again; on failure the last read stays. */
+  async function loadDetails() {
+    try {
+      details.value = await projectsList()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  /** The colour a project was given in setup, when it is a plain `#rrggbb`. */
+  function color(id: string): string | null {
+    const value = details.value.find((p) => p.id === id)?.color
+    return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : null
+  }
+
+  /** The host of the first URL the project is checked at, for the header line. */
+  function domain(id: string): string | null {
+    const url = details.value.find((p) => p.id === id)?.urls[0]
+    if (!url) return null
+    try {
+      return new URL(url).hostname
+    } catch {
+      return null
+    }
+  }
+
   const issues = computed(() => (report.latest ? issueCount(report.latest) : 0))
 
   function project(id: string): ProjectRollup | undefined {
@@ -26,5 +55,5 @@ export const useProjectsStore = defineStore('projects', () => {
     return diskPercent(report.latest?.items ?? [], host)
   }
 
-  return { projects, servers, issues, project, server, disk }
+  return { projects, servers, issues, details, loadDetails, color, domain, project, server, disk }
 })

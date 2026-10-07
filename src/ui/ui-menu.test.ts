@@ -48,6 +48,14 @@ const press = (key: string, init: KeyboardEventInit = {}) =>
   )
 
 describe('UiMenu', () => {
+  it('draws its shortcuts as flat keys on the menu surface', async () => {
+    make()
+    await open()
+    const keys = [...document.querySelectorAll('[role="menuitem"] kbd')]
+    expect(keys.map((k) => k.textContent)).toEqual(['⌘', 'R'])
+    for (const key of keys) expect(key.classList.contains('kbd-on-menu')).toBe(true)
+  })
+
   it('is a menu button: closed, then role=menu with a menuitem per row', async () => {
     make()
     expect(menu()).toBeNull()
@@ -155,5 +163,51 @@ describe('UiMenu', () => {
     await open()
     expect(menu()?.querySelector('img')).toBeNull()
     expect(rows()[0]?.textContent).toBe('<img src=x onerror=alert(1)>')
+  })
+})
+
+describe('UiMenu compact (project tabs)', () => {
+  const tabs: MenuItem[] = [
+    { id: 'overview', label: 'Overview', hint: '⌘1' },
+    { id: 'disk', label: 'Disk', hint: '⌘2', mark: 'warn', markLabel: 'Needs a look' },
+    { id: 'security', label: 'Security', hint: '⌘5', mark: 'crit', checked: true },
+  ]
+  const choices = () => [...document.querySelectorAll<HTMLElement>('[role="menuitemradio"]')]
+
+  it('is a list of choices: the open one ticked, a status dot, the shortcut as plain text', async () => {
+    make({ items: tabs, compact: true })
+    await open()
+    expect(choices().map((r) => r.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true'])
+    expect(choices()[2]?.querySelector('.tick .icon')).not.toBeNull()
+    // The tick is drawn at stroke 2, as the board "Narrow window" draws it.
+    expect(choices()[2]?.querySelector('.tick .icon')?.getAttribute('stroke-width')).toBe('2')
+    expect(choices()[0]?.querySelector('.tick .icon')).toBeNull()
+    expect(choices()[1]?.querySelector('.mark.warn')).not.toBeNull()
+    expect(choices()[1]?.querySelector('.sr-only')?.textContent).toBe('Needs a look')
+    expect(choices().map((r) => r.querySelector('.hint')?.textContent)).toEqual(['⌘1', '⌘2', '⌘5'])
+    expect(document.querySelectorAll('[role="menuitem"]')).toHaveLength(0)
+  })
+
+  it('keeps the arrow keys, Enter and Escape of the menu pattern', async () => {
+    make({ items: tabs, compact: true })
+    await open()
+    expect(document.activeElement).toBe(choices()[0])
+    press('ArrowDown')
+    expect(document.activeElement).toBe(choices()[1])
+    press('Escape')
+    await nextTick()
+    await nextTick()
+    expect(menu()).toBeNull()
+  })
+
+  it('rounds its surface to 12 and keeps the plain menu at 14', async () => {
+    make({ items: tabs, compact: true })
+    await open()
+    expect(menu()?.style.borderRadius).toBe('12px')
+    wrapper?.unmount()
+    document.body.replaceChildren()
+    make()
+    await open()
+    expect(menu()?.style.borderRadius).toBe('var(--radius-md)')
   })
 })
