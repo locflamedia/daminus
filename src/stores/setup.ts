@@ -109,6 +109,8 @@ export const useSetupStore = defineStore('setup', () => {
   const listing = shallowRef<HostListing | null>(null)
   const environment = ref<SshEnvironment | null>(null)
   const loading = ref(false)
+  /** The "Add host" sheet is open (the hand-made Host block). */
+  const addHostOpen = ref(false)
   const error = ref<AppError | null>(null)
 
   const entries = computed<HostEntry[]>(() => listing.value?.entries ?? [])
@@ -467,6 +469,7 @@ export const useSetupStore = defineStore('setup', () => {
     listing,
     environment,
     loading,
+    addHostOpen,
     error,
     entries,
     skipped,
