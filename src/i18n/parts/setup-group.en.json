@@ -118,7 +118,7 @@
       "projects": "{n} project | {n} projects",
       "parts": "{n} part | {n} parts",
       "servers": "{n} server | {n} servers",
-      "hint": "The first scan starts right after saving.",
+      "hint": "The first scan starts right after saving, about 15 s.",
       "back": "Back",
       "save": "Save and run first scan"
     },

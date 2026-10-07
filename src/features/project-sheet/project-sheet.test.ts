@@ -11,6 +11,8 @@ import { vEnter } from '@/lib/motion'
 import { type DraftProject, draftFromProject, emptyDraft } from '@/lib/setup-model'
 import { useProjectSheetStore } from '@/stores/project-sheet'
 import { useProjectsStore } from '@/stores/projects'
+import { useReportStore } from '@/stores/report'
+import { report } from '@/testing/report-fixture'
 import { useToastStore } from '@/stores/toasts'
 import { SAVED_PROJECTS } from '@/testing/setup-fixture'
 import ProjectSheet from './ProjectSheet.vue'
@@ -399,5 +401,17 @@ describe('removing', () => {
     await settle()
     const restore = calls.filter((c) => c.cmd === 'projects_save').at(-1)
     expect((restore?.args.projects as Project[])[0]).toEqual(SAVED_PROJECTS[0])
+  })
+})
+
+describe('header scan line', () => {
+  it('says when it was last scanned only when a report exists', async () => {
+    await open(edit())
+    expect(text()).not.toContain('last scan')
+    wrapper?.unmount()
+    document.body.replaceChildren()
+    useReportStore().latest = report()
+    await open(edit())
+    expect(text()).toContain('last scan')
   })
 })

@@ -71,7 +71,13 @@
     "fail": {
       "key_rejected": "Khóa trong cấu hình của bạn chưa được nạp vào ssh-agent. Hãy thêm khóa rồi thử lại. Các host khác vẫn tiếp tục.",
       "key_rejected_nokey": "Các khóa mà ssh đưa ra đều không được chấp nhận. Hãy kiểm tra đúng khóa đã nạp vào ssh-agent rồi thử lại. Các host khác vẫn tiếp tục.",
-      "termius": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi chạy dòng lệnh ở trên.",
+      "termius": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi chạy dòng lệnh ở trên. {how}",
+      "termiusHow": "Cách làm",
+      "termiusSteps": {
+        "export": "Trong Termius, xuất khóa riêng tư ra một tệp trong {dir}.",
+        "protect": "Chỉ cho phép mình bạn đọc tệp đó:",
+        "load": "Nạp nó vào ssh-agent, rồi thử lại:"
+      },
       "termiusNoLine": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi thử lại.",
       "unreachable": {
         "dns": "Không phân giải được địa chỉ. Kiểm tra địa chỉ hoặc VPN.",
@@ -100,6 +106,7 @@
       "answer": {
         "docker": {
           "ok": "Phản hồi · {user} dùng được docker",
+          "ok_group": "Phản hồi · {user} thuộc nhóm docker",
           "no_permission": "Không có quyền · thêm {user} vào nhóm docker",
           "stopped": "Đã dừng · systemctl start docker"
         },

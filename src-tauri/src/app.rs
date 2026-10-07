@@ -204,6 +204,15 @@ impl AppCore {
         })?;
         Ok(dir)
     }
+
+    /// `~/.ssh` for Finder; creates nothing, so a Mac without one gets an `Io` error.
+    pub fn existing_ssh_dir(&self) -> Result<PathBuf, AppError> {
+        self.setup.existing_ssh_dir().ok_or_else(|| {
+            AppError::from(ErrorCode::Io {
+                path: "~/.ssh".to_owned(),
+            })
+        })
+    }
 }
 
 /// The projects the webview sent, checked as `projects.json` would check them

@@ -80,7 +80,7 @@
       "hostPlaceholder": "server",
       "kind": { "path": "folder", "compose": "compose", "pm2": "pm2" },
       "kindMenu": {
-        "folder": { "label": "Folder path" },
+        "folder": { "label": "Folder path", "hint": "Laravel, PHP, static" },
         "compose": { "label": "Compose project", "hint": "{n} found" },
         "pm2": { "label": "PM2 app", "hint": "{n} found" },
         "database": { "label": "Database", "hint": "MySQL, Postgres" },

@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
 import { useNow } from '@/composables/use-now'
+import SidebarAiCard from '@/features/empty/components/SidebarAiCard.vue'
 import SidebarGhosts from '@/features/empty/components/SidebarGhosts.vue'
 import SidebarTermius from '@/features/empty/components/SidebarTermius.vue'
 import { useEmptyStore } from '@/features/empty/empty-store'
@@ -161,6 +162,7 @@ const serverRows = computed(() =>
     </section>
 
     <div class="foot">
+      <SidebarAiCard v-if="firstLaunch && !helpScreen" />
       <RouterLink to="/settings" class="item" active-class="on">
         <UiIcon name="settings" />
         {{ t('nav.settings') }}
@@ -336,6 +338,9 @@ const serverRows = computed(() =>
 }
 
 .foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   margin-top: auto;
   flex: none;
 }

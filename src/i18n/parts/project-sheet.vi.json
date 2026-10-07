@@ -80,7 +80,7 @@
       "hostPlaceholder": "máy chủ",
       "kind": { "path": "thư mục", "compose": "compose", "pm2": "pm2" },
       "kindMenu": {
-        "folder": { "label": "Đường dẫn thư mục" },
+        "folder": { "label": "Đường dẫn thư mục", "hint": "Laravel, PHP, tĩnh" },
         "compose": { "label": "Dự án Compose", "hint": "tìm thấy {n}" },
         "pm2": { "label": "Ứng dụng PM2", "hint": "tìm thấy {n}" },
         "database": { "label": "Cơ sở dữ liệu", "hint": "MySQL, Postgres" },

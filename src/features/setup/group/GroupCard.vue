@@ -8,7 +8,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { vEnter } from '@/lib/motion'
-import { foldedParts, pairingLine, projectHosts, roleSet } from '@/lib/group-view'
+import { foldedParts, pairingLine, projectHosts, roleSet, showNewTag } from '@/lib/group-view'
 import { type DraftProject, isIncomplete } from '@/lib/setup-model'
 import { useSetupStore } from '@/stores/setup'
 import UiButton from '@/ui/UiButton.vue'
@@ -113,11 +113,11 @@ function onDrop() {
     <header class="head">
       <span class="dot" aria-hidden="true" />
       <b class="name">{{ draft.name || draft.id }}</b>
-      <span v-if="draft.isNew" class="new">{{ t('setupGroup.card.new') }}</span>
+      <span v-if="showNewTag(draft, replaces)" class="new">{{ t('setupGroup.card.new') }}</span>
       <span v-if="replaces" class="saved"
         ><UiIcon name="info" :size="12" />{{ t('setupGroup.replaces.chip') }}</span
       >
-      <span v-for="url in draft.urls" :key="url" class="url mono">
+      <span v-for="url in draft.urls" :key="url" class="url mono" :title="url">
         <UiIcon name="globe" :size="12" /><span class="u">{{ url }}</span>
       </span>
       <template v-if="!open">
@@ -126,9 +126,12 @@ function onDrop() {
         </span>
       </template>
       <span class="grow" />
-      <span v-if="replaces" class="id mono">{{
-        t('setupGroup.replaces.id', { id: draft.id })
-      }}</span>
+      <span
+        v-if="replaces"
+        class="id mono"
+        :title="t('setupGroup.replaces.id', { id: draft.id })"
+        >{{ t('setupGroup.replaces.id', { id: draft.id }) }}</span
+      >
       <span class="hosts">
         <template v-for="(host, i) in hosts" :key="host">
           <UiIcon v-if="i > 0 && hosts.length === 2" name="arrow-right" :size="12" />
@@ -263,7 +266,8 @@ function onDrop() {
 .head {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
   min-height: var(--h-row);
   min-width: 0;
   padding: 0 var(--space-1) var(--space-1);
@@ -279,6 +283,7 @@ function onDrop() {
 }
 
 .name {
+  flex: none;
   font-size: var(--text-15);
   font-weight: var(--weight-medium);
   letter-spacing: var(--track-15);
@@ -286,6 +291,7 @@ function onDrop() {
 
 .new {
   display: inline-flex;
+  flex: none;
   align-items: center;
   height: 20px;
   padding: 0 6px;
@@ -298,6 +304,7 @@ function onDrop() {
 
 .saved {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 6px;
   height: 24px;
@@ -313,7 +320,8 @@ function onDrop() {
 .url {
   display: inline-flex;
   flex: 0 1 auto;
-  min-width: 48px;
+  max-width: 100%;
+  min-width: 0;
   overflow: hidden;
   align-items: center;
   gap: 6px;
@@ -332,12 +340,14 @@ function onDrop() {
 }
 
 .u {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .roles {
   display: inline-flex;
+  flex: none;
   gap: var(--space-1);
 }
 
@@ -345,11 +355,21 @@ function onDrop() {
   flex-grow: 1;
 }
 
-.id,
 .hosts {
   display: inline-flex;
+  flex: none;
   align-items: center;
   gap: 6px;
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  white-space: nowrap;
+}
+
+.id {
+  flex: none;
+
+  /* When the header wraps, this line is the meta line and sits at the right. */
+  margin-left: auto;
   color: var(--ink-3);
   font-size: var(--text-11);
   white-space: nowrap;

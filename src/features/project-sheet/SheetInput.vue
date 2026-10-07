@@ -1,7 +1,7 @@
 <!--
   A text field of the project sheet, as the board draws it: filled (grey), 32 px with radius
   10, or 28 px with radius 8 as a cell inside a row. Focus lifts the fill to white with a 2 px
-  ring; an error draws a pink ring and a warning an amber one, so the field and the message
+  ring; an error draws a red ring and a warning an amber one (kept while focused), so the field and the message
   under it read together. Everything not listed here goes to the `input`.
 -->
 <script setup lang="ts">
@@ -83,11 +83,6 @@ defineSlots<{ before?: () => unknown; after?: () => unknown }>()
   padding: 0 6px;
 }
 
-.input:focus-within {
-  background: var(--field-focus-bg);
-  box-shadow: var(--field-focus-ring);
-}
-
 .tone-error {
   box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--crit-solid) 45%, transparent);
 }
@@ -96,9 +91,18 @@ defineSlots<{ before?: () => unknown; after?: () => unknown }>()
   box-shadow: inset 0 0 0 1.5px var(--warn-solid);
 }
 
-.tone-error:focus-within,
-.tone-warn:focus-within {
+.input:focus-within {
+  background: var(--field-focus-bg);
   box-shadow: var(--field-focus-ring);
+}
+
+/* A field with a problem keeps its problem ring while it has focus: red or amber, not blue. */
+.tone-error:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--crit-solid);
+}
+
+.tone-warn:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--warn-solid);
 }
 
 .glyph {

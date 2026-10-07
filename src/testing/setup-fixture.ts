@@ -2,6 +2,7 @@
 // the shapes the core sends. Used by the dev mock (the window in a plain browser) and by tests.
 import type {
   HostDiscovery,
+  HostKeyInfo,
   HostListing,
   HostOutcome,
   HostSetup,
@@ -28,6 +29,8 @@ export interface SampleHost {
   folders?: { path: string; state: 'readable' | 'denied' | 'missing' }[]
   /** Milliseconds before the first answer, to stagger the hosts. */
   delay: number
+  /** What the core says about the key the host offered, when the test ends on it. */
+  hostKey?: HostKeyInfo
 }
 
 const report = (over: Partial<LoginReport>): LoginReport => ({
@@ -120,6 +123,64 @@ export const SAMPLE_HOSTS: SampleHost[] = [
   },
 ]
 
+/** A fingerprint the way ssh prints it (`ED25519 SHA256:…`). */
+const FP_NEW = 'ED25519 SHA256:k3Jx0nQ8vYw2mTz1bUeR5pL9aHcD7sGfXo4NiWqVtEA'
+const FP_NOW = 'ED25519 SHA256:Zr9LmP2xQv7cYdT4hKbN1sWuJe6AoGfX3iUq8VtRnDE'
+const FP_OLD = 'ED25519 SHA256:b7Qe4TnWv1xJm9LzKc2dRpYh6sUoAfG3iNqX8tVrZEw'
+
+const failing = (
+  alias: string,
+  hostname: string,
+  delay: number,
+  outcome: HostOutcome,
+  over: Partial<SampleHost> = {},
+): SampleHost => ({
+  alias,
+  hostname,
+  user: 'deploy',
+  port: 22,
+  key: '~/.ssh/id_ed25519',
+  outcome,
+  ms: 600,
+  delay,
+  ...over,
+})
+
+/**
+ * Servers whose login test ends in each failure, beside two that work: a host key not trusted
+ * yet and one that changed (both with the key info the core sends), an address that does not
+ * resolve, one that never answers, and a key the agent does not hold.
+ */
+export const FAILURE_HOSTS: SampleHost[] = [
+  SAMPLE_HOSTS[0] as SampleHost,
+  failing(
+    'new-edge',
+    '198.51.100.71',
+    400,
+    { state: 'host_key_unknown', fp: FP_NEW },
+    {
+      hostKey: { state: 'unknown', offered: FP_NEW, known: [] },
+    },
+  ),
+  failing(
+    'old-box',
+    '198.51.100.72',
+    700,
+    { state: 'host_key_changed', fp: FP_NOW },
+    {
+      hostKey: { state: 'changed', offered: FP_NOW, known: [FP_OLD] },
+    },
+  ),
+  failing('ghost', 'ghost.invalid', 1000, { state: 'unreachable', cause: 'dns' }),
+  failing('slow-vpn', '10.8.0.9', 1300, { state: 'timeout' }, { ms: 10000 }),
+  SAMPLE_HOSTS.find((h) => h.alias === 'staging') as SampleHost,
+]
+
+/** The sample servers with one that starts late, so its queued lane can be seen for a while. */
+export const QUEUED_HOSTS: SampleHost[] = SAMPLE_HOSTS.map((h) =>
+  h.alias === 'legacy-shop' ? { ...h, delay: 6000 } : h,
+)
+
 export const SAMPLE_SKIPPED: SkippedHost[] = [
   { pattern: 'github.com', reason: 'no_host_name', file: '~/.ssh/config', line: 31 },
   { pattern: '*', reason: 'wildcard', file: '~/.ssh/config', line: 40 },
@@ -180,7 +241,7 @@ export function sampleSetup(host: SampleHost): HostSetup {
     host: host.alias,
     outcome: host.outcome,
     resolved: resolved(host),
-    host_key: null,
+    host_key: host.hostKey ?? null,
     login: host.login ? { login: host.login, paths: host.folders ?? [] } : null,
     discovery: null,
   }

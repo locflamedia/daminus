@@ -8,7 +8,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { LoginResult } from '@/api'
 import { useSettingsStore } from '@/stores/settings'
-import { formatLatency, knownGroups, permissionKey, type HostRowModel } from '@/lib/host-rows'
+import { formatLatency, groupNames, permissionKey, type HostRowModel } from '@/lib/host-rows'
 import { type PermissionRow, missingPermissions, permissionRows } from '@/lib/host-test'
 import FixRow from '@/features/setup/components/FixRow.vue'
 import UiChip from '@/ui/UiChip.vue'
@@ -23,7 +23,7 @@ const settings = useSettingsStore()
 const report = computed(() => props.login.login)
 const rows = computed(() => permissionRows(props.login))
 const missing = computed(() => missingPermissions(rows.value))
-const groups = computed(() => (report.value ? knownGroups(report.value) : []))
+const groups = computed(() => (report.value ? groupNames(report.value) : []))
 
 const system = computed(() => {
   const r = report.value

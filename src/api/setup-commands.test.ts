@@ -5,6 +5,7 @@ import {
   projectsRemove,
   projectsSave,
   projectsValidate,
+  revealSshDir,
   setupResult,
   setupStart,
   setupStatus,
@@ -35,6 +36,7 @@ describe('setup command wrappers', () => {
     await projectsSave([project], ['vps-a'])
     await projectsRemove('shop')
     await urlCheck('https://shop.example')
+    await revealSshDir()
     expect(calls).toEqual([
       { cmd: 'hosts_list', args: {} },
       { cmd: 'ssh_environment', args: {} },
@@ -47,6 +49,7 @@ describe('setup command wrappers', () => {
       { cmd: 'projects_save', args: { projects: [project], hosts: ['vps-a'] } },
       { cmd: 'projects_remove', args: { id: 'shop' } },
       { cmd: 'url_check', args: { url: 'https://shop.example' } },
+      { cmd: 'reveal_ssh_dir', args: {} },
     ])
   })
 })

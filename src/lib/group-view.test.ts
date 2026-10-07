@@ -17,6 +17,7 @@ import {
   pairingLine,
   partSource,
   replacedCounts,
+  showNewTag,
 } from './group-view'
 
 const db = (over: Partial<Extract<DraftPart, { kind: 'db' }>> = {}): DraftPart => ({
@@ -276,5 +277,13 @@ describe('preview helpers', () => {
 
   it('finds the next free id', () => {
     expect(freeId('shop', new Set(['shop', 'shop-2']))).toBe('shop-3')
+  })
+})
+
+describe('the New tag', () => {
+  it('shows for an unsaved project and gives way to the Already saved chip', () => {
+    expect(showNewTag({ isNew: true }, false)).toBe(true)
+    expect(showNewTag({ isNew: true }, true)).toBe(false)
+    expect(showNewTag({ isNew: false }, false)).toBe(false)
   })
 })

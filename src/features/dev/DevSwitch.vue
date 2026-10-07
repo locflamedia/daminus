@@ -1,6 +1,7 @@
 <!--
   Development only: switches theme and language from the corner while the Settings screens
-  are not built. It is not rendered in a production build.
+  are not built. It sits in the title bar strip, where no screen draws anything, so it never
+  covers a footer button. It is not rendered in a production build.
 -->
 <script setup lang="ts">
 import { LOCALES } from '@/i18n'
@@ -37,8 +38,8 @@ const settings = useSettingsStore()
 <style scoped>
 .dev-switch {
   position: fixed;
+  top: var(--space-2);
   right: var(--space-3);
-  bottom: var(--space-3);
   z-index: 50;
   display: flex;
   gap: 2px;

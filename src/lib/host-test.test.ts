@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { HostOutcome, LoginReport, LoginResult } from '@/api'
 import {
   addKeyCommand,
+  protectKeyCommand,
   chipOf,
   isEndOfLife,
   isFailed,
@@ -139,5 +140,11 @@ describe('permission rows', () => {
   it('builds the ssh-add line for the key the config names', () => {
     expect(addKeyCommand(['~/.ssh/staging_ed25519'])).toBe('ssh-add ~/.ssh/staging_ed25519')
     expect(addKeyCommand([])).toBeNull()
+  })
+
+  it('builds the chmod line for the same key, quoted like the ssh-add line', () => {
+    expect(protectKeyCommand(['~/.ssh/staging_ed25519'])).toBe('chmod 600 ~/.ssh/staging_ed25519')
+    expect(protectKeyCommand(['~/.ssh/my key'])).toBe("chmod 600 ~/'.ssh/my key'")
+    expect(protectKeyCommand([])).toBeNull()
   })
 })

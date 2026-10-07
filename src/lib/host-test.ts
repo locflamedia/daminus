@@ -139,6 +139,8 @@ export interface PermissionRow {
   fix: string | null
   /** An amber row with a fix: a permission the host lacks. */
   missing: boolean
+  /** Docker answers and the user is in the docker group (the row says so). */
+  inGroup?: boolean
 }
 
 function dockerRow(report: LoginReport): PermissionRow | null {
@@ -157,6 +159,7 @@ function dockerRow(report: LoginReport): PermissionRow | null {
     tone,
     fix,
     missing: report.docker === 'no_permission',
+    ...(report.docker === 'ok' && report.docker_group ? { inGroup: true } : {}),
   }
 }
 
@@ -206,11 +209,22 @@ export function missingPermissions(rows: readonly PermissionRow[]): number {
   return rows.filter((r) => r.missing).length
 }
 
-/** The `ssh-add` line for a rejected key; `null` when the config names no key file. */
-export function addKeyCommand(identityFiles: readonly string[]): string | null {
+/** The first identity file as one shell argument; `null` when the config names no key file. */
+function keyPathArg(identityFiles: readonly string[]): string | null {
   const first = identityFiles[0]
   if (!first) return null
   // A leading `~/` must stay outside the quotes for the shell to expand it.
-  const path = first.startsWith('~/') ? `~/${shellQuote(first.slice(2))}` : shellQuote(first)
-  return `ssh-add ${path}`
+  return first.startsWith('~/') ? `~/${shellQuote(first.slice(2))}` : shellQuote(first)
+}
+
+/** The `ssh-add` line for a rejected key; `null` when the config names no key file. */
+export function addKeyCommand(identityFiles: readonly string[]): string | null {
+  const path = keyPathArg(identityFiles)
+  return path === null ? null : `ssh-add ${path}`
+}
+
+/** The line that makes an exported private key readable by its owner only (ssh refuses it else). */
+export function protectKeyCommand(identityFiles: readonly string[]): string | null {
+  const path = keyPathArg(identityFiles)
+  return path === null ? null : `chmod 600 ${path}`
 }

@@ -60,6 +60,15 @@ pub(super) fn read_agent(code: Option<i32>, stdout: &str) -> (AgentState, u32) {
 }
 
 impl SetupService {
+    /// `~/.ssh` of the home folder the ssh tools use, only when it exists as a folder.
+    pub fn existing_ssh_dir(&self) -> Option<PathBuf> {
+        self.shared
+            .tools
+            .home()
+            .map(|home| home.join(".ssh"))
+            .filter(|dir| dir.is_dir())
+    }
+
     /// The agent and Termius, for the empty-app screens.
     pub async fn environment(&self) -> SshEnvironment {
         let tools = &self.shared.tools;

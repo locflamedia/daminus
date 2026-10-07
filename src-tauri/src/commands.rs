@@ -199,9 +199,19 @@ async fn run_blocking<T: Send + 'static>(
 /// opener plugin, so the webview never gets to open arbitrary paths.
 #[tauri::command]
 pub fn reveal_config_dir(core: State<'_, AppCore>) -> Result<(), AppError> {
-    let dir = core.ensure_config_dir()?;
+    open_in_finder(&core.ensure_config_dir()?)
+}
+
+/// Shows `~/.ssh` in Finder when it exists. Like the config folder, the path is
+/// fixed here and the webview sends none.
+#[tauri::command]
+pub fn reveal_ssh_dir(core: State<'_, AppCore>) -> Result<(), AppError> {
+    open_in_finder(&core.existing_ssh_dir()?)
+}
+
+fn open_in_finder(dir: &std::path::Path) -> Result<(), AppError> {
     std::process::Command::new("/usr/bin/open")
-        .arg(&dir)
+        .arg(dir)
         .status()
         .ok()
         .filter(std::process::ExitStatus::success)

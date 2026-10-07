@@ -63,7 +63,11 @@
       }
     },
     "stack": "Nhận diện sẵn",
-    "keyboard": { "title": "Phím tắt", "import": "Nhập", "addHost": "Thêm host" },
+    "keyboard": {
+      "title": "Phím tắt",
+      "import": "Nhập",
+      "addHost": "Thêm host"
+    },
     "help": {
       "headline": {
         "termius": "Máy chủ của bạn nằm trong Termius. Hãy để ssh nhìn thấy chúng.",
@@ -104,7 +108,9 @@
           "body": "Xuất khóa riêng bạn dùng trong Termius, hoặc tệp bạn đã tạo ra nó. Rồi khóa quyền truy cập của tệp:",
           "bodyPlain": "Giữ khóa riêng bạn dùng cho máy chủ thành một tệp trong ~/.ssh. Rồi khóa quyền truy cập của tệp:"
         },
-        "agent": { "title": "Nạp khóa vào ssh-agent, để Keychain ghi nhớ" },
+        "agent": {
+          "title": "Nạp khóa vào ssh-agent, để Keychain ghi nhớ"
+        },
         "describe": {
           "title": "Mô tả mỗi máy chủ một lần, ở bên phải",
           "body": "Dán khối này vào {config}. Thử bằng {test} trong Terminal."
@@ -131,7 +137,7 @@
         "no_host_name": "thiếu HostName",
         "invalid_alias": "bí danh không dùng được"
       },
-      "importHosts": "Nhập host | Nhập {n} host | Nhập {n} host",
+      "importHosts": "Nhập {n} host | Nhập {n} host",
       "importOff": "Hãy kiểm tra lại khi cấu hình đã có host và agent đã có khóa."
     },
     "hostBlock": {
@@ -156,6 +162,11 @@
         "userInvalid": "Chữ, số, dấu chấm, gạch dưới và gạch ngang; không có dấu cách.",
         "portInvalid": "Một số từ 1 đến 65535.",
         "identityInvalid": "Đường dẫn bắt đầu bằng ~/ hoặc /, không có dấu cách."
+      },
+      "reveal": {
+        "label": "Mở ~/.ssh trong Finder",
+        "missing": "~/.ssh chưa tồn tại",
+        "failed": "Không mở được ~/.ssh trong Finder"
       }
     },
     "addHost": {
@@ -167,7 +178,13 @@
     "sidebar": {
       "ghosts": "Dự án và máy chủ bạn thêm sẽ hiện ở đây, xếp theo mức cần xem.",
       "termiusTitle": "Sao không đọc Termius?",
-      "termiusBody": "Kho của Termius được mã hóa và chỉ riêng nó biết. Đọc bí mật của ứng dụng khác vừa dễ hỏng vừa không đúng. Tệp ssh thông thường chạy với mọi công cụ, kể cả Termius."
+      "termiusBody": "Kho của Termius được mã hóa và chỉ riêng nó biết. Đọc bí mật của ứng dụng khác vừa dễ hỏng vừa không đúng. Tệp ssh thông thường chạy với mọi công cụ, kể cả Termius.",
+      "ai": {
+        "title": "AI đang tắt",
+        "optional": "Tùy chọn",
+        "body": "Quét vẫn chạy không cần AI. Kết nối Claude, OpenAI, Gemini hoặc Ollama chạy trên máy để giải thích kết quả.",
+        "link": "Kết nối nhà cung cấp"
+      }
     }
   }
 }

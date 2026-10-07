@@ -54,7 +54,12 @@ const { t } = useI18n()
   position: relative;
 }
 
-/* The lane is narrow: the command wraps instead of scrolling, and is still whole. */
+/* The lane is narrow: the command wraps instead of scrolling and Copy drops below it, so the
+   command is shown whole and not squeezed by the button. */
+.fix :deep(.cmd) {
+  flex-wrap: wrap;
+}
+
 .fix :deep(code) {
   overflow-wrap: anywhere;
   white-space: pre-wrap;

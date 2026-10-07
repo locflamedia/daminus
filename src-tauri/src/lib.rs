@@ -43,6 +43,7 @@ pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + 
         commands::report_latest,
         commands::projects_list,
         commands::reveal_config_dir,
+        commands::reveal_ssh_dir,
         commands::hosts_list,
         commands::ssh_environment,
         commands::setup_start,

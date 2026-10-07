@@ -63,7 +63,11 @@
       }
     },
     "stack": "Recognises out of the box",
-    "keyboard": { "title": "Keyboard", "import": "Import", "addHost": "Add host" },
+    "keyboard": {
+      "title": "Keyboard",
+      "import": "Import",
+      "addHost": "Add host"
+    },
     "help": {
       "headline": {
         "termius": "Your servers live in Termius. Let’s make them visible to ssh.",
@@ -104,7 +108,9 @@
           "body": "Export the private key you use in Termius, or the file you created it from. Then lock its permissions:",
           "bodyPlain": "Keep the private key you use for your servers as a file in ~/.ssh. Then lock its permissions:"
         },
-        "agent": { "title": "Load it into ssh-agent, remembered by Keychain" },
+        "agent": {
+          "title": "Load it into ssh-agent, remembered by Keychain"
+        },
         "describe": {
           "title": "Describe each server once, on the right",
           "body": "Paste the block into {config}. Test with {test} in Terminal."
@@ -131,7 +137,7 @@
         "no_host_name": "no HostName",
         "invalid_alias": "unusable alias"
       },
-      "importHosts": "Import hosts | Import {n} host | Import {n} hosts",
+      "importHosts": "Import {n} host | Import {n} hosts",
       "importOff": "Check again once the config has a host and the agent has a key."
     },
     "hostBlock": {
@@ -156,6 +162,11 @@
         "userInvalid": "Letters, digits, dot, underscore and dash; no spaces.",
         "portInvalid": "A number from 1 to 65535.",
         "identityInvalid": "A path that starts with ~/ or /, without spaces."
+      },
+      "reveal": {
+        "label": "Reveal ~/.ssh in Finder",
+        "missing": "~/.ssh does not exist yet",
+        "failed": "Could not open ~/.ssh in Finder"
       }
     },
     "addHost": {
@@ -167,7 +178,13 @@
     "sidebar": {
       "ghosts": "Projects and servers you add show up here, sorted by what needs a look.",
       "termiusTitle": "Why not read Termius?",
-      "termiusBody": "Its vault is encrypted and private to Termius. Reading another app’s secrets would be fragile and wrong. Plain ssh files work with every tool, Termius included."
+      "termiusBody": "Its vault is encrypted and private to Termius. Reading another app’s secrets would be fragile and wrong. Plain ssh files work with every tool, Termius included.",
+      "ai": {
+        "title": "AI is off",
+        "optional": "Optional",
+        "body": "Scans work without it. Connect Claude, OpenAI, Gemini or a local Ollama to explain results.",
+        "link": "Connect a provider"
+      }
     }
   }
 }

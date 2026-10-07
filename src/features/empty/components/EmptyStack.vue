@@ -48,6 +48,7 @@ const STACK = [
   color: var(--ink-3);
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
+  line-height: normal;
 }
 
 .tiles {

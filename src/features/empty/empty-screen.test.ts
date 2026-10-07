@@ -205,7 +205,7 @@ describe('the help screen', () => {
     const { wrapper } = await mountScreen()
     const button = () => wrapper.get('.import')
     expect(button().attributes('aria-disabled')).toBe('true')
-    expect(button().text()).toContain('Import hosts')
+    expect(button().text()).toContain('Import 0 hosts')
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
     expect(useSetupStore().addHostOpen).toBe(false)
   })
@@ -247,6 +247,23 @@ describe('the help screen', () => {
     await importButton.trigger('click')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/setup')
+  })
+
+  it('counts the hosts on the Import button with the plural form', async () => {
+    const host = (alias: string) => ({
+      alias,
+      hostname: '203.0.113.14',
+      user: 'root',
+      port: 22,
+      key: '~/.ssh/id_ed25519',
+      outcome: { state: 'reached' as const },
+      ms: 1,
+      delay: 0,
+    })
+    world.listing = sampleListing([host('a'), host('b')])
+    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    const { wrapper } = await mountScreen()
+    expect(wrapper.get('.import').text()).toContain('Import 2 hosts')
   })
 
   it('checks again on ⇧⌘R', async () => {

@@ -3,6 +3,8 @@
 // events with the same order, the same checks on a project) with timers in place of servers.
 // The production bundle never imports it.
 import {
+  FAILURE_HOSTS,
+  QUEUED_HOSTS,
   SAMPLE_HOSTS,
   SAMPLE_RECORDS,
   SAMPLE_SKIPPED,
@@ -28,11 +30,26 @@ import type {
 } from './index'
 import { emitSetupEvent } from './testing'
 
-export type SetupMockVariant =
-  'empty' | 'empty-noconfig' | 'empty-nousable' | 'setup' | 'setup-saved'
+const VARIANTS = [
+  'empty',
+  'empty-noconfig',
+  'empty-nousable',
+  'setup',
+  'setup-saved',
+  'setup-failures',
+  'setup-empty-discover',
+  'setup-queued',
+] as const
+
+/**
+ * `setup-failures`: logins that end host key unknown, host key changed, unreachable, timed out
+ * and key rejected. `setup-empty-discover`: every host logs in but discover finds nothing.
+ * `setup-queued`: the last host starts six seconds late, so its queued lane stays visible.
+ */
+export type SetupMockVariant = (typeof VARIANTS)[number]
 
 export function isSetupVariant(variant: string): variant is SetupMockVariant {
-  return ['empty', 'empty-noconfig', 'empty-nousable', 'setup', 'setup-saved'].includes(variant)
+  return (VARIANTS as readonly string[]).includes(variant)
 }
 
 const ALIAS = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
@@ -129,10 +146,18 @@ export class SetupMock {
   private timers: ReturnType<typeof setTimeout>[] = []
   /** Milliseconds are divided by this, to see a flow quickly. */
   private speed: number
+  /** What discover prints per host; none at all in the nothing-found variant. */
+  private records: typeof SAMPLE_RECORDS
 
   constructor(variant: SetupMockVariant, speed = 1) {
     this.speed = speed
-    this.hosts = SAMPLE_HOSTS
+    this.hosts =
+      variant === 'setup-failures'
+        ? FAILURE_HOSTS
+        : variant === 'setup-queued'
+          ? QUEUED_HOSTS
+          : SAMPLE_HOSTS
+    this.records = variant === 'setup-empty-discover' ? {} : SAMPLE_RECORDS
     this.projects = variant === 'setup-saved' ? structuredClone(SAVED_PROJECTS) : []
     this.listing =
       variant === 'empty-noconfig'
@@ -215,9 +240,15 @@ export class SetupMock {
   private result(): SetupResult {
     const hosts = [...this.results.values()]
     const done = this.finished.filter((h) => this.results.get(h)?.discovery)
+    const found = done.filter((h) => (this.records[h] ?? []).length > 0)
     return {
       hosts: structuredClone(hosts),
-      proposal: done.length > 0 ? sampleProposal(done) : null,
+      proposal:
+        done.length === 0
+          ? null
+          : found.length === 0
+            ? { projects: [], unassigned: [] }
+            : sampleProposal(found),
     }
   }
 
@@ -291,6 +322,9 @@ export class SetupMock {
       this.later(running, () => this.send({ kind: 'host_running', host: alias }))
     }
     const end = running + (ok ? host.ms : 400)
+    const { hostKey } = host
+    if (hostKey)
+      this.later(end - 20, () => this.send({ kind: 'host_key', host: alias, info: hostKey }))
     this.later(end, () => {
       this.results.set(alias, sampleSetup(host))
       this.send({
@@ -308,7 +342,7 @@ export class SetupMock {
   /** Discover on one host: its records one by one; returns when it ends. */
   private scriptDiscover(host: SampleHost): number {
     const alias = host.alias
-    const records = SAMPLE_RECORDS[alias] ?? []
+    const records = this.records[alias] ?? []
     this.later(host.delay / 2, () => this.send({ kind: 'host_started', host: alias }))
     const first = host.delay / 2 + 250
     this.later(first, () => this.send({ kind: 'host_running', host: alias }))
@@ -326,7 +360,7 @@ export class SetupMock {
         outcome: { state: 'reached' },
         ms: Math.round(end - host.delay / 2),
         items: records.length,
-        dropped: alias === 'vps-hn-3' ? 2 : 0,
+        dropped: alias === 'vps-hn-3' && records.length > 0 ? 2 : 0,
       })
     })
     return end

@@ -496,4 +496,13 @@ mod ipc {
         assert!(env["termius_installed"].is_boolean());
         assert_eq!(env.as_object().map(serde_json::Map::len), Some(3));
     }
+
+    #[test]
+    fn reveal_ssh_dir_without_a_ssh_folder_is_an_io_error_and_creates_nothing() {
+        let app = mock_app(FakeTransport::new());
+        let err = app.invoke("reveal_ssh_dir", json!({})).unwrap_err();
+        assert_eq!(err["code"]["kind"], json!("io"));
+        assert_eq!(err["code"]["path"], json!("~/.ssh"));
+        assert!(!app._dir.path().join(".ssh").exists());
+    }
 }

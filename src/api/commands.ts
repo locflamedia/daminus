@@ -26,6 +26,7 @@ export const COMMANDS = [
   'report_latest',
   'projects_list',
   'reveal_config_dir',
+  'reveal_ssh_dir',
   'hosts_list',
   'ssh_environment',
   'setup_start',
@@ -73,6 +74,11 @@ export function projectsList(): Promise<Project[]> {
 /** Shows the config folder in Finder. */
 export function revealConfigDir(): Promise<void> {
   return invoke<void>('reveal_config_dir')
+}
+
+/** Shows `~/.ssh` in Finder; rejects with an `io` error when the folder does not exist. */
+export function revealSshDir(): Promise<void> {
+  return invoke<void>('reveal_ssh_dir')
 }
 
 /** The hosts of `~/.ssh/config` with what ssh resolves for each, and the entries left out. */

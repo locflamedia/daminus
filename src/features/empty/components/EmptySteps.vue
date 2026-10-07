@@ -51,6 +51,7 @@ const STEPS: { id: 'pick' | 'discover' | 'group'; icon: IconName }[] = [
 
 <style scoped>
 .steps {
+  --step-card-h: 192px;
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -83,6 +84,7 @@ const STEPS: { id: 'pick' | 'discover' | 'group'; icon: IconName }[] = [
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
+  min-height: var(--step-card-h);
   padding: var(--space-4);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--surface-0) 72%, transparent);

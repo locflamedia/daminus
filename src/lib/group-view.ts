@@ -22,6 +22,11 @@ const words = (key: string, params: Words['params'] = {}, n?: number): Words => 
   ...(n === undefined ? {} : { n }),
 })
 
+/** "New" says the project is not saved yet; a project that replaces a saved id is not new. */
+export function showNewTag(d: Pick<DraftProject, 'isNew'>, replaces: boolean): boolean {
+  return d.isNew && !replaces
+}
+
 // --- which project is looked at first ---------------------------------------------------
 
 export function incompleteParts(d: DraftProject): DraftPart[] {

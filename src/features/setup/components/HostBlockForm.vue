@@ -8,13 +8,16 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { revealSshDir } from '@/api'
 import {
   EXAMPLES,
   buildHostBlock,
   type HostBlockField,
   type HostBlockFields,
 } from '@/lib/host-block'
+import { revealSshFailure } from '@/lib/reveal-ssh'
 import { useCopy } from '@/lib/use-copy'
+import { useToastStore } from '@/stores/toasts'
 import UiCard from '@/ui/UiCard.vue'
 import UiField from '@/ui/UiField.vue'
 
@@ -27,6 +30,7 @@ const fields = defineModel<HostBlockFields>({ required: true })
 
 const { t } = useI18n()
 const { state, copy } = useCopy()
+const toasts = useToastStore()
 
 const block = computed(() => buildHostBlock(fields.value))
 
@@ -53,6 +57,14 @@ const copyLabel = computed(() =>
       ? t('empty.hostBlock.copyFailed')
       : t('empty.hostBlock.copy'),
 )
+
+async function onReveal() {
+  try {
+    await revealSshDir()
+  } catch (e) {
+    toasts.push({ tone: 'crit', title: t(`empty.hostBlock.reveal.${revealSshFailure(e)}`) })
+  }
+}
 
 async function onCopy() {
   if (block.value.valid) await copy(block.value.text)
@@ -110,6 +122,9 @@ const ORDER: { field: HostBlockField; wide?: boolean }[] = [
       </div>
       <footer>
         <span>{{ t('empty.hostBlock.neverWrites') }}</span>
+        <button type="button" class="reveal" @click="onReveal">
+          {{ t('empty.hostBlock.reveal.label') }}
+        </button>
       </footer>
     </section>
   </div>
@@ -249,6 +264,25 @@ footer {
   color: var(--code-dim);
   font-size: var(--text-11);
   line-height: 1.5;
+}
+
+.reveal {
+  align-self: flex-start;
+  padding: 0;
+  color: var(--code-key);
+  font-size: inherit;
+  font-weight: var(--weight-medium);
+  line-height: inherit;
+  text-align: left;
+}
+
+.reveal:hover {
+  text-decoration: underline;
+}
+
+.reveal:focus-visible {
+  border-radius: var(--radius-xs);
+  box-shadow: var(--focus-ring);
 }
 
 [data-variant='sheet'] .snippet {

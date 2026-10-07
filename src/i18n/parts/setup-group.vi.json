@@ -118,7 +118,7 @@
       "projects": "{n} dự án | {n} dự án",
       "parts": "{n} thành phần | {n} thành phần",
       "servers": "{n} máy chủ | {n} máy chủ",
-      "hint": "Lần quét đầu tiên bắt đầu ngay sau khi lưu.",
+      "hint": "Lần quét đầu tiên bắt đầu ngay sau khi lưu, khoảng 15 giây.",
       "back": "Quay lại",
       "save": "Lưu và quét lần đầu"
     },

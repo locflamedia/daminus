@@ -9,7 +9,9 @@ import { mockCommands } from './testing'
  * days old. The setup screens: `?mock=empty` (nothing saved yet, the board's servers),
  * `empty-noconfig` and `empty-nousable` (the two reasons there is no host), `setup` (the whole
  * flow against scripted servers; add `&speed=4` to run it faster) and `setup-saved` (the same
- * with a project already saved, so the second run meets "Already saved").
+ * with a project already saved, so the second run meets "Already saved"). Failure screens:
+ * `setup-failures` (every way a login test ends badly), `setup-empty-discover` (discover finds
+ * nothing on any host) and `setup-queued` (one host starts six seconds late).
  */
 export function installDevMock(variant = '', speed = 1): void {
   if (isSetupVariant(variant)) {

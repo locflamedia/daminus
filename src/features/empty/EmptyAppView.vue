@@ -79,7 +79,7 @@ const skips = computed(() => previewSkips(setup.skipped))
 
 .foot {
   margin-top: auto;
-  padding-top: var(--space-2);
+  padding-top: var(--space-1);
 }
 
 .keys {

@@ -152,6 +152,7 @@ describe('Discover screen', () => {
     expect(lane.text()).toContain('pm2 under user node')
     expect(lane.text()).toContain('logs in as node')
     expect(lane.text()).toContain('sudo usermod -aG docker deploy')
+    expect(lane.findAll('code').map((c) => c.text())).toContain('$ sudo usermod -aG docker deploy')
     expect(lane.text()).toContain('nginx config')
     expect(wrapper.get('[data-testid="lane-vps-sg-2"]').text()).not.toContain('not read')
   })
@@ -164,6 +165,9 @@ describe('Discover screen', () => {
     const toggle = lane.get('button.details')
     expect(toggle.attributes('aria-expanded')).toBe('false')
     expect(toggle.text()).toContain('2 lines dropped as invalid')
+    // The summary wraps (it is not cut) and takes the footer's whole width when it is long.
+    expect(lane.get('.foot').classes()).toContain('stacked')
+    expect(lane.get('.summary').text()).toBe(toggle.text().replace(/^Details\s*/, ''))
     expect(lane.find('.expanded').exists()).toBe(false)
     await toggle.trigger('click')
     expect(toggle.attributes('aria-expanded')).toBe('true')

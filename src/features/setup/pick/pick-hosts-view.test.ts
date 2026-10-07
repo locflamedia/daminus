@@ -279,6 +279,17 @@ describe('Failures stay inline', () => {
     expect(card.text()).toContain('The key in your config is not loaded in ssh-agent.')
     expect(card.find('code').text()).toBe('$ ssh-add ~/.ssh/staging_ed25519')
     expect(card.text()).toContain('Key only in Termius? Export it to ~/.ssh/ first')
+    expect(card.find('.steps').exists()).toBe(false)
+    const how = card.find('.how')
+    expect(how.text()).toBe('How')
+    expect(how.attributes('aria-expanded')).toBe('false')
+    await how.trigger('click')
+    const steps = row(wrapper, 'staging').find('.steps')
+    expect(row(wrapper, 'staging').find('.how').attributes('aria-expanded')).toBe('true')
+    expect(steps.findAll('code').map((c) => c.text())).toEqual([
+      '$ chmod 600 ~/.ssh/staging_ed25519',
+      '$ ssh-add ~/.ssh/staging_ed25519',
+    ])
     const retest = vi.spyOn(setup, 'retest').mockImplementation(() => undefined)
     const buttons = card.findAll('button').filter((b) => ['Skip host', 'Retry'].includes(b.text()))
     await buttons.find((b) => b.text() === 'Retry')!.trigger('click')
@@ -382,7 +393,8 @@ describe('Permission rows', () => {
     expect(panel.text()).toContain('2 permissions missing')
     expect(panel.text()).toContain('Ubuntu 24.04 · x86_64 · logged in as deploy')
     expect(panel.text()).toContain('Docker')
-    expect(panel.text()).toContain('Answers · deploy can use docker')
+    expect(panel.text()).toContain('Answers · deploy is in the docker group')
+    expect(panel.text()).toContain('groups deploy, docker')
     expect(panel.text()).toContain('System logs')
     expect(panel.text()).toContain('Folder /srv/shop')
     const commands = panel.findAll('code').map((c) => c.text())

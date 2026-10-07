@@ -103,14 +103,18 @@ watch(
 .code {
   flex: 1 1 auto;
   padding: 10px 0;
-  overflow: hidden;
+
+  /* A long line scrolls sideways; it never wraps, so the line numbers stay aligned. */
+  overflow: auto;
   font: var(--weight-regular) var(--text-11) / 1.7 var(--font-mono);
 }
 
 .ln {
   position: relative;
   display: grid;
-  grid-template-columns: 22px 1fr;
+  width: max-content;
+  min-width: 100%;
+  grid-template-columns: 22px max-content;
   gap: 10px;
   padding: 0 var(--space-3);
   border-radius: 4px;
@@ -118,8 +122,7 @@ watch(
 
 .t {
   min-width: 0;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
+  white-space: pre;
 }
 
 .ln::before {

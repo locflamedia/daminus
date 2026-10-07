@@ -190,7 +190,7 @@ export function netReason(cause: NetCause | null | undefined): NetReason {
 
 /** The key of the sentence that words one permission row (`answer.docker.no_permission`). */
 export function permissionKey(row: PermissionRow): string {
-  return `answer.${row.kind}.${row.answer}`
+  return row.inGroup ? `answer.${row.kind}.${row.answer}_group` : `answer.${row.kind}.${row.answer}`
 }
 
 /** The groups the login script reports, the only ones it asks about. */
@@ -200,6 +200,16 @@ export function knownGroups(report: LoginReport): string[] {
     ...(report.adm_group ? ['adm'] : []),
     ...(report.journal_group ? ['systemd-journal'] : []),
   ]
+}
+
+/**
+ * The groups line of a host: the user's own group, then the known ones. The report carries no
+ * group names, only uid/user and three booleans, so the user's own group is taken to share the
+ * user's name (the usual default). Empty when none of the known groups applies.
+ */
+export function groupNames(report: LoginReport): string[] {
+  const known = knownGroups(report)
+  return known.length === 0 ? [] : [report.user, ...known]
 }
 
 // --- left out ------------------------------------------------------------------------------

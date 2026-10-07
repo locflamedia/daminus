@@ -113,6 +113,10 @@ const summary = computed(() => {
 const showFoot = computed(
   () => settled.value && (props.lane.state !== 'done' || summary.value.length > 0),
 )
+// A long summary gets the whole width of the footer and Read again moves below it, so the text
+// is never squeezed into a few characters per line.
+const STACK_FROM = 24
+const stacked = computed(() => summary.value.join(' · ').length > STACK_FROM)
 const showDetailsRow = computed(() => props.lane.state === 'incomplete' || summary.value.length > 0)
 const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
 </script>
@@ -153,7 +157,7 @@ const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
 
     <LaneFixRows v-if="lane.state === 'incomplete'" :rows="lane.rows" />
 
-    <div v-if="showFoot" class="foot" :class="{ bare: !showDetailsRow }">
+    <div v-if="showFoot" class="foot" :class="{ bare: !showDetailsRow, stacked }">
       <button
         v-if="showDetailsRow"
         type="button"
@@ -331,6 +335,19 @@ const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
   background: var(--surface-1);
 }
 
+.foot.stacked {
+  flex-wrap: wrap;
+  padding-block: var(--space-2);
+}
+
+.foot.stacked .details {
+  flex-basis: 100%;
+}
+
+.foot.stacked :deep(button:last-child) {
+  margin-left: auto;
+}
+
 .foot.bare {
   background: none;
 }
@@ -343,7 +360,7 @@ const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
   display: flex;
   flex: 1 1 auto;
   gap: var(--space-2);
-  align-items: center;
+  align-items: flex-start;
   min-width: 0;
   padding: 0;
   border: 0;
@@ -362,13 +379,14 @@ const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
 }
 
 .summary {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .chev {
   flex: none;
+  margin-top: 2px;
   transition: transform var(--dur-state) var(--ease-out);
 }
 

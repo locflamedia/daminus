@@ -9,6 +9,7 @@ import {
   filterRows,
   formatLatency,
   headerStatus,
+  groupNames,
   knownGroups,
   latencyOf,
   netReason,
@@ -220,6 +221,25 @@ describe('latency, cards and words', () => {
 
   it('lists only the groups the login script asks about', () => {
     expect(knownGroups(REACHED.login!)).toEqual(['docker', 'systemd-journal'])
+  })
+
+  it('leads the groups line with the user, and is empty when no known group applies', () => {
+    expect(groupNames(REACHED.login!)).toEqual(['deploy', 'docker', 'systemd-journal'])
+    const none = { ...REACHED.login!, docker_group: false, adm_group: false, journal_group: false }
+    expect(groupNames(none)).toEqual([])
+  })
+
+  it('keys the docker row by group membership', () => {
+    expect(
+      permissionKey({
+        kind: 'docker',
+        answer: 'ok',
+        tone: 'ok',
+        fix: null,
+        missing: false,
+        inGroup: true,
+      }),
+    ).toBe('answer.docker.ok_group')
   })
 
   it('maps each skip reason to a message key', () => {
