@@ -257,3 +257,36 @@ describe('saving', () => {
     expect(drafts.issues).toEqual([])
   })
 })
+
+describe('a suggestion that grows as hosts finish', () => {
+  it('takes in the new parts and URLs, and leaves the user edits and removals alone', () => {
+    const { setup, drafts } = stores()
+    const kho = drafts.drafts[0]
+    if (!kho) throw new Error('setup')
+    kho.name = 'Kho hàng'
+    kho.parts = kho.parts.filter((p) => p.kind !== 'path') // the user removed the folder
+    const grown: Proposal = {
+      ...proposal,
+      projects: [
+        {
+          ...proposal.projects[0]!,
+          urls: ['https://khohang.vn', 'https://admin.khohang.vn'],
+          components: [
+            ...proposal.projects[0]!.components,
+            { role: 'worker', host: 'vps-hn-4', kind: 'pm2', app: 'kho-queue', pm2_home: null },
+          ],
+        },
+        proposal.projects[1]!,
+      ],
+    }
+    setup.result = { hosts: [], proposal: grown }
+    drafts.sync()
+    expect(drafts.drafts).toHaveLength(2)
+    expect(kho.name).toBe('Kho hàng')
+    expect(kho.urls).toEqual(['https://khohang.vn', 'https://admin.khohang.vn'])
+    expect(kho.parts.map((p) => p.kind)).toEqual(['db', 'pm2'])
+    // Syncing again adds nothing twice.
+    drafts.sync()
+    expect(kho.parts).toHaveLength(2)
+  })
+})

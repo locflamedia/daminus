@@ -430,3 +430,42 @@ describe('starting over', () => {
     expect(setup.result).toBeNull()
   })
 })
+
+describe('discover while a login test is running', () => {
+  it('waits for the test run to end and then starts, instead of stalling', async () => {
+    const setup = await ready()
+    setup.tick('vps-a', true)
+    await settle()
+    await backend.reached('vps-a')
+    // vps-b is being tested when the user asks for discover on vps-a.
+    setup.tick('vps-b', true)
+    await settle()
+    expect(backend.status?.step).toBe('test')
+    await setup.startDiscover(['vps-a'])
+    expect(setup.pendingDiscover).toEqual(['vps-a'])
+    expect(backend.starts.some((s) => s.step === 'discover')).toBe(false)
+
+    await backend.reached('vps-b')
+    await backend.finishRun()
+    expect(backend.starts.at(-1)).toMatchObject({ step: 'discover', hosts: ['vps-a'] })
+    expect(setup.pendingDiscover).toBeNull()
+    expect(backend.status?.step).toBe('discover')
+  })
+
+  it('does not start the waiting discover after the user stops', async () => {
+    const setup = await ready()
+    setup.tick('vps-a', true)
+    await settle()
+    await setup.startDiscover(['vps-a'])
+    await setup.stop()
+    expect(setup.pendingDiscover).toBeNull()
+  })
+
+  it('puts every host of tick-all into one run', async () => {
+    const setup = await ready()
+    setup.tickAll(true)
+    await settle()
+    expect(backend.starts).toHaveLength(1)
+    expect(backend.starts[0]?.hosts).toEqual(['vps-a', 'vps-b', 'vps-c'])
+  })
+})

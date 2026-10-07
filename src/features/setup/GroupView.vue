@@ -64,7 +64,7 @@ watch(
 )
 const ordered = computed(() => orderForGroup(store.drafts, pinned.value))
 
-const lines = computed(() => previewLines(store.drafts))
+const lines = computed(() => previewLines(ordered.value))
 const waiting = computed(() => store.drafts.length === 0 && !store.proposal && setup.scanning)
 const empty = computed(() => store.drafts.length === 0 && !waiting.value)
 
@@ -157,7 +157,7 @@ async function showBanner() {
 async function save() {
   if (store.saving || store.drafts.length === 0) return
   rejected.value = []
-  const outcome = await store.save()
+  const outcome = await store.save(ordered.value.map((d) => d.key))
   if (!outcome) return void showBanner()
   if (outcome.status === 'rejected') {
     rejected.value = outcome.issues.filter((i) => i.level === 'error')

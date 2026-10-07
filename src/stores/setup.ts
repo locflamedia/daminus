@@ -228,7 +228,18 @@ export const useSetupStore = defineStore('setup', () => {
 
   /** Ticks every listed host, or none. */
   function tickAll(on: boolean) {
-    for (const e of entries.value) tick(e.host.alias, on)
+    if (!on) {
+      for (const e of entries.value) tick(e.host.alias, false)
+      return
+    }
+    // Every host is queued before the one run starts, so they all go in the same run.
+    for (const e of entries.value) {
+      const host = e.host.alias
+      if (!isTicked(host)) ticked.value = [...ticked.value, host]
+      skippedHosts.value = skippedHosts.value.filter((h) => h !== host)
+      if (needsTest(host)) queue.value = [...queue.value, host]
+    }
+    void startQueued()
   }
 
   /** Tests `host` again (Retry): its earlier answer is forgotten. */
@@ -290,6 +301,9 @@ export const useSetupStore = defineStore('setup', () => {
     ),
   )
 
+  /** Discover waiting for the login-test run in progress to end (the core runs one at a time). */
+  const pendingDiscover = ref<HostAlias[] | null>(null)
+
   async function startDiscover(hosts: HostAlias[] = ready.value) {
     if (hosts.length === 0) return
     discovering.value = [...hosts]
@@ -297,9 +311,15 @@ export const useSetupStore = defineStore('setup', () => {
       delete liveItems.value[h]
       delete lanes.value[h]
     }
+    if (run.value && run.value.step !== 'discover') {
+      pendingDiscover.value = [...hosts]
+      return
+    }
     try {
-      await setupStart('discover', hosts)
+      const started = await setupStart('discover', hosts)
       await hydrate()
+      // The core joined a run of the other step it had already begun: wait for it to end.
+      if (started.joined && run.value?.step !== 'discover') pendingDiscover.value = [...hosts]
     } catch (e) {
       fail(e)
     }
@@ -355,7 +375,10 @@ export const useSetupStore = defineStore('setup', () => {
     await refreshResult()
     // A run that was stopped leaves the hosts it never reached without an answer.
     if (step === 'test' && e.kind !== 'done') queue.value = []
-    await startQueued()
+    const waiting = pendingDiscover.value
+    pendingDiscover.value = null
+    if (waiting) await startDiscover(waiting)
+    else await startQueued()
   }
 
   function hydrate(pending: SetupEvent[] = []): Promise<void> {
@@ -440,6 +463,7 @@ export const useSetupStore = defineStore('setup', () => {
 
   /** Stops the run in progress (Cancel setup, Esc). */
   async function stop() {
+    pendingDiscover.value = null
     try {
       await setupStop()
     } catch (e) {
@@ -455,6 +479,7 @@ export const useSetupStore = defineStore('setup', () => {
     answers.value = {}
     logins.value = {}
     queue.value = []
+    pendingDiscover.value = null
     liveItems.value = {}
     lanes.value = {}
     discovering.value = []
@@ -503,6 +528,7 @@ export const useSetupStore = defineStore('setup', () => {
     recordsOf,
     finds,
     startDiscover,
+    pendingDiscover,
     readAgain,
     refreshResult,
     init,

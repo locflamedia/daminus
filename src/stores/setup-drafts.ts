@@ -22,6 +22,7 @@ import {
   isIncomplete,
   newKey,
   nextColor,
+  partName,
   roleForName,
 } from '@/lib/setup-model'
 import { useSetupStore } from './setup'
@@ -119,18 +120,55 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
    * Makes a draft of every suggestion that has none yet. A draft the user already has (same
    * id) is left as edited; finds that arrive late become new drafts, never changes to old ones.
    */
+  /** What of each suggestion a draft has already taken in: part and URL signatures by draft key. */
+  const taken = new Map<string, Set<string>>()
+
+  function partSignature(p: DraftPart): string {
+    return `${p.host}|${p.kind}|${partName(p)}`
+  }
+
   function sync() {
     const p = proposal.value
     if (!p) return
-    const have = new Set(drafts.value.map((d) => d.id))
     const used = drafts.value.map((d) => d.color)
-    const fresh: DraftProject[] = []
     for (const suggestion of p.projects) {
-      if (have.has(suggestion.id)) continue
-      const color = nextColor([...used, ...fresh.map((d) => d.color)])
-      fresh.push(draftFromProposed(suggestion, color))
+      const existing = drafts.value.find((d) => d.id === suggestion.id)
+      if (!existing) {
+        const color = nextColor([...used, ...drafts.value.map((d) => d.color)])
+        const draft = draftFromProposed(suggestion, color)
+        drafts.value = [...drafts.value, draft]
+        taken.set(
+          draft.key,
+          new Set([...draft.parts.map(partSignature), ...draft.urls.map((u) => `url|${u}`)]),
+        )
+        continue
+      }
+      // The suggestion grows as hosts finish: take in what is new, never touch what the user
+      // edited or removed (a part already taken in once is not added again).
+      const seen = taken.get(existing.key) ?? new Set<string>()
+      const fresh = draftFromProposed(suggestion, existing.color)
+      const parts = fresh.parts.filter((part) => !seen.has(partSignature(part)))
+      const urls = fresh.urls.filter((u) => !seen.has(`url|${u}`))
+      for (const part of parts) seen.add(partSignature(part))
+      for (const u of urls) seen.add(`url|${u}`)
+      taken.set(existing.key, seen)
+      for (const env of fresh.envFiles) {
+        if (!existing.envFiles.includes(env) && !seen.has(`env|${env}`)) {
+          seen.add(`env|${env}`)
+          existing.envFiles = [...existing.envFiles, env]
+        }
+      }
+      if (parts.length > 0) {
+        const merged = parts.map((part) =>
+          part.kind === 'db' && part.envFile === ''
+            ? { ...part, envFile: existing.envFiles[0] ?? '' }
+            : part,
+        )
+        existing.parts = [...existing.parts, ...merged]
+      }
+      if (urls.length > 0) existing.urls = [...existing.urls, ...urls]
+      if (parts.length > 0 || urls.length > 0) void validate()
     }
-    if (fresh.length > 0) drafts.value = [...drafts.value, ...fresh]
   }
 
   const manualItems = computed<LooseItem[]>(() =>
@@ -274,12 +312,17 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
   const hasErrors = computed(() => issues.value.some((i) => i.level === 'error'))
 
   /** Writes `projects.json`. Resolves with the outcome; a rejected save leaves the drafts as they are. */
-  async function save(): Promise<SaveOutcome | null> {
+  async function save(order?: string[]): Promise<SaveOutcome | null> {
+    // A validate still in flight must not overwrite the issues the save returns.
+    requests += 1
     saving.value = true
     error.value = null
     try {
       const outcome = await projectsSave(
-        drafts.value.map((d) => draftToProject(d).project),
+        (order
+          ? [...drafts.value].sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key))
+          : drafts.value
+        ).map((d) => draftToProject(d).project),
         setup.ticked,
       )
       saved.value = outcome
