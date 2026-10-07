@@ -1,0 +1,31 @@
+{
+  "cert": {
+    "chipDays": "TLS {n} ngày",
+    "chipUnchecked": "TLS ?",
+    "flag": {
+      "expired": "Hết hạn",
+      "untrusted": "Không tin cậy",
+      "mismatch": "Sai tên"
+    },
+    "detail": {
+      "expires": "Còn {n} ngày | Còn {n} ngày",
+      "expiredAgo": "Hết hạn {n} ngày trước | Hết hạn {n} ngày trước",
+      "expiredToday": "Hết hạn hôm nay",
+      "untrusted": "Mac này không tin chứng chỉ",
+      "untrustedSub": "tự ký hoặc nhà cấp không rõ",
+      "mismatch": "Không hợp lệ cho {host}",
+      "mismatchSub": "chứng chỉ cấp cho tên khác",
+      "joinUntrusted": "không tin cậy",
+      "joinMismatch": "sai tên",
+      "unchecked": "Chưa kiểm tra",
+      "reason": {
+        "dns": "không có phản hồi DNS",
+        "no_route": "không có đường tới site",
+        "refused": "kết nối bị từ chối",
+        "timeout": "quá thời gian",
+        "tls": "không phải TLS",
+        "other": "không có phản hồi"
+      }
+    }
+  }
+}
