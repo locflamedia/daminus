@@ -1,4 +1,4 @@
-// The project sheet (board 05): which project is being edited and what happens when it is
+// The project sheet: which project is being edited and what happens when it is
 // saved. The sheet itself is drawn once, by `App.vue`; any screen opens it with `open()`.
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
@@ -15,6 +15,11 @@ export interface SheetRequest {
   mode: 'setup' | 'saved'
   /** `setup` mode: receives the edited draft. */
   onSave?: (draft: DraftProject) => void
+  /**
+   * `setup` mode: "Remove from setup" drops the suggestion; the button exists only when this
+   * does. A saved project is removed from `projects.json` by the sheet itself.
+   */
+  onRemove?: () => void
 }
 
 export const useProjectSheetStore = defineStore('project-sheet', () => {

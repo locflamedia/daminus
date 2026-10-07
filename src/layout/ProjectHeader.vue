@@ -3,7 +3,11 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import type { Level } from '@/api'
+import { draftFromProject } from '@/lib/setup-model'
 import { useViewportWidth } from '@/lib/viewport'
+import { useProjectSheetStore } from '@/stores/project-sheet'
+import { useProjectsStore } from '@/stores/projects'
+import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiMenu from '@/ui/UiMenu.vue'
 import ProjectTile from './ProjectTile.vue'
@@ -24,6 +28,14 @@ const props = defineProps<{
 const { t } = useI18n()
 const router = useRouter()
 const dots = computed(() => props.tabLevels ?? {})
+
+// "Edit" opens the project sheet on the saved project; it waits for `projects.json` to be read.
+const projects = useProjectsStore()
+const sheet = useProjectSheetStore()
+const saved = computed(() => projects.details.find((p) => p.id === props.id))
+function edit() {
+  if (saved.value) sheet.open({ draft: draftFromProject(saved.value), mode: 'saved' })
+}
 
 // "Tabs become a menu under 960 in project pages" (board "Narrow window"): the same tabs, in
 // a menu opened from a button that names the current one.
@@ -113,6 +125,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         />
       </RouterLink>
     </div>
+    <UiButton v-if="saved" icon="edit" @click="edit">{{ t('projectSheet.editButton') }}</UiButton>
     <slot name="actions" />
   </header>
 </template>

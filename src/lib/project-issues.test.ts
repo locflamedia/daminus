@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Project, ProjectIssue } from '@/api'
-import { issueMessage } from './project-issues'
+import { i18n } from '@/i18n'
+import { issueMessage, issueSentence } from './project-issues'
 
 const project: Project = {
   id: 'tiemtra',
@@ -51,5 +52,51 @@ describe('issueMessage', () => {
     expect(issueMessage(issue({ kind: 'id' }, { kind: 'replaces_existing' })).key).toBe(
       'projectSheet.issues.idReplaces',
     )
+  })
+})
+
+describe('issueSentence and the messages', () => {
+  const codes: ProjectIssue['code'][] = [
+    { kind: 'empty' },
+    { kind: 'bad_id' },
+    { kind: 'duplicate_id' },
+    { kind: 'replaces_existing' },
+    { kind: 'url_invalid' },
+    { kind: 'url_duplicate' },
+    { kind: 'url_local_only', warning: 'loopback' },
+    { kind: 'url_local_only', warning: 'private_network' },
+    { kind: 'url_local_only', warning: 'link_local' },
+    { kind: 'component_duplicate' },
+    { kind: 'unknown_host' },
+  ]
+  const fields: ProjectIssue['field'][] = [
+    { kind: 'id' },
+    { kind: 'name' },
+    { kind: 'project' },
+    { kind: 'component', index: 0 },
+  ]
+
+  it('has a sentence in both languages for every code', () => {
+    for (const locale of ['en', 'vi'] as const) {
+      const t = (key: string, params: Record<string, string | number>) =>
+        i18n.global.t(key, params, { locale })
+      for (const code of codes) {
+        for (const field of fields) {
+          const key = issueMessage(issue(field, code)).key
+          expect(i18n.global.te(key, locale), `${locale} ${key}`).toBe(true)
+          expect(issueSentence(issue(field, code), project, t)).not.toBe(key)
+        }
+      }
+    }
+  })
+
+  it('fills in the host of the part', () => {
+    const t = (key: string, params: Record<string, string | number>) => i18n.global.t(key, params)
+    const text = issueSentence(
+      issue({ kind: 'component', index: 0 }, { kind: 'unknown_host' }),
+      project,
+      t,
+    )
+    expect(text).toBe('vps-old is not in ~/.ssh/config, so this part can’t be scanned until it is.')
   })
 })

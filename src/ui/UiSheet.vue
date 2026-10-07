@@ -33,6 +33,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{ close: [] }>()
 defineSlots<{
+  /** Replaces the whole header (a sheet with its own tile and chips); gets the title's id. */
+  header?: (props: { titleId: string; close: () => void }) => unknown
   default?: () => unknown
   'footer-start'?: () => unknown
   'footer-end'?: () => unknown
@@ -61,18 +63,20 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
         :aria-labelledby="titleId"
       >
         <div class="card">
-          <header class="head">
-            <h2 :id="titleId" class="title">{{ title }}</h2>
-            <span v-if="context" class="context">{{ context }}</span>
-            <button
-              type="button"
-              class="close"
-              :aria-label="closeLabel ?? t('ui.close')"
-              @click="emit('close')"
-            >
-              <UiIcon name="close" :size="14" />
-            </button>
-          </header>
+          <slot name="header" :title-id="titleId" :close="() => emit('close')">
+            <header class="head">
+              <h2 :id="titleId" class="title">{{ title }}</h2>
+              <span v-if="context" class="context">{{ context }}</span>
+              <button
+                type="button"
+                class="close"
+                :aria-label="closeLabel ?? t('ui.close')"
+                @click="emit('close')"
+              >
+                <UiIcon name="close" :size="14" />
+              </button>
+            </header>
+          </slot>
           <div class="body"><slot /></div>
           <footer v-if="hasFooter" class="foot">
             <slot name="footer-start" />

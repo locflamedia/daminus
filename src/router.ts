@@ -58,6 +58,11 @@ export const routes: RouteRecordRaw[] = [
           component: () => import('@/features/dev/gallery/GalleryView.vue'),
           meta: { bare: true },
         } satisfies RouteRecordRaw,
+        {
+          path: '/dev/sheet',
+          name: 'dev-sheet',
+          component: () => import('@/features/project-sheet/DevSheetView.vue'),
+        } satisfies RouteRecordRaw,
       ]
     : []),
   { path: '/:rest(.*)*', redirect: '/' },

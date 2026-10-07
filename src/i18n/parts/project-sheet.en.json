@@ -1,0 +1,163 @@
+{
+  "projectSheet": {
+    "editButton": "Edit",
+    "close": "Close",
+    "title": { "edit": "Edit project", "new": "New project" },
+    "header": {
+      "parts": "1 part | {n} parts",
+      "servers": "1 server | {n} servers",
+      "empty": "No parts yet",
+      "context": "{parts} on {servers}",
+      "lastScan": "last scan {when}",
+      "replaces": "Already saved · Save replaces it"
+    },
+    "name": { "label": "Name" },
+    "id": {
+      "tag": "id",
+      "label": "Id",
+      "edit": "Edit the id",
+      "hint": "Lowercase letters, digits and dashes. Fixed after the first save."
+    },
+    "colour": {
+      "label": "Colour",
+      "group": "Project colour",
+      "names": {
+        "blue": "Blue",
+        "lilac": "Lilac",
+        "rose": "Rose",
+        "amber": "Amber",
+        "green": "Green",
+        "teal": "Teal",
+        "coral": "Coral",
+        "slate": "Slate"
+      }
+    },
+    "urls": {
+      "label": "URLs to check",
+      "note": "Checked from this Mac, not the server",
+      "add": "Add URL",
+      "remove": "Remove this URL",
+      "row": "URL {n}",
+      "placeholder": "https://"
+    },
+    "probe": {
+      "checking": "Checking…",
+      "badStatus": "Answered {status}",
+      "tls": "TLS {days}",
+      "tlsExpired": "TLS expired {days} ago",
+      "tlsTitle": "Days left on the certificate",
+      "failure": {
+        "dns": { "title": "Can’t resolve", "why": "no DNS record" },
+        "no_route": { "title": "No route", "why": "the host can’t be reached from here" },
+        "refused": { "title": "Refused", "why": "nothing is listening there" },
+        "timeout": { "title": "Timed out", "why": "no answer in time" },
+        "tls": { "title": "Certificate problem", "why": "the TLS handshake failed" },
+        "redirects": { "title": "Too many redirects", "why": "it keeps sending you elsewhere" },
+        "invalid": { "title": "Invalid address", "why": "it can’t be fetched" },
+        "other": { "title": "Couldn’t check", "why": "the request failed" }
+      }
+    },
+    "parts": {
+      "label": "Parts",
+      "note": "Drag to reorder · role decides which checks run",
+      "add": "Add part",
+      "suggestions": "Suggestions come from the last discover on these hosts.",
+      "drop": "Drop a part here, or add one below",
+      "list": "Parts of the project",
+      "handle": "Reorder {name}",
+      "handleHelp": "Space picks it up, arrows move it, Space puts it down.",
+      "moved": "{name} moved to position {n} of {total}",
+      "grabbed": "{name} picked up, position {n} of {total}",
+      "role": "Role of {name}",
+      "host": "Server of {name}",
+      "more": "More for {name}",
+      "moveUp": "Move up",
+      "moveDown": "Move down",
+      "remove": "Remove part",
+      "unnamed": "new part",
+      "absPath": "Use an absolute path, starting with /",
+      "unknownHost": "not in ssh config",
+      "hostPlaceholder": "server",
+      "kind": { "path": "folder", "compose": "compose", "pm2": "pm2" },
+      "kindMenu": {
+        "folder": { "label": "Folder path" },
+        "compose": { "label": "Compose project", "hint": "{n} found" },
+        "pm2": { "label": "PM2 app", "hint": "{n} found" },
+        "database": { "label": "Database", "hint": "MySQL, Postgres" },
+        "nginx": { "label": "nginx site", "hint": "by server_name" }
+      },
+      "menuLabel": "Add a part",
+      "field": {
+        "path": "/var/www/site",
+        "compose": "compose project",
+        "pm2": "app name",
+        "name": "Name of {kind}"
+      },
+      "suggest": {
+        "title": "{kind} on {host}",
+        "kind": { "compose": "compose", "pm2": "pm2", "path": "nginx" },
+        "taken": "in this project",
+        "empty": "Nothing found here: type it.",
+        "pm2": "{status} · 1 instance | {status} · {n} instances",
+        "compose": "{n} of {total} up",
+        "site": "{text}"
+      },
+      "state": {
+        "pm2": "{status} · 1 instance | {status} · {n} instances",
+        "compose": "{running} of {total} services up"
+      },
+      "expand": "Show the database details",
+      "collapse": "Hide the database details"
+    },
+    "db": {
+      "engine": { "mysql": "MySQL", "postgres": "PostgreSQL" },
+      "engineLabel": "Database engine",
+      "database": "Database",
+      "env": ".env on the server",
+      "envPath": "/srv/app/.env",
+      "container": "Container",
+      "optional": "optional",
+      "never": "Values are read on the server at scan time and never leave it."
+    },
+    "footer": {
+      "remove": "Remove project",
+      "removeSetup": "Remove from setup",
+      "undoNote": "Undo for 8 s after",
+      "unsaved": "no unsaved changes | 1 unsaved change | {n} unsaved changes",
+      "errors": "{n} error to fix | {n} errors to fix",
+      "cancel": "Cancel",
+      "save": "Save",
+      "saveWhy": "Fix the errors first. ⌘S jumps to the first one.",
+      "leftOut": "{n} unfinished part isn’t saved | {n} unfinished parts aren’t saved"
+    },
+    "confirm": {
+      "title": "Discard your changes?",
+      "body": "1 unsaved change will be lost. | {n} unsaved changes will be lost.",
+      "keep": "Keep editing",
+      "discard": "Discard"
+    },
+    "toast": {
+      "saved": "Saved {id}",
+      "savedWarn": "Saved {id} with 1 warning | Saved {id} with {n} warnings",
+      "removed": "Removed {id}",
+      "undo": "Undo",
+      "restored": "Restored {id}"
+    },
+    "error": { "save": "Couldn’t save", "remove": "Couldn’t remove", "undo": "Couldn’t restore" },
+    "issues": {
+      "idEmpty": "Give the project an id.",
+      "idBad": "Use lowercase letters, digits and dashes.",
+      "idDuplicate": "Another project in this setup uses {id}.",
+      "idReplaces": "{id} is already saved; Save replaces it.",
+      "nameEmpty": "Name can’t be empty.",
+      "nothingToCheck": "Nothing to check. Add a URL or a part.",
+      "urlInvalid": "Only http:// and https:// addresses can be checked.",
+      "urlDuplicate": "This URL is already in the list.",
+      "urlLoopback": "Points at this Mac. The check tests your Mac, not the server, so a site that is down can still look fine.",
+      "urlPrivate": "Private network. Only reachable from where you are now (office, VPN); away from it this shows as down.",
+      "urlLinkLocal": "Link-local address. It only answers on this local link and says nothing about the site.",
+      "partDuplicate": "This part is already added.",
+      "partUnknownHost": "{host} is not in ~/.ssh/config, so this part can’t be scanned until it is."
+    }
+  }
+}

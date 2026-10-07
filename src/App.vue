@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
+import ProjectSheet from '@/features/project-sheet/ProjectSheet.vue'
 import AppWindow from '@/layout/AppWindow.vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
@@ -38,5 +39,6 @@ onBeforeUnmount(() => scan.dispose())
   </AppWindow>
   <component :is="DevSwitch" v-if="DevSwitch && route.meta.bare !== true" />
   <component :is="DevTrafficLights" v-if="DevTrafficLights && route.meta.bare !== true" />
+  <ProjectSheet />
   <UiToastHost />
 </template>

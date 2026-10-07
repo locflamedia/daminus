@@ -164,7 +164,7 @@ export function emptyListing(cause: 'no_config' | 'no_usable_hosts'): HostListin
         cause === 'no_usable_hosts'
           ? [
               { pattern: '*', reason: 'wildcard', file: '~/.ssh/config', line: 1 },
-              { pattern: 'host *.corp', reason: 'match', file: '~/.ssh/config', line: 6 },
+              { pattern: 'Match host *.corp', reason: 'match', file: '~/.ssh/config', line: 6 },
               { pattern: 'bastion', reason: 'no_host_name', file: 'config.d/jump', line: 2 },
               { pattern: 'my server', reason: 'invalid_alias', file: '~/.ssh/config', line: 19 },
             ]

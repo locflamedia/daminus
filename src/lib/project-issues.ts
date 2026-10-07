@@ -59,3 +59,13 @@ export function issueMessage(issue: ProjectIssue, project?: Project): IssueMessa
       return { key: base + 'partUnknownHost', params: { host } }
   }
 }
+
+/** The sentence of an issue, for a toast or a list: `t` is the translator of the caller. */
+export function issueSentence(
+  issue: ProjectIssue,
+  project: Project | undefined,
+  t: (key: string, params: Record<string, string | number>) => string,
+): string {
+  const message = issueMessage(issue, project)
+  return t(message.key, message.params)
+}
