@@ -446,6 +446,8 @@ describe('token usage', () => {
     '--frame-pad',
     '--cursor-top',
     '--cursor-bottom',
+    // The side padding of the window's main column, which a setup footer reaches out to.
+    '--main-pad',
   ])
 
   it('only references tokens that are defined', () => {

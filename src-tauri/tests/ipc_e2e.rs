@@ -13,6 +13,7 @@ use daminus_core::domain::error::ErrorCode;
 use daminus_core::domain::project::ProjectsFile;
 use daminus_core::probe::fake::FakeProbe;
 use daminus_core::scan::{ScanEvent, ScanEventBody, ScanScope};
+use daminus_core::ssh::SshTools;
 use daminus_core::ssh::fake::{FakeHost, FakeTransport, fixture_run};
 use daminus_core::store::FsStore;
 use serde_json::json;
@@ -48,7 +49,13 @@ fn rig(transport: FakeTransport) -> Rig {
     let dir = TempDir::new().unwrap();
     let store = FsStore::new(dir.path());
     store.save_projects(&projects(), None).unwrap();
-    let (core, rx) = AppCore::new(Arc::new(transport), Arc::new(FakeProbe::new()), store);
+    let (core, events) = AppCore::new(
+        Arc::new(transport),
+        SshTools::new(),
+        Arc::new(FakeProbe::new()),
+        store,
+    );
+    let rx = events.scan;
     let events = Arc::new(Mutex::new(Vec::new()));
     let (tx, ended) = oneshot::channel();
     let mut tx = Some(tx);
@@ -175,7 +182,13 @@ async fn shutdown_cancels_and_kills_ssh() {
     let dir = TempDir::new().unwrap();
     let store = FsStore::new(dir.path());
     store.save_projects(&projects(), None).unwrap();
-    let (core, mut rx) = AppCore::new(transport.clone(), Arc::new(FakeProbe::new()), store);
+    let (core, events) = AppCore::new(
+        transport.clone(),
+        SshTools::new(),
+        Arc::new(FakeProbe::new()),
+        store,
+    );
+    let mut rx = events.scan;
     core.scan_start(&ScanScope::default()).unwrap();
     tokio::time::sleep(Duration::from_millis(50)).await;
     core.shutdown();
@@ -220,11 +233,24 @@ mod ipc {
             .invoke_handler(daminus_app::handler())
             .build(mock_context(noop_assets()))
             .unwrap();
-        let (core, rx) = AppCore::new(Arc::new(transport), Arc::new(FakeProbe::new()), store);
+        let ssh_config = dir.path().join("ssh_config");
+        std::fs::write(
+            &ssh_config,
+            "Host vps-a\n  HostName 203.0.113.14\n  User deploy\nHost *\n  ServerAliveInterval 30\n",
+        )
+        .unwrap();
+        let (core, events) = AppCore::new(
+            Arc::new(transport),
+            SshTools::new()
+                .with_config(&ssh_config)
+                .with_env([("HOME", dir.path().as_os_str())]),
+            Arc::new(FakeProbe::new().status("https://shop.example", 200, 42.0)),
+            store,
+        );
         app.manage(core);
         // `forward_events` spawns on Tauri's runtime.
         let handle = app.handle().clone();
-        tauri::async_runtime::block_on(async move { daminus_app::forward_events(&handle, rx) });
+        tauri::async_runtime::block_on(async move { daminus_app::forward_events(&handle, events) });
         let (tx, events) = mpsc::channel();
         app.listen(SCAN_EVENT, move |e| {
             let _ = tx.send(serde_json::from_str(e.payload()).unwrap());
@@ -361,5 +387,122 @@ mod ipc {
             json!("cancelled")
         );
         assert_eq!(app.invoke("scan_stop", json!({})).unwrap(), json!(false));
+    }
+
+    #[test]
+    fn hosts_list_gives_the_hosts_and_what_was_left_out() {
+        let app = mock_app(FakeTransport::new());
+        let got = app.invoke("hosts_list", json!({})).unwrap();
+        assert_eq!(got["list"]["config_found"], json!(true));
+        assert_eq!(got["list"]["hosts"][0]["alias"], json!("vps-a"));
+        assert_eq!(got["list"]["skipped"][0]["reason"], json!("wildcard"));
+        assert_eq!(got["entries"][0]["resolved"]["user"], json!("deploy"));
+    }
+
+    #[test]
+    fn setup_start_without_hosts_rejects_with_nothing_to_scan() {
+        let app = mock_app(FakeTransport::new());
+        let err = app
+            .invoke("setup_start", json!({ "step": "test", "hosts": [] }))
+            .unwrap_err();
+        assert_eq!(err["code"]["kind"], json!("nothing_to_scan"));
+        assert_eq!(app.invoke("setup_status", json!({})).unwrap(), json!(null));
+        assert_eq!(app.invoke("setup_stop", json!({})).unwrap(), json!(false));
+        assert_eq!(
+            app.invoke("setup_result", json!({})).unwrap()["hosts"],
+            json!([])
+        );
+    }
+
+    fn sheet_project(id: &str, urls: &[&str]) -> serde_json::Value {
+        json!({
+            "id": id, "name": id, "urls": urls,
+            "components": [{"role": "fe", "host": "vps-a", "kind": "path", "path": "/srv/x"}]
+        })
+    }
+
+    #[test]
+    fn projects_save_checks_again_and_remove_takes_a_project_out() {
+        let app = mock_app(FakeTransport::new());
+        // An error stops the write, and says which field.
+        let rejected = app
+            .invoke(
+                "projects_save",
+                json!({ "projects": [sheet_project("Tiem Tra!", &[])], "hosts": [] }),
+            )
+            .unwrap();
+        assert_eq!(rejected["status"], json!("rejected"));
+        assert_eq!(rejected["issues"][0]["code"]["kind"], json!("bad_id"));
+        assert_eq!(
+            app.invoke("projects_list", json!({}))
+                .unwrap()
+                .as_array()
+                .map(Vec::len),
+            Some(1)
+        );
+
+        // A name that could be read as an option never gets as far as the file.
+        let bad = json!({
+            "id": "x", "name": "x", "urls": [],
+            "components": [{"role": "fe", "host": "vps-a", "kind": "path", "path": "relative"}]
+        });
+        let err = app
+            .invoke("projects_validate", json!({ "projects": [bad] }))
+            .unwrap_err();
+        assert_eq!(err["code"]["kind"], json!("schema_invalid"));
+
+        let saved = app
+            .invoke(
+                "projects_save",
+                json!({ "projects": [sheet_project("blog", &["http://localhost:3000"])], "hosts": ["vps-a"] }),
+            )
+            .unwrap();
+        assert_eq!(saved["status"], json!("saved"));
+        assert_eq!(saved["projects"], json!(2));
+        assert_eq!(saved["issues"][0]["code"]["kind"], json!("url_local_only"));
+
+        assert_eq!(
+            app.invoke("projects_remove", json!({ "id": "blog" }))
+                .unwrap(),
+            json!(true)
+        );
+        assert_eq!(
+            app.invoke("projects_remove", json!({ "id": "blog" }))
+                .unwrap(),
+            json!(false)
+        );
+    }
+
+    #[test]
+    fn url_check_answers_from_the_probe_and_refuses_other_schemes() {
+        let app = mock_app(FakeTransport::new());
+        let ok = app
+            .invoke("url_check", json!({ "url": "https://shop.example" }))
+            .unwrap();
+        assert_eq!(ok["status"], json!(200));
+        assert_eq!(ok["failure"], json!(null));
+        let bad = app
+            .invoke("url_check", json!({ "url": "ftp://shop.example" }))
+            .unwrap();
+        assert_eq!(bad["failure"], json!("invalid"));
+    }
+
+    #[test]
+    fn ssh_environment_has_the_agent_and_termius_but_no_key_material() {
+        let app = mock_app(FakeTransport::new());
+        let env = app.invoke("ssh_environment", json!({})).unwrap();
+        assert!(env["agent"].is_string());
+        assert!(env["keys"].is_u64());
+        assert!(env["termius_installed"].is_boolean());
+        assert_eq!(env.as_object().map(serde_json::Map::len), Some(3));
+    }
+
+    #[test]
+    fn reveal_ssh_dir_without_a_ssh_folder_is_an_io_error_and_creates_nothing() {
+        let app = mock_app(FakeTransport::new());
+        let err = app.invoke("reveal_ssh_dir", json!({})).unwrap_err();
+        assert_eq!(err["code"]["kind"], json!("io"));
+        assert_eq!(err["code"]["path"], json!("~/.ssh"));
+        assert!(!app._dir.path().join(".ssh").exists());
     }
 }

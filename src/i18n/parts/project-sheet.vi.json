@@ -1,0 +1,167 @@
+{
+  "projectSheet": {
+    "editButton": "Sửa",
+    "close": "Đóng",
+    "title": { "edit": "Sửa dự án", "new": "Dự án mới" },
+    "header": {
+      "parts": "{n} phần | {n} phần",
+      "servers": "{n} máy chủ | {n} máy chủ",
+      "empty": "Chưa có phần nào",
+      "context": "{parts} trên {servers}",
+      "lastScan": "lần quét gần nhất {when}",
+      "replaces": "Đã lưu · Lưu sẽ thay thế"
+    },
+    "name": { "label": "Tên" },
+    "id": {
+      "tag": "id",
+      "label": "Id",
+      "edit": "Sửa id",
+      "hint": "Chữ thường, chữ số và dấu gạch ngang. Cố định sau lần lưu đầu tiên."
+    },
+    "colour": {
+      "label": "Màu",
+      "group": "Màu dự án",
+      "names": {
+        "blue": "Xanh dương",
+        "lilac": "Tím nhạt",
+        "rose": "Hồng",
+        "amber": "Hổ phách",
+        "green": "Xanh lá",
+        "teal": "Xanh ngọc",
+        "coral": "San hô",
+        "slate": "Xám đá"
+      }
+    },
+    "urls": {
+      "label": "URL cần kiểm tra",
+      "note": "Kiểm tra từ máy Mac này, không phải từ máy chủ",
+      "add": "Thêm URL",
+      "remove": "Bỏ URL này",
+      "row": "URL {n}",
+      "placeholder": "https://"
+    },
+    "probe": {
+      "checking": "Đang kiểm tra…",
+      "badStatus": "Trả về {status}",
+      "tls": "TLS {days}",
+      "tlsExpired": "TLS đã hết hạn {days} trước",
+      "tlsTitle": "Số ngày còn lại của chứng chỉ",
+      "failure": {
+        "dns": { "title": "Không phân giải được", "why": "không có bản ghi DNS" },
+        "no_route": { "title": "Không có đường đi", "why": "không tới được máy này từ đây" },
+        "refused": { "title": "Bị từ chối", "why": "không có gì đang lắng nghe ở đó" },
+        "timeout": { "title": "Hết thời gian chờ", "why": "không trả lời kịp" },
+        "tls": { "title": "Lỗi chứng chỉ", "why": "bắt tay TLS thất bại" },
+        "redirects": { "title": "Chuyển hướng quá nhiều", "why": "nó cứ đẩy bạn đi chỗ khác" },
+        "invalid": { "title": "Địa chỉ không hợp lệ", "why": "không thể truy cập" },
+        "other": { "title": "Không kiểm tra được", "why": "yêu cầu thất bại" }
+      }
+    },
+    "parts": {
+      "label": "Các phần",
+      "note": "Kéo để sắp xếp · vai trò quyết định kiểm tra nào được chạy",
+      "add": "Thêm phần",
+      "suggestions": "Gợi ý lấy từ lần khám phá gần nhất trên các host này.",
+      "drop": "Thả một phần vào đây, hoặc thêm ở bên dưới",
+      "list": "Các phần của dự án",
+      "handle": "Sắp xếp {name}",
+      "handleHelp": "Nhấn Space để nhấc lên, dùng phím mũi tên để di chuyển, nhấn Space để đặt xuống.",
+      "moved": "{name} đã chuyển tới vị trí {n} trên {total}",
+      "grabbed": "Đã nhấc {name}, vị trí {n} trên {total}",
+      "role": "Vai trò của {name}",
+      "host": "Máy chủ của {name}",
+      "more": "Thêm cho {name}",
+      "moveUp": "Chuyển lên",
+      "moveDown": "Chuyển xuống",
+      "remove": "Bỏ phần này",
+      "unnamed": "phần mới",
+      "absPath": "Dùng đường dẫn tuyệt đối, bắt đầu bằng /",
+      "unknownHost": "không có trong ssh config",
+      "hostPlaceholder": "máy chủ",
+      "kind": { "path": "thư mục", "compose": "compose", "pm2": "pm2" },
+      "kindMenu": {
+        "folder": { "label": "Đường dẫn thư mục", "hint": "Laravel, PHP, tĩnh" },
+        "compose": { "label": "Dự án Compose", "hint": "tìm thấy {n}" },
+        "pm2": { "label": "Ứng dụng PM2", "hint": "tìm thấy {n}" },
+        "database": { "label": "Cơ sở dữ liệu", "hint": "MySQL, Postgres" },
+        "nginx": { "label": "Site nginx", "hint": "theo server_name" }
+      },
+      "menuLabel": "Thêm một phần",
+      "field": {
+        "path": "/var/www/site",
+        "compose": "dự án compose",
+        "pm2": "tên ứng dụng",
+        "name": "Tên {kind}"
+      },
+      "suggest": {
+        "title": "{kind} trên {host}",
+        "kind": { "compose": "compose", "pm2": "pm2", "path": "nginx" },
+        "taken": "đã có trong dự án",
+        "empty": "Không tìm thấy gì ở đây: hãy tự gõ.",
+        "pm2": "{status} · {n} tiến trình | {status} · {n} tiến trình",
+        "compose": "{n} trên {total} đang chạy",
+        "site": "{text}"
+      },
+      "state": {
+        "pm2": "{status} · {n} tiến trình | {status} · {n} tiến trình",
+        "compose": "{running}/{total} dịch vụ đang chạy"
+      },
+      "expand": "Hiện chi tiết cơ sở dữ liệu",
+      "collapse": "Ẩn chi tiết cơ sở dữ liệu"
+    },
+    "db": {
+      "engine": { "mysql": "MySQL", "postgres": "PostgreSQL" },
+      "engineLabel": "Loại cơ sở dữ liệu",
+      "database": "Cơ sở dữ liệu",
+      "env": ".env trên máy chủ",
+      "envPath": "/srv/app/.env",
+      "container": "Container",
+      "optional": "tùy chọn",
+      "never": "Giá trị được đọc trên máy chủ lúc quét và không bao giờ rời khỏi đó."
+    },
+    "footer": {
+      "remove": "Xóa dự án",
+      "removeSetup": "Bỏ khỏi thiết lập",
+      "undoNote": "Hoàn tác trong 8 giây sau đó",
+      "unsaved": "không có thay đổi chưa lưu | 1 thay đổi chưa lưu | {n} thay đổi chưa lưu",
+      "errors": "{n} lỗi cần sửa | {n} lỗi cần sửa",
+      "cancel": "Hủy",
+      "save": "Lưu",
+      "saveWhy": "Hãy sửa các lỗi trước. ⌘S nhảy tới lỗi đầu tiên.",
+      "leftOut": "{n} phần chưa điền xong sẽ không được lưu | {n} phần chưa điền xong sẽ không được lưu"
+    },
+    "confirm": {
+      "title": "Bỏ các thay đổi?",
+      "body": "1 thay đổi chưa lưu sẽ mất. | {n} thay đổi chưa lưu sẽ mất.",
+      "keep": "Tiếp tục sửa",
+      "discard": "Bỏ thay đổi"
+    },
+    "toast": {
+      "saved": "Đã lưu {id}",
+      "savedWarn": "Đã lưu {id} với 1 cảnh báo | Đã lưu {id} với {n} cảnh báo",
+      "removed": "Đã xóa {id}",
+      "undo": "Hoàn tác",
+      "restored": "Đã khôi phục {id}"
+    },
+    "error": {
+      "save": "Không lưu được",
+      "remove": "Không xóa được",
+      "undo": "Không khôi phục được"
+    },
+    "issues": {
+      "idEmpty": "Hãy đặt id cho dự án.",
+      "idBad": "Dùng chữ thường, chữ số và dấu gạch ngang.",
+      "idDuplicate": "Một dự án khác trong thiết lập này đã dùng {id}.",
+      "idReplaces": "{id} đã được lưu; Lưu sẽ thay thế nó.",
+      "nameEmpty": "Tên không được để trống.",
+      "nothingToCheck": "Không có gì để kiểm tra. Hãy thêm một URL hoặc một phần.",
+      "urlInvalid": "Chỉ kiểm tra được địa chỉ http:// và https://.",
+      "urlDuplicate": "URL này đã có trong danh sách.",
+      "urlLoopback": "Trỏ về chính máy Mac này. Phép kiểm tra thử máy Mac của bạn chứ không phải máy chủ, nên một site đang sập vẫn có thể trông bình thường.",
+      "urlPrivate": "Mạng riêng. Chỉ truy cập được từ nơi bạn đang ở (văn phòng, VPN); rời khỏi đó thì sẽ hiện là ngừng hoạt động.",
+      "urlLinkLocal": "Địa chỉ link-local. Nó chỉ trả lời trên đường nối cục bộ này và không nói gì về site.",
+      "partDuplicate": "Phần này đã được thêm rồi.",
+      "partUnknownHost": "{host} không có trong ~/.ssh/config, nên phần này chưa quét được cho tới khi có."
+    }
+  }
+}

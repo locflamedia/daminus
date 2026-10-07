@@ -1,0 +1,156 @@
+{
+  "setupDiscover": {
+    "title": "Những gì đang chạy trên máy chủ của bạn",
+    "subtitle": "Website, container, ứng dụng Node và cơ sở dữ liệu. Chip màu là dự án được gợi ý, ghép theo tên miền và tên thư mục.",
+    "chip": {
+      "found": "đã tìm thấy · {done}/{total} host",
+      "label": "Đã tìm thấy {n}, {done}/{total} host"
+    },
+    "hosts": {
+      "title": "Host",
+      "count": "{n} host",
+      "list": "Các host đang được đọc"
+    },
+    "lane": {
+      "found": "{n} mục",
+      "queued": "Đang chờ",
+      "via": "qua {host}",
+      "timeout": "Quá thời gian",
+      "unreachable": "Không kết nối được",
+      "authFailed": "Đăng nhập bị từ chối",
+      "hostKey": "Chưa chấp nhận host key",
+      "line": {
+        "nginx": "Đang đọc site nginx…",
+        "containers": "Đang kiểm tra container…",
+        "pm2": "Đang liệt kê ứng dụng pm2…",
+        "databases": "Đang tìm cơ sở dữ liệu…",
+        "ports": "Đang dò các cổng đang nghe…",
+        "env": "Đang tìm file .env…"
+      },
+      "source": {
+        "nginx": "site nginx",
+        "containers": "container",
+        "pm2": "ứng dụng pm2",
+        "databases": "cơ sở dữ liệu",
+        "ports": "cổng đang nghe",
+        "env": "đường dẫn .env"
+      },
+      "chipReading": "Đang đọc {source}",
+      "chipIncomplete": "Chưa đủ · {time}",
+      "chipTimeout": "Quá thời gian · {time}",
+      "chipUnreachable": "Không kết nối được · {time}",
+      "unread": "{n} nguồn chưa đọc được",
+      "live": "số đếm tăng dần khi có kết quả",
+      "aria": "{host}: {state}"
+    },
+    "counts": {
+      "label": "Tìm thấy trên {host}",
+      "sites": "site",
+      "compose": "compose",
+      "pm2": "ứng dụng pm2",
+      "databases": "cơ sở dữ liệu",
+      "env": ".env",
+      "ports": "cổng"
+    },
+    "details": {
+      "label": "Chi tiết",
+      "dropped": "{n} dòng bị bỏ vì không hợp lệ",
+      "envOne": "Đã liệt kê .env tại {path} nhưng không đọc được (tên DB sẽ hỏi ở bước 3)",
+      "envMany": "Đã liệt kê {n} file .env nhưng không đọc được (tên DB sẽ hỏi ở bước 3)",
+      "nothing": "Không có dòng nào bị bỏ, mọi file .env đã liệt kê đều đọc được",
+      "envTitle": "File .env không đọc được"
+    },
+    "readAgain": "Đọc lại",
+    "fix": {
+      "pm2Home": "pm2 của user {user}",
+      "pm2HomeAt": "pm2 tại {home}",
+      "pm2HomeBody": "không thể liệt kê ứng dụng của nó từ tài khoản này ({login}).",
+      "pm2HomeBodyNoLogin": "không thể liệt kê ứng dụng của nó từ tài khoản này.",
+      "pm2HomeAdd": "Thêm một host thứ hai trong ~/.ssh/config đăng nhập bằng {user}, rồi bấm Đọc lại.",
+      "pm2HomeAddAt": "Thêm một host thứ hai trong ~/.ssh/config đăng nhập bằng chủ của thư mục đó, rồi bấm Đọc lại.",
+      "docker_no_permission": {
+        "name": "Docker",
+        "body": "không có quyền, nên thiếu container và dự án compose."
+      },
+      "docker_stopped": {
+        "name": "Docker",
+        "body": "không chạy, nên thiếu container và dự án compose."
+      },
+      "pm2_missing": {
+        "name": "pm2",
+        "body": "không có trong PATH của tài khoản này, nên không liệt kê được ứng dụng của nó."
+      },
+      "nginx_no_permission": {
+        "name": "Cấu hình nginx",
+        "body": "không đọc được, nên có thể thiếu site đó."
+      }
+    },
+    "columns": {
+      "sites": "Website",
+      "sitesMeta": "nginx · {n}",
+      "apps": "Ứng dụng Node",
+      "appsMeta": "pm2 · {n}",
+      "boxes": "Container",
+      "boxesMeta": "compose · {n}",
+      "dbs": "Cơ sở dữ liệu",
+      "dbsMeta": "{n} · tìm thấy .env cho {k}",
+      "listening": "Cổng khác đang nghe",
+      "listeningMeta": "chưa khớp",
+      "empty": "Chưa tìm thấy gì",
+      "waiting": "Đang đọc…"
+    },
+    "find": {
+      "new": "Mới",
+      "unassigned": "Chưa gán",
+      "proxy": "proxy → {target}",
+      "php": "PHP · {path}",
+      "services": "{n} service",
+      "instances": "{n} instance",
+      "inContainer": "trong {name}",
+      "process": "tiến trình {name}",
+      "envFound": "có .env",
+      "stopped": "đã dừng"
+    },
+    "listening": {
+      "public": "công khai trên {host}",
+      "pill": "{proc} · {host}",
+      "bare": "{host}",
+      "none": "Mọi cổng đang nghe đều thuộc một mục đã tìm thấy.",
+      "note": "Giữ lại cho bước 3. Cổng cơ sở dữ liệu mở ra internet sẽ được cảnh báo lại trong lần quét bảo mật đầu tiên."
+    },
+    "pairs": {
+      "empty": "Cặp FE-BE sẽ hiện ở đây khi tên khớp giữa các host",
+      "be": "BE",
+      "fe": "FE",
+      "label": "{project}: back end trên {be}, front end trên {fe}"
+    },
+    "rail": {
+      "title": "Discover đọc gì",
+      "note": "Chỉ đọc cấu hình và danh sách tiến trình. File .env chỉ được tìm vị trí, không bao giờ mở ra."
+    },
+    "add": {
+      "title": "Còn thiếu gì không?",
+      "body": "Ứng dụng chạy bằng systemd hoặc cron không được liệt kê. Hãy thêm bằng đường dẫn thư mục.",
+      "button": "Thêm theo đường dẫn",
+      "host": "Host",
+      "path": "Đường dẫn thư mục",
+      "hint": "Đường dẫn tuyệt đối trên host đó.",
+      "submit": "Thêm",
+      "invalid": "Hãy dùng đường dẫn tuyệt đối, ví dụ /var/www/shop.",
+      "exists": "Thư mục này đã được thêm.",
+      "done": "Đã thêm {path} trên {host}",
+      "doneDetail": "Nó nằm trong mục Chưa thuộc dự án nào ở bước 3."
+    },
+    "foot": {
+      "hosts": "{done}/{total} host",
+      "elapsed": "{time} đến giờ",
+      "elapsedDone": "{time}",
+      "readOnly": "chỉ đọc",
+      "progress": "Host đã đọc",
+      "hint": "Bạn có thể tiếp tục ngay. Kết quả đến muộn sẽ vào bước sau.",
+      "hintWait": "Có thể tiếp tục khi host đầu tiên đã đọc xong.",
+      "groupPre": "Gom nhóm",
+      "groupPost": "mục"
+    }
+  }
+}

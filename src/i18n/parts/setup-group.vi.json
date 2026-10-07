@@ -1,0 +1,140 @@
+{
+  "setupGroup": {
+    "title": "Xác nhận các dự án",
+    "subtitle": "Được gom theo tên miền và tên thư mục. Đổi tên, đổi vai trò hoặc chuyển một thành phần sang dự án khác.",
+    "newProject": "Dự án mới",
+    "list": "Các dự án được gợi ý",
+    "card": {
+      "new": "Mới",
+      "servers": "{n} máy chủ | {n} máy chủ",
+      "actions": "Thao tác cho {name}",
+      "edit": "Sửa",
+      "remove": "Gỡ",
+      "expand": "Xem các thành phần của {name}",
+      "collapse": "Ẩn các thành phần của {name}",
+      "allOk": "chưa có thành phần | cả {n} thành phần đều ổn | cả {n} thành phần đều ổn",
+      "open": "Mở",
+      "dropHere": "Thả để thêm vào {name}"
+    },
+    "source": {
+      "path": "đường dẫn",
+      "pm2": "pm2",
+      "compose": "compose",
+      "container": "container",
+      "engine": "engine"
+    },
+    "live": {
+      "pm2": "{status} · {n} tiến trình | {status} · {n} tiến trình",
+      "composeUp": "{n} dịch vụ đang chạy | {n} dịch vụ đang chạy",
+      "composePart": "{up} trên {total} dịch vụ đang chạy",
+      "site": "site nginx",
+      "sitePhp": "site nginx · PHP",
+      "dbEnv": "Thấy .env · {engine}",
+      "dbEngine": "{engine}"
+    },
+    "pair": {
+      "beServes": "BE phục vụ {url}",
+      "fePort": "FE ở :{port}",
+      "dbSame": "DB cùng máy chủ",
+      "dbOn": "DB ở {host}"
+    },
+    "db": {
+      "needsName": "Cần tên",
+      "engine": "engine",
+      "on": "trên",
+      "container": "container",
+      "none": "không",
+      "noEnv": "Không thấy .env",
+      "chooseEnv": "Chọn .env",
+      "envPathLabel": "Đường dẫn tuyệt đối của file .env",
+      "envPathPlaceholder": "/var/www/app/.env",
+      "envPathBad": "Dùng đường dẫn tuyệt đối, bắt đầu bằng /",
+      "envPathUnchecked": "Daminus không mở file này; máy chủ kiểm tra đường dẫn khi quét.",
+      "envLabel": "File .env · tìm thấy {n}, chọn file ứng dụng này dùng",
+      "alsoFound": "Cũng tìm thấy",
+      "nameLabel": "Tên database · bắt buộc",
+      "namePlaceholder": "booking_prod",
+      "nameHelp": "Daminus không bao giờ đọc .env của bạn nên không biết tên này. Hãy gõ giá trị của DB_DATABASE.",
+      "nameSet": "Đã có tên",
+      "saveAllowedLead": "Vẫn lưu được.",
+      "saveAllowedBody": "{project} được lưu; thành phần database này tạm bị bỏ ra cho đến khi có tên, và dung lượng hiện Chưa thiết lập."
+    },
+    "replaces": {
+      "chip": "Đã lưu trước đó · Lưu sẽ thay thế",
+      "id": "id {id} trong projects.json",
+      "replaced": "Được thay",
+      "replacedBody": "tên, {urls}, {parts}",
+      "urls": "{n} URL | {n} URL",
+      "parts": "{n} thành phần | {n} thành phần",
+      "kept": "Được giữ",
+      "keptBody": "màu, ngưỡng, các quy tắc Đánh dấu là bình thường, lịch sử quét",
+      "keepBoth": "Giữ cả hai",
+      "hint": "Giữ cả hai sẽ đổi gợi ý này thành {id} và huy hiệu biến mất. Thay thế là việc bình thường khi chạy thiết lập lần thứ hai nên không bao giờ chặn lưu."
+    },
+    "loose": {
+      "title": "Chưa thuộc dự án nào",
+      "titleCount": "Chưa thuộc dự án nào · {n}, theo máy chủ và loại",
+      "fine": "Để nguyên cũng được; chúng sẽ không bị quét.",
+      "empty": "Không còn gì sót lại. Mọi thứ tìm thấy đều thuộc một dự án.",
+      "add": "Thêm vào dự án",
+      "addTo": "Thêm {name} vào",
+      "newProject": "+ Dự án mới…",
+      "drag": "Kéo {name} thả vào một dự án",
+      "kind": {
+        "vhost": "Server block",
+        "compose": "Compose",
+        "pm2": "Ứng dụng pm2",
+        "db": "Máy chủ database",
+        "env": "File .env",
+        "path": "Thư mục"
+      },
+      "no_domain": "không có tên miền công khai",
+      "noSite": "{n} dịch vụ, không có site khớp | {n} dịch vụ, không có site khớp",
+      "runsFrom": "chạy từ {dir}",
+      "no_folder": "không rõ thư mục",
+      "container": "container {name}",
+      "process": "một tiến trình, không thuộc dự án compose",
+      "shared": ".env dùng chung cho nhiều thư mục dự án nên không được gợi ý cho dự án nào",
+      "by_hand": "thêm thủ công"
+    },
+    "preview": {
+      "file": "projects.json",
+      "tag": "Xem trước",
+      "path": "~/Library/Application Support/dev.daminus.app/projects.json",
+      "note": "JSON thuần. Bạn có thể sửa tay bất cứ lúc nào; Daminus nạp lại khi khởi động.",
+      "label": "Xem trước projects.json"
+    },
+    "check": {
+      "title": "Trước khi lưu",
+      "urls": "Mọi dự án đều có URL để kiểm tra uptime.",
+      "urlsMissing": "{n} dự án chưa có URL nên uptime không được kiểm tra. | {n} dự án chưa có URL nên uptime không được kiểm tra.",
+      "roles": "Front end và back end đã đặt ở nơi có cả hai.",
+      "rolesMissing": "{n} dự án chưa có thành phần front end hay back end. | {n} dự án chưa có thành phần front end hay back end.",
+      "databases": "Mọi database đều báo được dung lượng.",
+      "dbNoEnv": "{n} database chưa có .env. Không bắt buộc; dung lượng hiện Chưa thiết lập. | {n} database chưa có .env. Không bắt buộc; dung lượng hiện Chưa thiết lập.",
+      "dbNoName": "{n} database chưa có tên. Không bắt buộc; dung lượng hiện Chưa thiết lập. | {n} database chưa có tên. Không bắt buộc; dung lượng hiện Chưa thiết lập."
+    },
+    "foot": {
+      "projects": "{n} dự án | {n} dự án",
+      "parts": "{n} thành phần | {n} thành phần",
+      "servers": "{n} máy chủ | {n} máy chủ",
+      "hint": "Lần quét đầu tiên bắt đầu ngay sau khi lưu, khoảng 15 giây.",
+      "back": "Quay lại",
+      "save": "Lưu và quét lần đầu"
+    },
+    "result": {
+      "saved": "Đã lưu {n} dự án | Đã lưu {n} dự án",
+      "warnings": "{n} cảnh báo | {n} cảnh báo",
+      "savedWith": "{saved}, kèm {warnings}",
+      "rejected": "Chưa lưu: {n} điều cần sửa | Chưa lưu: {n} điều cần sửa",
+      "rejectedHint": "Chưa ghi gì cả. Hãy sửa các điều này rồi lưu lại.",
+      "failed": "Không ghi được projects.json"
+    },
+    "empty": {
+      "title": "Chưa có gì để xác nhận",
+      "text": "Quá trình khám phá không tìm thấy gì để gom trên các máy chủ này. Hãy quay lại chọn máy chủ khác, hoặc tự tạo một dự án.",
+      "back": "Quay lại bước khám phá"
+    },
+    "waiting": "Đang chờ các gợi ý"
+  }
+}

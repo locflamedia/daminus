@@ -21,7 +21,7 @@ async function start() {
   const mock = import.meta.env.DEV ? new URLSearchParams(location.search).get('mock') : null
   if (mock !== null) {
     const { installDevMock } = await import('./api/dev-mock')
-    installDevMock(mock)
+    installDevMock(mock, Number(new URLSearchParams(location.search).get('speed') ?? '1') || 1)
   }
   app.mount('#app')
 }

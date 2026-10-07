@@ -565,6 +565,15 @@ pub struct HostEntry {
     pub resolved: Option<ResolvedHost>,
 }
 
+/// The host list with what `ssh -G` says about each host, as the setup screens read it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct HostListing {
+    pub list: HostList,
+    /// One entry per listed host, in list order.
+    pub entries: Vec<HostEntry>,
+}
+
 /// Resolves every host of `list` (a few at a time), in list order.
 pub async fn resolve_all(tools: &SshTools, list: &HostList) -> Vec<HostEntry> {
     let mut out = Vec::with_capacity(list.hosts.len());

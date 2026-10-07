@@ -16,6 +16,14 @@ describe('UiButton', () => {
     expect(button.classes()).toEqual(expect.arrayContaining(['btn', 'btn-primary', 'btn-small']))
   })
 
+  it('has a 40 px size for the one action of a setup screen', () => {
+    const wrapper = mount(UiButton, {
+      props: { variant: 'primary', size: 'large' },
+      slots: { default: 'Discover 5 hosts' },
+    })
+    expect(wrapper.classes()).toContain('btn-large')
+  })
+
   it('defaults to the secondary variant at the default size', () => {
     const wrapper = mount(UiButton, { slots: { default: 'Open SSH' } })
     expect(wrapper.classes()).toContain('btn-secondary')

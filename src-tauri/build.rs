@@ -8,6 +8,17 @@ const COMMANDS: &[&str] = &[
     "report_latest",
     "projects_list",
     "reveal_config_dir",
+    "reveal_ssh_dir",
+    "hosts_list",
+    "ssh_environment",
+    "setup_start",
+    "setup_stop",
+    "setup_status",
+    "setup_result",
+    "projects_validate",
+    "projects_save",
+    "projects_remove",
+    "url_check",
 ];
 
 fn main() {

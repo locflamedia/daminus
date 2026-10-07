@@ -1,7 +1,7 @@
 // Projects and servers as the sidebar and the cards list them, taken from the latest
 // report's rollups. Sorting happens when a report arrives, so order holds during a scan.
 import { defineStore } from 'pinia'
-import { computed, shallowRef } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { type Project, type ProjectRollup, type ServerRollup, projectsList } from '@/api'
 import { diskPercent, issueCount, sortProjects, sortServers } from '@/lib/rollups'
 import { useReportStore } from './report'
@@ -13,11 +13,14 @@ export const useProjectsStore = defineStore('projects', () => {
   const servers = computed<ServerRollup[]>(() => sortServers(report.latest?.servers ?? []))
   /** The saved projects (name, colour, URLs): what the rollups do not carry. */
   const details = shallowRef<Project[]>([])
+  /** `projects.json` was read at least once: an empty `details` then means no project yet. */
+  const loaded = ref(false)
 
   /** Reads `projects.json` again; on failure the last read stays. */
   async function loadDetails() {
     try {
       details.value = await projectsList()
+      loaded.value = true
     } catch (e) {
       console.error(e)
     }
@@ -55,5 +58,17 @@ export const useProjectsStore = defineStore('projects', () => {
     return diskPercent(report.latest?.items ?? [], host)
   }
 
-  return { projects, servers, issues, details, loadDetails, color, domain, project, server, disk }
+  return {
+    projects,
+    servers,
+    issues,
+    details,
+    loaded,
+    loadDetails,
+    color,
+    domain,
+    project,
+    server,
+    disk,
+  }
 })

@@ -1,8 +1,11 @@
 // @vitest-environment happy-dom
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { i18n } from '@/i18n'
+import { useProjectSheetStore } from '@/stores/project-sheet'
+import { useProjectsStore } from '@/stores/projects'
 import ProjectHeader from './ProjectHeader.vue'
 
 let wrapper: VueWrapper | undefined
@@ -15,7 +18,11 @@ afterEach(() => {
   document.body.replaceChildren()
 })
 
+let pinia = createPinia()
+
 async function make(width: number) {
+  pinia = createPinia()
+  setActivePinia(pinia)
   Object.defineProperty(window, 'innerWidth', { configurable: true, value: width })
   const router = createRouter({
     history: createMemoryHistory(),
@@ -27,7 +34,7 @@ async function make(width: number) {
   await router.push('/p/kho-hang/disk')
   wrapper = mount(ProjectHeader, {
     props: { id: 'kho-hang', tab: 'disk', tabLevels: { disk: 'warn' } },
-    global: { plugins: [i18n, router] },
+    global: { plugins: [i18n, router, pinia] },
     attachTo: document.body,
   })
   return router
@@ -100,5 +107,29 @@ describe('ProjectHeader keys', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: '5' }))
     await new Promise((r) => setTimeout(r, 0))
     expect(router.currentRoute.value.params.tab).toBe('disk')
+  })
+})
+
+describe('ProjectHeader edit button', () => {
+  it('is hidden until projects.json was read, then opens the sheet on the saved project', async () => {
+    await make(1200)
+    expect(wrapper!.text()).not.toContain('Edit')
+    useProjectsStore().details = [
+      {
+        id: 'kho-hang',
+        name: 'Kho hàng',
+        color: '#4f6bed',
+        urls: ['https://kho.example'],
+        components: [{ role: 'be', host: 'vps-1', kind: 'path', path: '/srv/kho' }],
+      },
+    ]
+    await wrapper!.vm.$nextTick()
+    const edit = wrapper!.findAll('button').find((b) => b.text() === 'Edit')
+    expect(edit).toBeDefined()
+    await edit!.trigger('click')
+    const sheet = useProjectSheetStore()
+    expect(sheet.isOpen).toBe(true)
+    expect(sheet.request?.mode).toBe('saved')
+    expect(sheet.request?.draft).toMatchObject({ id: 'kho-hang', name: 'Kho hàng', isNew: false })
   })
 })

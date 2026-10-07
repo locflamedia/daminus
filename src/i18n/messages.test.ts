@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import type { AppError } from '@/api'
 import { checkManifest } from '@/lib/check-manifest'
-import en from './en.json'
 import { DEFAULT_LOCALE, LOCALES, localeFromTag } from './index'
-import vi from './vi.json'
+import { messages as bundled, withParts } from './messages'
 
 type Tree = { [key: string]: string | Tree }
 
@@ -24,9 +23,21 @@ function placeholders(message: string): string[] {
 }
 
 const messages: Record<(typeof LOCALES)[number], Map<string, string>> = {
-  en: leaves(en as Tree),
-  vi: leaves(vi as Tree),
+  en: leaves(bundled.en),
+  vi: leaves(bundled.vi),
 }
+
+describe('message parts', () => {
+  it('refuse a key that the shared messages or another part already hold', () => {
+    expect(() => withParts({ a: 'x' }, { './parts/one.en.json': { a: 'y' } })).toThrow(
+      /already taken/,
+    )
+    expect(() =>
+      withParts({}, { './parts/one.en.json': { b: 'x' }, './parts/two.en.json': { b: 'y' } }),
+    ).toThrow(/already taken/)
+    expect(withParts({ a: 'x' }, { './parts/one.en.json': { b: 'y' } })).toEqual({ a: 'x', b: 'y' })
+  })
+})
 
 describe('locale files', () => {
   it('have the same keys in English and Vietnamese', () => {

@@ -1,0 +1,156 @@
+{
+  "setupDiscover": {
+    "title": "What is running on your servers",
+    "subtitle": "Sites, containers, Node apps and databases. Colour chips are suggested projects, matched by domain and folder name.",
+    "chip": {
+      "found": "found · {done} of {total} hosts",
+      "label": "{n} found, {done} of {total} hosts"
+    },
+    "hosts": {
+      "title": "Hosts",
+      "count": "{n} host | {n} hosts",
+      "list": "Hosts being read"
+    },
+    "lane": {
+      "found": "{n} found",
+      "queued": "Queued",
+      "via": "via {host}",
+      "timeout": "Timed out",
+      "unreachable": "Unreachable",
+      "authFailed": "Login refused",
+      "hostKey": "Host key not accepted",
+      "line": {
+        "nginx": "Reading nginx sites…",
+        "containers": "Checking containers…",
+        "pm2": "Listing pm2 apps…",
+        "databases": "Looking for databases…",
+        "ports": "Probing listening ports…",
+        "env": "Locating .env files…"
+      },
+      "source": {
+        "nginx": "nginx sites",
+        "containers": "containers",
+        "pm2": "pm2 apps",
+        "databases": "databases",
+        "ports": "listening ports",
+        "env": ".env paths"
+      },
+      "chipReading": "Reading {source}",
+      "chipIncomplete": "Incomplete · {time}",
+      "chipTimeout": "Timed out · {time}",
+      "chipUnreachable": "Unreachable · {time}",
+      "unread": "{n} source not read | {n} sources not read",
+      "live": "counts roll as items land",
+      "aria": "{host}: {state}"
+    },
+    "counts": {
+      "label": "Found on {host}",
+      "sites": "site | sites",
+      "compose": "compose",
+      "pm2": "pm2 app | pm2 apps",
+      "databases": "database | databases",
+      "env": ".env",
+      "ports": "port | ports"
+    },
+    "details": {
+      "label": "Details",
+      "dropped": "{n} line dropped as invalid | {n} lines dropped as invalid",
+      "envOne": ".env at {path} listed, not readable (its DB name is asked in step 3)",
+      "envMany": "{n} .env files listed, not readable (their DB names are asked in step 3)",
+      "nothing": "No lines dropped, every .env listed can be read",
+      "envTitle": ".env files that cannot be read"
+    },
+    "readAgain": "Read again",
+    "fix": {
+      "pm2Home": "pm2 under user {user}",
+      "pm2HomeAt": "pm2 under {home}",
+      "pm2HomeBody": "its apps cannot be listed from this login ({login}).",
+      "pm2HomeBodyNoLogin": "its apps cannot be listed from this login.",
+      "pm2HomeAdd": "Add a second host in ~/.ssh/config that logs in as {user}, then Read again.",
+      "pm2HomeAddAt": "Add a second host in ~/.ssh/config that logs in as the owner of that folder, then Read again.",
+      "docker_no_permission": {
+        "name": "Docker",
+        "body": "no permission, so containers and compose projects are missing."
+      },
+      "docker_stopped": {
+        "name": "Docker",
+        "body": "is not running, so containers and compose projects are missing."
+      },
+      "pm2_missing": {
+        "name": "pm2",
+        "body": "command missing on this login's PATH, so its apps cannot be listed."
+      },
+      "nginx_no_permission": {
+        "name": "nginx config",
+        "body": "not readable, so that site may be missing."
+      }
+    },
+    "columns": {
+      "sites": "Websites",
+      "sitesMeta": "nginx · {n}",
+      "apps": "Node apps",
+      "appsMeta": "pm2 · {n}",
+      "boxes": "Containers",
+      "boxesMeta": "compose · {n}",
+      "dbs": "Databases",
+      "dbsMeta": "{n} · .env found for {k}",
+      "listening": "Also listening",
+      "listeningMeta": "no match yet",
+      "empty": "Nothing found yet",
+      "waiting": "Reading…"
+    },
+    "find": {
+      "new": "New",
+      "unassigned": "Unassigned",
+      "proxy": "proxy → {target}",
+      "php": "PHP · {path}",
+      "services": "{n} service | {n} services",
+      "instances": "{n} instance | {n} instances",
+      "inContainer": "in {name}",
+      "process": "process {name}",
+      "envFound": ".env found",
+      "stopped": "stopped"
+    },
+    "listening": {
+      "public": "public on {host}",
+      "pill": "{proc} · {host}",
+      "bare": "{host}",
+      "none": "Every listener belongs to a find.",
+      "note": "Kept for step 3. A database port open to the internet is flagged again in the first security scan."
+    },
+    "pairs": {
+      "empty": "Pairs show here when names match across hosts",
+      "be": "BE",
+      "fe": "FE",
+      "label": "{project}: back end on {be}, front end on {fe}"
+    },
+    "rail": {
+      "title": "What discover reads",
+      "note": "Reads config and process lists only. .env files are located, never opened here."
+    },
+    "add": {
+      "title": "Something missing?",
+      "body": "Apps run by systemd or cron are not listed. Add one by its folder path.",
+      "button": "Add by path",
+      "host": "Host",
+      "path": "Folder path",
+      "hint": "An absolute path on that host.",
+      "submit": "Add",
+      "invalid": "Use an absolute path, like /var/www/shop.",
+      "exists": "That folder is already added.",
+      "done": "Added {path} on {host}",
+      "doneDetail": "It is listed under Not in a project in step 3."
+    },
+    "foot": {
+      "hosts": "{done} of {total} hosts",
+      "elapsed": "{time} so far",
+      "elapsedDone": "{time}",
+      "readOnly": "read-only",
+      "progress": "Hosts read",
+      "hint": "You can continue now. Late finds join the next step.",
+      "hintWait": "Continue is ready when the first host has been read.",
+      "groupPre": "Group",
+      "groupPost": "find | finds"
+    }
+  }
+}

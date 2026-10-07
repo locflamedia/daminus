@@ -15,7 +15,9 @@
 //! One run at a time (a second `start` joins the running one). A run that is
 //! cancelled leaves what was already found.
 
+mod environment;
 mod event;
+mod url_check;
 mod validate;
 
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -29,9 +31,11 @@ use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument as _;
 
+pub use environment::{AgentState, SshEnvironment};
 pub use event::{
     HostSetup, SetupEvent, SetupEventBody, SetupHostProgress, SetupResult, SetupRun, Started, Step,
 };
+pub use url_check::{UrlCheck, UrlFailure, check_url};
 pub use validate::{
     IssueCode, IssueField, IssueLevel, ProjectIssue, has_errors, is_probeable_url, normalized,
     validate,
@@ -49,7 +53,7 @@ use crate::domain::project::{Project, ProjectsFile};
 use crate::domain::snapshot::HostOutcome;
 use crate::scan::{MAX_CONNECT_TIMEOUT_S, concurrency};
 use crate::ssh::config::{
-    ConfigSource, HostEntry, HostList, ResolvedHost, list_hosts, resolve, resolve_all,
+    ConfigSource, HostList, HostListing, ResolvedHost, list_hosts, resolve, resolve_all,
 };
 use crate::ssh::hostkey::{self, HostKeyInfo, HostKeyState};
 use crate::ssh::{RunEnd, RunRequest, RunSignal, SshTools, Transport, run_outcome};
@@ -166,10 +170,14 @@ impl SetupService {
     }
 
     /// The same, with what `ssh -G` says each connection uses.
-    pub async fn list_resolved(&self) -> Result<(HostList, Vec<HostEntry>), AppError> {
-        let list = self.list_hosts()?;
+    pub async fn list_resolved(&self) -> Result<HostListing, AppError> {
+        // The config files are read off the async threads.
+        let this = self.clone();
+        let list = tokio::task::spawn_blocking(move || this.list_hosts())
+            .await
+            .map_err(|_| AppError::from(ErrorCode::Internal))??;
         let entries = resolve_all(&self.shared.tools, &list).await;
-        Ok((list, entries))
+        Ok(HostListing { list, entries })
     }
 
     /// Looks at the key of `host` without logging in: what is recorded and
@@ -194,22 +202,13 @@ impl SetupService {
         paths: &[String],
     ) -> Result<Started, AppError> {
         let sh = &self.shared;
-        let mut current = sh
-            .current
-            .lock()
-            .map_err(|_| AppError::from(ErrorCode::StoreBusy))?;
-        if let Some(active) = current.as_ref() {
-            return Ok(Started {
-                setup_id: active.run.setup_id.clone(),
-                joined: true,
-            });
-        }
         let mut hosts = hosts.to_vec();
         let mut seen = std::collections::BTreeSet::new();
         hosts.retain(|h| seen.insert(h.clone()));
         if hosts.is_empty() {
             return Err(ErrorCode::NothingToScan.into());
         }
+        // File reads happen before the lock, so a status read never waits on the disk.
         let settings = sh.store.load_settings()?.value;
         let invalid = |e: crate::checks::bundle::BundleError| {
             AppError::from(ErrorCode::SchemaInvalid).with_param("detail", e.to_string())
@@ -224,6 +223,16 @@ impl SetupService {
                 sh.options.discover_budget,
             ),
         };
+        let mut current = sh
+            .current
+            .lock()
+            .map_err(|_| AppError::from(ErrorCode::StoreBusy))?;
+        if let Some(active) = current.as_ref() {
+            return Ok(Started {
+                setup_id: active.run.setup_id.clone(),
+                joined: true,
+            });
+        }
 
         let now = OffsetDateTime::now_utc();
         let n = sh.started.fetch_add(1, Ordering::Relaxed);
@@ -378,6 +387,30 @@ impl SetupService {
     }
 }
 
+impl SetupService {
+    /// Takes project `id` out of `projects.json`; everything else in the file,
+    /// the "mark as expected" rules included, stays. Scans already saved are
+    /// kept. Returns whether the project was there.
+    pub fn remove(&self, id: &str) -> Result<bool, AppError> {
+        let stamped = self.shared.store.load_projects()?;
+        if stamped.read_only {
+            return Err(ErrorCode::ConfigFromNewerVersion {
+                path: crate::store::PROJECTS_FILE.to_owned(),
+                version: stamped.value.version,
+            }
+            .into());
+        }
+        let mut file: ProjectsFile = stamped.value;
+        let before = file.projects.len();
+        file.projects.retain(|p| p.id != id);
+        if file.projects.len() == before {
+            return Ok(false);
+        }
+        self.shared.store.save_projects(&file, stamped.stamp)?;
+        Ok(true)
+    }
+}
+
 impl Shared {
     /// A new run starts from the hosts it is given: what earlier runs found
     /// about other hosts is dropped (it would otherwise feed the suggestions),
@@ -408,6 +441,11 @@ impl Shared {
 
     /// Suggestions from every host that has been discovered.
     fn regroup(&self) {
+        // One lock over the snapshot and the write, so two hosts finishing together
+        // cannot leave the older grouping in place.
+        let Ok(mut proposal) = self.proposal.lock() else {
+            return;
+        };
         let found: Vec<(HostAlias, HostDiscovery)> = self
             .results
             .lock()
@@ -417,9 +455,7 @@ impl Shared {
                     .collect()
             })
             .unwrap_or_default();
-        if let Ok(mut proposal) = self.proposal.lock() {
-            *proposal = (!found.is_empty()).then(|| group(&found));
-        }
+        *proposal = (!found.is_empty()).then(|| group(&found));
     }
 }
 
@@ -608,6 +644,11 @@ impl HostTask {
                 }
             }
         });
+        if step == Step::Discover {
+            // The suggestions grow as each host finishes, so the screen can pair what
+            // arrived without waiting for the slowest host.
+            self.shared.regroup();
+        }
         let ms = u32::try_from(started.elapsed().as_millis()).unwrap_or(u32::MAX);
         tracing::info!(
             ?outcome,

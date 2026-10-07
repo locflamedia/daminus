@@ -12,6 +12,7 @@ import { useNow } from '@/composables/use-now'
 import { checkName, errorText, severityText } from '@/lib/issue-text'
 import { staleDays } from '@/lib/staleness'
 import { useLayoutRange } from '@/lib/viewport'
+import EmptyScreen from '@/features/empty/EmptyScreen.vue'
 import PageHeader from '@/layout/PageHeader.vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
@@ -28,6 +29,9 @@ const projects = useProjectsStore()
 const range = useLayoutRange()
 
 const report = computed(() => reports.latest)
+
+/** `projects.json` was read and holds nothing: a first launch, not a failed read. */
+const showEmpty = computed(() => projects.loaded && projects.details.length === 0)
 
 // --- toolbar ---------------------------------------------------------------------------
 
@@ -118,6 +122,8 @@ function chipTitle(p: HostProgress): string {
 // --- keyboard --------------------------------------------------------------------------
 
 function onKeydown(e: KeyboardEvent) {
+  // With no project there is nothing to scan: the empty screen owns the keys.
+  if (showEmpty.value) return
   if (e.metaKey && e.key.toLowerCase() === 'r') {
     e.preventDefault()
     if (!scan.scanning) void scan.start()
@@ -195,7 +201,8 @@ const scanLabel = computed(() => (narrow.value ? t('toolbar.scan') : `↳ ${t('t
 </script>
 
 <template>
-  <div class="overview">
+  <EmptyScreen v-if="showEmpty" />
+  <div v-else class="overview">
     <div v-if="scan.scanning" class="scan-line" aria-hidden="true"><i /></div>
 
     <PageHeader :title="t('nav.overview')" :meta="scan.scanning || lastScan ? undefined : meta">

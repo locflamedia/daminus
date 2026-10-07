@@ -1,8 +1,7 @@
 // The one i18n instance. Messages are bundled (no network), the locale is a ref, so
 // switching language re-renders every `t()` call live, with no reload.
 import { createI18n } from 'vue-i18n'
-import en from './en.json'
-import vi from './vi.json'
+import { messages } from './messages'
 
 export const LOCALES = ['en', 'vi'] as const
 export type Locale = (typeof LOCALES)[number]
@@ -22,7 +21,7 @@ export const i18n = createI18n({
   legacy: false,
   locale: DEFAULT_LOCALE,
   fallbackLocale: DEFAULT_LOCALE,
-  messages: { en, vi },
+  messages,
   // A missing key is a bug the parity test catches; never print a warning in the app.
   missingWarn: false,
   fallbackWarn: false,

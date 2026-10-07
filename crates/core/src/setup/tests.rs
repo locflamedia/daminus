@@ -611,7 +611,7 @@ async fn the_host_list_comes_from_the_ssh_config_with_reasons() {
     assert!(list.config_found);
     let names: Vec<&str> = list.hosts.iter().map(|h| h.alias.as_str()).collect();
     assert_eq!(names, ["vps-a", "vps-b"]);
-    let (_, entries) = r.service.list_resolved().await.unwrap();
+    let entries = r.service.list_resolved().await.unwrap().entries;
     assert_eq!(
         entries[0].resolved.as_ref().unwrap().user.as_deref(),
         Some("deploy")
@@ -841,4 +841,89 @@ async fn what_discover_suggests_scans_without_any_further_edit() {
     let targets = crate::scan::resolve(&file, &crate::scan::ScanScope::default()).unwrap();
     assert_eq!(targets.hosts, [alias("vps-a")]);
     assert_eq!(targets.urls, ["https://shop-x.com"]);
+}
+
+#[tokio::test]
+async fn removing_a_project_keeps_the_others_the_rules_and_the_hosts() {
+    let r = rig(FakeTransport::new(), &["vps-a"]);
+    let mut existing = ProjectsFile::default();
+    existing
+        .projects
+        .push(proj("one", &["https://one.example"], "vps-a"));
+    existing
+        .projects
+        .push(proj("two", &["https://two.example"], "vps-a"));
+    existing
+        .hosts
+        .insert(alias("vps-a"), HostSettings { include: false });
+    r.store.save_projects(&existing, None).unwrap();
+
+    assert!(r.service.remove("one").unwrap());
+    let file = r.store.load_projects().unwrap().value;
+    let ids: Vec<&str> = file.projects.iter().map(|p| p.id.as_str()).collect();
+    assert_eq!(ids, ["two"]);
+    assert!(!file.hosts[&alias("vps-a")].include);
+    assert!(!r.service.remove("one").unwrap(), "already gone");
+}
+
+#[tokio::test]
+async fn a_removed_project_comes_back_whole_when_it_is_saved_again() {
+    let r = rig(FakeTransport::new(), &["vps-a"]);
+    let mut project = proj("one", &["https://one.example"], "vps-a");
+    project.color = Some("#3A55D6".into());
+    r.service.save(vec![project.clone()], &[]).unwrap();
+    r.service.remove("one").unwrap();
+    r.service.save(vec![project.clone()], &[]).unwrap();
+    let file = r.store.load_projects().unwrap().value;
+    assert_eq!(file.projects, vec![project]);
+}
+
+#[tokio::test]
+async fn the_environment_says_the_agent_is_unavailable_without_one() {
+    let dir = TempDir::new().unwrap();
+    let tools = SshTools::new().with_env([
+        ("HOME", dir.path().as_os_str()),
+        ("SSH_AUTH_SOCK", dir.path().join("none").as_os_str()),
+    ]);
+    let (tx, _rx) = mpsc::channel(8);
+    let service = SetupService::new(
+        Arc::new(FakeTransport::new()),
+        tools,
+        FsStore::new(dir.path().join("config")),
+        tx,
+    );
+    let env = service.environment().await;
+    assert_ne!(env.agent, crate::setup::AgentState::Keys);
+    assert_eq!(env.keys, 0);
+}
+
+#[tokio::test]
+async fn suggestions_are_there_as_soon_as_the_first_host_has_finished() {
+    let mut r = rig(
+        FakeTransport::new()
+            .host("vps-a", FakeHost::output(web_output()))
+            .host(
+                "vps-b",
+                FakeHost::slow(&web_output(), Duration::from_secs(30)),
+            ),
+        &["vps-a", "vps-b"],
+    );
+    r.service
+        .start(Step::Discover, &[alias("vps-a"), alias("vps-b")], &[])
+        .unwrap();
+    // Wait for vps-a to finish; vps-b is still running.
+    loop {
+        let event = tokio::time::timeout(Duration::from_secs(10), r.rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        if matches!(&event.body, SetupEventBody::HostFinished { host, .. } if host.as_str() == "vps-a")
+        {
+            break;
+        }
+    }
+    let proposal = r.service.result().proposal.unwrap();
+    assert_eq!(proposal.projects.len(), 1);
+    assert!(r.service.status().is_some(), "the run is still going");
+    r.service.cancel();
 }
