@@ -1,0 +1,173 @@
+{
+  "empty": {
+    "scanOff": "Add a project first",
+    "agentChip": "ssh-agent · {n} key loaded | ssh-agent · {n} keys loaded",
+    "loadFailed": "Could not read your ssh setup.",
+    "welcome": "Welcome to Daminus",
+    "title": "Check every server in one pass.",
+    "lead": "Add your servers once. Daminus reads disk, uptime, databases and security over SSH, shows what needs a look, then disconnects. Nothing is installed.",
+    "import": "Import from ~/.ssh/config",
+    "byHand": "Add a host by hand",
+    "agentNote": "Uses your running ssh-agent. Private keys never leave this Mac.",
+    "steps": {
+      "title": "Setup takes about 3 minutes",
+      "progress": "{done} of {total}",
+      "pick": {
+        "title": "Pick hosts",
+        "body": "Tick the servers from your SSH config. Nothing connects yet.",
+        "time": "about 1 min"
+      },
+      "discover": {
+        "title": "Discover",
+        "body": "One read-only pass per host finds sites, containers and databases.",
+        "time": "about 20 s per host"
+      },
+      "group": {
+        "title": "Group projects",
+        "body": "Pair front end and back end that live on different servers.",
+        "time": "about 1 min"
+      }
+    },
+    "preview": {
+      "title": "Found in",
+      "note": "Read locally, no connection made yet",
+      "reading": "Reading…",
+      "hosts": "{n} host | {n} hosts",
+      "alias": "Alias",
+      "hostName": "HostName",
+      "user": "User",
+      "key": "Key",
+      "agentKey": "agent",
+      "skipped": "Skipped",
+      "found": "server found · you pick which ones in the next step | servers found · you pick which ones in the next step",
+      "neverEdited": "is never edited",
+      "list": "Hosts found in your ssh config",
+      "skip": {
+        "gitRemote": "{name} looks like a git remote, so it is left out. You can add it back.",
+        "noHostName": "{name} has no HostName, so it is left out.",
+        "invalidAlias": "{name} is not a usable alias, so it is left out."
+      }
+    },
+    "trust": {
+      "installed": {
+        "title": "Nothing installed",
+        "body": "No agent, no daemon. One shell script per scan, piped over SSH."
+      },
+      "readOnly": {
+        "title": "Read-only",
+        "body": "Commands only read. Every one is listed before it runs."
+      },
+      "secrets": {
+        "title": "Secrets stay put",
+        "body": "Keys stay in ssh-agent. DB passwords are read from .env on the server."
+      }
+    },
+    "stack": "Recognises out of the box",
+    "keyboard": { "title": "Keyboard", "import": "Import", "addHost": "Add host" },
+    "help": {
+      "headline": {
+        "termius": "Your servers live in Termius. Let’s make them visible to ssh.",
+        "noConfig": "No ssh config yet. Let’s make your servers visible to ssh.",
+        "noUsableHosts": "Your ssh config has no host Daminus can use yet.",
+        "agent": "Your ssh-agent holds no key yet. Let’s load one."
+      },
+      "subtitle": "Daminus uses the same {ssh} as Terminal. Three one-time steps, about five minutes.",
+      "subtitleFew": "Daminus uses the same {ssh} as Terminal. {n} one-time step. | Daminus uses the same {ssh} as Terminal. {n} one-time steps.",
+      "found": {
+        "title": "What Daminus found on this Mac",
+        "checkAgain": "Check again",
+        "checking": "Checking…"
+      },
+      "config": {
+        "missing": "No file yet. Daminus reads Host blocks from here.",
+        "missingChip": "not found",
+        "unusable": "Found, read, and every entry was left out for a reason below.",
+        "unusableChip": "{n} entry, 0 usable | {n} entries, 0 usable",
+        "ok": "Found {n} Host block: {names}. | Found {n} Host blocks: {names}.",
+        "okChip": "{n} host | {n} hosts"
+      },
+      "agent": {
+        "empty": "Running, but holds no keys.",
+        "emptyChip": "0 keys",
+        "unavailable": "No ssh-agent is running.",
+        "unavailableChip": "no agent",
+        "ok": "{n} key loaded. | {n} keys loaded.",
+        "okChip": "{n} key | {n} keys"
+      },
+      "termius": {
+        "body": "Installed. Its hosts and keys stay private to it.",
+        "chip": "not read"
+      },
+      "step": {
+        "key": {
+          "title": "Save your key as a file in ~/.ssh",
+          "body": "Export the private key you use in Termius, or the file you created it from. Then lock its permissions:",
+          "bodyPlain": "Keep the private key you use for your servers as a file in ~/.ssh. Then lock its permissions:"
+        },
+        "agent": { "title": "Load it into ssh-agent, remembered by Keychain" },
+        "describe": {
+          "title": "Describe each server once, on the right",
+          "body": "Paste the block into {config}. Test with {test} in Terminal."
+        },
+        "add": {
+          "title": "Add one Host block with a HostName",
+          "body": "Paste the block into {config}. Test with {test} in Terminal."
+        }
+      },
+      "test": {
+        "title": "Test it, then fix the usual errors",
+        "ok": "ok",
+        "permission": "Permission denied (publickey)",
+        "permissionFix": "The key is not in the agent or not in IdentityFile. Repeat step {n}.",
+        "permissionFixPlain": "The key is not in the agent or not in IdentityFile.",
+        "hostKey": "Host key verification failed",
+        "hostKeyFix": "First connection: run the test once in Terminal and answer yes."
+      },
+      "leftOut": {
+        "title": "Left out ({n})",
+        "readAgain": "Read again",
+        "wildcard": "pattern",
+        "match": "Match block",
+        "no_host_name": "no HostName",
+        "invalid_alias": "unusable alias"
+      },
+      "importHosts": "Import hosts | Import {n} host | Import {n} hosts",
+      "importOff": "Check again once the config has a host and the agent has a key."
+    },
+    "hostBlock": {
+      "title": "One Host block",
+      "hintTermius": "copy from Termius host settings",
+      "alias": "Alias",
+      "hostName": "HostName",
+      "user": "User",
+      "port": "Port",
+      "identityFile": "IdentityFile",
+      "snippetTitle": "Host block to paste",
+      "append": "append",
+      "copy": "Copy block",
+      "copied": "Copied",
+      "copyFailed": "Could not copy",
+      "neverWrites": "Daminus never writes this file. Paste it yourself, one block per server.",
+      "errors": {
+        "aliasRequired": "Give the host a name.",
+        "aliasInvalid": "Letters, digits, dot, underscore and dash; start with a letter or digit.",
+        "hostRequired": "Enter the address or domain.",
+        "hostInvalid": "Use a domain or an IP address, without spaces.",
+        "userInvalid": "Letters, digits, dot, underscore and dash; no spaces.",
+        "portInvalid": "A number from 1 to 65535.",
+        "identityInvalid": "A path that starts with ~/ or /, without spaces."
+      }
+    },
+    "addHost": {
+      "title": "Add a host by hand",
+      "context": "Daminus never writes ~/.ssh/config. Fill the fields, copy the block and paste it there.",
+      "close": "Close",
+      "checkAgain": "Check again"
+    },
+    "sidebar": {
+      "ghosts": "Projects and servers you add show up here, sorted by what needs a look.",
+      "termiusTitle": "Why not read Termius?",
+      "termiusBody": "Its vault is encrypted and private to Termius. Reading another app’s secrets would be fragile and wrong. Plain ssh files work with every tool, Termius included."
+    }
+  }
+}

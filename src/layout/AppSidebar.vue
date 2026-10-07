@@ -4,6 +4,9 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
 import { useNow } from '@/composables/use-now'
+import SidebarGhosts from '@/features/empty/components/SidebarGhosts.vue'
+import SidebarTermius from '@/features/empty/components/SidebarTermius.vue'
+import { useEmptyStore } from '@/features/empty/empty-store'
 import { diskTone, isUnreachable, issueCount } from '@/lib/rollups'
 import { staleDays } from '@/lib/staleness'
 import { useProjectsStore } from '@/stores/projects'
@@ -18,6 +21,11 @@ const { t } = useI18n()
 const report = useReportStore()
 const projects = useProjectsStore()
 const scan = useScanStore()
+const empty = useEmptyStore()
+
+/** No project yet: the sidebar draws its empty form, by the screen Overview shows. */
+const firstLaunch = computed(() => empty.active)
+const helpScreen = computed(() => firstLaunch.value && empty.screen === 'help')
 
 /** Results over a day old: Overview reads "4 d old" and nothing is coloured by severity. */
 const clock = useNow()
@@ -64,7 +72,7 @@ const serverRows = computed(() =>
       <b>{{ t('app.name') }}</b>
     </div>
 
-    <button type="button" class="search">
+    <button v-if="!helpScreen" type="button" class="search">
       <UiIcon name="search" />
       <span class="grow">{{ t('nav.search') }}</span>
       <UiKbd>⌘K</UiKbd>
@@ -88,6 +96,15 @@ const serverRows = computed(() =>
         <span v-if="report.latest?.seq != null" class="count">{{ report.latest.seq }}</span>
       </RouterLink>
     </div>
+
+    <template v-if="firstLaunch">
+      <section v-if="helpScreen" class="list">
+        <h3 class="group">{{ t('nav.projects') }} <span>0</span></h3>
+        <h3 class="group">{{ t('nav.servers') }} <span>0</span></h3>
+      </section>
+      <SidebarGhosts v-else />
+      <SidebarTermius v-if="helpScreen && empty.input.termiusInstalled" />
+    </template>
 
     <section v-if="projects.projects.length" class="list">
       <h3 class="group">
