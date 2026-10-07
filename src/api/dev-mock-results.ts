@@ -4,7 +4,9 @@
 // imports it.
 import { applyEvent } from '@/stores/scan'
 import { bundleAsOf, type ResultsBundle } from '@/testing/results-bundle'
+import { withSecurity } from '@/testing/results-security'
 import { withStates } from '@/testing/results-states'
+import { TAB_CASES, isTabCase, withTabCase } from '@/testing/results-tab-states'
 import { shellScanRun } from '@/testing/shell-fixture'
 import type {
   CheckGroup,
@@ -31,6 +33,8 @@ export const RESULTS_VARIANTS = [
   'groups-off',
   'states',
   'real',
+  'security',
+  ...TAB_CASES.map((c) => `tab-${c}` as const),
 ] as const
 
 /**
@@ -46,6 +50,11 @@ export type ResultsVariant = (typeof RESULTS_VARIANTS)[number]
 
 export function isResultsVariant(variant: string): variant is ResultsVariant {
   return (RESULTS_VARIANTS as readonly string[]).includes(variant)
+}
+
+/** `?mock=security&sec=<scenario>`: which Security tab state `results-security.ts` draws. */
+function securityScenario(): string | null {
+  return typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('sec')
 }
 
 const GROUP_ORDER: CheckGroup[] = ['system', 'disk', 'containers', 'databases', 'security']
@@ -76,6 +85,10 @@ export class ResultsMock {
     this.data = bundleAsOf(bundle, upTo, ago)
     if (variant === 'groups-off') this.data = withGroupsOff(this.data)
     if (variant === 'states') this.data = withStates(this.data)
+    if (variant.startsWith('tab-') && isTabCase(variant.slice(4))) {
+      this.data = withTabCase(this.data, variant.slice(4) as never)
+    }
+    if (variant === 'security') this.data = withSecurity(this.data, securityScenario())
     if (variant === 'scanning') this.run = midScan(this.hosts())
   }
 
