@@ -23,11 +23,18 @@ async function mountOverview() {
         termius_installed: noConfig,
       }
     }
+    if (cmd === 'rules_list') return []
+    if (cmd === 'history_list') return { scans: [], keep: null, bytes: 0 }
     return null
   })
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/', component: { template: '<div />' } }],
+    routes: [
+      { path: '/', name: 'overview', component: { template: '<div />' } },
+      { path: '/history', name: 'history', component: { template: '<div />' } },
+      { path: '/project/:id/:tab?', name: 'project', component: { template: '<div />' } },
+      { path: '/server/:host', name: 'server', component: { template: '<div />' } },
+    ],
   })
   await router.push('/')
   const wrapper = mount(OverviewView, { global: { plugins: [i18n, router] } })

@@ -1,0 +1,44 @@
+{
+  "scanPanel": {
+    "label": "Scan",
+    "title": "Scan",
+    "titleDone": "Scan finished",
+    "titleStopped": "Scan stopped",
+    "running": "Running",
+    "done": "Done",
+    "stopped": "Stopped",
+    "close": "Close the panel",
+    "progress": "{done} of {total} hosts done",
+    "unreachable": "{n} unreachable",
+    "left": "about {time} left",
+    "hostsLabel": "Hosts in this scan",
+    "noProject": "no project",
+    "checks": "{n} check | {n} checks",
+    "waitSlot": "waiting for a slot",
+    "retry": "Retry",
+    "retryLater": "Available when the scan ends",
+    "step": {
+      "connect": "Connect",
+      "system": "Host facts",
+      "disk": "Disk",
+      "containers": "Containers",
+      "databases": "Databases",
+      "security": "Security"
+    },
+    "found": "Found so far",
+    "foundEmpty": "Hosts show up here as they finish.",
+    "foundRead": "{n} check read | {n} checks read",
+    "trust": "Read-only commands. Nothing is installed or changed.",
+    "stop": "Stop scan",
+    "background": "Keep in background",
+    "finish": "Close",
+    "foundLine": "{projects}: {read}",
+    "mark": {
+      "done": "Done",
+      "running": "Reading",
+      "waiting": "Waiting",
+      "failed": "Failed",
+      "reading": "Reading"
+    }
+  }
+}

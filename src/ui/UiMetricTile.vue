@@ -26,6 +26,7 @@ import UiIcon from './UiIcon.vue'
 import UiRoll from './UiRoll.vue'
 import UiSkeleton from './UiSkeleton.vue'
 import UiSparkline, { type SparkTone } from './UiSparkline.vue'
+import UiTooltip from './UiTooltip.vue'
 import type { IconName } from './icon-paths'
 
 export type MetricState =
@@ -57,6 +58,9 @@ const props = withDefaults(
     form?: 'trend' | 'note'
     /** How the note reads in the card form; follows the state when not given. */
     noteTone?: NoteTone
+    /** A clock beside the label of the card form, with this text as its tooltip: the number
+     * can lag behind (MySQL refreshes table sizes about once a day). */
+    hint?: string
   }>(),
   {
     icon: undefined,
@@ -71,6 +75,7 @@ const props = withDefaults(
     once: undefined,
     form: 'trend',
     noteTone: undefined,
+    hint: undefined,
   },
 )
 
@@ -98,6 +103,11 @@ const noteClass = computed(() => {
   <div v-if="form === 'note'" class="tile tile-note" :class="`state-${state}`" :data-state="state">
     <span class="line">
       <span class="label"> <UiIcon v-if="icon" :name="icon" :size="12" />{{ label }} </span>
+      <UiTooltip v-if="hint" :text="hint">
+        <span class="lag" tabindex="0" role="img" :aria-label="hint"
+          ><UiIcon name="clock" :size="12"
+        /></span>
+      </UiTooltip>
     </span>
     <template v-if="state === 'scanning'">
       <UiSkeleton class="sk-value" width="70%" height="16px" />
@@ -112,7 +122,7 @@ const noteClass = computed(() => {
           <span v-if="unit" class="unit">{{ ` ${unit}` }}</span>
         </template>
       </span>
-      <span v-if="note" class="note" :class="noteClass">{{ note }}</span>
+      <span v-if="note" class="note" :class="noteClass" :title="note">{{ note }}</span>
     </template>
   </div>
   <div v-else class="tile" :class="`state-${state}`" :data-state="state">
@@ -218,6 +228,17 @@ const noteClass = computed(() => {
     filter var(--dur-state) var(--ease-state);
 }
 
+/* The clock that says the number can lag: quiet, with the usual focus ring. */
+.lag {
+  display: inline-flex;
+  border-radius: var(--radius-xs);
+  color: var(--ink-4);
+}
+
+.lag:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
 /* Reading: the value blurs in place and the shape holds. */
 .tile-note {
   padding: var(--space-2) 10px;
@@ -237,6 +258,13 @@ const noteClass = computed(() => {
 
 .tile-note :is(.line, .value, .note) {
   line-height: normal;
+}
+
+/* One line, always: a card keeps its height whatever the note says. */
+.tile-note .note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tile-note .note-plain {

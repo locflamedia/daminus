@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n } from '@/i18n'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
@@ -13,7 +14,12 @@ import OverviewView from './OverviewView.vue'
 async function mountOverview() {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/', name: 'overview', component: { template: '<div />' } }],
+    routes: [
+      { path: '/', name: 'overview', component: { template: '<div />' } },
+      { path: '/history', name: 'history', component: { template: '<div />' } },
+      { path: '/project/:id/:tab?', name: 'project', component: { template: '<div />' } },
+      { path: '/server/:host', name: 'server', component: { template: '<div />' } },
+    ],
   })
   await router.push('/')
   const wrapper = mount(OverviewView, { global: { plugins: [i18n, router] } })
@@ -22,11 +28,19 @@ async function mountOverview() {
 }
 
 beforeEach(() => {
+  mockCommands((cmd) => {
+    if (cmd === 'rules_list') return []
+    if (cmd === 'history_list') return { scans: [], keep: null, bytes: 0 }
+    return null
+  })
   setActivePinia(createPinia())
   useReportStore().latest = shellReport()
   useProjectsStore().details = shellProjects()
 })
-afterEach(() => document.body.replaceChildren())
+afterEach(() => {
+  clearMocks()
+  document.body.replaceChildren()
+})
 
 describe('Overview while a scan runs', () => {
   it('titles the scan by its running time, in the mono face, with no scan number yet', async () => {

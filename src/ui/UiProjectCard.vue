@@ -50,6 +50,8 @@ export interface ProjectCardMetric {
   /** The line under the value: what changed, "no change", or what to do. */
   note?: string
   noteTone?: NoteTone
+  /** The tooltip of the clock beside the label: the number can lag. */
+  hint?: string
 }
 
 export interface ProjectCardStatus {
@@ -105,6 +107,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ open: []; action: []; 'open-domain': [url: string] }>()
+defineSlots<{ 'status-chip'?: () => unknown }>()
 
 const fmt = useFormat()
 
@@ -181,15 +184,18 @@ function onCardClick(event: MouseEvent) {
       :title="status.title"
       :meta="status.meta"
     >
-      <template v-if="actionLabel" #trailing>
-        <button
-          type="button"
-          class="action"
-          :class="`action-${status.tone}`"
-          @click="emit('action')"
-        >
-          {{ actionLabel }}
-        </button>
+      <template v-if="actionLabel || $slots['status-chip']" #trailing>
+        <!-- A certificate chip stands in for the word when the main issue is a certificate. -->
+        <slot name="status-chip">
+          <button
+            type="button"
+            class="action"
+            :class="`action-${status.tone}`"
+            @click="emit('action')"
+          >
+            {{ actionLabel }}
+          </button>
+        </slot>
       </template>
     </UiRow>
 

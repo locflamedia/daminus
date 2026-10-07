@@ -1,0 +1,153 @@
+{
+  "overviewScreen": {
+    "filterLabel": "Dự án cần hiện",
+    "filterAll": "Tất cả",
+    "filterNeeds": "Cần xem",
+    "baselineLabel": "So với lần quét trước",
+    "baseline": "so với #{seq}",
+    "metaTook": "Lần quét #{seq} · {when} · {took}",
+    "showScan": "Xem chi tiết lần quét",
+    "serverDisk": "{n} máy chủ · ổ đĩa {pct}%",
+    "serverLook": "{n} máy chủ cần xem",
+    "chipFilter": "Chỉ hiện {what}",
+    "loading": "Đang đọc lần quét gần nhất",
+    "reload": "Thử lại",
+    "empty": {
+      "title": "Chưa quét lần nào",
+      "text": "Nhấn Quét tất cả để đọc {servers}.",
+      "waiting": "Đang chờ lần quét đầu tiên"
+    },
+    "stale": {
+      "title": "Kết quả này đã cũ {n} ngày",
+      "clear": "Mọi thứ đều ổn vào {day}.",
+      "open": "{issues} còn mở vào {day}.",
+      "cost": "Một lần quét mất khoảng {took} và chỉ đọc.",
+      "scanNow": "Quét ngay",
+      "noneDue": "chưa có cái nào đến hạn"
+    },
+    "card": {
+      "waiting": "đang chờ",
+      "updating": "đang cập nhật",
+      "open": "Mở",
+      "retry": "Thử lại",
+      "where": "{domain} · {where}",
+      "thisScanWaiting": "lần quét này · đang chờ",
+      "thisScanUpdating": "lần quét này · một phần, đang cập nhật",
+      "passed": "{passed}/{total} đạt",
+      "passedOld": "lần quét #{seq} · {passed}/{total} đạt",
+      "topology": "{name} chạy ở đâu",
+      "more": "và {n} máy chủ nữa",
+      "node": {
+        "ok": "Ổn",
+        "warn": "Cần xem",
+        "crit": "Nghiêm trọng",
+        "unknown": "Chưa kiểm tra"
+      }
+    },
+    "tag": {
+      "compose": "compose",
+      "pm2": "pm2",
+      "mysql": "MySQL",
+      "postgres": "PostgreSQL"
+    },
+    "status": {
+      "allPassed": "Cả {n} kiểm tra đều ổn",
+      "noResults": "Chưa có kết quả",
+      "expected": "{n} đã chấp nhận",
+      "reviewIn": "xem lại sau {n} ngày",
+      "off": "{groups} đang tắt trong Cài đặt",
+      "cannotRead": "{n} kiểm tra không đọc được",
+      "cannotReadMeta": "Mở dự án để xem lý do",
+      "clearAgo": "Ổn cả {ago}",
+      "issuesAgo": "{issues} · {ago}",
+      "oldMeta": "{when} · lần quét #{seq}",
+      "silent": "{host} không phản hồi",
+      "silentMeta": "Hiện kết quả của lần nó còn phản hồi gần nhất",
+      "reading": "Đang đọc {host}…",
+      "waitingFor": "Đang chờ {host}…",
+      "readingMeta": "kết quả cũ được giữ đến khi có kết quả mới",
+      "firstScan": "Đang chờ lần quét đầu tiên",
+      "firstScanMeta": "Nhấn Quét tất cả để đọc",
+      "tlsTitle": "Chứng chỉ của {host}"
+    },
+    "group": {
+      "uptime": "Hoạt động",
+      "disk": "Ổ đĩa",
+      "containers": "Container",
+      "databases": "CSDL",
+      "security": "Bảo mật",
+      "code_changes": "Đổi code",
+      "system": "Hệ thống"
+    },
+    "metric": {
+      "uptime": "Hoạt động",
+      "disk": "Ổ đĩa",
+      "database": "CSDL",
+      "noChange": "không đổi",
+      "was": "trước là {status}",
+      "notSetUp": "Chưa có",
+      "addUrl": "thêm URL",
+      "addFolder": "thêm thư mục",
+      "addEnv": "thêm .env",
+      "off": "đang tắt trong Cài đặt",
+      "since": "từ #{seq}",
+      "noAnswer": "không phản hồi",
+      "mysqlLag": "MySQL cập nhật dung lượng bảng khoảng một lần mỗi ngày"
+    },
+    "servers": {
+      "title": "Máy chủ",
+      "hint": "vòng ổ đĩa · tải · bộ nhớ",
+      "load": "Tải {n}",
+      "mem": "RAM {n}%",
+      "unreachable": "Mất kết nối",
+      "unreachableFor": "Mất kết nối · {n} ngày",
+      "notScanned": "Không quét",
+      "retry": "Thử lại",
+      "reading": "đang đọc",
+      "readingDisk": "đang đọc ổ đĩa…",
+      "waitSlot": "đợi đến lượt",
+      "diskRing": "Ổ đĩa đầy {n}%",
+      "none": "Chưa có máy chủ nào trong lần quét này."
+    },
+    "changes": {
+      "title": "Thay đổi so với #{seq}",
+      "titleScanning": "Thay đổi ở #{seq} · lần quét này vẫn đang chạy",
+      "titleOld": "Thay đổi ở #{seq}, {ago}",
+      "history": "Lịch sử",
+      "empty": "Không có gì đổi so với #{seq}.",
+      "noBaseline": "Chưa có lần quét trước để so sánh.",
+      "more": "và {n} thay đổi nữa trong Lịch sử",
+      "row": "{owner} · {what}",
+      "disk": "{target}",
+      "database": "database {target}",
+      "docker": "dung lượng Docker",
+      "table": "bảng {table}",
+      "image": "image {name}",
+      "renewed": "{host} đã gia hạn TLS",
+      "online": "{host} đã kết nối lại",
+      "offline": "{host} không phản hồi",
+      "value": {
+        "new": "mới",
+        "worse": "xấu đi",
+        "better": "đỡ hơn",
+        "fixed": "đã sửa",
+        "up": "lên",
+        "down": "mất"
+      }
+    },
+    "coming": {
+      "title": "Sắp tới",
+      "titleOld": "Sắp tới, tính đến {day}",
+      "empty": "Mấy ngày tới chưa có gì cần để ý.",
+      "disk": "Ổ đĩa {host} chạm {pct}%",
+      "review": "Xem lại quy tắc · {subject}",
+      "quiet": "{host} mất kết nối",
+      "tls": "TLS {host} hết hạn",
+      "inApprox": "khoảng {n} ngày nữa",
+      "inDays": "{n} ngày nữa",
+      "today": "hôm nay",
+      "forDays": "đã {n} ngày",
+      "days": "{n} ngày"
+    }
+  }
+}

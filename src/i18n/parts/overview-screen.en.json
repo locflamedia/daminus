@@ -1,0 +1,153 @@
+{
+  "overviewScreen": {
+    "filterLabel": "Which projects to show",
+    "filterAll": "All",
+    "filterNeeds": "Needs a look",
+    "baselineLabel": "Compare with an earlier scan",
+    "baseline": "vs #{seq}",
+    "metaTook": "Scan #{seq} · {when} · {took}",
+    "showScan": "Show the scan details",
+    "serverDisk": "{n} server · disk {pct}% | {n} servers · disk {pct}%",
+    "serverLook": "{n} server needs a look | {n} servers need a look",
+    "chipFilter": "Show only {what}",
+    "loading": "Reading the latest scan",
+    "reload": "Try again",
+    "empty": {
+      "title": "No scan yet",
+      "text": "Press Scan all to read {servers}.",
+      "waiting": "Waiting for the first scan"
+    },
+    "stale": {
+      "title": "These results are {n} day old | These results are {n} days old",
+      "clear": "Everything was clear on {day}.",
+      "open": "{issues} were open on {day}.",
+      "cost": "A scan takes about {took} and reads only.",
+      "scanNow": "Scan now",
+      "noneDue": "none due"
+    },
+    "card": {
+      "waiting": "waiting",
+      "updating": "updating",
+      "open": "Open",
+      "retry": "Retry",
+      "where": "{domain} · {where}",
+      "thisScanWaiting": "this scan · waiting",
+      "thisScanUpdating": "this scan · partial, updating",
+      "passed": "{passed} of {total} passed",
+      "passedOld": "scan #{seq} · {passed} of {total} passed",
+      "topology": "Where {name} runs",
+      "more": "and {n} more server | and {n} more servers",
+      "node": {
+        "ok": "Healthy",
+        "warn": "Needs a look",
+        "crit": "Critical",
+        "unknown": "Not checked"
+      }
+    },
+    "tag": {
+      "compose": "compose",
+      "pm2": "pm2",
+      "mysql": "MySQL",
+      "postgres": "PostgreSQL"
+    },
+    "status": {
+      "allPassed": "All {n} checks passed",
+      "noResults": "No results yet",
+      "expected": "{n} expected",
+      "reviewIn": "review due in {n} d",
+      "off": "{groups} off in Settings",
+      "cannotRead": "{n} check could not be read | {n} checks could not be read",
+      "cannotReadMeta": "Open the project to see why",
+      "clearAgo": "All clear {ago}",
+      "issuesAgo": "{issues} · {ago}",
+      "oldMeta": "{when} · scan #{seq}",
+      "silent": "{host} is not answering",
+      "silentMeta": "Showing what it said the last time it answered",
+      "reading": "Reading {host}…",
+      "waitingFor": "Waiting for {host}…",
+      "readingMeta": "last result stays until the new one lands",
+      "firstScan": "Waiting for the first scan",
+      "firstScanMeta": "Press Scan all to read it",
+      "tlsTitle": "Certificate of {host}"
+    },
+    "group": {
+      "uptime": "Uptime",
+      "disk": "Disk",
+      "containers": "Containers",
+      "databases": "Databases",
+      "security": "Security",
+      "code_changes": "Code changes",
+      "system": "System"
+    },
+    "metric": {
+      "uptime": "Uptime",
+      "disk": "Disk",
+      "database": "Database",
+      "noChange": "no change",
+      "was": "was {status}",
+      "notSetUp": "Not set up",
+      "addUrl": "add a URL",
+      "addFolder": "add a folder",
+      "addEnv": "add .env path",
+      "off": "off in Settings",
+      "since": "since #{seq}",
+      "noAnswer": "no answer",
+      "mysqlLag": "MySQL updates table sizes about once a day"
+    },
+    "servers": {
+      "title": "Servers",
+      "hint": "disk ring · load · memory",
+      "load": "Load {n}",
+      "mem": "mem {n}%",
+      "unreachable": "Unreachable",
+      "unreachableFor": "Unreachable · {n} d",
+      "notScanned": "Not scanned",
+      "retry": "Retry",
+      "reading": "reading",
+      "readingDisk": "reading disk…",
+      "waitSlot": "waits for a slot",
+      "diskRing": "Disk {n}% full",
+      "none": "None of your servers is in this scan."
+    },
+    "changes": {
+      "title": "Changes since #{seq}",
+      "titleScanning": "Changes in #{seq} · this scan still running",
+      "titleOld": "Changes in #{seq}, {ago}",
+      "history": "History",
+      "empty": "Nothing changed since #{seq}.",
+      "noBaseline": "There is no earlier scan to compare with yet.",
+      "more": "and {n} more in History",
+      "row": "{owner} · {what}",
+      "disk": "{target}",
+      "database": "{target} database",
+      "docker": "Docker storage",
+      "table": "{table} table",
+      "image": "{name} image",
+      "renewed": "{host} TLS renewed",
+      "online": "{host} back online",
+      "offline": "{host} is not answering",
+      "value": {
+        "new": "new",
+        "worse": "worse",
+        "better": "better",
+        "fixed": "fixed",
+        "up": "up",
+        "down": "down"
+      }
+    },
+    "coming": {
+      "title": "Coming up",
+      "titleOld": "Coming up, as of {day}",
+      "empty": "Nothing to watch in the next days.",
+      "disk": "{host} disk reaches {pct}%",
+      "review": "Expected rule review · {subject}",
+      "quiet": "{host} unreachable",
+      "tls": "{host} TLS expires",
+      "inApprox": "in ≈ {n} day | in ≈ {n} days",
+      "inDays": "in {n} day | in {n} days",
+      "today": "today",
+      "forDays": "for {n} day | for {n} days",
+      "days": "{n} day | {n} days"
+    }
+  }
+}
