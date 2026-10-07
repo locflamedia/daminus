@@ -1,0 +1,86 @@
+{
+  "projectDatabase": {
+    "empty": {
+      "title": "No database to read",
+      "text": "This project has no database part. Add one by editing the project."
+    },
+    "engine": {
+      "label": "Engine",
+      "postgres": "PostgreSQL",
+      "mysql": "MySQL",
+      "other": "Database",
+      "container": "container {name}",
+      "host": "on {host}"
+    },
+    "size": {
+      "label": "Size",
+      "since": "{delta} since #{seq}",
+      "first": "first reading"
+    },
+    "tables": {
+      "label": "Tables",
+      "largest": "largest: {name}"
+    },
+    "mysqlNote": "MySQL updates table sizes about once a day",
+    "largest": {
+      "title": "Largest tables",
+      "metaPostgres": "pg_total_relation_size · vs #{seq}",
+      "metaMysql": "information_schema · vs #{seq}",
+      "metaFirst": "the first scan has nothing to compare with",
+      "label": "Largest tables",
+      "none": "The last scan listed no tables.",
+      "same": "0"
+    },
+    "curve": {
+      "title": "Size over {n} scans",
+      "label": "Size of {name} over {n} scans, from {from} to {to}",
+      "step": "Biggest step: {delta} at #{seq}.",
+      "flat": "The size did not grow in these scans."
+    },
+    "reads": {
+      "title": "How Daminus reads it",
+      "meta": "credentials never leave the server",
+      "env": ".env",
+      "arrow": "→",
+      "result": "{tables} tables · {size}",
+      "resultSize": "{size}",
+      "text": "Values are read by the script on the server and used there. Only sizes and counts come back."
+    },
+    "perm": {
+      "title": "Daminus can’t read {name}’s .env on {host}",
+      "text": "Either the SSH user cannot read the file, or the login in it was refused. From here the two look the same. Nothing is broken on the server.",
+      "listTitle": "See who owns the file",
+      "groupTitle": "Add the SSH user to the file’s group",
+      "groupText": "Replace the names from the line above, run it, then reconnect. The user can then read the file; it still cannot write it.",
+      "sudoTitle": "Or allow one read with sudo",
+      "sudoText": "Add this line with visudo on {host}. It limits sudo to this one file.",
+      "loginTitle": "If the file is readable: try the login yourself",
+      "loginText": "Daminus read a login from the .env, but the database said no, or nothing answered at DB_HOST. Wrong password, a user without access to {database}, a stopped database, or DB_HOST pointing elsewhere. No permission fix applies.",
+      "again": "Group changes apply to new SSH sessions; the next scan opens a fresh one."
+    },
+    "refused": {
+      "title": "The database refused the login, or could not be reached",
+      "text": "Daminus read a login from the .env, but the database said no, or nothing answered at DB_HOST. From here the two look the same, so check both on {host}. No permission fix applies.",
+      "tryTitle": "Try the login yourself with the values from the .env",
+      "why": "Wrong password, a user without access to {database}, a stopped database, or DB_HOST pointing elsewhere."
+    },
+    "unsupported": {
+      "title": "This .env uses a form Daminus does not read",
+      "text": "Rather than guess, Daminus stops. Reading would need the shell to expand it, and Daminus never runs your .env.",
+      "read": "Read",
+      "notRead": "Not read",
+      "notReadText": "a backslash or an unclosed quote inside quotes, a DATABASE_URL with ?options or %-escapes, no login keys at all.",
+      "fix": "Fix: write the login as plain DB_* lines in {path}."
+    },
+    "missing": {
+      "title": "Something it needs is not there",
+      "text": "One of three, named exactly. Nothing is wrong with the database itself.",
+      "env": "No .env at {path}",
+      "envFix": "moved or renamed? Edit the project and pick the file again.",
+      "client": "No {client} client on {host}",
+      "clientFix": "install the client, or set the container if the database runs in Docker.",
+      "container": "Container {name} not found",
+      "containerFix": "renamed or stopped. Edit the project and pick the container again."
+    }
+  }
+}

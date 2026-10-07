@@ -1,0 +1,86 @@
+{
+  "projectDatabase": {
+    "empty": {
+      "title": "Chưa có cơ sở dữ liệu để đọc",
+      "text": "Dự án này chưa có phần cơ sở dữ liệu nào. Sửa dự án để thêm."
+    },
+    "engine": {
+      "label": "Engine",
+      "postgres": "PostgreSQL",
+      "mysql": "MySQL",
+      "other": "Cơ sở dữ liệu",
+      "container": "container {name}",
+      "host": "trên {host}"
+    },
+    "size": {
+      "label": "Dung lượng",
+      "since": "{delta} so với #{seq}",
+      "first": "lần đọc đầu tiên"
+    },
+    "tables": {
+      "label": "Bảng",
+      "largest": "lớn nhất: {name}"
+    },
+    "mysqlNote": "MySQL cập nhật dung lượng bảng khoảng một lần mỗi ngày",
+    "largest": {
+      "title": "Bảng lớn nhất",
+      "metaPostgres": "pg_total_relation_size · so với #{seq}",
+      "metaMysql": "information_schema · so với #{seq}",
+      "metaFirst": "lần quét đầu chưa có gì để so sánh",
+      "label": "Bảng lớn nhất",
+      "none": "Lần quét gần nhất không liệt kê bảng nào.",
+      "same": "0"
+    },
+    "curve": {
+      "title": "Dung lượng qua {n} lần quét",
+      "label": "Dung lượng {name} qua {n} lần quét, từ {from} đến {to}",
+      "step": "Bước nhảy lớn nhất: {delta} ở #{seq}.",
+      "flat": "Dung lượng không tăng trong các lần quét này."
+    },
+    "reads": {
+      "title": "Daminus đọc như thế nào",
+      "meta": "thông tin đăng nhập không rời máy chủ",
+      "env": ".env",
+      "arrow": "→",
+      "result": "{tables} bảng · {size}",
+      "resultSize": "{size}",
+      "text": "Script trên máy chủ đọc giá trị và dùng ngay tại đó. Chỉ dung lượng và số lượng được gửi về."
+    },
+    "perm": {
+      "title": "Daminus không đọc được .env của {name} trên {host}",
+      "text": "Hoặc người dùng SSH không đọc được file, hoặc thông tin đăng nhập trong đó bị từ chối. Từ đây hai trường hợp trông giống nhau. Máy chủ không hỏng gì cả.",
+      "listTitle": "Xem ai sở hữu file",
+      "groupTitle": "Thêm người dùng SSH vào nhóm của file",
+      "groupText": "Thay các tên bằng kết quả dòng trên, chạy, rồi kết nối lại. Người dùng sẽ đọc được file; vẫn không ghi được.",
+      "sudoTitle": "Hoặc cho phép đọc một file bằng sudo",
+      "sudoText": "Thêm dòng này bằng visudo trên {host}. Nó giới hạn sudo ở đúng file này.",
+      "loginTitle": "Nếu file đọc được: tự thử đăng nhập",
+      "loginText": "Daminus đọc được thông tin đăng nhập từ .env, nhưng cơ sở dữ liệu từ chối hoặc không có gì trả lời ở DB_HOST. Sai mật khẩu, người dùng không có quyền với {database}, cơ sở dữ liệu đang dừng, hoặc DB_HOST trỏ chỗ khác. Không có cách sửa quyền nào áp dụng.",
+      "again": "Đổi nhóm chỉ áp dụng cho phiên SSH mới; lần quét sau sẽ mở phiên mới."
+    },
+    "refused": {
+      "title": "Cơ sở dữ liệu từ chối đăng nhập, hoặc không kết nối được",
+      "text": "Daminus đọc được thông tin đăng nhập từ .env, nhưng cơ sở dữ liệu từ chối hoặc không có gì trả lời ở DB_HOST. Từ đây hai trường hợp trông giống nhau, nên hãy kiểm tra cả hai trên {host}. Không có cách sửa quyền nào áp dụng.",
+      "tryTitle": "Tự thử đăng nhập bằng giá trị trong .env",
+      "why": "Sai mật khẩu, người dùng không có quyền với {database}, cơ sở dữ liệu đang dừng, hoặc DB_HOST trỏ chỗ khác."
+    },
+    "unsupported": {
+      "title": ".env này dùng dạng Daminus không đọc",
+      "text": "Daminus dừng thay vì đoán. Để đọc cần shell mở rộng giá trị, mà Daminus không bao giờ chạy .env của bạn.",
+      "read": "Đọc được",
+      "notRead": "Không đọc",
+      "notReadText": "dấu gạch ngược hoặc dấu nháy chưa đóng trong chuỗi, DATABASE_URL có ?options hoặc ký tự %, hoặc không có khoá đăng nhập nào.",
+      "fix": "Cách sửa: viết thông tin đăng nhập thành các dòng DB_* thuần trong {path}."
+    },
+    "missing": {
+      "title": "Thiếu thứ nó cần",
+      "text": "Một trong ba, gọi đúng tên. Bản thân cơ sở dữ liệu không có vấn đề gì.",
+      "env": "Không có .env ở {path}",
+      "envFix": "đã di chuyển hoặc đổi tên? Sửa dự án và chọn lại file.",
+      "client": "Không có client {client} trên {host}",
+      "clientFix": "cài client, hoặc đặt container nếu cơ sở dữ liệu chạy trong Docker.",
+      "container": "Không thấy container {name}",
+      "containerFix": "đã đổi tên hoặc đã dừng. Sửa dự án và chọn lại container."
+    }
+  }
+}

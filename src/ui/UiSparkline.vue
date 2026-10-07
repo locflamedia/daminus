@@ -14,7 +14,7 @@ import { computed, useId } from 'vue'
 import { sparkline } from '@/lib/chart-geometry'
 import { shouldPlay } from '@/lib/motion'
 
-export type SparkTone = 'accent' | 'warn' | 'crit' | 'stale'
+export type SparkTone = 'accent' | 'warn' | 'crit' | 'stale' | 'lilac' | 'ok'
 
 const props = withDefaults(
   defineProps<{
@@ -110,6 +110,14 @@ const dot = computed(() => {
 
 .tone-stale {
   --spark: var(--ink-4);
+}
+
+.tone-lilac {
+  --spark: var(--chart-lilac);
+}
+
+.tone-ok {
+  --spark: var(--ok-solid);
 }
 
 .svg {

@@ -1,0 +1,92 @@
+{
+  "projectContainers": {
+    "empty": {
+      "title": "No containers to read",
+      "text": "This project has no Docker Compose project or pm2 app. Add one by editing the project."
+    },
+    "context": {
+      "compose": "compose project",
+      "pm2": "pm2 apps",
+      "image": "image",
+      "updated": "updated at #{seq}",
+      "services": "{n} service · {up} running | {n} services · {up} running",
+      "apps": "{n} app | {n} apps",
+      "source": "docker ps · docker stats --no-stream",
+      "sourcePm2": "pm2 jlist"
+    },
+    "state": {
+      "running": "Up {time}",
+      "runningRestarted": "Up {time} · restarted {n}×",
+      "restarting": "Restarting",
+      "exited": "Exited",
+      "paused": "Paused",
+      "dead": "Dead",
+      "created": "Created",
+      "other": "{state}",
+      "online": "Online {time}",
+      "stopped": "Stopped",
+      "errored": "Errored"
+    },
+    "cell": {
+      "cpu": "CPU",
+      "memory": "Memory / limit",
+      "memoryOnly": "Memory",
+      "noLimit": "no limit",
+      "restarts": "Restarts",
+      "instances": "Instances",
+      "since": "Started"
+    },
+    "exit": {
+      "title": "{name} · last exit",
+      "meta": "docker inspect",
+      "state": "State",
+      "oom": "OOMKilled",
+      "yes": "true",
+      "no": "false",
+      "code": "ExitCode",
+      "started": "Started",
+      "image": "image",
+      "restarts": "restarts",
+      "seeWhy": "See why, on the server",
+      "noLogs": "Daminus does not read container logs: they can hold tokens, emails and query values. Run this yourself to see the last lines.",
+      "memoryTitle": "{name} memory, last {n} scans",
+      "memoryLabel": "Memory of {name} over {n} scans, peak {peak}",
+      "limit": "limit {size}",
+      "peak": "Highest reading {peak} of the {limit} limit.",
+      "peakOnly": "Highest reading {peak}; the container has no limit."
+    },
+    "finding": {
+      "oomLimit": "{name} hits its {limit} memory limit",
+      "oom": "{name} was killed for lack of memory",
+      "oomText": "OOMKilled, restarted {n}× since it started; memory climbs to the limit before each kill. Raise the limit, or look at what {name} does just before it (logs command on the left).",
+      "oomTextLimit": "OOMKilled, restarted {n}× since it started; memory climbs to the {limit} limit before each kill. Raise the limit, or look at what {name} does just before it (logs command on the left).",
+      "down": "{name} is not running",
+      "downText": "Its state is {state}, exit code {exit}. Look at its logs (command on the left), then start it again.",
+      "restarted": "{name} restarted {n}×",
+      "restartedText": "It is running now but has restarted since it started. Look at its logs (command on the left) for what it stops on.",
+      "also": "Also on {host}",
+      "hostMemory": "Host memory {used} of {total} in use."
+    },
+    "perm": {
+      "title": "Daminus can’t use Docker on {host}",
+      "text": "The SSH user is not allowed to run docker, so there is nothing to read. Nothing is broken on the server.",
+      "tryTitle": "See it yourself",
+      "fixTitle": "Let the SSH user run docker",
+      "fixText": "Add the SSH user to the docker group, then reconnect. Members of that group can act as root on the server; if that is too much, skip containers for this project.",
+      "again": "Group changes apply to new SSH sessions; the next scan opens a fresh one."
+    },
+    "unknown": {
+      "title": "{name} could not be read on {host}",
+      "timeout": "The check timed out. The host may be busy; the next scan tries again.",
+      "unreachable": "The host did not answer, so nothing new was read.",
+      "missing": "Docker or this Compose project was not found on {host}. Edit the project and pick the project name again.",
+      "unsupported": "This Docker version answered in a form Daminus does not read."
+    },
+    "unknownPm2": {
+      "title": "{name} could not be read on {host}",
+      "needs_perm": "The SSH user cannot talk to the pm2 daemon. pm2 apps belong to the user that started them; connect as that user or point the project at its PM2_HOME.",
+      "missing": "pm2 or this app was not found on {host}.",
+      "other": "pm2 did not answer, so nothing new was read."
+    }
+  }
+}

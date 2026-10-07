@@ -1,0 +1,41 @@
+{
+  "projectShared": {
+    "group": {
+      "disk": "Disk checks",
+      "containers": "Container checks",
+      "databases": "Database checks",
+      "uptime": "URL checks"
+    },
+    "waiting": {
+      "title": "No result yet",
+      "text": "Scan to read this project. The numbers appear here when a scan has finished."
+    },
+    "error": {
+      "title": "Could not read the results",
+      "text": "The last scan could not be loaded from this Mac.",
+      "retry": "Try again"
+    },
+    "off": {
+      "title": "{group} are off in Settings",
+      "text": "Switch them on in Settings › Scan and they run with the next scan.",
+      "open": "Open Settings"
+    },
+    "unreachable": {
+      "title": "{hosts} did not answer",
+      "text": "Scan #{seq} could not reach it, so there is nothing to show yet.",
+      "kept": "Its parts show nothing until a scan reaches it again."
+    },
+    "stale": {
+      "title": "Not re-checked since #{seq}",
+      "text": "These results are what scan #{seq} saw. The next scan that reaches the host refreshes them."
+    },
+    "old": {
+      "title": "These results are {n} day old | These results are {n} days old",
+      "text": "Scan again to see how things are now."
+    },
+    "delta": {
+      "since": "since #{seq}",
+      "same": "no change"
+    }
+  }
+}

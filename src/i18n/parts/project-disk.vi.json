@@ -1,0 +1,53 @@
+{
+  "projectDisk": {
+    "empty": {
+      "title": "Không có thư mục để đo",
+      "text": "Dự án này chưa có thư mục nào trên máy chủ. Sửa dự án để thêm."
+    },
+    "tiles": {
+      "title": "{size} nằm ở đâu",
+      "meta": "{paths} · du, thư mục lớn nhất",
+      "label": "Thư mục theo dung lượng",
+      "other": "khác",
+      "partial": "du không đọc được hết thư mục con, nên một số dung lượng thấp hơn thực tế.",
+      "none": "Lần quét gần nhất chưa có dung lượng thư mục."
+    },
+    "growth": {
+      "title": "Tăng trưởng",
+      "meta": "{n} lần quét · {delta}",
+      "label": "Dung lượng dự án qua {n} lần quét, từ {from} đến {to}",
+      "grew": "{name} tăng nhiều nhất từ #{seq}: {delta}.",
+      "flat": "Không thư mục nào tăng từ #{seq}.",
+      "first": "Lần quét sau sẽ cho thấy cái gì tăng."
+    },
+    "logs": {
+      "title": "File log lớn",
+      "meta": "logs.big",
+      "text": "{n} file log vượt 500 MB, lớn nhất là {name}, {size}. Daminus không bao giờ xoá gì; hãy tự xem chúng.",
+      "command": "Liệt kê file lớn nhất trong thư mục đó"
+    },
+    "files": {
+      "title": "File lớn nhất",
+      "meta": "find, chỉ đọc",
+      "label": "File lớn nhất",
+      "skipped": "Bỏ qua {paths} · đổi ở Cài đặt › Quét",
+      "none": "Không có file nào vượt ngưỡng đặt ở Cài đặt › Quét.",
+      "finding": "Được cảnh báo file log lớn nêu tên"
+    },
+    "servers": {
+      "title": "Trên máy chủ",
+      "meta": "dùng chung với dự án khác",
+      "fill": "{host} /",
+      "docker": "docker",
+      "none": "Chưa có số đo ổ đĩa của các máy chủ này."
+    },
+    "free": {
+      "title": "Giải phóng được gì",
+      "note": "Ước tính. Daminus chỉ hiện lệnh; bạn tự chạy.",
+      "buildCache": "Dọn build cache của Docker",
+      "images": "Xoá image Docker không dùng",
+      "logs": "Xoá hoặc xoay vòng các file log lớn",
+      "on": "{what} · {host}"
+    }
+  }
+}

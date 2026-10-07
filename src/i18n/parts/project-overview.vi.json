@@ -1,0 +1,109 @@
+{
+  "projectOverview": {
+    "tile": {
+      "uptime": "Uptime · {host}",
+      "uptimeNone": "Uptime",
+      "disk": "Ổ đĩa dự án",
+      "database": "Cơ sở dữ liệu",
+      "tls": "TLS",
+      "renewed": "đã gia hạn",
+      "days": "ngày",
+      "notSetUp": "chưa thiết lập",
+      "needsPermission": "cần quyền",
+      "noAnswer": "không có phản hồi",
+      "spark": "{name}, {n} lần quét gần nhất",
+      "mysqlClock": "MySQL cập nhật dung lượng bảng khoảng một lần mỗi ngày"
+    },
+    "wiring": {
+      "title": "{name} được nối thế nào",
+      "meta": "{servers} · {parts} · trực tiếp từ lần quét #{seq}",
+      "servers": "{n} máy chủ",
+      "parts": "{n} phần",
+      "label": "Các phần của {name} và cách chúng nối với nhau, theo máy chủ",
+      "data": "{host} · dữ liệu",
+      "none": "Dự án này chưa lưu phần nào.",
+      "pm2": "pm2 · {n} tiến trình",
+      "pm2Status": "pm2 · {status}",
+      "pm2Restarts": "pm2 · khởi động lại {n} lần",
+      "compose": "compose · {up} chạy",
+      "composeDown": "compose · {down} dừng",
+      "composeRestarts": "compose · khởi động lại {n} lần",
+      "db": "{size} · {tables} bảng",
+      "dbSize": "{size}",
+      "path": "thư mục · {size}",
+      "unknown": "chưa đọc được",
+      "state": {
+        "ok": "Ổn",
+        "warn": "Cần xem",
+        "crit": "Nghiêm trọng",
+        "unknown": "Chưa đọc được"
+      },
+      "role": {
+        "fe": "FE",
+        "be": "BE",
+        "db": "DB",
+        "worker": "WORKER"
+      }
+    },
+    "look": {
+      "title": "Cần xem",
+      "meta": "{crit} · {warn} · {perm}",
+      "critical": "{n} nghiêm trọng",
+      "warnings": "{n} cảnh báo",
+      "permission": "{n} cần quyền",
+      "none": "Không có gì cần xem.",
+      "noneText": "Mọi kết quả đều ổn hoặc đã được đánh dấu mong đợi.",
+      "permissionTitle": "{check} cần quyền",
+      "open": "Mở",
+      "server": "Máy chủ"
+    },
+    "parts": {
+      "title": "Các phần",
+      "meta": "vai trò · nguồn · máy chủ · trạng thái · CPU · bộ nhớ",
+      "label": "Các phần của dự án",
+      "none": "Dự án này chưa lưu phần nào.",
+      "source": {
+        "path": "thư mục",
+        "pm2": "pm2",
+        "compose": "compose",
+        "postgres": "postgres",
+        "mysql": "mysql"
+      },
+      "online": "{status} · {n}",
+      "status": "{status}",
+      "up": "{n} chạy",
+      "down": "{n} dừng",
+      "restarts": "khởi động lại {n} lần",
+      "notRead": "—"
+    },
+    "response": {
+      "title": "Phản hồi, {n} lần quét gần nhất",
+      "meta": "trung vị {ms}",
+      "none": "Chưa ghi nhận phản hồi nào.",
+      "label": "Phản hồi của các URL dự án qua {n} lần quét",
+      "cell": "#{seq} · {ms}",
+      "cellNone": "#{seq} · không phản hồi",
+      "today": "hôm nay",
+      "slow": "{n} lần quét không ổn; chậm nhất là #{seq}, {ms}.",
+      "allGood": "Mọi lần quét đều phản hồi kịp.",
+      "answered": "{status} · {ms}",
+      "failed": "không phản hồi · {why}",
+      "exposure": "/.env · /.git/HEAD",
+      "notExposed": "không bị lộ",
+      "exposed": "bị phục vụ",
+      "exposureUnknown": "chưa kiểm tra",
+      "certificate": "Chứng chỉ · {host}",
+      "noUrls": "Dự án này không có URL để kiểm tra.",
+      "error": {
+        "dns": "không tìm thấy tên",
+        "no_route": "không có đường tới",
+        "refused": "bị từ chối",
+        "timeout": "quá thời gian",
+        "tls": "lỗi TLS",
+        "redirects": "chuyển hướng quá nhiều",
+        "invalid_url": "URL không hợp lệ",
+        "other": "thất bại"
+      }
+    }
+  }
+}

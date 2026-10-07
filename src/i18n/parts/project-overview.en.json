@@ -1,0 +1,109 @@
+{
+  "projectOverview": {
+    "tile": {
+      "uptime": "Uptime · {host}",
+      "uptimeNone": "Uptime",
+      "disk": "Project disk",
+      "database": "Database",
+      "tls": "TLS",
+      "renewed": "renewed",
+      "days": "days",
+      "notSetUp": "not set up",
+      "needsPermission": "needs permission",
+      "noAnswer": "no answer",
+      "spark": "{name}, last {n} scans",
+      "mysqlClock": "MySQL updates table sizes about once a day"
+    },
+    "wiring": {
+      "title": "How {name} is wired",
+      "meta": "{servers} · {parts} · live from scan #{seq}",
+      "servers": "{n} server | {n} servers",
+      "parts": "{n} part | {n} parts",
+      "label": "Parts of {name} and how they connect, by server",
+      "data": "{host} · data",
+      "none": "No parts saved for this project yet.",
+      "pm2": "pm2 · {n} instance | pm2 · {n} instances",
+      "pm2Status": "pm2 · {status}",
+      "pm2Restarts": "pm2 · {n} restart | pm2 · {n} restarts",
+      "compose": "compose · {up} up",
+      "composeDown": "compose · {down} down",
+      "composeRestarts": "compose · {n} restart | compose · {n} restarts",
+      "db": "{size} · {tables} tables",
+      "dbSize": "{size}",
+      "path": "path · {size}",
+      "unknown": "not read",
+      "state": {
+        "ok": "Healthy",
+        "warn": "Needs a look",
+        "crit": "Critical",
+        "unknown": "Not read"
+      },
+      "role": {
+        "fe": "FE",
+        "be": "BE",
+        "db": "DB",
+        "worker": "WORKER"
+      }
+    },
+    "look": {
+      "title": "Needs a look",
+      "meta": "{crit} · {warn} · {perm}",
+      "critical": "{n} critical",
+      "warnings": "{n} warning | {n} warnings",
+      "permission": "{n} needs permission",
+      "none": "Nothing needs a look.",
+      "noneText": "Every result is fine or expected.",
+      "permissionTitle": "{check} needs permission",
+      "open": "Open",
+      "server": "Server"
+    },
+    "parts": {
+      "title": "Parts",
+      "meta": "role · source · host · state · CPU · memory",
+      "label": "Parts of the project",
+      "none": "No parts saved for this project yet.",
+      "source": {
+        "path": "path",
+        "pm2": "pm2",
+        "compose": "compose",
+        "postgres": "postgres",
+        "mysql": "mysql"
+      },
+      "online": "{status} · {n}",
+      "status": "{status}",
+      "up": "{n} up",
+      "down": "{n} down",
+      "restarts": "{n} restart | {n} restarts",
+      "notRead": "—"
+    },
+    "response": {
+      "title": "Response, last {n} scans",
+      "meta": "median {ms}",
+      "none": "No answers recorded yet.",
+      "label": "Response of the project's URLs over {n} scans",
+      "cell": "#{seq} · {ms}",
+      "cellNone": "#{seq} · no answer",
+      "today": "today",
+      "slow": "{n} scan was not healthy; the slowest was #{seq} at {ms}. | {n} scans were not healthy; the slowest was #{seq} at {ms}.",
+      "allGood": "Every scan answered in time.",
+      "answered": "{status} · {ms}",
+      "failed": "no answer · {why}",
+      "exposure": "/.env · /.git/HEAD",
+      "notExposed": "not exposed",
+      "exposed": "served",
+      "exposureUnknown": "not checked",
+      "certificate": "Certificate · {host}",
+      "noUrls": "This project has no URL to check.",
+      "error": {
+        "dns": "name not found",
+        "no_route": "no route",
+        "refused": "refused",
+        "timeout": "timed out",
+        "tls": "TLS error",
+        "redirects": "too many redirects",
+        "invalid_url": "invalid URL",
+        "other": "failed"
+      }
+    }
+  }
+}
