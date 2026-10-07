@@ -14,7 +14,7 @@ import type { IconName } from '@/ui/icon-paths'
 
 const props = withDefaults(
   defineProps<{
-    tone?: 'warn' | 'crit' | 'ok'
+    tone?: 'warn' | 'crit' | 'ok' | 'quiet'
     icon?: IconName
     /** The left column of a permission row ("System logs"); a lane's note has none. */
     label?: string
@@ -79,6 +79,17 @@ async function onCopy() {
 }
 
 .fix-ok {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
+}
+
+/* A permission that is fine: a quiet grey row with only the tile green. */
+.fix-quiet {
+  background: var(--surface-well);
+  color: var(--ink);
+}
+
+.fix-quiet .tile {
   background: var(--ok-soft);
   color: var(--ok-ink);
 }

@@ -1,0 +1,150 @@
+{
+  "setupPick": {
+    "title": "Which servers should Daminus watch?",
+    "subtitle": "From {file} · {entries}, {left}. Login is tested as soon as a host is ticked.",
+    "subtitleNoneLeft": "From {file} · {entries}. Login is tested as soon as a host is ticked.",
+    "entries": "No entries | 1 entry | {n} entries",
+    "leftOut": "{n} left out",
+    "status": {
+      "testing": "Testing {n} of {total}",
+      "done": "All {total} tested"
+    },
+    "filter": {
+      "placeholder": "Filter by alias or IP",
+      "label": "Filter hosts by alias or address",
+      "segments": "Filter by login test",
+      "all": "All",
+      "ready": "Ready",
+      "failed": "Failed",
+      "selectReady": "Select all ready",
+      "addHost": "Add host",
+      "none": "No host matches this filter."
+    },
+    "columns": {
+      "host": "Host",
+      "user": "User",
+      "route": "Route",
+      "system": "System",
+      "login": "Login test",
+      "key": "Key",
+      "selectAll": "Select all hosts",
+      "tick": "Test {host}"
+    },
+    "route": {
+      "direct": "Direct",
+      "via": "via {jump}"
+    },
+    "system": {
+      "waiting": "Waiting for login",
+      "unknown": "Unknown until login",
+      "eol": "EOL",
+      "eolTip": "No longer gets security updates."
+    },
+    "chip": {
+      "queued": "Queued",
+      "connecting": "Connecting",
+      "agent_wait": "Waiting for SSH agent",
+      "testing": "Testing",
+      "testingRow": "Testing…",
+      "reached": "Reached",
+      "connected": "Connected",
+      "slow": "Slow",
+      "host_key_unknown": "Host key unknown",
+      "host_key_changed": "Host key changed",
+      "key_rejected": "Key rejected",
+      "unreachable": "Unreachable",
+      "timed_out": "Timed out",
+      "kept": "kept · retries on first scan"
+    },
+    "tip": {
+      "queued": "Waits for a free slot (Hosts at once).",
+      "connecting": "Handshake, up to the {n} s connect timeout.",
+      "agent_wait": "The SSH agent asks you to approve. Not counted in the timeout.",
+      "testing": "Logged in, reading system, user and permissions.",
+      "reached": "Opens the permission rows below.",
+      "host_key_unknown": "The host key is not trusted yet. Nothing is written to known_hosts.",
+      "host_key_changed": "Stops this host. The key differs from the one on record.",
+      "key_rejected": "Auth failed. The ssh-add fix is in the card below.",
+      "unreachable": "DNS, no route or refused. Check the address or VPN.",
+      "timed_out": "No answer in {n} s. Retry, or raise it in Settings › Scan."
+    },
+    "fail": {
+      "key_rejected": "The key in your config is not loaded in ssh-agent. Add it, then retry. Your other hosts keep going.",
+      "key_rejected_nokey": "The keys ssh offered were not accepted. Check that the right key is loaded in ssh-agent, then retry. Your other hosts keep going.",
+      "termius": "Key only in Termius? Export it to {dir} first, then run the line above.",
+      "termiusNoLine": "Key only in Termius? Export it to {dir} first, then retry.",
+      "unreachable": {
+        "dns": "The address did not resolve. Check the address or VPN.",
+        "refused": "The server refused the connection. Check the address or VPN.",
+        "no_route": "There is no route to the server. Check the address or VPN.",
+        "other": "DNS, no route or refused. Check the address or VPN."
+      },
+      "timed_out": "No answer in {n} s. Retry, or raise it in Settings › Scan.",
+      "host_key_unknown": "This server's host key is not trusted yet. Compare the fingerprint with the one you expect, then run the line below once and accept it. Daminus never writes known_hosts.",
+      "host_key_changed": "The host key differs from the one on record, so this host is stopped. Find out why before you connect to it.",
+      "offered": "Offers",
+      "known": "On record",
+      "skip": "Skip host",
+      "retry": "Retry"
+    },
+    "perm": {
+      "reached": "Reached · {time}",
+      "missing": "No permissions missing | 1 permission missing | {n} permissions missing",
+      "close": "Close the permission rows of {host}",
+      "system": "{distro} · {arch} · logged in as {user}",
+      "groups": "groups {groups}",
+      "noGroups": "not in docker, adm or systemd-journal",
+      "folder": "Folder {path}",
+      "dockerLabel": "Docker",
+      "logsLabel": "System logs",
+      "answer": {
+        "docker": {
+          "ok": "Answers · {user} can use docker",
+          "no_permission": "No permission · add {user} to the docker group",
+          "stopped": "Stopped · systemctl start docker"
+        },
+        "logs": {
+          "ok": "Readable · {user} can read system logs",
+          "no_permission": "No permission · not in adm or systemd-journal, so log checks will say Needs permission"
+        },
+        "folder": {
+          "readable": "Readable",
+          "denied": "Not readable · {user} cannot list it, so disk and upload checks skip it",
+          "missing": "Missing · moved or a typo in the path"
+        }
+      }
+    },
+    "leftOutRow": {
+      "title": "Left out {n}",
+      "toggle": "Show the entries left out",
+      "wildcard": "wildcard",
+      "match": "match block",
+      "noHostName": "no HostName",
+      "invalidAlias": "invalid alias",
+      "note": "Wildcards set defaults, so they are read but never listed."
+    },
+    "termius": {
+      "title": "Hosts only in Termius?",
+      "body": "Termius keeps its own list. Export it once into {file}, then reload.",
+      "reload": "Reload"
+    },
+    "footer": {
+      "ready": "{n} ready",
+      "failed": "{n} failed",
+      "testing": "{n} testing",
+      "progress": "Hosts tested",
+      "hint": "A ticked host that failed stays in and retries on the first scan.",
+      "back": "Back",
+      "discover": "Discover {n} host | Discover {n} hosts",
+      "none": "Tick a host that logs in to go on."
+    },
+    "rail": {
+      "title": "What the test runs",
+      "note": "One read-only script, about 1 s per host. BatchMode means it never waits for a password."
+    },
+    "error": {
+      "title": "Could not read your SSH config",
+      "retry": "Try again"
+    }
+  }
+}

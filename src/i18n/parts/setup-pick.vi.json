@@ -1,0 +1,150 @@
+{
+  "setupPick": {
+    "title": "Daminus nên theo dõi những máy chủ nào?",
+    "subtitle": "Từ {file} · {entries}, {left}. Đăng nhập được thử ngay khi bạn chọn một host.",
+    "subtitleNoneLeft": "Từ {file} · {entries}. Đăng nhập được thử ngay khi bạn chọn một host.",
+    "entries": "Chưa có mục nào | 1 mục | {n} mục",
+    "leftOut": "{n} mục bị bỏ qua",
+    "status": {
+      "testing": "Đang thử {n} trên {total}",
+      "done": "Đã thử xong {total}"
+    },
+    "filter": {
+      "placeholder": "Lọc theo alias hoặc IP",
+      "label": "Lọc host theo alias hoặc địa chỉ",
+      "segments": "Lọc theo kết quả đăng nhập",
+      "all": "Tất cả",
+      "ready": "Sẵn sàng",
+      "failed": "Lỗi",
+      "selectReady": "Chọn tất cả host sẵn sàng",
+      "addHost": "Thêm host",
+      "none": "Không có host nào khớp bộ lọc."
+    },
+    "columns": {
+      "host": "Host",
+      "user": "Người dùng",
+      "route": "Đường kết nối",
+      "system": "Hệ thống",
+      "login": "Thử đăng nhập",
+      "key": "Khóa",
+      "selectAll": "Chọn tất cả host",
+      "tick": "Thử {host}"
+    },
+    "route": {
+      "direct": "Trực tiếp",
+      "via": "qua {jump}"
+    },
+    "system": {
+      "waiting": "Chờ đăng nhập",
+      "unknown": "Chưa rõ (cần đăng nhập)",
+      "eol": "EOL",
+      "eolTip": "Không còn nhận bản vá bảo mật."
+    },
+    "chip": {
+      "queued": "Đang chờ",
+      "connecting": "Đang kết nối",
+      "agent_wait": "Chờ SSH agent",
+      "testing": "Đang thử",
+      "testingRow": "Đang thử…",
+      "reached": "Đã vào được",
+      "connected": "Đã kết nối",
+      "slow": "Chậm",
+      "host_key_unknown": "Host key chưa biết",
+      "host_key_changed": "Host key đã đổi",
+      "key_rejected": "Khóa bị từ chối",
+      "unreachable": "Không tới được",
+      "timed_out": "Hết thời gian",
+      "kept": "giữ lại · thử lại ở lần quét đầu"
+    },
+    "tip": {
+      "queued": "Chờ một lượt trống (Số host cùng lúc).",
+      "connecting": "Bắt tay kết nối, tối đa {n} s theo thời gian chờ kết nối.",
+      "agent_wait": "SSH agent đang chờ bạn duyệt. Không tính vào thời gian chờ.",
+      "testing": "Đã đăng nhập, đang đọc hệ thống, người dùng và quyền.",
+      "reached": "Mở các dòng quyền bên dưới.",
+      "host_key_unknown": "Host key chưa được tin cậy. Không có gì được ghi vào known_hosts.",
+      "host_key_changed": "Dừng host này. Khóa khác với khóa đã lưu.",
+      "key_rejected": "Xác thực thất bại. Cách sửa bằng ssh-add nằm ở thẻ bên dưới.",
+      "unreachable": "DNS, không có đường đi hoặc bị từ chối. Kiểm tra địa chỉ hoặc VPN.",
+      "timed_out": "Không có phản hồi sau {n} s. Thử lại, hoặc tăng thời gian ở Cài đặt › Quét."
+    },
+    "fail": {
+      "key_rejected": "Khóa trong cấu hình của bạn chưa được nạp vào ssh-agent. Hãy thêm khóa rồi thử lại. Các host khác vẫn tiếp tục.",
+      "key_rejected_nokey": "Các khóa mà ssh đưa ra đều không được chấp nhận. Hãy kiểm tra đúng khóa đã nạp vào ssh-agent rồi thử lại. Các host khác vẫn tiếp tục.",
+      "termius": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi chạy dòng lệnh ở trên.",
+      "termiusNoLine": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi thử lại.",
+      "unreachable": {
+        "dns": "Không phân giải được địa chỉ. Kiểm tra địa chỉ hoặc VPN.",
+        "refused": "Máy chủ từ chối kết nối. Kiểm tra địa chỉ hoặc VPN.",
+        "no_route": "Không có đường đi tới máy chủ. Kiểm tra địa chỉ hoặc VPN.",
+        "other": "DNS, không có đường đi hoặc bị từ chối. Kiểm tra địa chỉ hoặc VPN."
+      },
+      "timed_out": "Không có phản hồi sau {n} s. Thử lại, hoặc tăng thời gian ở Cài đặt › Quét.",
+      "host_key_unknown": "Host key của máy chủ này chưa được tin cậy. Hãy so dấu vân tay với giá trị bạn mong đợi, rồi chạy dòng lệnh bên dưới một lần và chấp nhận. Daminus không bao giờ ghi vào known_hosts.",
+      "host_key_changed": "Host key khác với khóa đã lưu nên host này bị dừng. Hãy tìm hiểu nguyên nhân trước khi kết nối.",
+      "offered": "Máy chủ đưa ra",
+      "known": "Đã lưu",
+      "skip": "Bỏ qua host",
+      "retry": "Thử lại"
+    },
+    "perm": {
+      "reached": "Đã vào được · {time}",
+      "missing": "Không thiếu quyền nào | Thiếu 1 quyền | Thiếu {n} quyền",
+      "close": "Đóng các dòng quyền của {host}",
+      "system": "{distro} · {arch} · đăng nhập bằng {user}",
+      "groups": "nhóm {groups}",
+      "noGroups": "không thuộc docker, adm hay systemd-journal",
+      "folder": "Thư mục {path}",
+      "dockerLabel": "Docker",
+      "logsLabel": "Nhật ký hệ thống",
+      "answer": {
+        "docker": {
+          "ok": "Phản hồi · {user} dùng được docker",
+          "no_permission": "Không có quyền · thêm {user} vào nhóm docker",
+          "stopped": "Đã dừng · systemctl start docker"
+        },
+        "logs": {
+          "ok": "Đọc được · {user} đọc được nhật ký hệ thống",
+          "no_permission": "Không có quyền · không thuộc adm hay systemd-journal, nên các kiểm tra nhật ký sẽ báo Cần quyền"
+        },
+        "folder": {
+          "readable": "Đọc được",
+          "denied": "Không đọc được · {user} không liệt kê được, nên các kiểm tra ổ đĩa và tệp tải lên bị bỏ qua",
+          "missing": "Không có · đã chuyển đi hoặc gõ sai đường dẫn"
+        }
+      }
+    },
+    "leftOutRow": {
+      "title": "Bỏ qua {n}",
+      "toggle": "Hiện các mục bị bỏ qua",
+      "wildcard": "ký tự đại diện",
+      "match": "khối match",
+      "noHostName": "thiếu HostName",
+      "invalidAlias": "alias không hợp lệ",
+      "note": "Ký tự đại diện chỉ đặt giá trị mặc định, nên được đọc nhưng không bao giờ liệt kê."
+    },
+    "termius": {
+      "title": "Host chỉ có trong Termius?",
+      "body": "Termius giữ danh sách riêng. Hãy xuất nó một lần vào {file}, rồi tải lại.",
+      "reload": "Tải lại"
+    },
+    "footer": {
+      "ready": "{n} sẵn sàng",
+      "failed": "{n} lỗi",
+      "testing": "{n} đang thử",
+      "progress": "Số host đã thử",
+      "hint": "Host đã chọn mà bị lỗi vẫn được giữ lại và thử lại ở lần quét đầu tiên.",
+      "back": "Quay lại",
+      "discover": "Khám phá {n} host | Khám phá {n} host",
+      "none": "Hãy chọn một host đăng nhập được để tiếp tục."
+    },
+    "rail": {
+      "title": "Phép thử chạy gì",
+      "note": "Một script chỉ đọc, khoảng 1 s mỗi host. BatchMode nghĩa là nó không bao giờ chờ mật khẩu."
+    },
+    "error": {
+      "title": "Không đọc được cấu hình SSH của bạn",
+      "retry": "Thử lại"
+    }
+  }
+}
