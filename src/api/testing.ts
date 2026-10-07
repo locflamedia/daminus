@@ -3,8 +3,9 @@
 import { emit } from '@tauri-apps/api/event'
 import { clearMocks, mockIPC } from '@tauri-apps/api/mocks'
 import type { ScanEvent } from './bindings/ScanEvent'
+import type { SetupEvent } from './bindings/SetupEvent'
 import type { CommandName } from './commands'
-import { SCAN_EVENT } from './events'
+import { SCAN_EVENT, SETUP_EVENT } from './events'
 
 export type CommandMock = (cmd: CommandName, args: Record<string, unknown>) => unknown
 
@@ -18,6 +19,11 @@ export function mockCommands(handler: CommandMock): void {
 /** Delivers `event` as Rust would. */
 export function emitScanEvent(event: ScanEvent): Promise<void> {
   return emit(SCAN_EVENT, event)
+}
+
+/** Delivers a setup `event` as Rust would. */
+export function emitSetupEvent(event: SetupEvent): Promise<void> {
+  return emit(SETUP_EVENT, event)
 }
 
 export { clearMocks }
