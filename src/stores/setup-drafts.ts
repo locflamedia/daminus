@@ -18,6 +18,7 @@ import {
   draftFromProposed,
   draftToProject,
   hostsOf,
+  isAbsPath,
   isIncomplete,
   newKey,
   nextColor,
@@ -29,7 +30,7 @@ import { useSetupStore } from './setup'
 export interface LooseItem {
   key: string
   host: string
-  kind: 'vhost' | 'compose' | 'pm2' | 'db' | 'env'
+  kind: 'vhost' | 'compose' | 'pm2' | 'db' | 'env' | 'path'
   /** The name, folder or file it is known by. */
   name: string
   /** Kind-specific words for the detail line, which the screen turns into text. */
@@ -102,6 +103,8 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
   const setup = useSetupStore()
 
   const drafts = ref<DraftProject[]>([])
+  /** Folders the user added by hand ("Add by path"); they are loose finds until moved. */
+  const manual = ref<{ host: string; path: string }[]>([])
   /** Keys of loose finds the user already moved into a project. */
   const moved = ref<Set<string>>(new Set())
   const issues = ref<ProjectIssue[]>([])
@@ -130,17 +133,47 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
     if (fresh.length > 0) drafts.value = [...drafts.value, ...fresh]
   }
 
-  const loose = computed<LooseItem[]>(() =>
-    (proposal.value?.unassigned ?? [])
-      .map(looseOf)
-      .filter((l): l is LooseItem => l !== null && !moved.value.has(l.key)),
+  const manualItems = computed<LooseItem[]>(() =>
+    manual.value.map((m) => ({
+      key: `${m.host}|path|${m.path}`,
+      host: m.host,
+      kind: 'path' as const,
+      name: m.path,
+      detail: { code: 'by_hand' },
+    })),
   )
+
+  const loose = computed<LooseItem[]>(() =>
+    [...(proposal.value?.unassigned ?? []).map(looseOf), ...manualItems.value].filter(
+      (l): l is LooseItem => l !== null && !moved.value.has(l.key),
+    ),
+  )
+
+  /** "Add by path": a folder on `host` that discover could not know about. */
+  function addManualPath(host: string, path: string): boolean {
+    const clean = path.trim()
+    if (!isAbsPath(clean) || manual.value.some((m) => m.host === host && m.path === clean)) {
+      return false
+    }
+    manual.value = [...manual.value, { host, path: clean }]
+    return true
+  }
 
   /** Adds a loose find to the project `draftKey`; `.env` files go to its list of `.env`. */
   function addToProject(item: LooseItem, draftKey: string) {
-    const u = proposal.value?.unassigned.find((x) => looseOf(x)?.key === item.key)
     const draft = drafts.value.find((d) => d.key === draftKey)
-    if (!u || !draft) return
+    if (!draft) return
+    if (item.kind === 'path') {
+      draft.parts = [
+        ...draft.parts,
+        { key: newKey('p'), role: 'be', host: item.host, kind: 'path', path: item.name },
+      ]
+      moved.value = new Set([...moved.value, item.key])
+      void validate()
+      return
+    }
+    const u = proposal.value?.unassigned.find((x) => looseOf(x)?.key === item.key)
+    if (!u) return
     if (u.item.rec === 'env') {
       if (!draft.envFiles.includes(u.item.path)) draft.envFiles = [...draft.envFiles, u.item.path]
     } else {
@@ -155,8 +188,9 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
 
   /** "+ New project…": a project made from one find. */
   function newProjectFrom(item: LooseItem): DraftProject | null {
-    const u = proposal.value?.unassigned.find((x) => looseOf(x)?.key === item.key)
-    if (!u) return null
+    const known =
+      item.kind === 'path' || proposal.value?.unassigned.some((x) => looseOf(x)?.key === item.key)
+    if (!known) return null
     const name = item.kind === 'env' ? '' : item.name
     const draft: DraftProject = {
       key: newKey('d'),
@@ -263,6 +297,7 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
   function reset() {
     drafts.value = []
     moved.value = new Set()
+    manual.value = []
     issues.value = []
     saved.value = null
     error.value = null
@@ -272,6 +307,7 @@ export const useSetupDraftsStore = defineStore('setup-drafts', () => {
     drafts,
     proposal,
     loose,
+    addManualPath,
     issues,
     saving,
     saved,
