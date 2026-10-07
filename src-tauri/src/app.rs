@@ -209,8 +209,9 @@ impl AppCore {
 /// The projects the webview sent, checked as `projects.json` would check them
 /// (names and paths that could be read as an option are refused).
 fn parse_projects(value: &serde_json::Value) -> Result<Vec<Project>, AppError> {
-    serde_json::from_value(value.clone())
-        .map_err(|e| AppError::from(ErrorCode::SchemaInvalid).with_param("detail", e.to_string()))
+    serde_json::from_value(value.clone()).map_err(|e| {
+        AppError::from(ErrorCode::SchemaInvalid).with_param("detail", serde_error_path(&e))
+    })
 }
 
 /// Whether an event ends the scan.
@@ -224,4 +225,10 @@ pub async fn pump<E>(mut rx: mpsc::Receiver<E>, mut sink: impl FnMut(E)) {
     while let Some(event) = rx.recv().await {
         sink(event);
     }
+}
+
+/// Where a rejected project went wrong (line and column), never the message: serde's text
+/// can quote the value, and values here are names and paths from the webview.
+fn serde_error_path(e: &serde_json::Error) -> String {
+    format!("line {}, column {}", e.line(), e.column())
 }

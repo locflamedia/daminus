@@ -111,25 +111,34 @@ pub async fn setup_start(
     hosts: Vec<HostAlias>,
     paths: Option<Vec<String>>,
 ) -> Result<SetupStarted, AppError> {
-    core.setup_start(step, &hosts, &paths.unwrap_or_default())
+    let core = core.inner().clone();
+    // Reads settings.json before it starts, and spawns the run: keep both off the main thread.
+    let paths = paths.unwrap_or_default();
+    let started = run_blocking("setup_start", move || {
+        // `start` spawns on the Tokio runtime, which a blocking thread of Tauri's pool can enter.
+        let _guard = tauri::async_runtime::handle().inner().enter();
+        core.setup_start(step, &hosts, &paths)
+    })
+    .await?;
+    Ok(started)
 }
 
 /// Stops the running setup step. `false` when none was running.
 #[tauri::command]
-pub fn setup_stop(core: State<'_, AppCore>) -> bool {
-    core.setup_stop()
+pub async fn setup_stop(core: State<'_, AppCore>) -> Result<bool, AppError> {
+    Ok(core.setup_stop())
 }
 
 /// The setup step in progress, if any (a reloaded webview hydrates from it).
 #[tauri::command]
-pub fn setup_status(core: State<'_, AppCore>) -> Option<SetupRun> {
-    core.setup_status()
+pub async fn setup_status(core: State<'_, AppCore>) -> Result<Option<SetupRun>, AppError> {
+    Ok(core.setup_status())
 }
 
 /// What the setup steps found so far, and the suggested projects.
 #[tauri::command]
-pub fn setup_result(core: State<'_, AppCore>) -> SetupResult {
-    core.setup_result()
+pub async fn setup_result(core: State<'_, AppCore>) -> Result<SetupResult, AppError> {
+    Ok(core.setup_result())
 }
 
 /// What is wrong or doubtful about `projects`, per field.

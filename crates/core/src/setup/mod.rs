@@ -171,7 +171,11 @@ impl SetupService {
 
     /// The same, with what `ssh -G` says each connection uses.
     pub async fn list_resolved(&self) -> Result<HostListing, AppError> {
-        let list = self.list_hosts()?;
+        // The config files are read off the async threads.
+        let this = self.clone();
+        let list = tokio::task::spawn_blocking(move || this.list_hosts())
+            .await
+            .map_err(|_| AppError::from(ErrorCode::Internal))??;
         let entries = resolve_all(&self.shared.tools, &list).await;
         Ok(HostListing { list, entries })
     }
@@ -198,22 +202,13 @@ impl SetupService {
         paths: &[String],
     ) -> Result<Started, AppError> {
         let sh = &self.shared;
-        let mut current = sh
-            .current
-            .lock()
-            .map_err(|_| AppError::from(ErrorCode::StoreBusy))?;
-        if let Some(active) = current.as_ref() {
-            return Ok(Started {
-                setup_id: active.run.setup_id.clone(),
-                joined: true,
-            });
-        }
         let mut hosts = hosts.to_vec();
         let mut seen = std::collections::BTreeSet::new();
         hosts.retain(|h| seen.insert(h.clone()));
         if hosts.is_empty() {
             return Err(ErrorCode::NothingToScan.into());
         }
+        // File reads happen before the lock, so a status read never waits on the disk.
         let settings = sh.store.load_settings()?.value;
         let invalid = |e: crate::checks::bundle::BundleError| {
             AppError::from(ErrorCode::SchemaInvalid).with_param("detail", e.to_string())
@@ -228,6 +223,16 @@ impl SetupService {
                 sh.options.discover_budget,
             ),
         };
+        let mut current = sh
+            .current
+            .lock()
+            .map_err(|_| AppError::from(ErrorCode::StoreBusy))?;
+        if let Some(active) = current.as_ref() {
+            return Ok(Started {
+                setup_id: active.run.setup_id.clone(),
+                joined: true,
+            });
+        }
 
         let now = OffsetDateTime::now_utc();
         let n = sh.started.fetch_add(1, Ordering::Relaxed);
@@ -436,6 +441,11 @@ impl Shared {
 
     /// Suggestions from every host that has been discovered.
     fn regroup(&self) {
+        // One lock over the snapshot and the write, so two hosts finishing together
+        // cannot leave the older grouping in place.
+        let Ok(mut proposal) = self.proposal.lock() else {
+            return;
+        };
         let found: Vec<(HostAlias, HostDiscovery)> = self
             .results
             .lock()
@@ -445,9 +455,7 @@ impl Shared {
                     .collect()
             })
             .unwrap_or_default();
-        if let Ok(mut proposal) = self.proposal.lock() {
-            *proposal = (!found.is_empty()).then(|| group(&found));
-        }
+        *proposal = (!found.is_empty()).then(|| group(&found));
     }
 }
 
