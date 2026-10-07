@@ -24,6 +24,7 @@ import {
   monotonePath,
   paddedDomain,
   scaleLinear,
+  timeShares,
   type Point,
 } from '@/lib/chart-geometry'
 import { focusedByKeyboard, stepCursor } from '@/lib/chart-cursor'
@@ -46,13 +47,21 @@ export interface HistoryBand {
   to: number
   /** "warn from 85%". */
   label: string
+  /** The band's colour: amber unless it says `crit`. */
+  tone?: 'warn' | 'crit'
+  /** The label as a pill at the left edge, as the server board draws it, not as text at the right. */
+  pill?: boolean
 }
 
 const props = withDefaults(
   defineProps<{
     series: readonly HistorySeries[]
-    /** Gridline labels, formatted by the caller ("7.5 GB"). */
-    formatY: (value: number) => string
+    /** Gridline labels, formatted by the caller ("7.5 GB"); without it the gridlines carry none. */
+    formatY?: (value: number) => string
+    /** When each scan ran, in milliseconds: the points follow the clock instead of being evenly spaced. */
+    times?: readonly number[]
+    /** A small ring on every scan, not only the newest. */
+    dots?: boolean
     /** Labels under the axis at scan positions; the first is left aligned, the last right. */
     xLabels?: readonly { index: number; text: string; anchor?: 'start' | 'middle' | 'end' }[]
     /** Value range; defaults to the data with 10 % headroom. */
@@ -61,7 +70,7 @@ const props = withDefaults(
     grid?: readonly number[]
     /** Single series: from this value the stroke and the end marker turn amber. */
     threshold?: number
-    band?: HistoryBand
+    band?: HistoryBand | readonly HistoryBand[]
     /** Value and change written next to the newest point. */
     endLabel?: { value: string; delta?: string }
     /** One card per scan for the hover, in series order of the first series. */
@@ -78,6 +87,9 @@ const props = withDefaults(
     once?: string
   }>(),
   {
+    formatY: undefined,
+    times: undefined,
+    dots: false,
     xLabels: () => [],
     domain: undefined,
     grid: undefined,
@@ -151,9 +163,15 @@ interface Drawn {
   color: string
 }
 
+const shares = computed(() =>
+  props.times && props.times.length === props.series[0]?.values.length
+    ? timeShares(props.times)
+    : undefined,
+)
+
 const drawn = computed<Drawn[]>(() =>
   props.series.map((s) => {
-    const points = linePoints(s.values, box.value, domain.value)
+    const points = linePoints(s.values, box.value, domain.value, shares.value)
     return {
       series: s,
       points,
@@ -223,6 +241,22 @@ const xTicks = computed(() => {
 })
 
 const count = computed(() => primary.value?.points.length ?? 0)
+
+const bands = computed(() => {
+  const list = props.band ? (Array.isArray(props.band) ? props.band : [props.band]) : []
+  return (list as readonly HistoryBand[]).map((b) => {
+    const top = yOf.value(b.to)
+    const height = yOf.value(b.from) - top
+    // A pill is as wide as its words plus the dot and the padding.
+    const width = Math.round(b.label.length * 5.6 + 26)
+    return { ...b, top, height, pillWidth: width, crit: b.tone === 'crit' }
+  })
+})
+
+/** Scans that are past the threshold, for the ring on each scan. */
+function pastLine(value: number): boolean {
+  return props.threshold !== undefined && value >= props.threshold
+}
 const cursor = computed(() => {
   const i = hovered.value
   if (i === null || i < 0 || i >= count.value) return null
@@ -241,9 +275,12 @@ function onPointer(e: PointerEvent) {
   const rect = el.getBoundingClientRect()
   if (rect.width === 0) return
   const x = ((e.clientX - rect.left) / rect.width) * W.value
-  const span = box.value.x1 - box.value.x0
-  const i = Math.round(((x - box.value.x0) / span) * (count.value - 1))
-  hovered.value = Math.min(count.value - 1, Math.max(0, i))
+  const points = primary.value?.points ?? []
+  let nearest = 0
+  points.forEach((p, i) => {
+    if (Math.abs(p[0] - x) < Math.abs((points[nearest]?.[0] ?? 0) - x)) nearest = i
+  })
+  hovered.value = nearest
 }
 
 function onKey(e: KeyboardEvent) {
@@ -329,17 +366,29 @@ const gid = (name: string) => `${name}-${uid}`
           </linearGradient>
         </defs>
 
-        <template v-if="band">
+        <template v-for="b in bands" :key="b.label">
           <rect
             class="band"
-            :x="box.x0"
-            :y="yOf(band.to)"
-            :width="box.x1 + plot.right - box.x0 - 8"
-            :height="yOf(band.from) - yOf(band.to)"
-            rx="8"
+            :class="{ crit: b.crit, flush: b.pill }"
+            :x="b.pill ? 0 : box.x0"
+            :y="b.top"
+            :width="b.pill ? W : box.x1 + plot.right - box.x0 - 8"
+            :height="b.height"
+            :rx="b.pill ? 0 : 8"
           />
-          <text class="band-text" :x="W - 12" :y="yOf(band.from) - 8" text-anchor="end">
-            {{ band.label }}
+          <g v-if="b.pill" class="pill" :class="{ crit: b.crit }">
+            <rect
+              :x="box.x0 + 8"
+              :y="b.top + b.height / 2 - 10"
+              :width="b.pillWidth"
+              height="20"
+              rx="10"
+            />
+            <circle :cx="box.x0 + 8 + 11" :cy="b.top + b.height / 2" r="3" />
+            <text :x="box.x0 + 8 + 20" :y="b.top + b.height / 2 + 3.5">{{ b.label }}</text>
+          </g>
+          <text v-else class="band-text" :x="W - 12" :y="b.top + b.height - 8" text-anchor="end">
+            {{ b.label }}
           </text>
         </template>
 
@@ -351,14 +400,14 @@ const gid = (name: string) => `${name}-${uid}`
           stroke-linecap="round"
         />
         <text
-          v-for="g in gridLines"
+          v-for="g in formatY ? gridLines : []"
           :key="g.value"
           class="axis"
           :x="box.x0 - axisGap"
           :y="g.y + 4"
           text-anchor="end"
         >
-          {{ formatY(g.value) }}
+          {{ formatY?.(g.value) }}
         </text>
 
         <g v-for="(d, k) in layers" :key="d.series.id">
@@ -378,6 +427,19 @@ const gid = (name: string) => `${name}-${uid}`
             stroke-linecap="round"
             stroke-linejoin="round"
             :style="{ stroke: single ? `url(#${gid('stroke')})` : d.color }"
+          />
+        </g>
+
+        <g v-if="dots" class="dots">
+          <circle
+            v-for="(p, i) in primary?.points ?? []"
+            :key="i"
+            :cx="p[0]"
+            :cy="p[1]"
+            r="2.5"
+            class="dot"
+            stroke-width="1.5"
+            :stroke="pastLine(series[0]?.values[i] ?? 0) ? 'var(--chart-amber)' : 'var(--accent)'"
           />
         </g>
 
@@ -524,6 +586,38 @@ const gid = (name: string) => `${name}-${uid}`
 .band {
   fill: var(--warn-soft);
   fill-opacity: 0.7;
+}
+
+.band.crit {
+  fill: var(--crit-soft);
+  fill-opacity: 0.55;
+}
+
+.band.flush {
+  fill-opacity: 0.6;
+}
+
+.pill rect {
+  fill: var(--surface-0);
+  fill-opacity: 0.8;
+}
+
+.pill circle {
+  fill: var(--chart-amber);
+}
+
+.pill text {
+  fill: var(--warn-ink);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.pill.crit circle {
+  fill: var(--crit-solid);
+}
+
+.pill.crit text {
+  fill: var(--crit-ink);
 }
 
 .band-text {

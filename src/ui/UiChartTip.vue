@@ -13,18 +13,21 @@ export interface ChartTip {
   delta?: string
   /** The sentence read out for this point; defaults to the card's own words. */
   spoken?: string
+  /** A line under the value, e.g. a forecast; the card grows to hold it. */
+  note?: string
 }
 
 defineProps<{ tip: ChartTip; compact?: boolean }>()
 </script>
 
 <template>
-  <div class="tip" :class="{ compact }" aria-hidden="true">
+  <div class="tip" :class="{ compact, 'has-note': tip.note }" aria-hidden="true">
     <span class="tip-title">{{ tip.title }}</span>
     <span class="tip-row">
       <b class="tip-value">{{ tip.value }}</b>
       <span v-if="tip.delta" class="tip-delta">{{ tip.delta }}</span>
     </span>
+    <span v-if="tip.note" class="tip-note">{{ tip.note }}</span>
   </div>
 </template>
 
@@ -83,6 +86,18 @@ defineProps<{ tip: ChartTip; compact?: boolean }>()
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
   line-height: 18px;
+  white-space: nowrap;
+}
+
+.has-note {
+  height: auto;
+  padding-bottom: 10px;
+}
+
+.tip-note {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  line-height: 14px;
   white-space: nowrap;
 }
 

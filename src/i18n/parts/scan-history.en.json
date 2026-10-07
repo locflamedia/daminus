@@ -1,0 +1,78 @@
+{
+  "historyScreen": {
+    "title": "Scan history",
+    "retention": {
+      "count": "{n} scan since {date} | {n} scans since {date}",
+      "keeping": "keeping the last {n}",
+      "keepingAll": "keeping every scan"
+    },
+    "filter": {
+      "label": "Show scans of",
+      "all": "All projects"
+    },
+    "chart": {
+      "title": "Issues per scan",
+      "label": "Issues per scan, {n} scans, the two being compared are solid",
+      "critical": "critical",
+      "warning": "warning",
+      "info": "info",
+      "tipTitle": "{date} · scan #{seq}",
+      "count": "{n} issue | {n} issues",
+      "spoken": "Scan {seq}, {date}",
+      "none": "no issues",
+      "partCrit": "{n} critical",
+      "partWarn": "{n} warning | {n} warnings",
+      "partInfo": "{n} info"
+    },
+    "tally": {
+      "title": "Since #{seq}",
+      "fixed": "Fixed",
+      "expected": "Marked as expected",
+      "open": "Open now",
+      "oldest": "Oldest open",
+      "oldestValue": "{n} scan | {n} scans",
+      "none": "none",
+      "unreachable": "{host} has been unreachable since #{since}, so its checks are missing from the last bar. | {host} has been unreachable since #{since}, so its checks are missing from the last {n} bars."
+    },
+    "list": {
+      "title": "Scans",
+      "meta": "hosts · duration",
+      "label": "Scans, newest first",
+      "row": "Scan #{seq}, {date}, {issues}, {reached} of {total} hosts reached, {duration}",
+      "pick": "Select to compare",
+      "picked": "Selected for the comparison",
+      "foot": "All {n} shown. Select two rows to compare them.",
+      "footCut": "Showing the newest {n} of {total}. Select two rows to compare them.",
+      "seconds": "{n} s"
+    },
+    "compare": {
+      "title": "Compare",
+      "direction": "Which scan the comparison reads from",
+      "newer": "#{seq}",
+      "older": "vs #{seq}",
+      "new": "new",
+      "fixed": "fixed",
+      "still": "unchanged",
+      "tagNew": "New",
+      "tagFixed": "Fixed",
+      "tagStill": "Still",
+      "scansOpen": "{owner} · {n} scan | {owner} · {n} scans",
+      "rows": "What changed between the two scans",
+      "hosts": "Hosts reached",
+      "duration": "Duration",
+      "unchanged": "Nothing differs between these two scans.",
+      "pickTwo": "Pick two scans in the list to compare them.",
+      "pickOne": "Pick one more scan.",
+      "reading": "Reading the two scans"
+    },
+    "empty": {
+      "title": "No scans yet",
+      "text": "Run a scan and every scan after it is kept here, so you can see what changed.",
+      "scan": "Scan all"
+    },
+    "failed": {
+      "title": "Could not read the scan history",
+      "retry": "Try again"
+    }
+  }
+}
