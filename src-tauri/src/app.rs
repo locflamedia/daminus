@@ -10,11 +10,11 @@ use std::time::{Duration, Instant};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
+use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::domain::project::ProjectsFile;
 use daminus_core::probe::UrlProbe;
-use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::scan::{
     HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started, history_facts,
     history_view, latest_report, report_at,
@@ -187,7 +187,11 @@ impl AppCore {
 
     /// The facts of `checks` in the newest `last` scans.
     pub fn history_facts(&self, checks: &[String], last: u32) -> Result<Vec<ScanFact>, AppError> {
-        history_facts(&self.store, checks, usize::try_from(last).unwrap_or(usize::MAX))
+        history_facts(
+            &self.store,
+            checks,
+            usize::try_from(last).unwrap_or(usize::MAX),
+        )
     }
 
     /// The expected rules as saved: what each covers, why, and until when.
