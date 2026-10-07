@@ -50,7 +50,7 @@ pub fn hosts(store: &FsStore, ssh_config: Option<PathBuf>) -> ExitCode {
     rt.block_on(async {
         let (service, _rx) = service(store, ssh_config.as_ref());
         let (list, entries) = match service.list_resolved().await {
-            Ok(v) => v,
+            Ok(v) => (v.list, v.entries),
             Err(e) => {
                 eprintln!("hosts: {e:?}");
                 return ExitCode::FAILURE;

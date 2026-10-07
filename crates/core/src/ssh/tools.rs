@@ -50,6 +50,7 @@ pub struct SshTools {
     pub(crate) ssh: PathBuf,
     pub(crate) keygen: PathBuf,
     pub(crate) keyscan: PathBuf,
+    pub(crate) ssh_add: PathBuf,
     /// `ssh -F`; `None` reads the user's normal config.
     pub(crate) config: Option<PathBuf>,
     /// Variables set on every process (a GUI app's login-shell `PATH`,
@@ -70,6 +71,7 @@ impl SshTools {
             ssh: PathBuf::from("ssh"),
             keygen: PathBuf::from("ssh-keygen"),
             keyscan: PathBuf::from("ssh-keyscan"),
+            ssh_add: PathBuf::from("ssh-add"),
             config: None,
             env: Vec::new(),
         }
@@ -107,6 +109,16 @@ impl SshTools {
         self.keygen = keygen.into();
         self.keyscan = keyscan.into();
         self
+    }
+
+    /// `ssh-add`, which asks the agent what it holds.
+    pub(crate) fn ssh_add(&self) -> &Path {
+        &self.ssh_add
+    }
+
+    /// The home folder: `HOME` as set here or in this process.
+    pub(crate) fn home(&self) -> Option<PathBuf> {
+        self.var("HOME").map(PathBuf::from)
     }
 
     /// The config file given with `-F`, if any.

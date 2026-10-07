@@ -14,14 +14,12 @@ pub mod tray_text;
 use std::sync::Arc;
 
 use daminus_core::probe::HttpProbe;
-use daminus_core::scan::ScanEvent;
 use daminus_core::ssh::SshTransport;
 use daminus_core::store::FsStore;
 use tauri::{AppHandle, Emitter as _, Manager as _, RunEvent, Runtime, WindowEvent};
 use time::UtcOffset;
-use tokio::sync::mpsc::Receiver;
 
-use crate::app::{AppCore, SCAN_EVENT, is_final, pump};
+use crate::app::{AppCore, AppEvents, SCAN_EVENT, SETUP_EVENT, is_final, pump};
 
 /// Label of the one window, from `tauri.conf.json`.
 pub const MAIN_WINDOW: &str = "main";
@@ -45,14 +43,31 @@ pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + 
         commands::report_latest,
         commands::projects_list,
         commands::reveal_config_dir,
+        commands::hosts_list,
+        commands::ssh_environment,
+        commands::setup_start,
+        commands::setup_stop,
+        commands::setup_status,
+        commands::setup_result,
+        commands::projects_validate,
+        commands::projects_save,
+        commands::projects_remove,
+        commands::url_check,
     ]
 }
 
-/// Emits every scan event to the webview on [`SCAN_EVENT`] and re-reads the
-/// tray's results when a scan ends. Must be called inside the Tauri runtime.
-pub fn forward_events<R: Runtime>(app: &AppHandle<R>, rx: Receiver<ScanEvent>) {
+/// Emits every scan event to the webview on [`SCAN_EVENT`], every setup event
+/// on [`SETUP_EVENT`], and re-reads the tray's results when a scan ends. Must
+/// be called inside the Tauri runtime.
+pub fn forward_events<R: Runtime>(app: &AppHandle<R>, events: AppEvents) {
     let handle = app.clone();
-    tauri::async_runtime::spawn(pump(rx, move |event| {
+    tauri::async_runtime::spawn(pump(events.setup, move |event| {
+        if let Err(e) = handle.emit(SETUP_EVENT, &event) {
+            tracing::warn!(error = %e, "setup event not delivered");
+        }
+    }));
+    let handle = app.clone();
+    tauri::async_runtime::spawn(pump(events.scan, move |event| {
         if let Err(e) = handle.emit(SCAN_EVENT, &event) {
             tracing::warn!(error = %e, "scan event not delivered");
         }
@@ -84,14 +99,16 @@ pub fn run() -> Result<(), tauri::Error> {
             let dir = app.path().app_config_dir()?;
             tracing::info!(version = daminus_core::VERSION, config = %dir.display(), "Daminus starting");
             let transport = SshTransport::new().with_env(env.vars);
-            let (core, rx) = AppCore::new(
+            let tools = transport.tools().clone();
+            let (core, events) = AppCore::new(
                 Arc::new(transport),
+                tools,
                 Arc::new(HttpProbe::new()),
                 FsStore::new(dir),
             );
             app.manage(core);
 
-            forward_events(app.handle(), rx);
+            forward_events(app.handle(), events);
 
             let tray = tray::Tray::build(app.handle(), offset)?;
             app.manage(Arc::clone(&tray));

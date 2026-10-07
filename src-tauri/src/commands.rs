@@ -9,8 +9,14 @@ use std::time::Duration;
 
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
+use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::scan::{ScanRun, ScanScope, Started};
+use daminus_core::setup::{
+    ProjectIssue, Saved, SetupResult, SetupRun, SshEnvironment, Started as SetupStarted, Step,
+    UrlCheck,
+};
+use daminus_core::ssh::config::HostListing;
 use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppCore;
@@ -79,6 +85,103 @@ pub async fn projects_list(core: State<'_, AppCore>) -> Result<Vec<Project>, App
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "projects_list panicked");
+            AppError::from(ErrorCode::Internal)
+        })?
+}
+
+/// The hosts of `~/.ssh/config` with what ssh resolves for each, and the
+/// entries left out with their reason, file and line.
+#[tauri::command]
+pub async fn hosts_list(core: State<'_, AppCore>) -> Result<HostListing, AppError> {
+    core.hosts_list().await
+}
+
+/// Whether the SSH agent holds keys and Termius is installed.
+#[tauri::command]
+pub async fn ssh_environment(core: State<'_, AppCore>) -> Result<SshEnvironment, AppError> {
+    Ok(core.ssh_environment().await)
+}
+
+/// Starts the login test or discover on `hosts` (or joins the run in progress).
+/// `paths` are the project folders the login test asks about.
+#[tauri::command]
+pub async fn setup_start(
+    core: State<'_, AppCore>,
+    step: Step,
+    hosts: Vec<HostAlias>,
+    paths: Option<Vec<String>>,
+) -> Result<SetupStarted, AppError> {
+    core.setup_start(step, &hosts, &paths.unwrap_or_default())
+}
+
+/// Stops the running setup step. `false` when none was running.
+#[tauri::command]
+pub fn setup_stop(core: State<'_, AppCore>) -> bool {
+    core.setup_stop()
+}
+
+/// The setup step in progress, if any (a reloaded webview hydrates from it).
+#[tauri::command]
+pub fn setup_status(core: State<'_, AppCore>) -> Option<SetupRun> {
+    core.setup_status()
+}
+
+/// What the setup steps found so far, and the suggested projects.
+#[tauri::command]
+pub fn setup_result(core: State<'_, AppCore>) -> SetupResult {
+    core.setup_result()
+}
+
+/// What is wrong or doubtful about `projects`, per field.
+#[tauri::command]
+pub async fn projects_validate(
+    core: State<'_, AppCore>,
+    projects: serde_json::Value,
+) -> Result<Vec<ProjectIssue>, AppError> {
+    let core = core.inner().clone();
+    run_blocking("projects_validate", move || {
+        core.projects_validate(&projects)
+    })
+    .await
+}
+
+/// Validates the whole set again and writes `projects.json`; nothing is
+/// written when an issue is an error.
+#[tauri::command]
+pub async fn projects_save(
+    core: State<'_, AppCore>,
+    projects: serde_json::Value,
+    hosts: Vec<HostAlias>,
+) -> Result<Saved, AppError> {
+    let core = core.inner().clone();
+    run_blocking("projects_save", move || {
+        core.projects_save(&projects, &hosts)
+    })
+    .await
+}
+
+/// Takes a project out of `projects.json`. `false` when it was not there.
+#[tauri::command]
+pub async fn projects_remove(core: State<'_, AppCore>, id: String) -> Result<bool, AppError> {
+    let core = core.inner().clone();
+    run_blocking("projects_remove", move || core.projects_remove(&id)).await
+}
+
+/// One URL probed from this Mac: status, time, certificate days.
+#[tauri::command]
+pub async fn url_check(core: State<'_, AppCore>, url: String) -> Result<UrlCheck, AppError> {
+    Ok(core.url_check(&url).await)
+}
+
+/// Runs file work off the async threads; a panic is logged and becomes `Internal`.
+async fn run_blocking<T: Send + 'static>(
+    what: &'static str,
+    work: impl FnOnce() -> Result<T, AppError> + Send + 'static,
+) -> Result<T, AppError> {
+    tauri::async_runtime::spawn_blocking(work)
+        .await
+        .map_err(|e| {
+            tracing::error!(error = %e, "{what} panicked");
             AppError::from(ErrorCode::Internal)
         })?
 }

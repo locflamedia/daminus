@@ -15,7 +15,9 @@
 //! One run at a time (a second `start` joins the running one). A run that is
 //! cancelled leaves what was already found.
 
+mod environment;
 mod event;
+mod url_check;
 mod validate;
 
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -29,9 +31,11 @@ use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument as _;
 
+pub use environment::{AgentState, SshEnvironment};
 pub use event::{
     HostSetup, SetupEvent, SetupEventBody, SetupHostProgress, SetupResult, SetupRun, Started, Step,
 };
+pub use url_check::{UrlCheck, UrlFailure, check_url};
 pub use validate::{
     IssueCode, IssueField, IssueLevel, ProjectIssue, has_errors, is_probeable_url, normalized,
     validate,
@@ -49,7 +53,7 @@ use crate::domain::project::{Project, ProjectsFile};
 use crate::domain::snapshot::HostOutcome;
 use crate::scan::{MAX_CONNECT_TIMEOUT_S, concurrency};
 use crate::ssh::config::{
-    ConfigSource, HostEntry, HostList, ResolvedHost, list_hosts, resolve, resolve_all,
+    ConfigSource, HostList, HostListing, ResolvedHost, list_hosts, resolve, resolve_all,
 };
 use crate::ssh::hostkey::{self, HostKeyInfo, HostKeyState};
 use crate::ssh::{RunEnd, RunRequest, RunSignal, SshTools, Transport, run_outcome};
@@ -166,10 +170,10 @@ impl SetupService {
     }
 
     /// The same, with what `ssh -G` says each connection uses.
-    pub async fn list_resolved(&self) -> Result<(HostList, Vec<HostEntry>), AppError> {
+    pub async fn list_resolved(&self) -> Result<HostListing, AppError> {
         let list = self.list_hosts()?;
         let entries = resolve_all(&self.shared.tools, &list).await;
-        Ok((list, entries))
+        Ok(HostListing { list, entries })
     }
 
     /// Looks at the key of `host` without logging in: what is recorded and
@@ -375,6 +379,30 @@ impl SetupService {
             issues,
             projects: u32::try_from(file.projects.len()).unwrap_or(u32::MAX),
         })
+    }
+}
+
+impl SetupService {
+    /// Takes project `id` out of `projects.json`; everything else in the file,
+    /// the "mark as expected" rules included, stays. Scans already saved are
+    /// kept. Returns whether the project was there.
+    pub fn remove(&self, id: &str) -> Result<bool, AppError> {
+        let stamped = self.shared.store.load_projects()?;
+        if stamped.read_only {
+            return Err(ErrorCode::ConfigFromNewerVersion {
+                path: crate::store::PROJECTS_FILE.to_owned(),
+                version: stamped.value.version,
+            }
+            .into());
+        }
+        let mut file: ProjectsFile = stamped.value;
+        let before = file.projects.len();
+        file.projects.retain(|p| p.id != id);
+        if file.projects.len() == before {
+            return Ok(false);
+        }
+        self.shared.store.save_projects(&file, stamped.stamp)?;
+        Ok(true)
     }
 }
 
