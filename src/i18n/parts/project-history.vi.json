@@ -1,0 +1,107 @@
+{
+  "projectHistory": {
+    "state": {
+      "loading": "Đang đọc các lần quét đã lưu",
+      "emptyTitle": "Chưa có lần quét nào",
+      "emptyText": "Lịch sử đầy dần khi bạn quét. Bấm Quét tất cả để lưu lần đầu.",
+      "errorTitle": "Không đọc được các lần quét đã lưu",
+      "retry": "Thử lại"
+    },
+    "range": {
+      "label": "Khoảng thời gian",
+      "7d": "7 ngày",
+      "30d": "30 ngày",
+      "all": "Tất cả"
+    },
+    "compare": {
+      "label": "So sánh",
+      "from": "Lần quét gốc",
+      "to": "Lần quét so với gốc",
+      "option": "#{seq} · {date}",
+      "optionToday": "#{seq} · hôm nay",
+      "hint": "Mọi thay đổi trên màn này được tính từ lần quét gốc."
+    },
+    "summary": "{n} lần quét · {from} đến {to} · mỗi lần quét theo yêu cầu",
+    "summaryOne": "1 lần quét · {from} · mỗi lần quét theo yêu cầu",
+    "strip": {
+      "label": "Nhóm kiểm tra theo lần quét",
+      "group": {
+        "uptime": "Hoạt động và TLS",
+        "response": "Thời gian phản hồi",
+        "disk": "Ổ đĩa",
+        "containers": "Container",
+        "security": "Bảo mật lite"
+      },
+      "state": {
+        "ok": "ổn",
+        "warn": "cảnh báo",
+        "crit": "nghiêm trọng",
+        "none": "không chạy"
+      },
+      "legend": {
+        "ok": "ổn",
+        "warn": "cảnh báo",
+        "crit": "nặng",
+        "none": "không chạy"
+      },
+      "note": "Cột có viền là hai lần quét đang so sánh",
+      "cell": "#{seq} · {group} · {state}"
+    },
+    "chart": {
+      "label": "Ổ đĩa dự án, CSDL và thời gian phản hồi qua các lần quét",
+      "disk": "Ổ đĩa dự án",
+      "database": "CSDL",
+      "response": "Thời gian phản hồi",
+      "folderSub": "{name} chiếm {size}",
+      "tableSub": "bảng {name} {delta}",
+      "responseSub": "{host}, từ máy này",
+      "since": "từ #{seq}",
+      "noData": "Dự án này chưa có dữ liệu trong khoảng này",
+      "tipTitle": "Lần quét #{seq} · {when}",
+      "slow": "chậm",
+      "down": "hỏng",
+      "same": "cùng lần quét: {group} {state}",
+      "reading": "Lần quét {seq}, {when}. {parts}",
+      "part": "{name} {value}",
+      "hint": "Phím mũi tên đi qua các lần quét, Home và End nhảy tới đầu và cuối, Escape đóng thẻ.",
+      "tableSize": "bảng {name} chiếm {size}"
+    },
+    "changes": {
+      "title": "Có gì đổi",
+      "between": "#{from} → #{to}",
+      "empty": "Hai lần quét này không có gì khác nhau.",
+      "same": "Chọn hai lần quét khác nhau để so sánh.",
+      "reading": "Đang đọc hai lần quét",
+      "gone": "Một trong hai lần quét không còn được giữ, nên không có gì để so sánh."
+    },
+    "change": {
+      "title": {
+        "folderGrew": "{name} phình ra",
+        "tableGrew": "Bảng {name} phình ra",
+        "restarts": "{name} khởi động lại",
+        "imageUpdated": "Image đã cập nhật",
+        "turned": "{check} cần xem",
+        "fixed": "{check} đã ổn",
+        "tlsRenewed": "Chứng chỉ đã gia hạn",
+        "responseRecovered": "Phản hồi chậm đã hết",
+        "securityClean": "Bảo mật lite vẫn sạch"
+      },
+      "sub": {
+        "folderWhere": "{path} trên {host}",
+        "tableWhere": "{engine} · {database}",
+        "restartsSub": "khởi động lại {from} → {to}",
+        "imageSub": "{from} → {to}",
+        "where": "{target} trên {host}",
+        "tlsSub": "{host} · {from} ngày → {to} ngày",
+        "responseSub": "{peak} ở #{seq}, nay {now}",
+        "cleanSub": "{n} kiểm tra, cả {scans} lần quét từ #{seq}"
+      },
+      "value": {
+        "fixed": "đã ổn",
+        "clean": "sạch",
+        "warn": "cảnh báo",
+        "crit": "nặng"
+      }
+    }
+  }
+}

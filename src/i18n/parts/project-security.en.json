@@ -1,0 +1,229 @@
+{
+  "projectSecurity": {
+    "state": {
+      "loading": "Reading the security checks",
+      "emptyTitle": "No security results yet",
+      "emptyText": "Press Scan all and Daminus will run the nine checks for this project.",
+      "errorTitle": "Couldn't read the latest results",
+      "retry": "Try again",
+      "staleTitle": "These results are {n} day old | These results are {n} days old",
+      "staleText": "Scan #{seq} is the last one saved. Nothing here was checked since.",
+      "unreachableTitle": "{hosts} did not answer scan #{seq}",
+      "unreachableText": "Results from that host are the last ones Daminus read; the rows say since which scan.",
+      "allOffTitle": "Security checks are off in Settings",
+      "allOffText": "The groups behind these nine checks are switched off, so nothing was run.",
+      "openSettings": "Open Settings"
+    },
+    "sev": {
+      "crit": "CRIT",
+      "warn": "WARN",
+      "info": "INFO"
+    },
+    "first": {
+      "label": "Do this first",
+      "copyRule": "Copy nginx rule",
+      "thisFile": "the file",
+      "afterLine": "{list} comes after.",
+      "title": {
+        "sec_miner": "Do this first: stop the miner process",
+        "sec_preload": "Do this first: look at /etc/ld.so.preload",
+        "sec_upload_php": "Do this first: stop PHP from running in uploads",
+        "url_exposed": "Do this first: stop serving .env and .git",
+        "url_tls": "Do this first: renew the certificate",
+        "url_http": "Do this first: find out why the site does not answer"
+      },
+      "next": {
+        "sec_miner": "Then find what started it and change the passwords and keys this server holds.",
+        "sec_preload": "Then remove any library you did not add and restart the services.",
+        "sec_upload_php": "Then copy {file} off the server.",
+        "url_exposed": "Then rotate every key listed.",
+        "url_tls": "Then reload the web server and check the site again.",
+        "url_http": "Then check the web server and the app logs on the host."
+      },
+      "after": {
+        "sec_miner": "stopping the miner and changing credentials",
+        "sec_preload": "checking ld.so.preload",
+        "sec_upload_php": "removing the uploaded PHP files",
+        "url_exposed": "fixing the nginx root and rotating keys",
+        "url_tls": "renewing the certificate",
+        "url_http": "finding why the site does not answer"
+      }
+    },
+    "title": {
+      "uploadPhp": "PHP file inside the uploads folder | {n} PHP files inside the uploads folder",
+      "tmpExec": "Executable file in a temp folder | {n} executable files in temp folders",
+      "exposed": "{file} is readable from the internet",
+      "miner": "Possible crypto miner: {name}",
+      "preload": "ld.so.preload has content",
+      "port3306": "MySQL or MariaDB listens on all interfaces",
+      "port5432": "PostgreSQL listens on all interfaces",
+      "port6379": "Redis listens on all interfaces",
+      "port27017": "MongoDB listens on all interfaces",
+      "port2375": "Docker's remote API listens on all interfaces",
+      "portOther": "Port {port} listens on all interfaces",
+      "recentChange": "{n} code file changed in 3 days | {n} code files changed in 3 days",
+      "tlsExpired": "The certificate of {host} has expired",
+      "tlsUntrusted": "The certificate of {host} is not trusted",
+      "tlsMismatch": "The certificate of {host} is for another name",
+      "tlsSoon": "The certificate of {host} expires soon",
+      "httpDown": "{host} is not answering as expected",
+      "httpSlow": "{host} is slow to answer"
+    },
+    "card": {
+      "newThisScan": "new this scan",
+      "firstSeen": "first seen scan #{seq} · {when}",
+      "firstSeenToday": "first seen scan #{seq} · today",
+      "days": "{n} day | {n} days",
+      "staleSince": "not re-checked since #{seq}",
+      "expected": "expected",
+      "ruleUntil": "until {date}",
+      "ruleReason": {
+        "intended": "intended",
+        "accepted_risk": "accepted risk",
+        "false_positive": "false positive"
+      },
+      "details": "Details",
+      "hide": "Hide",
+      "copyScp": "Copy scp command",
+      "copyNginxFix": "Copy nginx fix",
+      "checkedProcesses": "Checked {seen} of {total} processes",
+      "checkedProcessesWhy": "Only the processes this login can see were read, so a miner running as another user could be missed.",
+      "permissionHelp": "How to give the check wider access is on the permission help screen, which is not built yet."
+    },
+    "evidence": {
+      "listLabel": "Files found, newest first",
+      "more": "Show all {n}",
+      "less": "Show fewer",
+      "meta": "{size} · {owner} · modified {when}",
+      "metaNoOwner": "{size} · modified {when}",
+      "uploadHint": "uploads should only hold images",
+      "get": "GET",
+      "served": "served to anyone",
+      "keysMatched": "keys matched",
+      "namesOnly": "names only, no value is kept",
+      "moreKeys": "+{n} more",
+      "gitRef": "ref",
+      "gitMeaning": "the whole repository, history included, can be downloaded",
+      "exe": "runs from {path}",
+      "deleted": "its file was deleted",
+      "libraries": "{n} library listed | {n} libraries listed",
+      "http": "{status} · {time}",
+      "httpNone": "no answer · {why}",
+      "reason": {
+        "dns": "no DNS answer",
+        "no_route": "no route to the site",
+        "refused": "connection refused",
+        "timeout": "timed out",
+        "tls": "TLS failed",
+        "redirects": "too many redirects",
+        "invalid_url": "not a valid address",
+        "other": "no reason given"
+      },
+      "port": "{target} · {proc}",
+      "recentNewest": "Newest changes",
+      "noFiles": "Daminus kept no file names for this result."
+    },
+    "means": {
+      "sec_miner": "A process that matches a known miner is running, or one runs from a file that was deleted. Treat the server as compromised.",
+      "sec_preload": "A library is loaded into every program on the server. That is a common rootkit trick.",
+      "sec_upload_php": "A PHP file where users upload images is a common sign of a web shell. Treat the site as possibly compromised.",
+      "sec_tmp_exec": "Executable files in temp folders are where attackers often drop their tools. A build or a deploy script can leave some there too.",
+      "sec_ports": "Anyone on the internet can try to reach this port. Databases are meant to listen on the server itself or a private network.",
+      "sec_recent_change": "Expected if you deployed in the last days. Worth a look if you did not.",
+      "url_exposed": "Anyone who asks gets this file. Only the key names are kept as proof; Daminus never stores a value.",
+      "url_tls": "Browsers show a warning to every visitor, and some clients refuse to connect.",
+      "url_http": "Visitors see an error or wait too long."
+    },
+    "do": {
+      "sec_miner": "Find out what started it, stop and remove it, then change the passwords and keys the server holds.",
+      "sec_preload": "Open /etc/ld.so.preload and check every library it lists. If you did not add them, treat the server as compromised.",
+      "sec_upload_php": "Do not delete it yet. Copy it off the server for review, then check the access logs around {when}.",
+      "sec_tmp_exec": "Check what each file is and who owns it. Remove what you did not put there.",
+      "sec_ports": "Bind the service to 127.0.0.1 or a private address, or close the port in the firewall.",
+      "sec_recent_change": "Compare with your last deploy. Look at the newest files first.",
+      "url_exposed": "Point nginx root at public/, not the project folder. Then rotate every key listed, since anyone could have read them.",
+      "url_tls": "Renew the certificate and reload the web server.",
+      "url_http": "Open the site, then check the web server and the app logs on the host."
+    },
+    "exposed": {
+      "noMarkLine": "No Mark as expected on this finding",
+      "whyNoMarkLead": "Why no Mark as expected.",
+      "whyNoMark": "There is no safe reason to serve a .env or .git to the internet, and the rule could not tell new keys apart."
+    },
+    "cut": {
+      "showing": "Showing",
+      "showingOf": "{listed} of {total}",
+      "newestFirst": "newest first",
+      "notListed": "the other {n} are not listed"
+    },
+    "value": {
+      "none": "none",
+      "noneSeen": "none · {seen} of {total}",
+      "seenOf": "{seen} of {total}",
+      "needsPermission": "needs permission",
+      "minerFound": "{name} found",
+      "minerFoundPartial": "{name} found · {seen} of {total} seen",
+      "empty": "empty",
+      "libraries": "{n} library | {n} libraries",
+      "files": "{n} file | {n} files",
+      "filesChanged": "{n} file | {n} files",
+      "portsPublic": "{ports} public",
+      "http": "{status} · {time}",
+      "httpStatus": "{status}",
+      "httpDown": "no answer · {why}",
+      "served": "{file} served",
+      "more": "+{n}",
+      "unknownReason": "not checked · {reason}",
+      "off": "off in Settings",
+      "noResult": "no result",
+      "expected": "expected",
+      "staleSince": "last checked #{seq}"
+    },
+    "checks": {
+      "title": "Checks this scan",
+      "metaTime": "{n} in {time}",
+      "meta": "{n} checks",
+      "critical": "critical",
+      "mix": "Severity mix of the checks: {crit} critical, {warn} warning, {info} info, {ok} clear",
+      "list": "The nine security checks"
+    },
+    "fold": {
+      "label": "Warnings and info",
+      "expectedLabel": "Expected"
+    },
+    "timeline": {
+      "title": "How it unfolded",
+      "meta": "last {n} scans",
+      "line": "{seq} · {date}",
+      "today": "today"
+    },
+    "event": {
+      "allClean": "All nine clean",
+      "clean": "Nothing found",
+      "stillOpen": "{n} finding still open | {n} findings still open",
+      "uploadPhp": "{file} appears in uploads",
+      "tmpExec": "{file} appears in a temp folder",
+      "miner": "{name} found running",
+      "preload": "ld.so.preload gained content",
+      "ports": "Port {port} opened to the internet",
+      "exposed": "A private file is now served publicly",
+      "tls": "The certificate needs a look",
+      "http": "The site stopped answering as expected",
+      "recent": "{n} code file changed | {n} code files changed",
+      "more": "+{n} more",
+      "notRun": "The security checks did not run"
+    },
+    "limits": {
+      "title": "Not checked in v0.1",
+      "text": "A clean result means none of these nine signs, not a clean server.",
+      "soon": "v0.2",
+      "scanner": "maldet or ClamAV, on demand",
+      "baseline": "Web root hash baseline",
+      "cron": "Cron, systemd and authorized_keys diff"
+    },
+    "clean": {
+      "title": "Nothing found",
+      "text": "All nine checks answered and none found a problem."
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "projectHistory": {
+    "state": {
+      "loading": "Reading the saved scans",
+      "emptyTitle": "No scans yet",
+      "emptyText": "History fills as you scan. Press Scan all to save the first one.",
+      "errorTitle": "Couldn't read the saved scans",
+      "retry": "Try again"
+    },
+    "range": {
+      "label": "Window",
+      "7d": "7 days",
+      "30d": "30 days",
+      "all": "All"
+    },
+    "compare": {
+      "label": "Compare",
+      "from": "Baseline scan",
+      "to": "Compared scan",
+      "option": "#{seq} · {date}",
+      "optionToday": "#{seq} · today",
+      "hint": "Every change on this screen is measured from the baseline."
+    },
+    "summary": "{n} scans · {from} to {to} · every scan on demand",
+    "summaryOne": "1 scan · {from} · every scan on demand",
+    "strip": {
+      "label": "Check groups by scan",
+      "group": {
+        "uptime": "Uptime and TLS",
+        "response": "Response time",
+        "disk": "Disk",
+        "containers": "Containers",
+        "security": "Security lite"
+      },
+      "state": {
+        "ok": "ok",
+        "warn": "warning",
+        "crit": "critical",
+        "none": "not run"
+      },
+      "legend": {
+        "ok": "ok",
+        "warn": "warn",
+        "crit": "crit",
+        "none": "not run"
+      },
+      "note": "Ringed columns are the two scans being compared",
+      "cell": "#{seq} · {group} · {state}"
+    },
+    "chart": {
+      "label": "Project disk, database and response time over the scans",
+      "disk": "Project disk",
+      "database": "Database",
+      "response": "Response time",
+      "folderSub": "{name} is {size} of it",
+      "tableSub": "{name} table {delta}",
+      "responseSub": "{host}, from this Mac",
+      "since": "since #{seq}",
+      "noData": "No data for this project in this window",
+      "tipTitle": "Scan #{seq} · {when}",
+      "slow": "slow",
+      "down": "down",
+      "same": "same scan: {group} {state}",
+      "reading": "Scan {seq}, {when}. {parts}",
+      "part": "{name} {value}",
+      "hint": "Arrow keys move through the scans, Home and End jump to the first and last, Escape closes the card.",
+      "tableSize": "{name} table is {size}"
+    },
+    "changes": {
+      "title": "What changed",
+      "between": "#{from} → #{to}",
+      "empty": "Nothing changed between these two scans.",
+      "same": "Pick two different scans to compare.",
+      "reading": "Reading the two scans",
+      "gone": "One of the two scans is no longer kept, so there is nothing to compare."
+    },
+    "change": {
+      "title": {
+        "folderGrew": "{name} grew",
+        "tableGrew": "{name} table grew",
+        "restarts": "{name} restarted",
+        "imageUpdated": "Image updated",
+        "turned": "{check} needs a look",
+        "fixed": "{check} fixed",
+        "tlsRenewed": "Certificate renewed",
+        "responseRecovered": "Slow response recovered",
+        "securityClean": "Security lite stayed clean"
+      },
+      "sub": {
+        "folderWhere": "{path} on {host}",
+        "tableWhere": "{engine} · {database}",
+        "restartsSub": "restarts {from} → {to}",
+        "imageSub": "{from} → {to}",
+        "where": "{target} on {host}",
+        "tlsSub": "{host} · {from} d → {to} d",
+        "responseSub": "{peak} at #{seq}, {now} now",
+        "cleanSub": "{n} checks, all {scans} scans since #{seq}"
+      },
+      "value": {
+        "fixed": "fixed",
+        "clean": "clean",
+        "warn": "warning",
+        "crit": "critical"
+      }
+    }
+  }
+}
