@@ -171,6 +171,11 @@ impl FsStore {
         snapshots::list(&self.snapshots_dir())
     }
 
+    /// Total size of the snapshot files, in bytes.
+    pub fn snapshot_bytes(&self) -> Result<u64, AppError> {
+        snapshots::total_bytes(&self.snapshots_dir())
+    }
+
     /// Reads one snapshot; `None` when missing or unreadable.
     pub fn load_snapshot(&self, seq: u32) -> Option<Snapshot> {
         snapshots::read(&self.snapshots_dir(), seq)

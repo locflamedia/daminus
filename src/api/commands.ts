@@ -3,11 +3,14 @@
 // `generate_handler!` list, the build.rs permission list and the capability.
 import { invoke } from '@tauri-apps/api/core'
 import type { AppError } from './bindings/AppError'
+import type { ExpectedRule } from './bindings/ExpectedRule'
+import type { HistoryView } from './bindings/HistoryView'
 import type { HostAlias } from './bindings/HostAlias'
 import type { HostListing } from './bindings/HostListing'
 import type { Project } from './bindings/Project'
 import type { ProjectIssue } from './bindings/ProjectIssue'
 import type { Report } from './bindings/Report'
+import type { ScanFact } from './bindings/ScanFact'
 import type { ScanRun } from './bindings/ScanRun'
 import type { ScanScope } from './bindings/ScanScope'
 import type { SaveOutcome } from './bindings/SaveOutcome'
@@ -24,6 +27,10 @@ export const COMMANDS = [
   'scan_stop',
   'scan_status',
   'report_latest',
+  'history_list',
+  'report_at',
+  'history_facts',
+  'rules_list',
   'projects_list',
   'reveal_config_dir',
   'reveal_ssh_dir',
@@ -64,6 +71,26 @@ export function scanStatus(): Promise<ScanRun | null> {
 /** `evaluate` over the saved scans. */
 export function reportLatest(): Promise<Report> {
   return invoke<Report>('report_latest')
+}
+
+/** One summary per kept scan (counts, hosts, per-project levels), oldest first. */
+export function historyList(): Promise<HistoryView> {
+  return invoke<HistoryView>('history_list')
+}
+
+/** `evaluate` over the saved scans up to scan `seq`, as of when it finished. */
+export function reportAt(seq: number): Promise<Report> {
+  return invoke<Report>('report_at', { seq })
+}
+
+/** The raw facts of `checks` in the newest `last` scans, oldest scan first. */
+export function historyFacts(checks: string[], last: number): Promise<ScanFact[]> {
+  return invoke<ScanFact[]>('history_facts', { checks, last })
+}
+
+/** The expected rules: what each covers, why, and until which day. */
+export function rulesList(): Promise<ExpectedRule[]> {
+  return invoke<ExpectedRule[]>('rules_list')
 }
 
 /** The saved projects: name, colour, URLs and components. */

@@ -9,9 +9,10 @@ use std::time::Duration;
 
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
+use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
-use daminus_core::scan::{ScanRun, ScanScope, Started};
+use daminus_core::scan::{HistoryView, ScanFact, ScanRun, ScanScope, Started};
 use daminus_core::setup::{
     ProjectIssue, Saved, SetupResult, SetupRun, SshEnvironment, Started as SetupStarted, Step,
     UrlCheck,
@@ -73,6 +74,38 @@ pub async fn report_latest(core: State<'_, AppCore>) -> Result<Report, AppError>
             tracing::error!(error = %e, "report_latest panicked");
             AppError::from(ErrorCode::Internal)
         })?
+}
+
+/// One summary per kept scan (counts, hosts, per-project levels), oldest first.
+#[tauri::command]
+pub async fn history_list(core: State<'_, AppCore>) -> Result<HistoryView, AppError> {
+    let core = core.inner().clone();
+    run_blocking("history_list", move || core.history_list()).await
+}
+
+/// `evaluate` over the saved scans up to scan `seq`, as of when it finished.
+#[tauri::command]
+pub async fn report_at(core: State<'_, AppCore>, seq: u32) -> Result<Report, AppError> {
+    let core = core.inner().clone();
+    run_blocking("report_at", move || core.report_at(seq)).await
+}
+
+/// The raw facts of the named checks in the newest `last` scans, oldest first.
+#[tauri::command]
+pub async fn history_facts(
+    core: State<'_, AppCore>,
+    checks: Vec<String>,
+    last: u32,
+) -> Result<Vec<ScanFact>, AppError> {
+    let core = core.inner().clone();
+    run_blocking("history_facts", move || core.history_facts(&checks, last)).await
+}
+
+/// The expected rules: what each one covers, its reason and review day.
+#[tauri::command]
+pub async fn rules_list(core: State<'_, AppCore>) -> Result<Vec<ExpectedRule>, AppError> {
+    let core = core.inner().clone();
+    run_blocking("rules_list", move || core.rules_list()).await
 }
 
 /// The saved projects (name, colour, URLs, components), for the marks in the
