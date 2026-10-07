@@ -60,6 +60,12 @@ export const ICON_PATHS = {
   trend: 'M2.5 12.5 6 8l3 2.5 4.5-6',
   uptime: CIRCLE + 'M2 8h12',
   file: 'M4 2h5l3 3v9H4z M9 2v3h3',
+  // Setup screens: add, drag handle (six dots), arrow, "via" a jump host, key.
+  plus: 'M8 3.5v9M3.5 8h9',
+  drag: 'M5.5 3.5h.01 M5.5 8h.01 M5.5 12.5h.01 M10.5 3.5h.01 M10.5 8h.01 M10.5 12.5h.01',
+  'arrow-right': 'M3 8h10 M9 4l4 4-4 4',
+  jump: 'M3 12.5V8.5A2 2 0 0 1 5 6.5h7.5 M9.5 3.5l3 3-3 3',
+  key: 'M10.5 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z M8.4 7.1l-5.6 5.6V14.5h2v-1.5h1.5v-1.5h1.3',
 } as const
 
 export type IconName = keyof typeof ICON_PATHS

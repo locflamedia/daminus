@@ -1,0 +1,25 @@
+{
+  "setupShell": {
+    "name": "Thiết lập",
+    "progress": "{n} / 3",
+    "breadcrumb": "Thiết lập",
+    "stepOf": "Bước {n} trên 3",
+    "stepList": "Các bước thiết lập",
+    "pick": { "name": "Chọn host", "idle": "Chọn và thử đăng nhập" },
+    "discover": { "name": "Khám phá", "idle": "Trang web, ứng dụng, cơ sở dữ liệu" },
+    "group": { "name": "Gom dự án", "idle": "Tên, URL, FE và BE" },
+    "pickReady": "{n} sẵn sàng",
+    "pickSkipped": "{n} bị bỏ qua",
+    "pickFailed": "{n} lỗi",
+    "discoverProgress": "{done} trên {total} host xong",
+    "discoverDone": "{finds} mục trên {hosts} host",
+    "groupSuggested": "Chưa có dự án gợi ý | 1 dự án được gợi ý | {n} dự án được gợi ý",
+    "nothingSaved": "Chưa lưu gì",
+    "nothingSavedPick": "projects.json chỉ được ghi sau bước 3. Thoát lúc nào cũng được, không có gì thay đổi.",
+    "nothingSavedDiscover": "projects.json được ghi sau bước 3.",
+    "noSecrets": "Không lưu bí mật nào",
+    "noSecretsBody": "Host là bí danh SSH. Với cơ sở dữ liệu chỉ lưu đường dẫn .env; giá trị được đọc trên máy chủ khi quét.",
+    "cancel": "Hủy thiết lập",
+    "back": "Quay lại"
+  }
+}

@@ -1,23 +1,42 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { watchFullscreen } from '@/api'
 import { prefersReducedMotion } from '@/lib/motion'
+import { useSetupDraftsStore } from '@/stores/setup-drafts'
+import { SETUP_STEPS, useSetupStore, type SetupScreen } from '@/stores/setup'
 import { LAYOUT_RANGE, rangeOf, useViewportWidth } from '@/lib/viewport'
 import { useSettingsStore } from '@/stores/settings'
 import AppRail from './AppRail.vue'
 import SettingsNav from './SettingsNav.vue'
+import SetupSidebar from './SetupSidebar.vue'
 import AppSidebar from './AppSidebar.vue'
 
 const route = useRoute()
+const router = useRouter()
+const setup = useSetupStore()
+const setupDrafts = useSetupDraftsStore()
 const settings = useSettingsStore()
 const width = useViewportWidth()
 
 const range = computed(() => rangeOf(width.value))
 provide(LAYOUT_RANGE, range)
 const inSettings = computed(() => route.meta.settings === true)
+const inSetup = computed(() => route.meta.setup === true)
+const setupScreen = computed<SetupScreen>(() => {
+  const screen = route.meta.screen
+  return SETUP_STEPS.find((s) => s === screen) ?? 'pick'
+})
+
+/** "Cancel setup": stops what runs, forgets what was ticked and found, back to Overview. */
+async function cancelSetup() {
+  await setup.stop()
+  setup.reset()
+  setupDrafts.reset()
+  await router.push('/')
+}
 // Settings has its own left column; it never folds to a rail.
-const folded = computed(() => !inSettings.value && settings.isFolded(range.value))
+const folded = computed(() => !inSettings.value && !inSetup.value && settings.isFolded(range.value))
 const column = computed(() => {
   if (folded.value) return 'rail'
   return range.value === 'wide' ? 'full' : 'medium'
@@ -41,6 +60,16 @@ watch(column, () => {
 
 function onKeydown(e: KeyboardEvent) {
   // ⌘\ folds or unfolds the sidebar at any width; the choice is kept per width range.
+  if (
+    e.key === 'Escape' &&
+    inSetup.value &&
+    !e.defaultPrevented &&
+    !document.querySelector('[role="dialog"]')
+  ) {
+    e.preventDefault()
+    void cancelSetup()
+    return
+  }
   if (e.metaKey && e.key === '\\' && !inSettings.value) {
     e.preventDefault()
     instant.value = true
@@ -75,7 +104,8 @@ onBeforeUnmount(() => {
     <aside class="side" :class="{ animating }">
       <!-- The top 40 px of the sidebar and of the page drags the window; a double click zooms. -->
       <span class="drag" data-tauri-drag-region aria-hidden="true" />
-      <SettingsNav v-if="inSettings" />
+      <SetupSidebar v-if="inSetup" :screen="setupScreen" @cancel="cancelSetup" />
+      <SettingsNav v-else-if="inSettings" />
       <AppRail v-else-if="folded" />
       <AppSidebar v-else />
     </aside>

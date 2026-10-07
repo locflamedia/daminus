@@ -24,8 +24,9 @@ defineOptions({ inheritAttrs: false })
 const props = withDefaults(
   defineProps<{
     variant?: ButtonVariant
-    /** Default is 32 px (toolbars, sheet footers); small is 28 px (inside rows). Links are 24 px. */
-    size?: 'default' | 'small'
+    /** Default is 32 px (toolbars, sheet footers); small is 28 px (inside rows); large is 40 px
+     * (the one action of a setup screen). Links are 24 px. */
+    size?: 'default' | 'small' | 'large'
     /** A 14 px glyph before the label; the only glyph of an icon-only button. */
     icon?: IconName
     /** A 14 px glyph after the label (the chevron of an inline link). */
@@ -100,6 +101,7 @@ function onClick(event: MouseEvent) {
     :class="[
       `btn-${variant}`,
       size === 'small' && variant !== 'link' ? 'btn-small' : '',
+      size === 'large' && variant !== 'link' ? 'btn-large' : '',
       {
         'btn-icon': isIconOnly(),
         'btn-busy': busy,
@@ -161,6 +163,11 @@ function onClick(event: MouseEvent) {
   height: var(--h-control-sm);
   border-radius: 8px;
   font-size: var(--text-12);
+}
+
+.btn-large {
+  height: var(--h-row);
+  padding: 0 var(--space-4);
 }
 
 .btn-icon {

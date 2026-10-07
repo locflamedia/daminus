@@ -896,3 +896,34 @@ async fn the_environment_says_the_agent_is_unavailable_without_one() {
     assert_ne!(env.agent, crate::setup::AgentState::Keys);
     assert_eq!(env.keys, 0);
 }
+
+#[tokio::test]
+async fn suggestions_are_there_as_soon_as_the_first_host_has_finished() {
+    let mut r = rig(
+        FakeTransport::new()
+            .host("vps-a", FakeHost::output(web_output()))
+            .host(
+                "vps-b",
+                FakeHost::slow(&web_output(), Duration::from_secs(30)),
+            ),
+        &["vps-a", "vps-b"],
+    );
+    r.service
+        .start(Step::Discover, &[alias("vps-a"), alias("vps-b")], &[])
+        .unwrap();
+    // Wait for vps-a to finish; vps-b is still running.
+    loop {
+        let event = tokio::time::timeout(Duration::from_secs(10), r.rx.recv())
+            .await
+            .unwrap()
+            .unwrap();
+        if matches!(&event.body, SetupEventBody::HostFinished { host, .. } if host.as_str() == "vps-a")
+        {
+            break;
+        }
+    }
+    let proposal = r.service.result().proposal.unwrap();
+    assert_eq!(proposal.projects.len(), 1);
+    assert!(r.service.status().is_some(), "the run is still going");
+    r.service.cancel();
+}

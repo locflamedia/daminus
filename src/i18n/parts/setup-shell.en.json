@@ -1,0 +1,25 @@
+{
+  "setupShell": {
+    "name": "Setup",
+    "progress": "{n} / 3",
+    "breadcrumb": "Setup",
+    "stepOf": "Step {n} of 3",
+    "stepList": "Setup steps",
+    "pick": { "name": "Pick hosts", "idle": "Select and test login" },
+    "discover": { "name": "Discover", "idle": "Sites, apps, databases" },
+    "group": { "name": "Group projects", "idle": "Name, URL, FE and BE" },
+    "pickReady": "{n} ready",
+    "pickSkipped": "{n} skipped",
+    "pickFailed": "{n} failed",
+    "discoverProgress": "{done} of {total} hosts done",
+    "discoverDone": "{finds} finds on {hosts} hosts",
+    "groupSuggested": "No projects suggested | 1 project suggested | {n} projects suggested",
+    "nothingSaved": "Nothing saved yet",
+    "nothingSavedPick": "projects.json is written after step 3. Quit any time and nothing changes.",
+    "nothingSavedDiscover": "projects.json is written after step 3.",
+    "noSecrets": "No secrets stored",
+    "noSecretsBody": "Hosts are SSH aliases. For databases only the .env path is kept; values are read on the server at scan time.",
+    "cancel": "Cancel setup",
+    "back": "Back"
+  }
+}

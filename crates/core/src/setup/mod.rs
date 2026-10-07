@@ -636,6 +636,11 @@ impl HostTask {
                 }
             }
         });
+        if step == Step::Discover {
+            // The suggestions grow as each host finishes, so the screen can pair what
+            // arrived without waiting for the slowest host.
+            self.shared.regroup();
+        }
         let ms = u32::try_from(started.elapsed().as_millis()).unwrap_or(u32::MAX);
         tracing::info!(
             ?outcome,
