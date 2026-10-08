@@ -28,12 +28,14 @@ ts = ["dep:ts-rs"]
 clap = { version = "4.6", features = ["derive"], optional = true }
 nix = { version = "0.31", default-features = false, features = ["signal", "process", "user"] }
 reqwest = { version = "0.13", default-features = false, features = ["rustls", "http2"] }
+getrandom = "0.4"
 regex = "1.13"
 rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "std", "tls12"] }
 rustls-platform-verifier = "0.7"
 rustls-webpki = { version = "0.103", default-features = false, features = ["std"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10"
 thiserror = "2.0"
 time = { version = "0.3.47", features = ["serde", "formatting", "parsing", "macros"] }
 tempfile = "3"
@@ -44,6 +46,9 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", optional = true, default-features = false, features = ["fmt", "env-filter", "ansi"] }
 ts-rs = { version = "12", optional = true, features = ["serde-json-impl", "no-serde-warnings"] }
 psl = "2"
+url = "2"
+genai = { version = "0.6", default-features = false }
+futures-util = { version = "0.3.34", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 rcgen = "0.14"

@@ -322,6 +322,10 @@
     "provider_rate_limit": "Nhà cung cấp AI đang giới hạn yêu cầu. Thử lại sau một phút.",
     "provider_unavailable": "Hiện chưa kết nối được nhà cung cấp AI.",
     "schema_invalid": "Câu trả lời của AI không đúng định dạng mong đợi.",
+    "claude_cli_not_found": "Daminus không tìm thấy lệnh Claude Code trên máy Mac này.",
+    "claude_cli_not_logged_in": "Claude Code chưa đăng nhập. Hãy đăng nhập bằng lệnh claude trong Terminal.",
+    "claude_cli_quota": "Gói Claude của bạn đã hết hạn mức sử dụng. Thử lại sau.",
+    "cancelled": "Đã dừng.",
     "internal": "Daminus gặp lỗi bên trong. Chi tiết có trong log."
   },
   "tooltip": {
