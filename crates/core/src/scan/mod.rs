@@ -14,8 +14,9 @@ mod tests;
 
 pub use event::{HostProgress, HostState, ScanEvent, ScanEventBody, ScanRun};
 pub use history::{
-    CHARTED_CHECKS, HistoryView, HostSummary, MAX_FACT_SCANS, ProjectSummary, ScanFact,
-    ScanSummary, history_bundle, history_facts, history_view, report_at,
+    CHARTED_CHECKS, HistoryView, HostSummary, MAX_FACT_CHECKS, MAX_FACT_SCANS, MAX_HISTORY_SCANS,
+    MAX_SUMMARISED_SCANS, ProjectSummary, ScanFact, ScanSummary, history_bundle, history_facts,
+    history_view, report_at,
 };
 pub use report::latest_report;
 pub use service::{

@@ -14,6 +14,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use daminus_core::domain::error::ErrorCode;
 use daminus_core::domain::host::HostRef;
 use daminus_core::domain::severity::Level;
 use daminus_core::scan::{history_bundle, history_facts, history_view, report_at};
@@ -90,7 +91,9 @@ fn an_old_report_is_evaluated_as_of_that_scan() {
     assert_eq!(five.seq, Some(5));
     let twelve = report_at(&store, 12).expect("report 12");
     assert!(five.counts.crit < twelve.counts.crit);
-    assert!(report_at(&store, 99).is_err(), "a scan that is not kept");
+    let missing = report_at(&store, 99).expect_err("a scan that is not kept");
+    assert_eq!(missing.code, ErrorCode::ScanNotFound);
+    assert!(!missing.retryable);
 }
 
 #[test]
@@ -104,4 +107,22 @@ fn history_facts_returns_only_the_asked_checks_oldest_scan_first() {
     assert_eq!(seqs, sorted);
     assert_eq!(seqs.first(), Some(&10));
     assert_eq!(seqs.last(), Some(&12));
+}
+
+#[test]
+fn an_old_report_does_not_see_newer_scans() {
+    let (_tmp, store) = store();
+    let five = report_at(&store, 5).expect("report 5");
+    assert_eq!(
+        five.counts.crit, 0,
+        "the exposed .env and the uploaded shell came later"
+    );
+    assert!(five.scanned_at.is_some());
+}
+
+#[test]
+fn too_many_checks_are_refused() {
+    let (_tmp, store) = store();
+    let checks: Vec<String> = (0..40).map(|i| format!("sys.fake{i}")).collect();
+    assert!(history_facts(&store, &checks, 3).is_err());
 }

@@ -33,15 +33,15 @@
         "security": "Bảo mật lite"
       },
       "state": {
-        "ok": "ổn",
+        "ok": "ổn cả",
         "warn": "cảnh báo",
         "crit": "nghiêm trọng",
         "none": "không chạy"
       },
       "legend": {
-        "ok": "ổn",
+        "ok": "ổn cả",
         "warn": "cảnh báo",
-        "crit": "nặng",
+        "crit": "nghiêm trọng",
         "none": "không chạy"
       },
       "note": "Cột có viền là hai lần quét đang so sánh",
@@ -100,7 +100,7 @@
         "fixed": "đã ổn",
         "clean": "sạch",
         "warn": "cảnh báo",
-        "crit": "nặng"
+        "crit": "nghiêm trọng"
       }
     }
   }

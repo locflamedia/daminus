@@ -309,6 +309,7 @@
     "scan_in_progress": "A scan is already running.",
     "nothing_to_scan": "There is nothing to scan. Add a host or a project first.",
     "local_network_down": "This Mac looks offline. Check your network and scan again.",
+    "scan_not_found": "That scan is no longer kept. Settings › Data decides how many scans are kept.",
     "config_invalid": "Couldn’t read {path}. Fix the file or move it aside.",
     "config_invalid_at": "Couldn’t read {path} at line {line}. Fix the file or move it aside.",
     "config_from_newer_version": "{path} was written by a newer Daminus (version {version}). Update Daminus to edit it.",

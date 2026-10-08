@@ -1,8 +1,8 @@
 {
   "projectOverview": {
     "tile": {
-      "uptime": "Uptime · {host}",
-      "uptimeNone": "Uptime",
+      "uptime": "Hoạt động · {host}",
+      "uptimeNone": "Hoạt động",
       "disk": "Ổ đĩa dự án",
       "database": "Cơ sở dữ liệu",
       "tls": "TLS",

@@ -153,6 +153,7 @@ Setup turns `~/.ssh/config` into suggested projects. It is core and service only
 | `projects.json` v1 | Components carry an explicit `kind`; `rules` at top level with `host`; `hosts` for server-level settings | serde untagged; rules nested inside projects |
 | NDJSON v1 | Meta lines `begin{v,bundle}` / `step{group,ms}` / `end`; optional `fp`; missing `end` = Partial | Completion judged by exit code |
 | Snapshot v1 | Raw facts + coverage only; file name `000123.json` by `seq`; lenient reads, no history migration | Storing delta/rollup; names by time |
+| Technology marks | Nine bundled SVGs from `@thesvg/icons` (MIT package; marks are their owners' trademarks, notice in `THIRD_PARTY_NOTICES.md`), drawn only where the data names the technology, fallback a dot or monogram | Loading logos from the network (CSP); guessing frameworks from folder names |
 | Severity | Computed in Rust from manifest thresholds ⊕ settings | Scripts decide severity |
 | IPC | `AppError{code, params, retryable}`; one event per domain (`scan://event`, tagged); bindings committed | English error strings; many channel names |
 | Cancelled scan | Not saved | Save partial |

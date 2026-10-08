@@ -15,9 +15,9 @@
       "openSettings": "Mở Cài đặt"
     },
     "sev": {
-      "crit": "NẶNG",
-      "warn": "CẢNH BÁO",
-      "info": "TIN"
+      "crit": "Nghiêm trọng",
+      "warn": "Cảnh báo",
+      "info": "Thông tin"
     },
     "first": {
       "label": "Làm việc này trước",

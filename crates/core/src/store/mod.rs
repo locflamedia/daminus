@@ -181,6 +181,23 @@ impl FsStore {
         snapshots::read(&self.snapshots_dir(), seq)
     }
 
+    /// The history as of scan `seq`: that scan and the older ones, newest first, at most `limit`.
+    pub fn load_history_up_to(
+        &self,
+        seq: u32,
+        limit: Option<usize>,
+    ) -> Result<Vec<Snapshot>, AppError> {
+        let dir = self.snapshots_dir();
+        let seqs = snapshots::list(&dir)?;
+        Ok(seqs
+            .into_iter()
+            .rev()
+            .filter(|s| *s <= seq)
+            .filter_map(|s| snapshots::read(&dir, s))
+            .take(limit.unwrap_or(usize::MAX))
+            .collect())
+    }
+
     /// The retained history, newest first, as `evaluate` expects. Unreadable
     /// snapshots are skipped. `limit` caps how many are read.
     pub fn load_history(&self, limit: Option<usize>) -> Result<Vec<Snapshot>, AppError> {

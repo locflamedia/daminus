@@ -15,11 +15,17 @@ export const useProjectsStore = defineStore('projects', () => {
   const details = shallowRef<Project[]>([])
   /** `projects.json` was read at least once: an empty `details` then means no project yet. */
   const loaded = ref(false)
+  let detailsKey = ''
 
   /** Reads `projects.json` again; on failure the last read stays. */
   async function loadDetails() {
     try {
-      details.value = await projectsList()
+      const list = await projectsList()
+      const key = JSON.stringify(list)
+      // Older reports were evaluated against the projects as they were: they go with a change.
+      if (loaded.value && key !== detailsKey) report.forgetOlder()
+      detailsKey = key
+      details.value = list
       loaded.value = true
     } catch (e) {
       console.error(e)

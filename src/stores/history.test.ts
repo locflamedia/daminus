@@ -84,4 +84,48 @@ describe('useHistoryStore', () => {
     expect(calls.filter((c) => c.cmd === 'history_list').length).toBe(before + 1)
     expect(calls.filter((c) => c.cmd === 'history_facts')).toHaveLength(2)
   })
+
+  it('drops cached older reports when the rules change', async () => {
+    let rules: unknown[] = [{ id: 'rule-1' }]
+    mockCommands((cmd, args) => {
+      if (cmd === 'history_list') return view
+      if (cmd === 'rules_list') return rules
+      if (cmd === 'report_at') return report({ seq: Number(args.seq) })
+      throw new Error(`unexpected command ${cmd}`)
+    })
+    const store = useHistoryStore()
+    const reports = useReportStore()
+    reports.latest = report({ seq: 12 })
+    await settle()
+    await store.report(9)
+    expect(reports.cached(9)).toBeDefined()
+    rules = [{ id: 'rule-1' }, { id: 'rule-2' }]
+    await store.load()
+    expect(reports.cached(9)).toBeUndefined()
+  })
+
+  it('ignores a facts answer that was asked before a newer scan landed', async () => {
+    const waiting: Array<(r: unknown) => void> = []
+    mockCommands((cmd) => {
+      if (cmd === 'history_list') return view
+      if (cmd === 'rules_list') return []
+      if (cmd === 'history_facts') return new Promise((resolve) => waiting.push(resolve))
+      throw new Error(`unexpected command ${cmd}`)
+    })
+    const store = useHistoryStore()
+    const reports = useReportStore()
+    reports.latest = report({ seq: 12 })
+    await settle()
+    const stale = store.factsOf(['disk.fs'])
+    reports.latest = report({ seq: 13 })
+    await nextTick()
+    await settle()
+    const fresh = store.factsOf(['disk.fs'])
+    waiting[0]?.([{ seq: 11 }])
+    await stale
+    expect(store.factsNow.get('disk.fs')).toBeUndefined()
+    waiting[1]?.([{ seq: 12 }])
+    await fresh
+    expect(store.factsNow.get('disk.fs')).toEqual([{ seq: 12 }])
+  })
 })

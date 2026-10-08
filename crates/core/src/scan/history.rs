@@ -22,6 +22,17 @@ use crate::store::FsStore;
 /// The most scans one `history_facts` call returns facts for.
 pub const MAX_FACT_SCANS: usize = 100;
 
+/// The most checks one `history_facts` call answers for.
+pub const MAX_FACT_CHECKS: usize = 32;
+
+/// The most scans the history screens read when Settings keeps every scan. Settings keeps 20 by
+/// default; with "keep all" the newest scans are what the screens show, so a long history costs a
+/// bounded read (each summary evaluates over every older scan it can see).
+pub const MAX_HISTORY_SCANS: usize = 200;
+
+/// The most scans summarised (one `evaluate` each); older ones are read for context only.
+pub const MAX_SUMMARISED_SCANS: usize = 60;
+
 /// How one host fared in one scan.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
@@ -94,11 +105,12 @@ fn load(store: &FsStore) -> Result<Loaded, AppError> {
     let manifest = manifest().map_err(|e| {
         AppError::from(ErrorCode::SchemaInvalid).with_param("detail", format!("manifest: {e}"))
     })?;
-    let keep = settings
-        .data
-        .keep_scans
-        .map(|k| usize::try_from(k).unwrap_or(usize::MAX));
-    let history = store.load_history(keep)?;
+    let keep = settings.data.keep_scans.map_or(MAX_HISTORY_SCANS, |k| {
+        usize::try_from(k)
+            .unwrap_or(usize::MAX)
+            .min(MAX_HISTORY_SCANS)
+    });
+    let history = store.load_history(Some(keep))?;
     Ok(Loaded {
         projects,
         settings,
@@ -127,7 +139,8 @@ impl Loaded {
 /// One summary per kept scan, oldest first.
 pub fn history_view(store: &FsStore) -> Result<HistoryView, AppError> {
     let loaded = load(store)?;
-    let mut scans: Vec<ScanSummary> = (0..loaded.history.len())
+    let summarised = loaded.history.len().min(MAX_SUMMARISED_SCANS);
+    let mut scans: Vec<ScanSummary> = (0..summarised)
         .map(|i| summarize(&loaded.history[i], &loaded.report_from(i)))
         .collect();
     scans.reverse();
@@ -215,17 +228,13 @@ fn add_to_project(p: &mut ProjectSummary, item: &Item, level: Option<Level>, ope
 
 /// The report as scan `seq` saw it: `evaluate` over the scans up to it.
 pub fn report_at(store: &FsStore, seq: u32) -> Result<Report, AppError> {
-    let loaded = load(store)?;
-    let at = loaded
-        .history
-        .iter()
-        .position(|s| s.seq == seq)
-        .ok_or_else(|| {
-            AppError::from(ErrorCode::Io {
-                path: format!("snapshots/{seq:06}.json"),
-            })
-        })?;
-    Ok(loaded.report_from(at))
+    let mut loaded = load(store)?;
+    // Only the scans up to `seq` matter, so a read of an old scan does not load the newer ones.
+    loaded.history = store.load_history_up_to(seq, Some(MAX_HISTORY_SCANS))?;
+    if loaded.history.first().map(|s| s.seq) != Some(seq) {
+        return Err(AppError::from(ErrorCode::ScanNotFound).with_param("seq", seq.to_string()));
+    }
+    Ok(loaded.report_from(0))
 }
 
 /// The facts of `checks` in the newest `last` scans (at most [`MAX_FACT_SCANS`]), oldest scan first.
@@ -234,6 +243,10 @@ pub fn history_facts(
     checks: &[String],
     last: usize,
 ) -> Result<Vec<ScanFact>, AppError> {
+    if checks.len() > MAX_FACT_CHECKS {
+        return Err(AppError::from(ErrorCode::SchemaInvalid)
+            .with_param("detail", format!("at most {MAX_FACT_CHECKS} checks")));
+    }
     let last = last.clamp(1, MAX_FACT_SCANS);
     let history = store.load_history(Some(last))?;
     let mut out = Vec::new();
