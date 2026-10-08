@@ -857,14 +857,18 @@ END
             pidfile.display()
         );
         let bin = script(dir, "claude", &body);
-        // The first run of a new file can be slow to start; take that cost before timing.
+        warm_up(&bin);
+        (bin, pidfile)
+    }
+
+    /// The first run of a new file can be slow to start; take that cost before timing.
+    fn warm_up(bin: &Path) {
         assert!(
-            std::process::Command::new(&bin)
+            std::process::Command::new(bin)
                 .arg("warm")
                 .status()
                 .is_ok_and(|s| s.success())
         );
-        (bin, pidfile)
     }
 
     #[tokio::test]
@@ -902,6 +906,7 @@ END
 esac
 "#;
         let bin = script(dir.path(), "claude", body);
+        warm_up(&bin);
         let s = detect(&bin, SAFE_PATH).await.unwrap();
         assert_eq!(
             s,
@@ -919,6 +924,7 @@ esac
 esac
 "#;
         let bin = script(dir.path(), "claude-out", out);
+        warm_up(&bin);
         let s = detect(&bin, SAFE_PATH).await.unwrap();
         assert!(!s.logged_in && s.auth_method.is_none());
         assert_eq!(

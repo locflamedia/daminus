@@ -19,6 +19,8 @@ use daminus_core::ssh::{SshTransport, outcome_error};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
 
+#[path = "daminus_dev/ai.rs"]
+mod ai;
 #[path = "daminus_dev/setup.rs"]
 mod setup;
 
@@ -110,6 +112,35 @@ enum Command {
     },
     /// List saved snapshots, newest last.
     Snapshots,
+    /// Ask an AI provider about the latest scan of a project. `--dry-run`
+    /// prints the exact payload and sends nothing. The key is read from
+    /// `DAMINUS_AI_KEY`. Suggested commands are printed, never run.
+    Ai {
+        /// The project to ask about.
+        #[arg(long, value_name = "ID")]
+        project: String,
+        /// Ask about this server's results instead of the project's.
+        #[arg(long, value_name = "ALIAS")]
+        server: Option<String>,
+        /// Print the payload that would be sent (system, user, sections, hash) and exit.
+        #[arg(long)]
+        dry_run: bool,
+        /// Provider profile id (`anthropic`, `openai`, `ollama`, `claude-code`, ...).
+        #[arg(long, value_name = "ID")]
+        provider: Option<String>,
+        /// Model name. Default: the provider's own default.
+        #[arg(long, value_name = "NAME")]
+        model: Option<String>,
+        /// Replace the provider's endpoint (`https`, or `http` to this machine).
+        #[arg(long, value_name = "URL")]
+        base_url: Option<String>,
+        /// Agree to send the question through your Claude account (claude-code only).
+        #[arg(long)]
+        claude_code_ack: bool,
+        /// The question. Default: what to do first.
+        #[arg(long, value_name = "TEXT")]
+        question: Option<String>,
+    },
     /// Print `evaluate` over the saved snapshots as JSON.
     Report,
     /// Print what the history screens read (scan summaries, every past report, charted facts,
@@ -177,6 +208,29 @@ fn main() -> ExitCode {
                 databases: database,
                 paths,
                 dry_run,
+            },
+        ),
+        Some(Command::Ai {
+            project,
+            server,
+            dry_run,
+            provider,
+            model,
+            base_url,
+            claude_code_ack,
+            question,
+        }) => ai::run(
+            &store,
+            &dir,
+            ai::AiArgs {
+                project,
+                server,
+                dry_run,
+                provider,
+                model,
+                base_url,
+                claude_code_ack,
+                question,
             },
         ),
         Some(Command::Snapshots) => list_snapshots(&store),
