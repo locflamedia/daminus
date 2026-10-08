@@ -7,6 +7,10 @@
 
 use std::time::Duration;
 
+use daminus_core::ai::profiles::ModelList;
+use daminus_core::ai::view::{
+    AiProvidersView, AiTestResult, PayloadPreview, PreviewOptions, PreviewScope,
+};
 use daminus_core::data::{DataUsage, ExportedFile};
 use daminus_core::diagnostics::Diagnostics;
 use daminus_core::domain::error::{AppError, ErrorCode};
@@ -15,7 +19,7 @@ use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::domain::settings::{
-    AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
+    AiSettings, AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
 };
 use daminus_core::scan::{ExpectedDraft, HistoryView, ScanFact, ScanRun, ScanScope, Started};
 use daminus_core::setup::{
@@ -332,6 +336,81 @@ pub async fn settings_reset<R: Runtime>(
     let saved = run_blocking("settings_reset", move || core.settings_reset()).await?;
     tauri::async_runtime::spawn(async move { tray::refresh(&app) });
     Ok(saved)
+}
+
+/// The eight providers with whether a key is stored for each (never the key), the selected
+/// provider, model and endpoint, and what the `claude` program reports.
+#[tauri::command]
+pub async fn ai_providers(core: State<'_, AppCore>) -> Result<AiProvidersView, AppError> {
+    core.ai_providers().await
+}
+
+/// Stores (`Some`) or removes (`None`) the key of a provider in the Keychain. Answers whether
+/// a key is stored afterwards. The key crosses IPC here, inward, and nowhere else.
+#[tauri::command]
+pub async fn ai_set_key(
+    core: State<'_, AppCore>,
+    provider_id: String,
+    key: Option<String>,
+) -> Result<bool, AppError> {
+    core.ai_set_key(&provider_id, key).await
+}
+
+/// Replaces Settings › AI (provider, model, endpoint, the Claude Code consent); the provider and
+/// the URL are checked against the profiles and the whole file is checked again.
+#[tauri::command]
+pub async fn ai_settings_set(
+    core: State<'_, AppCore>,
+    ai: AiSettings,
+) -> Result<Settings, AppError> {
+    core.ai_settings_set(ai).await
+}
+
+/// The models of a provider; the suggestions with manual entry when it cannot list them.
+#[tauri::command]
+pub async fn ai_models(
+    core: State<'_, AppCore>,
+    provider_id: String,
+) -> Result<ModelList, AppError> {
+    core.ai_models(&provider_id).await
+}
+
+/// Checks a provider's key and endpoint with the stored key. A failure is data in the answer.
+#[tauri::command]
+pub async fn ai_test(
+    core: State<'_, AppCore>,
+    provider_id: String,
+) -> Result<AiTestResult, AppError> {
+    core.ai_test(&provider_id).await
+}
+
+/// The text that would be sent for `scope`, built from the latest report. Its bytes are kept
+/// under the hash; `ai_analyze` sends those.
+#[tauri::command]
+pub async fn ai_payload_preview(
+    core: State<'_, AppCore>,
+    scope: PreviewScope,
+    options: PreviewOptions,
+) -> Result<PayloadPreview, AppError> {
+    core.ai_payload_preview(scope, options).await
+}
+
+/// Sends the payload previewed under `previewed_hash`. Answers once the send is under way; the
+/// reply arrives on `ai://event`, tagged with `request_id`.
+#[tauri::command]
+pub async fn ai_analyze(
+    core: State<'_, AppCore>,
+    request_id: String,
+    previewed_hash: String,
+) -> Result<(), AppError> {
+    core.ai_analyze(&request_id, &previewed_hash).await
+}
+
+/// Stops a send. `false` when `request_id` is not running. The stop shows as a `cancelled`
+/// event, not as an error.
+#[tauri::command]
+pub async fn ai_cancel(core: State<'_, AppCore>, request_id: String) -> Result<bool, AppError> {
+    Ok(core.ai_cancel(&request_id))
 }
 
 /// What the app's folder holds: path, files and bytes by kind, the size of each scan.

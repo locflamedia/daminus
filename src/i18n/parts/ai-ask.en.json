@@ -1,0 +1,44 @@
+{
+  "aiAsk": {
+    "title": "Ask about {name}",
+    "everything": "everything",
+    "close": "Close",
+    "toggleHint": "Toggle with ⌘J",
+    "scanNo": "scan #{n}",
+    "vs": "vs #{n}",
+    "mixCrit": "{n} crit",
+    "mixWarn": "{n} warn",
+    "mixClear": "nothing to fix",
+    "sent": "≈ {tokens} tokens to {provider}",
+    "sentNoProvider": "≈ {tokens} tokens sent",
+    "reading": "Reading {n} check results",
+    "readingDiff": "Reading {n} check results and the diff from #{seq}",
+    "health": "Health: {level}",
+    "healthLevel": {
+      "ok": "fine",
+      "crit": "critical",
+      "warn": "needs attention",
+      "info": "fine, with notes"
+    },
+    "answeredIn": "answered in {time}",
+    "cause": "cause",
+    "unmatched": "Not matched to a result of this scan",
+    "stop": "Stop",
+    "tryAgain": "Try again",
+    "askAgain": "Ask again",
+    "stopped": "Stopped. Nothing more will arrive.",
+    "failed": "No answer",
+    "threadLabel": "Conversation about {name}",
+    "composerLabel": "Question for the AI",
+    "placeholder": "Ask about {name}…",
+    "placeholderMore": "Ask a follow-up about {name}…",
+    "promise": "Commands are for you to copy. Daminus never runs them.",
+    "noAnswerText": "The AI sent no text with this answer.",
+    "tag": {
+      "crit": "CRIT",
+      "warn": "WARN",
+      "info": "INFO"
+    },
+    "button": "Ask AI"
+  }
+}

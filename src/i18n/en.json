@@ -119,6 +119,7 @@
   },
   "nav": {
     "search": "Search",
+    "aiProvider": "AI provider: {name}",
     "overview": "Overview",
     "history": "Scan history",
     "projects": "Projects",
@@ -330,6 +331,46 @@
   },
   "tooltip": {
     "issues": "{name} · {count}"
+  },
+  "ai": {
+    "payload": {
+      "title": "Review before sending to {provider}",
+      "providerFallback": "the provider",
+      "included": "Included",
+      "rules": "Masking rules applied",
+      "size": "Size",
+      "tokens": "Tokens in",
+      "masked": "Masked",
+      "maskedNote": "values replaced before leaving",
+      "maskedTag": "masked values in amber",
+      "copy": "Copy",
+      "copied": "Copied",
+      "copyFailed": "Failed",
+      "codeLabel": "The exact text that is sent",
+      "checking": "Checking for secrets…",
+      "ready": "Nothing needed masking, nothing looks secret | {n} value masked, nothing else looks secret | {n} values masked, nothing else looks secret",
+      "send": "Send to {provider}",
+      "dontAsk": "Don’t ask again for {subject}",
+      "thisScope": "this scope",
+      "reviewOf": "review {n} of {total}",
+      "previewFailed": "Couldn’t prepare what would be sent",
+      "sendFailed": "Nothing was sent",
+      "retry": "Try again",
+      "sections": {
+        "question": "Your question",
+        "questionDesc": "plain text, {n} characters",
+        "project_config": "Project config",
+        "project_configDesc": "id, URLs, parts and roles",
+        "check_results": "Check results",
+        "check_resultsDesc": "{n} rows, status and short message",
+        "diff": "Diff vs the last scan",
+        "diffDesc": "what grew, what is new or fixed",
+        "server_facts": "Server facts",
+        "server_factsDesc": "OS, CPU, memory, uptime",
+        "top_disk_paths": "Top disk paths",
+        "top_disk_pathsDesc": "largest folders per part"
+      }
+    }
   },
   "ui": {
     "cancel": "Cancel",

@@ -28,8 +28,10 @@ const props = withDefaults(
     prompt?: string | false
     /** The 36 px bar with a white 28 px Copy button (the host key screen). */
     large?: boolean
+    /** The 30 px line of the Ask board (radius 8, font 11, a 22 px Copy). */
+    compact?: boolean
   }>(),
-  { prompt: '$', large: false },
+  { prompt: '$', large: false, compact: false },
 )
 const emit = defineEmits<{ copied: [command: string] }>()
 
@@ -40,7 +42,7 @@ const risks = computed(() => commandRisks(cleaned.value.text))
 </script>
 
 <template>
-  <div class="command" :class="{ large }">
+  <div class="command" :class="{ large, compact }">
     <div class="line">
       <span v-if="prompt" class="prompt" aria-hidden="true">{{ prompt }}</span>
       <span
@@ -52,7 +54,7 @@ const risks = computed(() => commandRisks(cleaned.value.text))
       >
       <UiCopyButton
         :text="cleaned.text"
-        :variant="large ? 'bar' : 'line'"
+        :variant="large ? 'bar' : compact ? 'compact' : 'line'"
         @copied="emit('copied', $event)"
       />
     </div>
@@ -87,6 +89,16 @@ const risks = computed(() => commandRisks(cleaned.value.text))
   height: 36px;
   padding: 0 var(--space-1) 0 var(--space-3);
   border-radius: var(--radius-sm);
+}
+
+.compact .line {
+  height: 30px;
+  border-radius: 8px;
+  font-size: var(--text-11);
+}
+
+.compact .text {
+  padding-top: 4px;
 }
 
 .prompt {

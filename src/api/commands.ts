@@ -3,6 +3,9 @@
 // `generate_handler!` list, the build.rs permission list and the capability.
 import { invoke } from '@tauri-apps/api/core'
 import type { AgentStatus } from './bindings/AgentStatus'
+import type { AiProvidersView } from './bindings/AiProvidersView'
+import type { AiSettings } from './bindings/AiSettings'
+import type { AiTestResult } from './bindings/AiTestResult'
 import type { AppError } from './bindings/AppError'
 import type { DataSettings } from './bindings/DataSettings'
 import type { DataUsage } from './bindings/DataUsage'
@@ -16,6 +19,10 @@ import type { HistoryView } from './bindings/HistoryView'
 import type { HostAlias } from './bindings/HostAlias'
 import type { HostKeyInfo } from './bindings/HostKeyInfo'
 import type { HostListing } from './bindings/HostListing'
+import type { ModelList } from './bindings/ModelList'
+import type { PayloadPreview } from './bindings/PayloadPreview'
+import type { PreviewOptions } from './bindings/PreviewOptions'
+import type { PreviewScope } from './bindings/PreviewScope'
 import type { Project } from './bindings/Project'
 import type { ProjectIssue } from './bindings/ProjectIssue'
 import type { Report } from './bindings/Report'
@@ -71,6 +78,14 @@ export const COMMANDS = [
   'hosts_set_include',
   'agent_status',
   'diagnostics_collect',
+  'ai_providers',
+  'ai_set_key',
+  'ai_settings_set',
+  'ai_models',
+  'ai_test',
+  'ai_payload_preview',
+  'ai_analyze',
+  'ai_cancel',
 ] as const
 
 export type CommandName = (typeof COMMANDS)[number]
@@ -276,4 +291,62 @@ export function hostsExcluded(): Promise<HostAlias[]> {
 /** Switches one host on or off for scans; answers with the hosts that are off afterwards. */
 export function hostsSetInclude(host: HostAlias, include: boolean): Promise<HostAlias[]> {
   return invoke<HostAlias[]>('hosts_set_include', { host, include })
+}
+
+/**
+ * The eight providers with whether a key is stored for each (never the key), the selection, the
+ * Claude Code consent and what the `claude` program reports. No `claude` is `found: false`.
+ */
+export function aiProviders(): Promise<AiProvidersView> {
+  return invoke<AiProvidersView>('ai_providers')
+}
+
+/**
+ * Stores the key of a provider in the Keychain, or removes it with `null`. Answers whether a key
+ * is stored afterwards. This is the only call that carries a key, and only inward.
+ */
+export function aiSetKey(providerId: string, key: string | null): Promise<boolean> {
+  return invoke<boolean>('ai_set_key', { providerId, key })
+}
+
+/**
+ * Replaces Settings › AI (provider, model, endpoint, Claude Code consent). Rust checks the
+ * provider and the URL, then the whole file; answers with what was saved.
+ */
+export function aiSettingsSet(ai: AiSettings): Promise<Settings> {
+  return invoke<Settings>('ai_settings_set', { ai })
+}
+
+/** The models a provider offers, or its suggestions with `manual_entry` when it cannot list. */
+export function aiModels(providerId: string): Promise<ModelList> {
+  return invoke<ModelList>('ai_models', { providerId })
+}
+
+/** Checks a provider with its stored key. A failure is in the answer, not a rejection. */
+export function aiTest(providerId: string): Promise<AiTestResult> {
+  return invoke<AiTestResult>('ai_test', { providerId })
+}
+
+/**
+ * The text that would be sent for `scope`, from the latest report. `ai_analyze` sends exactly
+ * these bytes, named by the `hash`.
+ */
+export function aiPayloadPreview(
+  scope: PreviewScope,
+  options: PreviewOptions,
+): Promise<PayloadPreview> {
+  return invoke<PayloadPreview>('ai_payload_preview', { scope, options })
+}
+
+/**
+ * Sends the previewed payload. Resolves once the send is under way; the reply comes on
+ * `ai://event` (`onAiEvent`), tagged with `requestId`. Rejects when nothing was sent.
+ */
+export function aiAnalyze(requestId: string, previewedHash: string): Promise<void> {
+  return invoke<void>('ai_analyze', { requestId, previewedHash })
+}
+
+/** Stops a send; it ends with a `cancelled` event. `false` when `requestId` is not running. */
+export function aiCancel(requestId: string): Promise<boolean> {
+  return invoke<boolean>('ai_cancel', { requestId })
 }

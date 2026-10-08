@@ -7,7 +7,7 @@
   the status region is the only thing that announces the result.
 
   `line` sits at the end of a command line; `bar` is the white 28 px button of the tall bar
-  (board "Host key changed"), with the copy glyph; `block` floats in the top corner of a code block,
+  (board "Host key changed"), with the copy glyph; `compact` is the 22 px button of the Ask board's command line; `block` floats in the top corner of a code block,
   with a fade of the block's own colour (`--copy-fade`) so text never runs under the button.
 -->
 <script setup lang="ts">
@@ -20,7 +20,7 @@ import UiTooltip from './UiTooltip.vue'
 const props = withDefaults(
   defineProps<{
     text: string
-    variant?: 'line' | 'block' | 'bar'
+    variant?: 'line' | 'block' | 'bar' | 'compact'
     /** Holds one face still, for the gallery that draws all three. */
     forceState?: CopyState
   }>(),
@@ -52,9 +52,12 @@ async function onCopy(text: string) {
         @blur="leave"
       >
         <span class="face" :data-on="state === 'idle'" aria-hidden="true">
-          <UiIcon v-if="variant !== 'line'" name="copy" :size="12" :stroke="1.6" />{{
-            t('ui.copy')
-          }}
+          <UiIcon
+            v-if="variant === 'block' || variant === 'bar'"
+            name="copy"
+            :size="12"
+            :stroke="1.6"
+          />{{ t('ui.copy') }}
         </span>
         <span class="face" :data-on="state === 'copied'" aria-hidden="true">
           <UiIcon name="check" :size="12" :stroke="1.6" />{{ t('ui.copied') }}
@@ -72,7 +75,8 @@ async function onCopy(text: string) {
 
 <style scoped>
 .copy-line,
-.copy-bar {
+.copy-bar,
+.copy-compact {
   display: contents;
 }
 
@@ -114,6 +118,12 @@ async function onCopy(text: string) {
   background: var(--surface-0);
   color: var(--ink);
   font-size: var(--text-12);
+}
+
+.copy-compact .copy {
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
 }
 
 .copy-bar .copy:hover {

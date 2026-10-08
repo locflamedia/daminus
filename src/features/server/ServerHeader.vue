@@ -8,6 +8,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
+import AskAiButton from '@/features/ai/ask/AskAiButton.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiMenu from '@/ui/UiMenu.vue'
@@ -69,6 +70,7 @@ const items = computed(() =>
         </UiButton>
       </template>
     </UiMenu>
+    <AskAiButton v-if="known" :scope="{ kind: 'server', host }" />
     <UiButton
       v-if="known"
       variant="primary"

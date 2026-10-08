@@ -2,7 +2,9 @@
 // the file in memory and refuses what the core refuses (an unknown language), so the
 // screens can be seen and used without the app.
 import type { AppearanceSettings } from './bindings/AppearanceSettings'
+import type { AiSettings } from './bindings/AiSettings'
 import type { DataSettings } from './bindings/DataSettings'
+import { aiSettingsRefusal } from './dev-mock-ai'
 import { dataAnswer } from './dev-mock-data'
 import type { GeneralSettings } from './bindings/GeneralSettings'
 import type { ScanSettings } from './bindings/ScanSettings'
@@ -39,7 +41,7 @@ function initial(): Settings {
       hosts_at_once: null,
       thresholds: [],
     },
-    ai: { provider: null, model: null, claude_code_acknowledged: false },
+    ai: { provider: null, model: null, claude_code_acknowledged: false, base_url: null },
     data: { keep_scans: 20, forget_ai_after_days: 30 },
   }
 }
@@ -85,6 +87,13 @@ export function settingsAnswer(cmd: string, args: Record<string, unknown>): unkn
     if (data.keep_scans === 0) throw refusal('data.keep_scans')
     if (data.forget_ai_after_days === 0) throw refusal('data.forget_ai_after_days')
     current = { ...current, data: { ...data } }
+    return structuredClone(current)
+  }
+  if (cmd === 'ai_settings_set') {
+    const ai = args.ai as AiSettings
+    const refused = aiSettingsRefusal(ai)
+    if (refused) throw refusal(refused)
+    current = { ...current, ai: { ...ai } }
     return structuredClone(current)
   }
   if (cmd === 'settings_reset') {

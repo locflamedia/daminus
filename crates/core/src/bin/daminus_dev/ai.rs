@@ -119,7 +119,7 @@ async fn send(
     payload: &Payload,
     confirm_hash: Option<&str>,
     cancel: &CancellationToken,
-    on_piece: impl FnMut(&str),
+    on_piece: impl FnMut(&str) + Send,
 ) -> Result<AiAnalysis, String> {
     let hash = confirm_hash.ok_or_else(|| NEEDS_HASH.to_owned())?;
     analyze(client, target, payload, hash, cancel, on_piece)

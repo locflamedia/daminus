@@ -36,6 +36,13 @@ describe('UiChip', () => {
   })
 })
 
+describe('UiChip size', () => {
+  it('stays 22 px by default; large adds the 24 px class', () => {
+    expect(mount(UiChip).classes()).not.toContain('chip-large')
+    expect(mount(UiChip, { props: { size: 'large' } }).classes()).toContain('chip-large')
+  })
+})
+
 describe('UiTag', () => {
   it('is a plain fact label by default', () => {
     const wrapper = mount(UiTag, { slots: { default: 'pm2' } })

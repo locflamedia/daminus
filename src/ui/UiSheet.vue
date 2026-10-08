@@ -27,8 +27,13 @@ const props = withDefaults(
     /** The card's width; 760px unless a screen needs another. */
     width?: string
     closeLabel?: string
+    /** A plain white card with no glass tray, 36 px from the window's top and bottom (the AI
+     * payload board). */
+    plain?: boolean
+    /** Focus the panel itself on open, not the first control (no ring on a close control). */
+    focusPanel?: boolean
   }>(),
-  { context: undefined, width: '760px', closeLabel: undefined },
+  { context: undefined, width: '760px', closeLabel: undefined, plain: false, focusPanel: false },
 )
 
 const emit = defineEmits<{ close: [] }>()
@@ -45,18 +50,22 @@ const slots = useSlots()
 const titleId = useId()
 const panel = ref<HTMLElement>()
 
-useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
+useFocusTrap(panel, toRef(props, 'open'), {
+  onEscape: () => emit('close'),
+  initialFocus: (root) => (props.focusPanel ? root : undefined),
+})
 
 const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'])
 </script>
 
 <template>
   <Transition name="sheet" appear>
-    <div v-if="open" class="layer">
+    <div v-if="open" class="layer" :class="{ plain }">
       <div class="scrim" aria-hidden="true" />
       <div
         ref="panel"
         class="tray"
+        :class="{ plain }"
         :style="{ width }"
         role="dialog"
         aria-modal="true"
@@ -122,6 +131,38 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
 
 .tray:focus-visible {
   box-shadow: var(--shadow-overlay);
+}
+
+/* Plain: one white card, radius 20, 36 px from the top and bottom of the window. */
+.layer.plain {
+  align-items: stretch;
+  padding: 36px 0;
+}
+
+.layer.plain .scrim {
+  background: var(--scrim-dialog);
+}
+
+.tray.plain,
+.tray.plain:focus-visible {
+  max-height: none;
+  padding: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface-0);
+  box-shadow: var(--shadow-sheet-plain);
+  transform-origin: 50% 50%;
+}
+
+.tray.plain:focus-visible {
+  outline: none;
+}
+
+.tray.plain .card {
+  border-radius: var(--radius-lg);
+}
+
+.tray.plain .foot {
+  background: var(--surface-well);
 }
 
 .card {
@@ -215,6 +256,11 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
 .sheet-enter-from .tray,
 .sheet-leave-to .tray {
   transform: translateY(8px) scale(0.98);
+}
+
+.sheet-enter-from .tray.plain,
+.sheet-leave-to .tray.plain {
+  transform: scale(0.98);
 }
 
 @media (prefers-reduced-motion: reduce) {

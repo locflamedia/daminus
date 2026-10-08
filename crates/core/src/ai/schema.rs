@@ -195,7 +195,7 @@ async fn send_once(
     payload: &Payload,
     previewed_hash: &str,
     cancel: &CancellationToken,
-    on_piece: &mut dyn FnMut(&str),
+    on_piece: &mut (dyn FnMut(&str) + Send),
 ) -> Result<Reply, AppError> {
     let started = Instant::now();
     let result = read_reply(client, target, payload, previewed_hash, cancel, on_piece).await;
@@ -223,7 +223,7 @@ async fn read_reply(
     payload: &Payload,
     previewed_hash: &str,
     cancel: &CancellationToken,
-    on_piece: &mut dyn FnMut(&str),
+    on_piece: &mut (dyn FnMut(&str) + Send),
 ) -> Result<Reply, AppError> {
     let req = payload.request(target.model.map(str::to_owned), previewed_hash)?;
     let mut rx = client.stream(req, cancel.clone()).await?;
@@ -262,7 +262,7 @@ pub async fn analyze(
     payload: &Payload,
     previewed_hash: &str,
     cancel: &CancellationToken,
-    mut on_summary_delta: impl FnMut(&str),
+    mut on_summary_delta: impl FnMut(&str) + Send,
 ) -> Result<AiAnalysis, AppError> {
     payload.verify(previewed_hash)?;
     // What the caller has been given so far, so a second attempt adds only

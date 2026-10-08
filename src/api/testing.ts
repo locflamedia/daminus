@@ -2,10 +2,11 @@
 // Not imported by app code.
 import { emit } from '@tauri-apps/api/event'
 import { clearMocks, mockIPC } from '@tauri-apps/api/mocks'
+import type { AiStreamEvent } from './bindings/AiStreamEvent'
 import type { ScanEvent } from './bindings/ScanEvent'
 import type { SetupEvent } from './bindings/SetupEvent'
 import type { CommandName } from './commands'
-import { SCAN_EVENT, SETUP_EVENT } from './events'
+import { AI_EVENT, SCAN_EVENT, SETUP_EVENT } from './events'
 
 export type CommandMock = (cmd: CommandName, args: Record<string, unknown>) => unknown
 
@@ -24,6 +25,11 @@ export function emitScanEvent(event: ScanEvent): Promise<void> {
 /** Delivers a setup `event` as Rust would. */
 export function emitSetupEvent(event: SetupEvent): Promise<void> {
   return emit(SETUP_EVENT, event)
+}
+
+/** Delivers an AI send `event` as Rust would. */
+export function emitAiEvent(event: AiStreamEvent): Promise<void> {
+  return emit(AI_EVENT, event)
 }
 
 export { clearMocks }

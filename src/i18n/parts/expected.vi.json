@@ -4,7 +4,8 @@
       "label": "Thao tác cho {check}",
       "open": "Thêm thao tác",
       "copyPath": "Sao chép đường dẫn",
-      "mark": "Đánh dấu là bình thường…"
+      "mark": "Đánh dấu là bình thường…",
+      "markShort": "Đánh dấu là bình thường"
     },
     "pop": {
       "label": "Đánh dấu là bình thường",

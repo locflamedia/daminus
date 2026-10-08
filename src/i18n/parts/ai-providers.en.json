@@ -1,0 +1,126 @@
+{
+  "aiProviders": {
+    "ai": "AI",
+    "failed": "Couldn’t complete that. Try again.",
+    "loadFailed": "Couldn’t read the AI providers",
+    "retry": "Try again",
+    "grid": "Providers",
+    "active": "Active",
+    "tag": { "recommended": "Recommended", "free_local": "Free · local", "beta": "Beta" },
+    "status": {
+      "connected": "Connected",
+      "keySaved": "Key saved",
+      "addKey": "Add key",
+      "local": "Running locally",
+      "noKey": "No key needed",
+      "baseUrlKey": "Base URL + key",
+      "cli": "CLI on this Mac"
+    },
+    "adapter": "adapter {adapter} · key required",
+    "adapterNoKey": "adapter {adapter} · no key",
+    "key": {
+      "label": "API key",
+      "placeholder": "{hint}…",
+      "placeholderGeneric": "Paste the key…",
+      "hint": "Sent once to Keychain. Daminus never shows it again.",
+      "inKeychain": "in Keychain",
+      "replace": "Replace",
+      "save": "Save key",
+      "cancel": "Cancel"
+    },
+    "baseUrl": {
+      "label": "Base URL",
+      "hint": "https, or http to this Mac only. Empty uses {default}.",
+      "hintNone": "https, or http to this Mac only.",
+      "use": "Use this address",
+      "reset": "Use the default",
+      "scheme": "Use https. Plain http is allowed only for localhost, 127.0.0.1 or [::1].",
+      "invalid": "That is not a web address.",
+      "credentials": "Remove the user name and password from the address."
+    },
+    "model": {
+      "label": "Model",
+      "default": "default",
+      "listed": "{n} models listed",
+      "refresh": "Read the list again",
+      "manual": "The list could not be read. Type the model name.",
+      "placeholder": "Model name",
+      "example": "e.g. llama-3.1-70b",
+      "use": "Use",
+      "suggested": "Suggested"
+    },
+    "test": {
+      "button": "Test connection",
+      "idle": "Sends one short message: “reply with ok”. About 20 tokens.",
+      "busy": "Calling {host}…",
+      "works": "Works",
+      "needsKey": "Add a key first."
+    },
+    "privacy": {
+      "title": "What leaves this Mac",
+      "maskKeys": "Mask keys and tokens",
+      "maskKeysDesc": "sk-, ghp_, AKIA, xox, PEM and long random strings. Always on.",
+      "never": "Never sent, whatever you choose",
+      "neverEnv": ".env values and database passwords",
+      "neverSsh": "SSH keys, agents or known_hosts",
+      "neverFiles": "File contents from your servers",
+      "neverUrl": "Anything from the exposed-URL check body"
+    }
+  },
+  "aiClaudeCode": {
+    "name": "Claude Code",
+    "beta": "Beta",
+    "sub": "uses the Claude Code app already on this Mac · no API key",
+    "program": "Program",
+    "programFound": "claude · {version}",
+    "programMissing": "Not found",
+    "signedIn": "Signed in",
+    "signedInValue": "{method} · checked by Claude Code itself",
+    "signedInNo": "Not signed in",
+    "reads": "Daminus reads",
+    "readsValue": "nothing in ~/.claude; no token is ever opened",
+    "checkAgain": "Check again",
+    "model": "Model",
+    "modelDesc": "Passed to Claude Code; your plan decides what is available.",
+    "modelName": "Claude Code model",
+    "modelDefault": "Default",
+    "how": "How Daminus calls it",
+    "howNote": "Headless mode of the official CLI; same redacted payload and answer schema as any provider.",
+    "test": {
+      "button": "Test connection",
+      "idle": "Sends “reply with ok”.",
+      "busy": "Asking Claude Code…",
+      "works": "Works · {s} s",
+      "counted": "Counted in your plan’s usage, not billed per token.",
+      "needsAck": "Accept the warning first."
+    },
+    "warning": {
+      "title": "Experimental: uses your Claude subscription",
+      "body": "Daminus hands the redacted payload to the Claude Code app you already use. Anthropic’s rules for subscriptions outside Claude Code and Claude.ai change often and may not allow this. Usage counts against your plan. If in doubt, use an API key.",
+      "ack": "I understand, turn it on",
+      "policy": "Anthropic’s usage policy"
+    },
+    "compare": {
+      "title": "API key or Claude Code",
+      "apiKey": "API key",
+      "billing": "Billing",
+      "setup": "Setup",
+      "status": "Status",
+      "perToken": "per token",
+      "planLimits": "your plan’s limits",
+      "keyInKeychain": "key in Keychain",
+      "yourLogin": "your Claude Code login",
+      "supported": "supported",
+      "experimental": "experimental"
+    },
+    "cannot": {
+      "title": "When it can’t be used",
+      "notFound": "Claude Code not found",
+      "notFoundBody": "Install it from Anthropic, then Check again.",
+      "notSignedIn": "Not signed in",
+      "notSignedInBody": "Run claude in Terminal and log in; Daminus never signs in.",
+      "limit": "Plan limit reached",
+      "limitBody": "Stops with “limit hit”; switch provider or wait for the reset."
+    }
+  }
+}

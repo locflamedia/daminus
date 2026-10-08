@@ -119,6 +119,7 @@
   },
   "nav": {
     "search": "Tìm kiếm",
+    "aiProvider": "Nhà cung cấp AI: {name}",
     "overview": "Tổng quan",
     "history": "Lịch sử quét",
     "projects": "Dự án",
@@ -330,6 +331,46 @@
   },
   "tooltip": {
     "issues": "{name} · {count}"
+  },
+  "ai": {
+    "payload": {
+      "title": "Xem lại trước khi gửi tới {provider}",
+      "providerFallback": "nhà cung cấp",
+      "included": "Được gửi",
+      "rules": "Quy tắc che đã áp dụng",
+      "size": "Dung lượng",
+      "tokens": "Token vào",
+      "masked": "Đã che",
+      "maskedNote": "giá trị được thay trước khi rời máy",
+      "maskedTag": "giá trị đã che màu hổ phách",
+      "copy": "Sao chép",
+      "copied": "Đã chép",
+      "copyFailed": "Không chép được",
+      "codeLabel": "Đúng nội dung sẽ được gửi",
+      "checking": "Đang dò bí mật…",
+      "ready": "Không có gì cần che, không có gì giống bí mật | Đã che {n} giá trị, không còn gì giống bí mật | Đã che {n} giá trị, không còn gì giống bí mật",
+      "send": "Gửi tới {provider}",
+      "dontAsk": "Đừng hỏi lại cho {subject}",
+      "thisScope": "phạm vi này",
+      "reviewOf": "lần xem {n} trên {total}",
+      "previewFailed": "Không chuẩn bị được nội dung sẽ gửi",
+      "sendFailed": "Chưa có gì được gửi",
+      "retry": "Thử lại",
+      "sections": {
+        "question": "Câu hỏi của bạn",
+        "questionDesc": "văn bản thuần, {n} ký tự",
+        "project_config": "Cấu hình dự án",
+        "project_configDesc": "id, URL, các phần và vai trò",
+        "check_results": "Kết quả kiểm tra",
+        "check_resultsDesc": "{n} dòng, trạng thái và thông điệp ngắn",
+        "diff": "Khác với lần quét trước",
+        "diffDesc": "gì tăng, gì mới hoặc đã sửa",
+        "server_facts": "Thông tin máy chủ",
+        "server_factsDesc": "HĐH, CPU, bộ nhớ, thời gian chạy",
+        "top_disk_paths": "Thư mục nặng nhất",
+        "top_disk_pathsDesc": "thư mục lớn nhất theo từng phần"
+      }
+    }
   },
   "ui": {
     "cancel": "Hủy",

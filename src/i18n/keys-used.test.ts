@@ -15,7 +15,12 @@ const SRC = join(process.cwd(), 'src')
 const SKIP_DIRS = new Set(['bindings', 'node_modules'])
 
 /** Literals that look like a key but name something else, e.g. a file or an object path. */
-const NOT_KEYS: readonly RegExp[] = [/^project\.json$/, /^projects\.json$/]
+const NOT_KEYS: readonly RegExp[] = [
+  /^project\.json$/,
+  /^projects\.json$/,
+  // Names of the settings field a refused AI setting points at (the mock's error detail).
+  /^ai\.(provider|model|base_url)$/,
+]
 
 /**
  * Variable keys whose variable is not one child of the node. `checks.${id}.name` takes a

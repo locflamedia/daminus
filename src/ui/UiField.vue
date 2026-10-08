@@ -63,6 +63,7 @@ function onInput(event: Event) {
         :id="id"
         class="input"
         :type="type"
+        :autocomplete="type === 'password' ? 'off' : undefined"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -134,6 +135,11 @@ function onInput(event: Event) {
 
 .mono .input {
   font: var(--text-12) var(--font-mono);
+}
+
+/* The control already rings on focus; the global keyboard ring would draw a second one. */
+.input:focus-visible {
+  box-shadow: none;
 }
 
 .input::placeholder {

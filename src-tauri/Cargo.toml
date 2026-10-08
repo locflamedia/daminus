@@ -32,9 +32,14 @@ tauri-plugin-log = "2.9"
 tauri-plugin-opener = "2.5"
 tauri-plugin-single-instance = "2.4"
 tokio = { version = "1.53", features = ["rt", "sync", "macros", "time"] }
+tokio-util = "0.7"
 nix = { version = "0.31", default-features = false, features = ["signal", "process"] }
 time = { version = "0.3.47", features = ["local-offset", "formatting", "macros"] }
 tracing = { version = "0.1.44", features = ["log"] }
+
+# The Keychain: already in the tree through the TLS verifier, so no new crate to vet.
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = "3.7"
 
 [lints]
 workspace = true

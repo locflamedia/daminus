@@ -39,7 +39,7 @@ const props = withDefaults(
   defineProps<{
     modelValue: string
     options: SelectOption[]
-    variant?: 'default' | 'language'
+    variant?: 'default' | 'language' | 'model'
     label?: string
     /** Accessible name when there is no visible label. */
     accessibleName?: string
@@ -76,6 +76,7 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string]; help: [] }>()
+defineSlots<{ lead?: () => unknown }>()
 
 const uid = useId()
 const triggerId = `${uid}-trigger`
@@ -246,6 +247,7 @@ if (props.defaultOpen) {
 
     <!-- Closed: a button. Open (default shape): the field itself becomes the text box. -->
     <div v-if="open && !isLanguage" class="field field-typing">
+      <slot name="lead" />
       <input
         :id="triggerId"
         ref="input"
@@ -280,7 +282,9 @@ if (props.defaultOpen) {
       @keydown="onTriggerKeydown"
     >
       <UiFlag v-if="selected?.flag" :code="selected.flag" />
+      <slot name="lead" />
       <span class="value">{{ shownLabel }}</span>
+      <span v-if="variant === 'model' && selected?.meta" class="tag">{{ selected.meta }}</span>
       <UiIcon name="chevron-down" :size="14" class="chevron" />
     </button>
 
@@ -488,6 +492,46 @@ if (props.defaultOpen) {
 .typing:focus-visible,
 .search-input:focus-visible {
   box-shadow: none;
+}
+
+/* Model: the white field of the AI providers board, 36 px, a hairline ring, a mono value and
+   the note as a tag inside it. */
+.select-model .field,
+.select-model .field:hover {
+  height: 36px;
+  background: var(--surface-0);
+  box-shadow: var(--shadow-ring);
+}
+
+.select-model .field:focus-visible,
+.select-model.open .field {
+  box-shadow: var(--field-focus-ring);
+}
+
+.select-model .value,
+.select-model .typing {
+  font: var(--text-12) var(--font-mono);
+}
+
+.select-model .chevron {
+  color: var(--ink-4);
+}
+
+.select-model .tag {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--surface-1);
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  font-weight: var(--weight-medium);
+}
+
+.select-model .value {
+  flex: 0 1 auto;
 }
 
 .select-language .field {

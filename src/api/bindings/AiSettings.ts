@@ -8,4 +8,8 @@ provider: string | null, model: string | null,
 /**
  * The user accepted the Claude Code (Beta) warning.
  */
-claude_code_acknowledged: boolean, };
+claude_code_acknowledged: boolean, 
+/**
+ * A custom endpoint for the selected provider; `None` uses the profile's own.
+ */
+base_url: string | null, };

@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
+import AiFindingsView from '@/features/ai/findings/AiFindingsView.vue'
 import OverviewView from '@/features/overview/OverviewView.vue'
 import ScanHistoryView from '@/features/history/ScanHistoryView.vue'
 import ProjectView from '@/features/project/ProjectView.vue'
@@ -12,6 +13,7 @@ import SetupView from '@/features/setup/SetupView.vue'
 export const routes: RouteRecordRaw[] = [
   { path: '/', name: 'overview', component: OverviewView },
   { path: '/history', name: 'history', component: ScanHistoryView },
+  { path: '/ai/findings', name: 'ai-findings', component: AiFindingsView },
   { path: '/project/:id/:tab?', name: 'project', component: ProjectView },
   { path: '/server/:host', name: 'server', component: ServerView },
   {
@@ -58,6 +60,11 @@ export const routes: RouteRecordRaw[] = [
           path: '/dev/sheet',
           name: 'dev-sheet',
           component: () => import('@/features/project-sheet/DevSheetView.vue'),
+        } satisfies RouteRecordRaw,
+        {
+          path: '/dev/payload',
+          name: 'dev-payload',
+          component: () => import('@/features/ai/payload/DevPayloadView.vue'),
         } satisfies RouteRecordRaw,
       ]
     : []),

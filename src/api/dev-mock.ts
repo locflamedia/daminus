@@ -1,5 +1,6 @@
 // Development only: answers the IPC commands with a fixed report so the window can be seen in
 // a plain browser (`?mock` in the address). The production bundle never imports it.
+import { AiMock } from './dev-mock-ai'
 import { diagnosticsAnswer } from './dev-mock-diagnostics'
 import { withExpectedAndHostKey } from './dev-mock-expected'
 import { ResultsMock, isResultsVariant } from './dev-mock-results'
@@ -19,14 +20,29 @@ const HOST_COMMANDS = /^(hosts_list|ssh_environment|setup_)/
  * flow against scripted servers; add `&speed=4` to run it faster) and `setup-saved` (the same
  * with a project already saved, so the second run meets "Already saved"). Failure screens:
  * `setup-failures` (every way a login test ends badly), `setup-empty-discover` (discover finds
- * nothing on any host) and `setup-queued` (one host starts six seconds late).
+ * nothing on any host) and `setup-queued` (one host starts six seconds late). The AI screens:
+ * `?mock=ai` and the variants listed in `dev-mock-ai.ts` (Claude Code states, refused and
+ * broken sends, a refusing Keychain); the send is scripted: summary pieces, three findings, done.
  */
 export async function installDevMock(variant = '', speed = 1): Promise<void> {
+  // The window opens as for a person who finished the AI step of Settings: a provider with its
+  // key and a model, so a question can be sent. (Tests start from the plain defaults.)
+  settingsAnswer('ai_settings_set', {
+    ai: {
+      provider: 'anthropic',
+      model: 'claude-sonnet-5',
+      claude_code_acknowledged: false,
+      base_url: null,
+    },
+  })
   if (isSetupVariant(variant)) {
     const setup = new SetupMock(variant, speed)
+    const ai = new AiMock(variant, speed)
     mockCommands((cmd, args) => {
       const answered = setup.handle(cmd, args)
       if (answered !== undefined) return answered
+      const aiAnswer = ai.handle(cmd, args)
+      if (aiAnswer !== undefined) return aiAnswer
       const diagnostics = diagnosticsAnswer(cmd)
       if (diagnostics !== undefined) return diagnostics
       const settings = settingsAnswer(cmd, args)
@@ -44,10 +60,12 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
   // The hosts and the login tests of the Settings screens come from the scripted setup servers,
   // which carry the same aliases as the timeline.
   const hosts = new SetupMock('setup', speed)
+  const ai = new AiMock(variant, speed)
   mockCommands(
     withExpectedAndHostKey(
       (cmd, args) =>
         results.handle(cmd, args) ??
+        ai.handle(cmd, args) ??
         diagnosticsAnswer(cmd) ??
         settingsAnswer(cmd, args) ??
         (HOST_COMMANDS.test(cmd) ? hosts.handle(cmd, args) : undefined) ??

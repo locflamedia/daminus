@@ -32,6 +32,10 @@ export const ICON_PATHS = {
   settings:
     'M8 5.8a2.2 2.2 0 1 1 0 4.4a2.2 2.2 0 1 1 0-4.4z M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1',
   appearance: CIRCLE + 'M8 2v12 M8 2a6 6 0 0 1 0 12z',
+  // The play triangle of a "Test" button.
+  play: 'M4 3.5v9l8-4.5z',
+  // The code brackets: a profile with no brand mark (a compatible API).
+  code: 'M6 4.5 2.5 8 6 11.5M10 4.5 13.5 8 10 11.5',
   refresh: 'M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.8h-2.8',
   'chevron-right': 'm6 3.5 4.5 4.5L6 12.5',
   'chevron-down': 'm3.5 6 4.5 4.5L12.5 6',
