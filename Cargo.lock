@@ -956,6 +956,7 @@ dependencies = [
  "daminus-core",
  "log",
  "nix",
+ "security-framework",
  "serde",
  "serde_json",
  "tauri",
@@ -967,6 +968,7 @@ dependencies = [
  "tempfile",
  "time",
  "tokio",
+ "tokio-util",
  "tracing",
 ]
 

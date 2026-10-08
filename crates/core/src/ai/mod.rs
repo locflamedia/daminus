@@ -10,6 +10,7 @@ pub mod profiles;
 pub mod schema;
 pub mod send_log;
 pub mod summary_stream;
+pub mod view;
 
 #[cfg(any(test, feature = "fake"))]
 pub mod fake;

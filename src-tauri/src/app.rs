@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use daminus_core::ai::view::AiStreamEvent;
 use daminus_core::data::{self, DataUsage};
 use daminus_core::diagnostics::{self, Diagnostics, DiagnosticsSource};
 use daminus_core::domain::datetime::Timestamp;
@@ -17,7 +18,7 @@ use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::domain::project::ProjectsFile;
 use daminus_core::domain::settings::{
-    AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
+    AiSettings, AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
 };
 use daminus_core::probe::UrlProbe;
 use daminus_core::scan::{
@@ -35,6 +36,8 @@ use daminus_core::ssh::{SshTools, Transport};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
 
+use crate::ai::AiRuntime;
+
 /// The one event channel the webview listens to.
 pub const SCAN_EVENT: &str = "scan://event";
 
@@ -47,12 +50,13 @@ const EVENT_BUFFER: usize = 1024;
 /// Store, scan service and setup flow, shared by commands, the tray and quit handling.
 #[derive(Clone)]
 pub struct AppCore {
-    store: FsStore,
+    pub(crate) store: FsStore,
     service: ScanService,
     setup: SetupService,
     probe: Arc<dyn UrlProbe>,
     tools: SshTools,
     log_file: Option<PathBuf>,
+    pub(crate) ai: AiRuntime,
 }
 
 /// The receivers of the two event streams; each must be drained continuously
@@ -60,6 +64,7 @@ pub struct AppCore {
 pub struct AppEvents {
     pub scan: mpsc::Receiver<ScanEvent>,
     pub setup: mpsc::Receiver<SetupEvent>,
+    pub ai: mpsc::Receiver<AiStreamEvent>,
 }
 
 impl AppCore {
@@ -79,6 +84,7 @@ impl AppCore {
             store.clone(),
             tx,
         );
+        let (ai_tx, ai_rx) = mpsc::channel(EVENT_BUFFER);
         let setup = SetupService::new(transport, tools.clone(), store.clone(), setup_tx);
         (
             Self {
@@ -88,10 +94,12 @@ impl AppCore {
                 probe,
                 tools,
                 log_file: None,
+                ai: AiRuntime::new(ai_tx),
             },
             AppEvents {
                 scan: rx,
                 setup: setup_rx,
+                ai: ai_rx,
             },
         )
     }
@@ -285,6 +293,12 @@ impl AppCore {
     /// whole file again, then writes it. The next scan prunes to the new limit.
     pub fn settings_set_data(&self, data: DataSettings) -> Result<Settings, AppError> {
         self.store.update_settings(|s| s.data = data)
+    }
+
+    /// Replaces the AI section, checks the whole file again, then writes it. The provider and
+    /// the URL were checked against the profiles by the caller.
+    pub(crate) fn settings_set_ai(&self, ai: AiSettings) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.ai = ai)
     }
 
     /// What the app's folder holds, for Settings › Data.

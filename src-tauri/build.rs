@@ -39,6 +39,14 @@ const COMMANDS: &[&str] = &[
     "hosts_set_include",
     "agent_status",
     "diagnostics_collect",
+    "ai_providers",
+    "ai_set_key",
+    "ai_settings_set",
+    "ai_models",
+    "ai_test",
+    "ai_payload_preview",
+    "ai_analyze",
+    "ai_cancel",
 ];
 
 fn main() {

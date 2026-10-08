@@ -47,6 +47,7 @@ impl Settings {
     pub fn validate(&self) -> Result<(), AppError> {
         self.general.validate()?;
         self.scan.validate()?;
+        self.ai.validate()?;
         self.data.validate()
     }
 }
@@ -254,6 +255,33 @@ pub struct AiSettings {
     pub model: Option<String>,
     /// The user accepted the Claude Code (Beta) warning.
     pub claude_code_acknowledged: bool,
+    /// A custom endpoint for the selected provider; `None` uses the profile's own.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_url: Option<String>,
+}
+
+/// Longest provider id, model name or base URL kept in the file.
+pub const MAX_AI_FIELD_CHARS: usize = 300;
+
+impl AiSettings {
+    /// Shape only: the provider id and the URL are checked against the profiles
+    /// where they are used (`daminus_core::ai::view::check_ai_settings`).
+    pub fn validate(&self) -> Result<(), AppError> {
+        let fields = [
+            ("ai.provider", &self.provider),
+            ("ai.model", &self.model),
+            ("ai.base_url", &self.base_url),
+        ];
+        for (name, value) in fields {
+            let too_long = value
+                .as_deref()
+                .is_some_and(|v| v.chars().count() > MAX_AI_FIELD_CHARS || v.contains('\0'));
+            if too_long {
+                return Err(invalid(name));
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
