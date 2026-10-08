@@ -384,13 +384,20 @@ fn write_new_file(dir: &std::path::Path, stem: &str, text: &str) -> Result<Expor
             format!("{stem}-{n}.json")
         };
         let path = dir.join(&name);
-        match std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&path)
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
         {
+            use std::os::unix::fs::OpenOptionsExt as _;
+            options.mode(0o600);
+        }
+        match options.open(&path) {
             Ok(mut file) => {
-                file.write_all(text.as_bytes()).map_err(|_| io(&path))?;
+                if file.write_all(text.as_bytes()).is_err() {
+                    drop(file);
+                    let _ = std::fs::remove_file(&path);
+                    return Err(io(&path));
+                }
                 return Ok(ExportedFile { name });
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
@@ -460,4 +467,29 @@ fn open_in_finder(dir: &std::path::Path) -> Result<(), AppError> {
                 path: dir.display().to_string(),
             })
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::write_new_file;
+
+    #[test]
+    fn an_export_is_private_to_the_user_and_never_replaces_a_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let first = write_new_file(dir.path(), "scans", "{}").unwrap();
+        let second = write_new_file(dir.path(), "scans", "{}").unwrap();
+        assert_eq!(
+            (first.name.as_str(), second.name.as_str()),
+            ("scans.json", "scans-2.json")
+        );
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt as _;
+            let mode = std::fs::metadata(dir.path().join("scans.json"))
+                .unwrap()
+                .permissions()
+                .mode();
+            assert_eq!(mode & 0o777, 0o600);
+        }
+    }
 }

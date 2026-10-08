@@ -50,6 +50,10 @@ pub struct HostKeyInfo {
     pub offered: Option<String>,
     /// The keys recorded for it, same format.
     pub known: Vec<String>,
+    /// The name known-hosts files file this host's key under (what
+    /// `ssh-keygen -R` takes); `None` when the lookup never resolved the host.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub lookup_name: Option<String>,
 }
 
 /// Looks the host's key up and asks the host for the key it offers.
@@ -70,12 +74,13 @@ pub async fn check(tools: &SshTools, host: &ResolvedHost) -> HostKeyInfo {
         state,
         offered: preferred(offered),
         known,
+        lookup_name: Some(lookup_name(host)),
     }
 }
 
 /// The name a known-hosts entry is filed under: `HostKeyAlias`, else the host
 /// name, with the port as `[host]:port` when it is not 22.
-fn lookup_name(host: &ResolvedHost) -> String {
+pub(crate) fn lookup_name(host: &ResolvedHost) -> String {
     let name = host.host_key_alias.as_deref().unwrap_or(&host.hostname);
     if host.port == 22 {
         name.to_owned()

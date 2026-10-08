@@ -85,7 +85,12 @@ pub fn make_rule(
         return Err(refused("rule_note"));
     }
     let fp = match draft.covers {
-        Covers::AsItIs => item.fact.as_ref().and_then(|f| f.fp.clone()),
+        Covers::AsItIs => Some(
+            item.fact
+                .as_ref()
+                .and_then(|f| f.fp.clone())
+                .ok_or_else(|| refused("rule_no_evidence"))?,
+        ),
         Covers::AnyEvidence => None,
     };
     let until = draft.review_days.and_then(|days| {
@@ -250,6 +255,17 @@ mod tests {
     }
 
     #[test]
+    fn as_it_is_needs_evidence_to_hold_on_to() {
+        for severity in [Severity::Crit, Severity::Warn] {
+            let items = [item(severity, None)];
+            assert_eq!(
+                code(&make_rule(draft(), &items, &[], now()).unwrap_err()),
+                "rule_no_evidence"
+            );
+        }
+    }
+
+    #[test]
     fn an_accepted_risk_needs_a_day() {
         let items = [item(Severity::Warn, None)];
         let risk = ExpectedDraft {
@@ -308,7 +324,11 @@ mod tests {
     #[test]
     fn ids_do_not_repeat() {
         let items = [item(Severity::Warn, None)];
-        let rule = make_rule(draft(), &items, &["r1790430120-0"], now()).unwrap();
+        let any = ExpectedDraft {
+            covers: Covers::AnyEvidence,
+            ..draft()
+        };
+        let rule = make_rule(any, &items, &["r1790430120-0"], now()).unwrap();
         assert_eq!(rule.id, "r1790430120-1");
     }
 

@@ -10,4 +10,9 @@ offered?: string | null,
 /**
  * The keys recorded for it, same format.
  */
-known: Array<string>, };
+known: Array<string>, 
+/**
+ * The name known-hosts files file this host's key under (what
+ * `ssh-keygen -R` takes); `None` when the lookup never resolved the host.
+ */
+lookup_name?: string | null, };

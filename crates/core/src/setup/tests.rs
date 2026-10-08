@@ -646,6 +646,13 @@ async fn the_host_key_can_be_looked_at_without_logging_in() {
     assert_eq!(r.transport.runs(), 0, "no login was attempted");
 }
 
+#[tokio::test]
+async fn the_host_key_is_only_looked_up_for_hosts_of_the_ssh_config() {
+    let r = rig(FakeTransport::new(), &["vps-a"]);
+    assert!(r.service.host_key(&alias("not-in-config")).await.is_none());
+    assert!(r.service.host_key(&alias("vps-a")).await.is_some());
+}
+
 fn proj(id: &str, urls: &[&str], host: &str) -> Project {
     Project {
         id: id.into(),
