@@ -1,0 +1,124 @@
+{
+  "aiProviders": {
+    "ai": "AI",
+    "failed": "Không thực hiện được. Hãy thử lại.",
+    "loadFailed": "Không đọc được các nhà cung cấp AI",
+    "retry": "Thử lại",
+    "grid": "Nhà cung cấp",
+    "active": "Đang dùng",
+    "tag": { "recommended": "Nên dùng", "free_local": "Miễn phí · cục bộ", "beta": "Beta" },
+    "status": {
+      "connected": "Đã kết nối",
+      "keySaved": "Đã lưu khoá",
+      "addKey": "Thêm khoá",
+      "local": "Đang chạy trên máy",
+      "noKey": "Không cần khoá",
+      "baseUrlKey": "URL gốc + khoá",
+      "cli": "CLI trên máy này"
+    },
+    "adapter": "bộ chuyển đổi {adapter} · cần khoá",
+    "adapterNoKey": "bộ chuyển đổi {adapter} · không cần khoá",
+    "key": {
+      "label": "Khoá API",
+      "placeholder": "{hint}…",
+      "hint": "Chỉ gửi một lần vào Keychain. Daminus không bao giờ hiện lại khoá.",
+      "inKeychain": "trong Keychain",
+      "replace": "Thay",
+      "save": "Lưu khoá",
+      "cancel": "Huỷ"
+    },
+    "baseUrl": {
+      "label": "URL gốc",
+      "hint": "https, hoặc http chỉ tới máy này. Để trống sẽ dùng {default}.",
+      "hintNone": "https, hoặc http chỉ tới máy này.",
+      "use": "Dùng địa chỉ này",
+      "reset": "Dùng mặc định",
+      "scheme": "Dùng https. Chỉ localhost, 127.0.0.1 hoặc [::1] được dùng http thường.",
+      "invalid": "Đây không phải địa chỉ web.",
+      "credentials": "Bỏ tên người dùng và mật khẩu khỏi địa chỉ."
+    },
+    "model": {
+      "label": "Mô hình",
+      "default": "mặc định",
+      "listed": "{n} mô hình trong danh sách",
+      "refresh": "Đọc lại danh sách",
+      "manual": "Không đọc được danh sách. Hãy gõ tên mô hình.",
+      "placeholder": "Tên mô hình",
+      "use": "Dùng",
+      "suggested": "Gợi ý"
+    },
+    "test": {
+      "button": "Kiểm tra kết nối",
+      "idle": "Gửi một tin ngắn: “reply with ok”. Khoảng 20 token.",
+      "busy": "Đang gọi {host}…",
+      "works": "Dùng được",
+      "needsKey": "Hãy thêm khoá trước."
+    },
+    "privacy": {
+      "title": "Những gì rời khỏi máy này",
+      "maskKeys": "Che khoá và token",
+      "maskKeysDesc": "sk-, ghp_, AKIA, xox, PEM và chuỗi ngẫu nhiên dài. Luôn bật.",
+      "never": "Không bao giờ gửi, dù bạn chọn gì",
+      "neverEnv": "Giá trị .env và mật khẩu cơ sở dữ liệu",
+      "neverSsh": "Khoá SSH, agent hoặc known_hosts",
+      "neverFiles": "Nội dung tệp trên máy chủ của bạn",
+      "neverUrl": "Mọi thứ trong nội dung của kiểm tra URL bị lộ"
+    }
+  },
+  "aiClaudeCode": {
+    "name": "Claude Code",
+    "beta": "Beta",
+    "sub": "dùng ứng dụng Claude Code đã có trên máy này · không cần khoá API",
+    "program": "Chương trình",
+    "programFound": "claude · {version}",
+    "programMissing": "Không tìm thấy",
+    "signedIn": "Đăng nhập",
+    "signedInValue": "{method} · do chính Claude Code kiểm tra",
+    "signedInNo": "Chưa đăng nhập",
+    "reads": "Daminus đọc",
+    "readsValue": "không đọc gì trong ~/.claude; không mở token nào",
+    "checkAgain": "Kiểm tra lại",
+    "model": "Mô hình",
+    "modelDesc": "Chuyển cho Claude Code; gói của bạn quyết định mô hình nào dùng được.",
+    "modelName": "Mô hình Claude Code",
+    "modelDefault": "Mặc định",
+    "how": "Cách Daminus gọi",
+    "howNote": "Chế độ không giao diện của CLI chính thức; cùng dữ liệu đã che và cùng khuôn trả lời như mọi nhà cung cấp.",
+    "test": {
+      "button": "Kiểm tra kết nối",
+      "idle": "Gửi “reply with ok”.",
+      "busy": "Đang hỏi Claude Code…",
+      "works": "Dùng được · {s} giây",
+      "counted": "Tính vào lượt dùng của gói, không tính tiền theo token.",
+      "needsAck": "Hãy chấp nhận cảnh báo trước."
+    },
+    "warning": {
+      "title": "Thử nghiệm: dùng gói đăng ký Claude của bạn",
+      "body": "Daminus chuyển dữ liệu đã che cho ứng dụng Claude Code bạn đang dùng. Quy định của Anthropic về dùng gói đăng ký ngoài Claude Code và Claude.ai hay thay đổi và có thể không cho phép. Lượt dùng tính vào gói của bạn. Nếu không chắc, hãy dùng khoá API.",
+      "ack": "Tôi hiểu, hãy bật",
+      "policy": "Chính sách sử dụng của Anthropic"
+    },
+    "compare": {
+      "title": "Khoá API hay Claude Code",
+      "apiKey": "Khoá API",
+      "billing": "Thanh toán",
+      "setup": "Cài đặt",
+      "status": "Trạng thái",
+      "perToken": "theo token",
+      "planLimits": "giới hạn của gói",
+      "keyInKeychain": "khoá trong Keychain",
+      "yourLogin": "đăng nhập Claude Code của bạn",
+      "supported": "được hỗ trợ",
+      "experimental": "thử nghiệm"
+    },
+    "cannot": {
+      "title": "Khi không dùng được",
+      "notFound": "Không tìm thấy Claude Code",
+      "notFoundBody": "Cài từ Anthropic, rồi Kiểm tra lại.",
+      "notSignedIn": "Chưa đăng nhập",
+      "notSignedInBody": "Chạy claude trong Terminal và đăng nhập; Daminus không bao giờ tự đăng nhập.",
+      "limit": "Đã hết giới hạn của gói",
+      "limitBody": "Dừng với “limit hit”; hãy đổi nhà cung cấp hoặc chờ đến khi đặt lại."
+    }
+  }
+}

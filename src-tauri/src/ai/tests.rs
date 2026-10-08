@@ -14,8 +14,12 @@ use daminus_core::ai::view::{
     AiEventBody, AiStreamEvent, ClaudeCodeStatus, PreviewOptions, PreviewScope,
 };
 use daminus_core::ai::{AiClient, AiRequest, AiStream, BoxFuture, SecretString};
+use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
+use daminus_core::domain::fact::CheckFact;
+use daminus_core::domain::host::HostRef;
 use daminus_core::domain::settings::AiSettings;
+use daminus_core::domain::snapshot::{HostOutcome, Snapshot};
 use daminus_core::probe::fake::FakeProbe;
 use daminus_core::ssh::SshTools;
 use daminus_core::ssh::fake::FakeTransport;
@@ -193,6 +197,62 @@ async fn the_payload_sent_is_the_payload_previewed() {
     assert_eq!(r.core.store.load_state().unwrap().ai_reviewed_sends, 1);
     // The request is free again once it ended.
     assert!(!r.core.ai_cancel("req-1"));
+}
+
+fn scan_of(hosts: &[&str]) -> Snapshot {
+    let at = Timestamp::from_unix(1_790_000_000);
+    let mut snap = Snapshot::new(at, at);
+    for name in hosts {
+        let host = HostRef::parse(name).unwrap();
+        snap.hosts.insert(host.clone(), HostOutcome::Reached);
+        snap.facts.insert(
+            host,
+            vec![CheckFact::new("disk.fs", "/").with_data(serde_json::json!({ "pct": 97 }))],
+        );
+    }
+    snap
+}
+
+#[tokio::test]
+async fn a_finding_carries_the_key_of_the_payload_sent_not_of_the_latest_report() {
+    let json = r#"{"summary":"s","findings":[{"id":"c1","why":"w"},{"id":"c9","why":"unknown"}]}"#;
+    let (mut r, _client) = rig(FakeReply::Deltas(vec![json.to_owned()]));
+    select(&r.core, "ollama").await;
+    r.core
+        .store
+        .save_snapshot(scan_of(&["vps-b"]), None)
+        .unwrap();
+    let preview = r
+        .core
+        .ai_payload_preview(PreviewScope::Whole, options())
+        .await
+        .unwrap();
+    // A scan lands between the preview and the answer, and `c1` of the latest report is another result.
+    r.core
+        .store
+        .save_snapshot(scan_of(&["vps-a", "vps-b"]), None)
+        .unwrap();
+    let latest = r.core.report_latest().unwrap();
+    assert_ne!(
+        latest.items.first().map(|i| i.key.host.clone()),
+        Some(HostRef::parse("vps-b").unwrap())
+    );
+
+    r.core.ai_analyze("req-k", &preview.hash).await.unwrap();
+    let events = until_end(&mut r.events).await;
+    let keys: Vec<_> = events
+        .iter()
+        .filter_map(|e| match &e.body {
+            AiEventBody::Finding { finding, key } => Some((finding.id.clone(), key.clone())),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(keys.len(), 1, "the unknown id is dropped");
+    let (id, key) = &keys[0];
+    assert_eq!(id, "c1");
+    let key = key.as_ref().expect("c1 names a result of the payload");
+    assert_eq!(key.host, HostRef::parse("vps-b").unwrap());
+    assert_eq!((key.check.as_str(), key.target.as_str()), ("disk.fs", "/"));
 }
 
 #[tokio::test]

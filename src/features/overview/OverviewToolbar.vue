@@ -9,6 +9,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import AskAiButton from '@/features/ai/ask/AskAiButton.vue'
 import { scanCounts, urlChecks } from '@/lib/overview-scan'
 import { useLayoutRange } from '@/lib/viewport'
 import PageHeader from '@/layout/PageHeader.vue'
@@ -169,6 +170,7 @@ const showFilters = computed(
             </template>
           </UiMenu>
         </template>
+        <AskAiButton :scope="{ kind: 'whole' }" />
         <UiButton
           variant="primary"
           lifted

@@ -1,0 +1,43 @@
+{
+  "aiAsk": {
+    "title": "Hỏi về {name}",
+    "everything": "mọi thứ",
+    "close": "Đóng",
+    "toggleHint": "Bật tắt bằng ⌘J",
+    "scanNo": "lần quét #{n}",
+    "vs": "so với #{n}",
+    "mixCrit": "{n} nghiêm trọng",
+    "mixWarn": "{n} cảnh báo",
+    "mixClear": "không có gì cần sửa",
+    "sent": "≈ {tokens} token gửi tới {provider}",
+    "sentNoProvider": "Đã gửi ≈ {tokens} token",
+    "reading": "Đang đọc {n} kết quả kiểm tra",
+    "readingDiff": "Đang đọc {n} kết quả kiểm tra và chênh lệch so với #{seq}",
+    "health": "Sức khoẻ: {level}",
+    "healthLevel": {
+      "crit": "nghiêm trọng",
+      "warn": "cần chú ý",
+      "info": "ổn, có vài ghi chú"
+    },
+    "answeredIn": "trả lời trong {time}",
+    "cause": "nguyên nhân",
+    "unmatched": "Không khớp kết quả nào của lần quét này",
+    "stop": "Dừng",
+    "tryAgain": "Thử lại",
+    "askAgain": "Hỏi lại",
+    "stopped": "Đã dừng. Sẽ không có thêm nội dung.",
+    "failed": "Chưa có câu trả lời",
+    "threadLabel": "Cuộc trò chuyện về {name}",
+    "composerLabel": "Câu hỏi cho AI",
+    "placeholder": "Hỏi về {name}…",
+    "placeholderMore": "Hỏi tiếp về {name}…",
+    "promise": "Lệnh chỉ để bạn sao chép. Daminus không bao giờ chạy chúng.",
+    "noAnswerText": "AI không gửi văn bản kèm câu trả lời này.",
+    "tag": {
+      "crit": "NẶNG",
+      "warn": "CẢNH BÁO",
+      "info": "GHI CHÚ"
+    },
+    "button": "Hỏi AI"
+  }
+}

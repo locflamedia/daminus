@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import type { Level } from '@/api'
+import AskAiButton from '@/features/ai/ask/AskAiButton.vue'
 import { draftFromProject } from '@/lib/setup-model'
 import { useViewportWidth } from '@/lib/viewport'
 import { useProjectSheetStore } from '@/stores/project-sheet'
@@ -125,6 +126,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         />
       </RouterLink>
     </div>
+    <AskAiButton :scope="{ kind: 'project', id }" />
     <UiButton v-if="saved" icon="edit" @click="edit">{{ t('projectSheet.editButton') }}</UiButton>
     <slot name="actions" />
   </header>

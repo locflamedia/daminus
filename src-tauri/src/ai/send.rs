@@ -205,7 +205,8 @@ async fn run(job: Job) {
         Ok(analysis) => {
             let shown = analysis.restore_for_display(&job.payload);
             for finding in shown.findings {
-                out.send(AiEventBody::Finding { finding }).await;
+                let key = job.payload.finding_key(&finding.id).cloned();
+                out.send(AiEventBody::Finding { finding, key }).await;
             }
             let core = job.core.clone();
             let reviewed = tokio::task::spawn_blocking(move || core.count_reviewed_send())

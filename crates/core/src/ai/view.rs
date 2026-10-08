@@ -8,6 +8,7 @@ use super::payload::{Payload, SectionId, SectionInfo};
 use super::profiles::{ProviderProfile, profile, validate_base_url};
 use super::schema::AiFinding;
 use crate::domain::error::{AppError, ErrorCode};
+use crate::domain::fact::CheckKey;
 use crate::domain::host::HostAlias;
 use crate::domain::settings::AiSettings;
 
@@ -138,6 +139,8 @@ pub enum AiEventBody {
     /// One ranked finding of the finished reply.
     Finding {
         finding: AiFinding,
+        /// The result the id names, from the payload that was sent; none when it names none.
+        key: Option<CheckKey>,
     },
     /// The reply is complete. `summary` is the whole text, to replace what the deltas built.
     Done {

@@ -63,6 +63,7 @@ function onInput(event: Event) {
         :id="id"
         class="input"
         :type="type"
+        :autocomplete="type === 'password' ? 'off' : undefined"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"

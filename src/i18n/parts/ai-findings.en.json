@@ -1,0 +1,33 @@
+{
+  "aiFindings": {
+    "title": "AI review of scan #{n}",
+    "titleNoScan": "AI review",
+    "provenance": "{model} · {time} · {size} sent, redacted",
+    "seePayload": "see payload",
+    "all": "All {n}",
+    "critical": "Critical {n}",
+    "warnings": "Warnings {n}",
+    "filter": "Show",
+    "runAgain": "Run again",
+    "inShort": "In short",
+    "inShortNote": "written for you, not for an auditor",
+    "ranked": "Ranked by harm × effort",
+    "count": "{n} findings",
+    "orderNote": "Order is the AI’s suggestion; severity comes from the checks.",
+    "list": "Findings",
+    "suggestedFix": "Suggested fix",
+    "followUp": "Ask a follow-up",
+    "unmatched": "Not matched to a result of this scan",
+    "reviewing": "The AI is reading your scan…",
+    "failed": "The review did not finish",
+    "tryAgain": "Try again",
+    "stopped": "Stopped.",
+    "none": "No AI review yet",
+    "noneBody": "Ask a question to get the findings ranked. Until then, this is the list from the checks, not ranked.",
+    "ask": "Ask the AI",
+    "fromChecks": "From the checks, not ranked",
+    "providers": "AI providers",
+    "nothingToShow": "No findings in this view.",
+    "detail": "Details of finding {n}"
+  }
+}

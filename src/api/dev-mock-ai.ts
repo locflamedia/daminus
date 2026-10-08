@@ -5,6 +5,7 @@
 import type { AiEventBody } from './bindings/AiEventBody'
 import type { AiProvidersView } from './bindings/AiProvidersView'
 import type { AiSettings } from './bindings/AiSettings'
+import type { CheckKey } from './bindings/CheckKey'
 import type { ClaudeCodeStatus } from './bindings/ClaudeCodeStatus'
 import type { ErrorCode } from './bindings/ErrorCode'
 import type { ModelList } from './bindings/ModelList'
@@ -147,6 +148,13 @@ const FINDINGS = [
     rank: 3,
   },
 ]
+
+/** The result each finding id names, as Rust resolves them from the payload that was sent. */
+const FINDING_KEYS: Record<string, CheckKey> = {
+  c1: { host: 'vps-hn-3', check: 'sys.oom', target: '' },
+  c2: { host: 'vps-sg-1', check: 'tls.expiry', target: 'shop.example' },
+  c3: { host: 'vps-sg-2', check: 'backup.age', target: '' },
+}
 
 const SECTION_SIZES: Record<SectionId, [number, number]> = {
   question: [120, 1],
@@ -400,6 +408,7 @@ export class AiMock {
         this.emit(requestId, {
           kind: 'finding',
           finding: f,
+          key: FINDING_KEYS[f.id] ?? null,
         })
       }),
     )
