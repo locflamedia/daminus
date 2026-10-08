@@ -325,6 +325,7 @@
     "claude_cli_not_found": "Daminus can’t find the Claude Code command on this Mac.",
     "claude_cli_not_logged_in": "Claude Code is not signed in. Sign in with the claude command in Terminal.",
     "claude_cli_quota": "Your Claude plan has reached its usage limit. Try again later.",
+    "cancelled": "Stopped.",
     "internal": "Something went wrong inside Daminus. The log has the details."
   },
   "tooltip": {

@@ -225,13 +225,19 @@ impl Payload {
         }
     }
 
-    /// The request to send. Call [`Payload::verify`] first.
-    pub fn request(&self, model: Option<String>) -> AiRequest {
-        AiRequest {
+    /// The request to send, once the payload still hashes to what the user
+    /// previewed.
+    pub fn request(
+        &self,
+        model: Option<String>,
+        previewed_hash: &str,
+    ) -> Result<AiRequest, AppError> {
+        self.verify(previewed_hash)?;
+        Ok(AiRequest {
             system: self.system.clone(),
             user: self.user.clone(),
             model,
-        }
+        })
     }
 
     /// Puts the real names back into text that used the placeholders (a reply).
@@ -669,9 +675,9 @@ impl Scrubber {
 }
 
 static URL: LazyLock<Option<Regex>> =
-    LazyLock::new(|| Regex::new(r#"(?i)\bhttps?://[^\s"'<>\\]+"#).ok());
+    LazyLock::new(|| Regex::new(r#"(?i)\b[a-z][a-z0-9+.-]*://[^\s"'<>\\]+"#).ok());
 
-/// Every `http(s)://` URL in `text` without userinfo, query and fragment.
+/// Every `scheme://` URL in `text` (http, postgres, redis, ...) without userinfo, query and fragment.
 fn strip_urls(text: &str) -> String {
     match URL.as_ref() {
         Some(re) => re
@@ -685,7 +691,7 @@ fn strip_urls(text: &str) -> String {
     }
 }
 
-/// `https://user:pw@host/path?q#f` → `https://host/path`. The authority ends at
+/// `https://user:pw@host/path?q#f` → `https://host/path`, for any scheme. The authority ends at
 /// the first `/`, as a URL parser reads it, so `?` and `#` inside the
 /// credentials do not hide them.
 fn strip_url(url: &str) -> String {

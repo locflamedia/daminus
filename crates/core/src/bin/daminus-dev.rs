@@ -113,7 +113,8 @@ enum Command {
     /// List saved snapshots, newest last.
     Snapshots,
     /// Ask an AI provider about the latest scan of a project. `--dry-run`
-    /// prints the exact payload and sends nothing. The key is read from
+    /// prints the exact payload and its hash and sends nothing; a real send
+    /// needs `--confirm-hash` with that hash. The key is read from
     /// `DAMINUS_AI_KEY`. Suggested commands are printed, never run.
     Ai {
         /// The project to ask about.
@@ -125,6 +126,10 @@ enum Command {
         /// Print the payload that would be sent (system, user, sections, hash) and exit.
         #[arg(long)]
         dry_run: bool,
+        /// The hash `--dry-run` printed. A real send needs it and goes out only
+        /// if the payload still has this hash.
+        #[arg(long, value_name = "HASH")]
+        confirm_hash: Option<String>,
         /// Provider profile id (`anthropic`, `openai`, `ollama`, `claude-code`, ...).
         #[arg(long, value_name = "ID")]
         provider: Option<String>,
@@ -214,6 +219,7 @@ fn main() -> ExitCode {
             project,
             server,
             dry_run,
+            confirm_hash,
             provider,
             model,
             base_url,
@@ -226,6 +232,7 @@ fn main() -> ExitCode {
                 project,
                 server,
                 dry_run,
+                confirm_hash,
                 provider,
                 model,
                 base_url,

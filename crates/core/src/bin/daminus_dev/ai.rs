@@ -1,5 +1,7 @@
 //! `daminus-dev ai`: the AI review from a terminal. `--dry-run` prints the
-//! exact payload and sends nothing; otherwise the key is read from the
+//! exact payload and its hash and sends nothing; a real send needs that hash
+//! as `--confirm-hash`, and nothing goes out if the payload no longer matches
+//! it. The key is read from the
 //! `DAMINUS_AI_KEY` environment variable and the streamed summary and the
 //! ranked findings are printed. Suggested commands are printed, never run.
 
@@ -10,7 +12,7 @@ use daminus_core::ai::claude_cli::{ClaudeCliClient, find_claude};
 use daminus_core::ai::client::GenaiClient;
 use daminus_core::ai::payload::{OsNonce, Payload, PayloadOptions, Scope, build_payload};
 use daminus_core::ai::profiles::{ProviderKind, ProviderProfile, profile};
-use daminus_core::ai::schema::{SendTarget, analyze};
+use daminus_core::ai::schema::{AiAnalysis, SendTarget, analyze};
 use daminus_core::ai::{AiClient, SecretString};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::evaluate::Report;
@@ -21,12 +23,15 @@ use tokio_util::sync::CancellationToken;
 
 const KEY_VAR: &str = "DAMINUS_AI_KEY";
 const DEFAULT_PROVIDER: &str = "anthropic";
+const NEEDS_HASH: &str =
+    "a real send needs --confirm-hash <hash>: run with --dry-run, read the payload, pass its hash";
 const DEFAULT_QUESTION: &str = "What should I do first?";
 
 pub struct AiArgs {
     pub project: String,
     pub server: Option<String>,
     pub dry_run: bool,
+    pub confirm_hash: Option<String>,
     pub provider: Option<String>,
     pub model: Option<String>,
     pub base_url: Option<String>,
@@ -67,6 +72,9 @@ fn run_inner(store: &FsStore, dir: &std::path::Path, args: AiArgs) -> Result<(),
         return Ok(());
     }
 
+    if args.confirm_hash.is_none() {
+        return Err(NEEDS_HASH.to_owned());
+    }
     let provider_id = args.provider.as_deref().unwrap_or(DEFAULT_PROVIDER);
     let profile =
         profile(provider_id).ok_or_else(|| format!("unknown provider {provider_id:?}"))?;
@@ -80,21 +88,43 @@ fn run_inner(store: &FsStore, dir: &std::path::Path, args: AiArgs) -> Result<(),
     let analysis = runtime
         .block_on(async {
             tokio::select! {
-                r = analyze(client.as_ref(), &target, &payload, &payload.hash, &cancel, |piece| {
-                    print!("{piece}");
-                    let _ = std::io::stdout().flush();
-                }) => Some(r),
+                r = send(
+                    client.as_ref(),
+                    &target,
+                    &payload,
+                    args.confirm_hash.as_deref(),
+                    &cancel,
+                    |piece| {
+                        print!("{piece}");
+                        let _ = std::io::stdout().flush();
+                    },
+                ) => Some(r),
                 _ = tokio::signal::ctrl_c() => {
                     cancel.cancel();
                     None
                 }
             }
         })
-        .ok_or("cancelled")?
-        .map_err(|e| format!("\nai: {e:?}"))?;
+        .ok_or("cancelled")??;
     println!();
     print_findings(&report, &payload, &analysis);
     Ok(())
+}
+
+/// Sends through the real gate: the hash the user read in the dry run goes to
+/// [`analyze`], which refuses when the payload no longer hashes to it.
+async fn send(
+    client: &dyn AiClient,
+    target: &SendTarget<'_>,
+    payload: &Payload,
+    confirm_hash: Option<&str>,
+    cancel: &CancellationToken,
+    on_piece: impl FnMut(&str),
+) -> Result<AiAnalysis, String> {
+    let hash = confirm_hash.ok_or_else(|| NEEDS_HASH.to_owned())?;
+    analyze(client, target, payload, hash, cancel, on_piece)
+        .await
+        .map_err(|e| format!("\nai: {e:?}"))
 }
 
 fn build_client(profile: &ProviderProfile, args: &AiArgs) -> Result<Box<dyn AiClient>, String> {
@@ -142,13 +172,10 @@ fn print_payload(p: &Payload) {
         "data {} B, total {} B\nhash {}",
         p.data_bytes, p.total_bytes, p.hash
     );
+    println!("send it with --confirm-hash {}", p.hash);
 }
 
-fn print_findings(
-    report: &Report,
-    payload: &Payload,
-    analysis: &daminus_core::ai::schema::AiAnalysis,
-) {
+fn print_findings(report: &Report, payload: &Payload, analysis: &AiAnalysis) {
     let shown = analysis.restore_for_display(payload);
     if shown.findings.is_empty() {
         println!("no findings");
@@ -168,5 +195,90 @@ fn print_findings(
         if let Some(cmd) = &f.suggested_command {
             println!("   copy: {cmd}");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Mutex;
+
+    use daminus_core::ai::{AiRequest, AiStream, BoxFuture};
+    use daminus_core::domain::error::AppError;
+
+    use super::*;
+
+    #[derive(Default)]
+    struct Recorder(Mutex<usize>);
+
+    impl AiClient for Recorder {
+        fn stream(
+            &self,
+            _req: AiRequest,
+            _cancel: CancellationToken,
+        ) -> BoxFuture<'_, Result<AiStream, AppError>> {
+            if let Ok(mut n) = self.0.lock() {
+                *n += 1;
+            }
+            Box::pin(async {
+                let (_tx, rx) = tokio::sync::mpsc::channel(1);
+                Ok(rx)
+            })
+        }
+
+        fn list_models(&self) -> BoxFuture<'_, Result<Vec<String>, AppError>> {
+            Box::pin(async { Ok(Vec::new()) })
+        }
+
+        fn test(&self) -> BoxFuture<'_, Result<(), AppError>> {
+            Box::pin(async { Ok(()) })
+        }
+    }
+
+    fn payload() -> Result<Payload, Box<dyn std::error::Error>> {
+        let report = Report {
+            seq: Some(1),
+            scanned_at: None,
+            evaluated_at: Timestamp::from_unix(0),
+            items: Vec::new(),
+            projects: Vec::new(),
+            servers: Vec::new(),
+            disabled_groups: Vec::new(),
+            rules_due: Vec::new(),
+            counts: daminus_core::domain::evaluate::Counts::default(),
+        };
+        Ok(build_payload(
+            &report,
+            &Scope::Whole,
+            &PayloadOptions::new("q"),
+            &OsNonce,
+        )?)
+    }
+
+    const TARGET: SendTarget<'static> = SendTarget {
+        provider: "fake",
+        model: None,
+    };
+
+    #[tokio::test]
+    async fn a_wrong_or_missing_hash_sends_nothing() -> Result<(), Box<dyn std::error::Error>> {
+        let p = payload()?;
+        let client = Recorder::default();
+        let cancel = CancellationToken::new();
+        let wrong = send(&client, &TARGET, &p, Some("0000"), &cancel, |_| {})
+            .await
+            .err()
+            .ok_or("sent")?;
+        assert!(wrong.contains("payload_changed"), "{wrong}");
+        let missing = send(&client, &TARGET, &p, None, &cancel, |_| {})
+            .await
+            .err()
+            .ok_or("sent")?;
+        assert!(missing.contains("--confirm-hash"), "{missing}");
+        assert_eq!(client.0.lock().map(|n| *n).unwrap_or(1), 0);
+
+        // The right hash goes through to the client.
+        let _ = send(&client, &TARGET, &p, Some(&p.hash), &cancel, |_| {}).await;
+        assert!(client.0.lock().map(|n| *n).unwrap_or(0) >= 1);
+        Ok(())
     }
 }

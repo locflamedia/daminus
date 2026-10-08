@@ -334,6 +334,10 @@ fn urls_lose_credentials_query_and_fragment() {
         assert_eq!(strip_url(url), want, "{url}");
     }
     assert_eq!(
+        strip_urls("use postgres://u:p@db.test/x?password=1 or redis://:p@c.test:6379/0."),
+        "use postgres://db.test/x or redis://c.test:6379/0."
+    );
+    assert_eq!(
         strip_urls("see (https://a:b@h.test/p?q=1) now"),
         "see (https://h.test/p) now"
     );
@@ -455,6 +459,9 @@ fn canary_report() -> Result<(tempfile::TempDir, Report), Box<dyn std::error::Er
                 "remote": "https://CANARY_GIT_USER:CANARY_GIT_PASS@github.com/x/y.git?k=CANARY_GIT_QUERY",
                 "args": "vite preview --token sk-CANARY_KEY_0123456789abcdef",
                 "tokens": ["ghp_CANARY0123456789abcdefABCDEF"],
+                "db": "postgres://CANARY_USER:CANARY_PASS@db.internal/x?password=CANARY_Q",
+                "cache": "redis://:CANARY_PASS@cache.internal:6379/0",
+                "mongo": "mongodb+srv://CANARY_USER:CANARY_PASS@cluster.internal/x?authSource=CANARY_QUERY",
                 "CANARY_KEY_NAME_sk-0123456789abcdefghij": "AKIAIOSFODNN7EXAMPLE",
             }),
         ),
@@ -493,6 +500,9 @@ fn canaries_never_reach_the_payload_or_the_alias_table() -> Test {
                 assert!(!everything.contains(canary), "{canary} leaked");
             }
             if !hide_hosts {
+                assert!(everything.contains("postgres://db.internal/x"));
+                assert!(everything.contains("redis://cache.internal:6379/0"));
+                assert!(everything.contains("mongodb+srv://cluster.internal/x"));
                 assert!(everything.contains("https://shop.test/"));
                 assert!(everything.contains("github.com/x/y.git"));
             }

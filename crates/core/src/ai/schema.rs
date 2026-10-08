@@ -177,17 +177,32 @@ struct Reply {
     ms: u64,
 }
 
+/// Whether the reply was not usable JSON, which another try may fix. Other
+/// failures (a size limit, a refused call) would only repeat.
+fn is_malformed(e: &AppError) -> bool {
+    e.code == ErrorCode::SchemaInvalid
+        && matches!(
+            e.params.get("detail").map(String::as_str),
+            Some("reply_not_json" | "summary_empty")
+        )
+}
+
 /// Sends the payload once and reads the whole reply. Feeds `on_piece` the
 /// summary text as it arrives.
 async fn send_once(
     client: &dyn AiClient,
     target: &SendTarget<'_>,
     payload: &Payload,
+    previewed_hash: &str,
     cancel: &CancellationToken,
     on_piece: &mut dyn FnMut(&str),
 ) -> Result<Reply, AppError> {
     let started = Instant::now();
-    let result = read_reply(client, target, payload, cancel, on_piece).await;
+    let result = read_reply(client, target, payload, previewed_hash, cancel, on_piece).await;
+    if cancel.is_cancelled() && result.is_err() {
+        // The caller asked for this; it is not a failed send to record.
+        return Err(ErrorCode::Cancelled.into());
+    }
     let elapsed = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
     match &result {
         Ok(r) => log_send(target.provider, target.model, r.usage, r.ms, Ok(())),
@@ -206,10 +221,11 @@ async fn read_reply(
     client: &dyn AiClient,
     target: &SendTarget<'_>,
     payload: &Payload,
+    previewed_hash: &str,
     cancel: &CancellationToken,
     on_piece: &mut dyn FnMut(&str),
 ) -> Result<Reply, AppError> {
-    let req = payload.request(target.model.map(str::to_owned));
+    let req = payload.request(target.model.map(str::to_owned), previewed_hash)?;
     let mut rx = client.stream(req, cancel.clone()).await?;
     let mut text = String::new();
     let mut extractor = SummaryExtractor::new();
@@ -228,7 +244,7 @@ async fn read_reply(
         }
     }
     if cancel.is_cancelled() {
-        return Err(AppError::from(ErrorCode::Internal).with_param("detail", "cancelled"));
+        return Err(ErrorCode::Cancelled.into());
     }
     Err(invalid("stream_ended"))
 }
@@ -237,9 +253,9 @@ async fn read_reply(
 ///
 /// The payload is hashed first; if it no longer matches `previewed_hash`
 /// nothing is sent. `on_summary_delta` gets the summary text as it streams. A
-/// reply that does not parse is asked for once more; after that the error is
-/// returned. When `cancel` fires the error is `Internal` with detail
-/// `cancelled`; the caller knows it asked for that.
+/// reply that is not valid JSON is asked for once more; after that the error is
+/// returned. A reply that breaks a size limit is not asked for again. When
+/// `cancel` fires the error is `Cancelled` and nothing is logged.
 pub async fn analyze(
     client: &dyn AiClient,
     target: &SendTarget<'_>,
@@ -264,11 +280,18 @@ pub async fn analyze(
                 shown.clone_from(&produced);
             }
         };
-        let outcome = send_once(client, target, payload, cancel, &mut on_piece)
-            .await
-            .and_then(|r| parse_analysis(&r.text, payload));
+        let outcome = send_once(
+            client,
+            target,
+            payload,
+            previewed_hash,
+            cancel,
+            &mut on_piece,
+        )
+        .await
+        .and_then(|r| parse_analysis(&r.text, payload));
         match outcome {
-            Err(e) if e.code == ErrorCode::SchemaInvalid && !retried && !cancel.is_cancelled() => {
+            Err(e) if is_malformed(&e) && !retried && !cancel.is_cancelled() => {
                 retried = true;
             }
             other => return other,

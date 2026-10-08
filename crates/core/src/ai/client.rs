@@ -28,6 +28,8 @@ const CHANNEL_CAPACITY: usize = 32;
 const MAX_REPLY_BYTES: usize = 1024 * 1024;
 /// More model names than this are dropped.
 const MAX_MODELS: usize = 2000;
+/// Model names longer than this are dropped.
+const MAX_MODEL_NAME_CHARS: usize = 200;
 /// Longest provider message kept in an error's `detail`, in characters.
 const MAX_DETAIL_CHARS: usize = 300;
 
@@ -106,7 +108,14 @@ impl GenaiClient {
                 }))
             },
         );
+        // A redirect would carry the key header to whatever host the provider
+        // names, so none is followed.
+        let http = reqwest::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .build()
+            .map_err(|_| invalid("http_client"))?;
         let mut builder = Client::builder()
+            .with_reqwest(http)
             .with_adapter_kind(adapter)
             .with_auth_resolver(auth);
         if let Some(endpoint) = endpoint.clone() {
@@ -227,6 +236,7 @@ impl AiClient for GenaiClient {
             .await
             .map_err(|_| timeout_error())?;
             let mut names = listing.map_err(|e| self.map_error(&e))?;
+            names.retain(|n| n.chars().count() <= MAX_MODEL_NAME_CHARS);
             names.truncate(MAX_MODELS);
             Ok(names)
         })
@@ -661,6 +671,65 @@ mod tests {
         let client = client_for(&server.uri(), Some(KEY));
         let models = client.list_models().await.expect("models listed");
         assert_eq!(models, ["gpt-a", "gpt-b"]);
+    }
+
+    #[tokio::test]
+    async fn list_drops_hostile_names_and_caps_the_count() {
+        let mut data: Vec<serde_json::Value> = (0..MAX_MODELS + 50)
+            .map(|i| serde_json::json!({"id": format!("m-{i}"), "object": "model"}))
+            .collect();
+        data.insert(
+            0,
+            serde_json::json!({"id": "x".repeat(MAX_MODEL_NAME_CHARS + 1), "object": "model"}),
+        );
+        let server = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/v1/models"))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_json(serde_json::json!({"object": "list", "data": data})),
+            )
+            .mount(&server)
+            .await;
+        let models = client_for(&server.uri(), Some(KEY))
+            .list_models()
+            .await
+            .expect("models listed");
+        assert_eq!(models.len(), MAX_MODELS);
+        assert!(
+            models
+                .iter()
+                .all(|m| m.chars().count() <= MAX_MODEL_NAME_CHARS)
+        );
+    }
+
+    #[tokio::test]
+    async fn redirects_are_not_followed_and_the_key_stays_home() {
+        let other = MockServer::start().await;
+        Mock::given(wiremock::matchers::any())
+            .respond_with(ResponseTemplate::new(200))
+            .mount(&other)
+            .await;
+        let first = MockServer::start().await;
+        mount_chat(
+            &first,
+            ResponseTemplate::new(302)
+                .insert_header("location", format!("{}/v1/chat/completions", other.uri())),
+        )
+        .await;
+        let client = client_for(&first.uri(), Some(KEY));
+        let err = client
+            .stream(request(), CancellationToken::new())
+            .await
+            .expect_err("redirect refused");
+        assert_eq!(err.code, ErrorCode::ProviderUnavailable);
+        assert!(
+            other
+                .received_requests()
+                .await
+                .unwrap_or_default()
+                .is_empty()
+        );
     }
 
     #[tokio::test]

@@ -56,6 +56,8 @@ pub enum ErrorCode {
     ClaudeCliQuota,
     /// A reply (AI, or a file) did not match its schema.
     SchemaInvalid,
+    /// The user stopped the work. Not a failure; trying again is the user's call.
+    Cancelled,
     /// A bug: the work panicked. Logged; trying again will not help.
     Internal,
 }
@@ -125,6 +127,7 @@ mod tests {
             ErrorCode::ClaudeCliNotFound,
             ErrorCode::ClaudeCliNotLoggedIn,
             ErrorCode::ClaudeCliQuota,
+            ErrorCode::Cancelled,
         ] {
             assert!(!code.retryable(), "{code:?} needs the user to act");
         }

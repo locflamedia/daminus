@@ -276,7 +276,7 @@ async fn sends_the_previewed_bytes_and_returns_the_analysis() -> Test {
     let client = fake(&[GOOD]);
     let a = run(&client, &p).await?;
     assert_eq!(a.findings.len(), 2);
-    assert_eq!(client.requests(), [p.request(Some("m-1".into()))]);
+    assert_eq!(client.requests(), [p.request(Some("m-1".into()), &p.hash)?]);
     Ok(())
 }
 
@@ -353,6 +353,51 @@ async fn valid_reply_on_the_retry_succeeds() -> Test {
     assert_eq!(seen.lock().map(|n| *n).unwrap_or(0), 2);
     // The retry's text continues what the first attempt showed, once.
     assert_eq!(summary, "Fix uploads first.");
+    Ok(())
+}
+
+#[tokio::test]
+async fn size_limit_failures_are_not_asked_again() -> Test {
+    let p = payload()?;
+    let huge = "a".repeat(MAX_REPLY_BYTES + 1);
+    let client = fake(&[huge.as_str()]);
+    let e = run(&client, &p).await.err().ok_or("accepted")?;
+    assert_eq!(
+        e.params.get("detail").map(String::as_str),
+        Some("reply_too_long")
+    );
+    assert_eq!(client.requests().len(), 1);
+    Ok(())
+}
+
+#[tokio::test]
+async fn cancelling_returns_cancelled_and_logs_nothing() -> Test {
+    let p = payload()?;
+    let lines = Arc::new(Lines::default());
+    let _guard = tracing::subscriber::set_default(Capture(Arc::clone(&lines)));
+    let client = fake(&[GOOD]);
+    let cancel = CancellationToken::new();
+    cancel.cancel();
+    let e = analyze(&client, &TARGET, &p, &p.hash, &cancel, |_| {})
+        .await
+        .err()
+        .ok_or("finished")?;
+    assert_eq!(e.code, ErrorCode::Cancelled);
+    assert!(!e.retryable);
+    assert_eq!(client.requests().len(), 1);
+    assert!(lines.0.lock().map(|l| l.is_empty()).unwrap_or(false));
+    Ok(())
+}
+
+#[test]
+fn a_request_needs_the_previewed_hash() -> Test {
+    let p = payload()?;
+    let e = p.request(None, "0000").err().ok_or("built anyway")?;
+    assert_eq!(
+        e.params.get("detail").map(String::as_str),
+        Some("payload_changed")
+    );
+    assert!(p.request(None, &p.hash).is_ok());
     Ok(())
 }
 

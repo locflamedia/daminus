@@ -76,9 +76,10 @@ pub async fn detect(bin: &Path, path_var: &str) -> Result<CliStatus, AppError> {
         .next()
         .unwrap_or_default()
         .to_owned();
-    let auth = run_short(bin, path_var, dir.path(), &["auth", "status"]).await?;
+    let auth = run_short(bin, path_var, dir.path(), &["auth", "status", "--json"]).await?;
+    // Text output (or anything that is not JSON) cannot say the user is signed in.
     let json: Value = serde_json::from_slice(&auth.stdout).unwrap_or(Value::Null);
-    let logged_in = auth.status.success() && json["loggedIn"].as_bool() != Some(false);
+    let logged_in = auth.status.success() && json["loggedIn"].as_bool() == Some(true);
     Ok(CliStatus {
         version,
         logged_in,
@@ -156,8 +157,16 @@ impl AiClient for ClaudeCliClient {
             let (tx, rx) = mpsc::channel(64);
             let timeout = self.timeout;
             tokio::spawn(async move {
-                let _keep = (guard, dir);
-                supervise(child, stdout, stderr, writer, tx, cancel, timeout).await;
+                supervise(
+                    Running { child, guard, dir },
+                    stdout,
+                    stderr,
+                    writer,
+                    tx,
+                    cancel,
+                    timeout,
+                )
+                .await;
             });
             Ok(rx)
         })
@@ -359,8 +368,18 @@ impl From<ErrorCode> for Stop {
     }
 }
 
+/// A started `claude`: the child, the group guard made when it was spawned
+/// (the child's id is gone once it is reaped), and the scratch folder.
+struct Running {
+    child: Child,
+    guard: GroupGuard,
+    dir: tempfile::TempDir,
+}
+
+/// Runs one question to its end. The guard outlives every exit path,
+/// including a child that exits without a result.
 async fn supervise(
-    mut child: Child,
+    running: Running,
     mut stdout: ChildStdout,
     mut stderr: JoinHandle<String>,
     writer: JoinHandle<()>,
@@ -368,6 +387,11 @@ async fn supervise(
     cancel: CancellationToken,
     timeout: Duration,
 ) {
+    let Running {
+        mut child,
+        guard,
+        dir: _dir,
+    } = running;
     let started = Instant::now();
     let outcome = tokio::select! {
         () = cancel.cancelled() => Err(Stop::Quiet),
@@ -375,7 +399,7 @@ async fn supervise(
         r = read_reply(&mut stdout, &mut child, &mut stderr, &tx) => r,
     };
     // Kill the group first, then reap the leader.
-    drop(GroupGuard::of(&child));
+    drop(guard);
     let _ = child.kill().await;
     writer.abort();
     stderr.abort();
@@ -884,6 +908,27 @@ END
     }
 
     #[tokio::test]
+    async fn child_that_exits_without_a_result_still_loses_its_group() {
+        let dir = tempfile::tempdir().unwrap();
+        let pidfile = dir.path().join("pid");
+        let body = format!(
+            "[ \"$1\" = warm ] && exit 0\nsleep 300 >/dev/null 2>&1 &\necho $! > '{}'\ncat >/dev/null\necho garbage\n",
+            pidfile.display()
+        );
+        let bin = script(dir.path(), "claude", &body);
+        warm_up(&bin);
+        let c = client(bin);
+        let events = collect(&c, req("q")).await;
+        assert!(error_of(events).code != ErrorCode::Internal);
+        let pid = pid_from(&pidfile).await;
+        assert!(pid > 0);
+        assert!(
+            gone(pid).await,
+            "grandchild outlived a child with no result"
+        );
+    }
+
+    #[tokio::test]
     async fn cancel_ends_the_stream_and_kills_the_group() {
         let dir = tempfile::tempdir().unwrap();
         let (bin, pidfile) = slow_script(dir.path());
@@ -923,6 +968,23 @@ esac
   auth) echo '{"loggedIn":false}'; exit 1 ;;
 esac
 "#;
+        let text = r#"case "$1" in
+  --version) echo "2.1.4 (Claude Code)" ;;
+  auth) case "$*" in *--json*) echo '{"loggedIn":true}' ;; *) echo 'Logged in as a@b.c' ;; esac ;;
+esac
+"#;
+        let bin = script(dir.path(), "claude-text", text);
+        warm_up(&bin);
+        assert!(detect(&bin, SAFE_PATH).await.unwrap().logged_in);
+        let plain = r#"case "$1" in
+  --version) echo "2.1.4 (Claude Code)" ;;
+  auth) echo 'Logged in as a@b.c' ;;
+esac
+"#;
+        let bin = script(dir.path(), "claude-plain", plain);
+        warm_up(&bin);
+        assert!(!detect(&bin, SAFE_PATH).await.unwrap().logged_in);
+
         let bin = script(dir.path(), "claude-out", out);
         warm_up(&bin);
         let s = detect(&bin, SAFE_PATH).await.unwrap();

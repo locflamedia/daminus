@@ -115,6 +115,7 @@ describe('locale files', () => {
       provider_rate_limit: true,
       provider_unavailable: true,
       schema_invalid: true,
+      cancelled: true,
       claude_cli_not_found: true,
       claude_cli_not_logged_in: true,
       claude_cli_quota: true,
