@@ -18,7 +18,7 @@
   6. foot, 32: when it was checked, how many checks passed, Open. The time turns warn-ink
      after 24 hours.
 
-  Padding 16, 10 between blocks, radius 16. A critical card is lifted by a rose shadow. Several
+  Padding 16, 10 between blocks, radius 16 (a project with no stack facts has no tags block). A critical card is lifted by a rose shadow. Several
   issues never stack rows. A name too long for one line is cut with an ellipsis; the full name
   is the title. Missing data is a dash, never zero. On a pointer hover the card lifts 2 px and
   the Open chevron nudges; a press on the card opens it. Every string comes from the caller and
@@ -29,6 +29,8 @@ import { computed } from 'vue'
 import { useFormat } from '@/composables/use-format'
 import { isStale } from '@/lib/micro'
 import type { NodeState, TopologyInput } from '@/lib/topology'
+import UiBrandMark from './UiBrandMark.vue'
+import type { BrandName } from './brand-marks'
 import UiButton from './UiButton.vue'
 import UiChipMorph from './UiChipMorph.vue'
 import UiDomainLink from './UiDomainLink.vue'
@@ -39,7 +41,7 @@ import UiTag from './UiTag.vue'
 import UiTopology from './UiTopology.vue'
 import type { IconName } from './icon-paths'
 
-export type ProjectCardState = 'crit' | 'warn' | 'ok' | 'scanning' | 'unreachable'
+export type ProjectCardState = 'crit' | 'warn' | 'ok' | 'partial' | 'scanning' | 'unreachable'
 
 export interface ProjectCardMetric {
   label: string
@@ -74,7 +76,8 @@ const props = withDefaults(
     stateLabel: string
     /** Where it runs: "vps-hn-3", "2 servers". Follows the domain. */
     where?: string
-    tags?: ReadonlyArray<{ label: string; swatch?: string }>
+    /** A tag with a technology mark draws it (14 px); without one, a dot in the project colour. */
+    tags?: ReadonlyArray<{ label: string; swatch?: string; brand?: BrandName | null }>
     /** How many tags show before "+N". */
     maxTags?: number
     topology: readonly TopologyInput[]
@@ -92,6 +95,8 @@ const props = withDefaults(
     openLabel: string
     /** The card lifts and a press opens it. */
     interactive?: boolean
+    /** Old results: nothing moves, not even the critical dot. */
+    still?: boolean
   }>(),
   {
     domain: undefined,
@@ -103,6 +108,7 @@ const props = withDefaults(
     actionLabel: undefined,
     checkedAt: undefined,
     interactive: true,
+    still: false,
   },
 )
 
@@ -115,6 +121,7 @@ const CHIP_TONE = {
   crit: 'crit',
   warn: 'warn',
   ok: 'ok',
+  partial: 'neutral',
   scanning: 'info',
   unreachable: 'neutral',
 } as const
@@ -153,16 +160,21 @@ function onCardClick(event: MouseEvent) {
         large
         :dot="state !== 'scanning'"
         :busy="scanning"
-        :pulse="state === 'crit'"
+        :pulse="state === 'crit' && !still"
         :tone="chipTone"
         :label="stateLabel"
       />
     </header>
 
-    <div class="tags">
-      <UiTag v-for="tag in shownTags" :key="tag.label" :swatch="tag.swatch ?? 'var(--mark)'">{{
-        tag.label
-      }}</UiTag>
+    <!-- A project with no stack facts has no tags row at all: no blank gap. -->
+    <div v-if="shownTags.length > 0" class="tags">
+      <UiTag
+        v-for="tag in shownTags"
+        :key="tag.label"
+        :swatch="tag.brand ? undefined : (tag.swatch ?? 'var(--mark)')"
+      >
+        <UiBrandMark v-if="tag.brand" :name="tag.brand" :size="14" />{{ tag.label }}
+      </UiTag>
       <UiTag v-if="hiddenTags > 0" class="more">+{{ hiddenTags }}</UiTag>
     </div>
 
@@ -321,6 +333,17 @@ function onCardClick(event: MouseEvent) {
 
 .status.tone-neutral {
   background: var(--surface-1);
+}
+
+/* The main issue keeps its verb: two lines at most, then the other issues on one line. */
+.status :deep(.title) {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 /* The status row's one action is a word, in the band's own ink. */

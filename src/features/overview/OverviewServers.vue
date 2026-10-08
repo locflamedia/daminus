@@ -10,8 +10,9 @@ import { serverScan } from '@/lib/overview-scan'
 import { useScanPanelStore } from '@/stores/scan-panel'
 import { useScanStore } from '@/stores/scan'
 import OverviewServerCell from './OverviewServerCell.vue'
+import OverviewServersList from './OverviewServersList.vue'
 
-defineProps<{ cells: readonly ServerCell[]; neutral: boolean }>()
+defineProps<{ cells: readonly ServerCell[]; neutral: boolean; asList?: boolean }>()
 
 const { t } = useI18n()
 const scan = useScanStore()
@@ -22,7 +23,8 @@ const delay = (i: number) => `${300 + i * 60}ms`
 </script>
 
 <template>
-  <section class="servers" :aria-label="t('overviewScreen.servers.title')">
+  <OverviewServersList v-if="asList" :cells="cells" :neutral="neutral" />
+  <section v-else class="servers" :aria-label="t('overviewScreen.servers.title')">
     <h2 class="head">
       {{ t('overviewScreen.servers.title') }}
       <span class="hint">{{ t('overviewScreen.servers.hint') }}</span>

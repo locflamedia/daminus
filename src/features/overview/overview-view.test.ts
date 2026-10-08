@@ -1,17 +1,19 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n } from '@/i18n'
+import { LAYOUT_RANGE, type SidebarRange } from '@/lib/viewport'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useScanStore } from '@/stores/scan'
 import { shellProjects, shellReport, shellScanRun } from '@/testing/shell-fixture'
 import OverviewView from './OverviewView.vue'
 
-async function mountOverview() {
+async function mountOverview(range: SidebarRange = 'wide') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -22,7 +24,9 @@ async function mountOverview() {
     ],
   })
   await router.push('/')
-  const wrapper = mount(OverviewView, { global: { plugins: [i18n, router] } })
+  const wrapper = mount(OverviewView, {
+    global: { plugins: [i18n, router], provide: { [LAYOUT_RANGE as symbol]: ref(range) } },
+  })
   await flushPromises()
   return wrapper
 }
@@ -108,5 +112,20 @@ describe('Overview toolbar with results over a day old', () => {
     const wrapper = await mountOverview()
     expect(wrapper.get('.meta').text()).toMatch(/^Scan #12 · /)
     expect(wrapper.find('.age').exists()).toBe(false)
+  })
+})
+
+describe('Overview servers in a narrow window', () => {
+  it('puts the servers in the free fourth cell of the two-across grid when three cards sit there', async () => {
+    const wrapper = await mountOverview('narrow')
+    const tail = wrapper.get('.tail')
+    expect(tail.classes()).toContain('cell')
+    expect(tail.find('.list-card').exists()).toBe(true)
+  })
+
+  it('keeps the full-width strip below the cards at a wide window', async () => {
+    const wrapper = await mountOverview('wide')
+    expect(wrapper.get('.tail').classes()).not.toContain('cell')
+    expect(wrapper.find('.list-card').exists()).toBe(false)
   })
 })

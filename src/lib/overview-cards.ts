@@ -15,10 +15,8 @@ import type {
 } from '@/api'
 import type { UnknownReason } from '@/api/bindings/UnknownReason'
 import type { JsonValue } from '@/api/bindings/serde_json/JsonValue'
+import { GROWTH_SHARE } from './presentation-hints'
 import type { NodeState, TopologyInput, TopologyRole } from './topology'
-
-/** A size that grew by this share of what it was is worth an amber note. */
-export const NOTABLE_GROWTH = 0.1
 
 export type CardState = 'crit' | 'warn' | 'ok' | 'unreachable'
 
@@ -88,6 +86,8 @@ export interface ProjectCardData {
   warn: number
   /** Results that could not be read (needs permission, timed out, not found...). */
   unreadable: number
+  /** Results of the project the latest scan did not check again. */
+  staleCount: number
   /** Days until the soonest review of an expected rule of this project; `null` when none. */
   reviewInDays: number | null
   /** Groups switched off in Settings whose results this card would show. */
@@ -241,7 +241,7 @@ function sizeCell(
       kind: 'value',
       bytes,
       delta,
-      notable: delta !== null && before > 0 && delta / before >= NOTABLE_GROWTH,
+      notable: delta !== null && before > 0 && delta / before >= GROWTH_SHARE,
       stale,
       checkedSeq: stale && seqs.length > 0 ? Math.min(...seqs) : null,
     },
@@ -331,6 +331,7 @@ export function buildProjectCard(input: CardInput): ProjectCardData {
     crit: rollup?.counts.crit ?? 0,
     warn: rollup?.counts.warn ?? 0,
     unreadable: (rollup?.counts.needs_perm ?? 0) + (rollup?.counts.unknown ?? 0),
+    staleCount: rollup?.counts.stale ?? 0,
     reviewInDays: reviewDays(rules, mine, input.now),
     offGroups: report.disabled_groups.filter((g) => g !== 'system' && g !== 'code_changes'),
     staleSince: seqs.length > 0 ? Math.min(...seqs) : null,

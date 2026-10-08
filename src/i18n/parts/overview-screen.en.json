@@ -42,7 +42,8 @@
         "warn": "Needs a look",
         "crit": "Critical",
         "unknown": "Not checked"
-      }
+      },
+      "partial": "Partly checked"
     },
     "tag": {
       "compose": "compose",
@@ -68,7 +69,8 @@
       "readingMeta": "last result stays until the new one lands",
       "firstScan": "Waiting for the first scan",
       "firstScanMeta": "Press Scan all to read it",
-      "tlsTitle": "Certificate of {host}"
+      "tlsTitle": "Certificate of {host}",
+      "partlyOld": "{n} result is from an earlier scan | {n} results are from an earlier scan"
     },
     "group": {
       "uptime": "Uptime",

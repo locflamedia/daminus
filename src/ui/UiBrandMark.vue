@@ -5,18 +5,24 @@
   branch. The mark is decoration next to a word, so it is hidden from assistive technology.
 -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { BRAND_FILES, type BrandName } from './brand-marks'
 
-withDefaults(defineProps<{ name?: BrandName | null; size?: number }>(), {
+/** Marks too dark to read on a dark surface: lifted with a brightness filter, never recoloured. */
+const DARK_ON_DARK: readonly BrandName[] = ['mysql']
+
+const props = withDefaults(defineProps<{ name?: BrandName | null; size?: number }>(), {
   name: null,
   size: 14,
 })
+const lifted = computed(() => props.name !== null && DARK_ON_DARK.includes(props.name))
 </script>
 
 <template>
   <img
     v-if="name"
     class="brand"
+    :class="{ lift: lifted }"
     :src="BRAND_FILES[name]"
     :width="size"
     :height="size"
@@ -32,5 +38,15 @@ withDefaults(defineProps<{ name?: BrandName | null; size?: number }>(), {
   display: block;
   flex: none;
   object-fit: contain;
+}
+
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .lift {
+    filter: brightness(1.5);
+  }
+}
+
+:global(:root[data-theme='dark']) .lift {
+  filter: brightness(1.5);
 }
 </style>

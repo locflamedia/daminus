@@ -13,7 +13,7 @@
   `form="note"` is the tile of a project card (board "Project card"): padding 8 10, no
   sparkline (trends live on the project page), and one note line under the value that says
   what changed, "no change", or what to do. The note is grey, 500 weight for a delta, amber
-  past a threshold, amber at 400 for an old result or a missing permission, rose when critical;
+  past a threshold, amber at 400 for a missing permission, grey for the age of an old result, rose when critical;
   a value that is not set up is written in grey, and while the host is read the value and the
   note give way to two skeleton bars of their final heights.
 
@@ -226,6 +226,12 @@ const noteClass = computed(() => {
   transition:
     opacity var(--dur-state) var(--ease-state),
     filter var(--dur-state) var(--ease-state);
+}
+
+/* The card form: the clock follows the label, a gap apart, never against it. */
+.tile-note .line {
+  justify-content: flex-start;
+  gap: var(--space-2);
 }
 
 /* The clock that says the number can lag: quiet, with the usual focus ring. */

@@ -4,6 +4,7 @@
 import type { Item } from '@/api'
 import { currentLocale, i18n } from '@/i18n'
 import { formatDelta, formatDuration, formatMeasure, formatWeekdayDateTime } from '@/lib/format'
+import { brandOfEngine, brandOfKind, type BrandName } from '@/ui/brand-marks'
 import { checkName, issueText } from '@/lib/issue-text'
 import {
   needsLook,
@@ -53,7 +54,7 @@ export interface CardView {
   state: ProjectCardState
   stateLabel: string
   where: string
-  tags: Array<{ label: string }>
+  tags: Array<{ label: string; brand: BrandName | null }>
   topology: readonly TopologyInput[]
   status: ProjectCardStatus
   actionLabel?: string
@@ -67,6 +68,8 @@ export interface CardView {
   passedLabel: string
   /** The card is one the "Needs a look" filter keeps. */
   look: boolean
+  /** Old results: nothing on the card moves. */
+  still: boolean
 }
 
 const TAB_OF_GROUP = {
@@ -93,6 +96,7 @@ function stateOf(data: ProjectCardData, ctx: CardContext): [ProjectCardState, st
   if (data.state === 'crit') return ['crit', t('overview.crit', { n: data.crit })]
   if (data.state === 'warn') return ['warn', t('overview.warn', { n: data.warn }, data.warn)]
   if (data.state === 'unreachable') return ['unreachable', t('nav.unreachable')]
+  if (partlyRead(data)) return ['partial', t('overviewScreen.card.partial')]
   return ['ok', t('severity.ok')]
 }
 
@@ -103,13 +107,19 @@ function whereOf(data: ProjectCardData): string {
     : t('overview.serverCount', { n: data.hosts.length }, data.hosts.length)
 }
 
-function tagsOf(data: ProjectCardData): Array<{ label: string }> {
+function tagsOf(data: ProjectCardData): CardView['tags'] {
   return data.tags.map((tag) => ({
     label:
       tag.kind === 'database'
         ? t(`overviewScreen.tag.${tag.engine === 'postgres' ? 'postgres' : 'mysql'}`)
         : t(`overviewScreen.tag.${tag.kind}`),
+    brand: tag.kind === 'database' ? brandOfEngine(tag.engine) : brandOfKind(tag.kind),
   }))
+}
+
+/** Clear means every check of the project passed: nothing unread, nothing from an old scan. */
+function partlyRead(data: ProjectCardData): boolean {
+  return data.total > 0 && (data.unreadable > 0 || data.staleCount > 0 || data.passed < data.total)
 }
 
 function offWords(data: ProjectCardData): string {
@@ -207,11 +217,21 @@ function statusOf(data: ProjectCardData, ctx: CardContext): ProjectCardStatus {
 }
 
 function okStatus(data: ProjectCardData): ProjectCardStatus {
-  if (data.unreadable > 0) {
+  const missing = data.total - data.passed
+  if (data.unreadable > 0 || (data.staleCount === 0 && missing > 0)) {
+    const n = data.unreadable > 0 ? data.unreadable : missing
     return {
       tone: 'neutral',
       icon: 'lock',
-      title: t('overviewScreen.status.cannotRead', { n: data.unreadable }, data.unreadable),
+      title: t('overviewScreen.status.cannotRead', { n }, n),
+      meta: t('overviewScreen.status.cannotReadMeta'),
+    }
+  }
+  if (data.staleCount > 0) {
+    return {
+      tone: 'neutral',
+      icon: 'clock',
+      title: t('overviewScreen.status.partlyOld', { n: data.staleCount }, data.staleCount),
       meta: t('overviewScreen.status.cannotReadMeta'),
     }
   }
@@ -260,7 +280,7 @@ function uptimeMetric(cell: UptimeCell, look: Look): ProjectCardMetric {
   }
   const unit = cell.ms === null ? undefined : `· ${formatMeasure(cell.ms, 'ms').text}`
   const value = cell.status === null ? undefined : String(cell.status)
-  if (look.old) return { ...base, value, unit, ...note(look.old, 'old') }
+  if (look.old) return { ...base, value, unit, ...note(look.old, 'plain') }
   const state: MetricState =
     cell.level === 'crit' ? 'crit' : cell.level === 'warn' ? 'warn' : 'normal'
   if (cell.status === null) {
@@ -312,7 +332,7 @@ function sizeMetric(
   }
   const size = formatMeasure(cell.bytes, 'bytes')
   const shown = { ...base, value: size.value, unit: size.unit }
-  if (look.old) return { ...shown, ...note(look.old, 'old') }
+  if (look.old) return { ...shown, ...note(look.old, 'plain') }
   if (cell.stale) {
     const since =
       cell.checkedSeq === null
@@ -423,6 +443,7 @@ export function cardView(data: ProjectCardData, ctx: CardContext): CardView {
     checkedAt: settled && ctx.scannedAt ? ctx.scannedAt : undefined,
     passedLabel: passedLabel(data, ctx),
     look: needsLook(data),
+    still: ctx.oldDays !== null,
   }
 }
 

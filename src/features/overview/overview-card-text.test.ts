@@ -77,6 +77,32 @@ describe('card head', () => {
   })
 })
 
+describe('a project that is not fully read', () => {
+  const booking = data('booking')
+
+  it('does not say all clear while a result could not be read, and agrees with the footer', () => {
+    const card = view('booking', {}, { ...booking, unreadable: 2, passed: 12 })
+    expect(card).toMatchObject({ state: 'partial', stateLabel: 'Partly checked' })
+    expect(card.status).toMatchObject({ icon: 'lock', title: '2 checks could not be read' })
+    expect(card.passedLabel).toBe('12 of 14 passed')
+  })
+
+  it('says how many results come from an earlier scan', () => {
+    const card = view('booking', {}, { ...booking, staleCount: 3, passed: 11 })
+    expect(card.state).toBe('partial')
+    expect(card.status.title).toBe('3 results are from an earlier scan')
+  })
+
+  it('keeps the all clear wording when every check passed', () => {
+    expect(view('booking')).toMatchObject({ state: 'ok', stateLabel: 'All clear' })
+  })
+
+  it('draws a technology mark where the data names the technology', () => {
+    expect(view('tiemtra').tags.map((t) => t.brand)).toEqual(['pm2', 'docker', 'postgresql'])
+    expect(view('booking').tags.map((t) => t.brand)).toEqual(['pm2', 'mysql'])
+  })
+})
+
 describe('status row', () => {
   it('leads a critical card with the main issue and lists the other checks', () => {
     const kho = view('kho-hang')
@@ -201,7 +227,7 @@ describe('metrics', () => {
   it('replaces every note by the age when the results are old', () => {
     const kho = view('kho-hang', { oldDays: 4 })
     expect(kho.metrics.map((m) => m.note)).toEqual(['4 d ago', '4 d ago', 'add .env path'])
-    expect(metric(kho, 'Uptime').noteTone).toBe('old')
+    expect(metric(kho, 'Uptime').noteTone).toBe('plain')
   })
 
   it('writes a database that cannot be read with the reason, and a group that is off', () => {

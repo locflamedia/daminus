@@ -4,7 +4,8 @@ import { currentLocale, i18n } from '@/i18n'
 import { formatDelta, formatMeasure } from '@/lib/format'
 import { checkName, issueText } from '@/lib/issue-text'
 import type { Change, ChangeTone } from '@/lib/overview-changes'
-import { DISK_LIMIT, type Upcoming } from '@/lib/overview-coming-up'
+import type { Upcoming } from '@/lib/overview-coming-up'
+import { DISK_FORECAST_LIMIT_PCT } from '@/lib/presentation-hints'
 
 type Params = Record<string, string | number>
 
@@ -104,7 +105,7 @@ export interface UpcomingRow {
 function upcomingText(row: Upcoming): string {
   switch (row.kind) {
     case 'disk':
-      return t('overviewScreen.coming.disk', { host: row.subject, pct: DISK_LIMIT })
+      return t('overviewScreen.coming.disk', { host: row.subject, pct: DISK_FORECAST_LIMIT_PCT })
     case 'review':
       return t('overviewScreen.coming.review', { subject: row.subject })
     case 'quiet':

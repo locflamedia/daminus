@@ -6,6 +6,12 @@ import type { ExpectedRule, Report, ScanFact } from '@/api'
 import type { JsonValue } from '@/api/bindings/serde_json/JsonValue'
 import { daysUntil, type TimedValue } from './forecast'
 import { daysToDay } from './overview-cards'
+import {
+  CERT_WARN_DAYS,
+  COMING_UP_HORIZON_DAYS,
+  COMING_UP_SOON_DAYS,
+  DISK_FORECAST_LIMIT_PCT,
+} from './presentation-hints'
 import { isUnreachable } from './rollups'
 
 export type UpcomingKind = 'disk' | 'review' | 'quiet' | 'tls'
@@ -21,16 +27,8 @@ export interface Upcoming {
   days: number | null
 }
 
-/** The disk level the forecast counts down to (the `disk.fs` critical threshold). */
-export const DISK_LIMIT = 90
-/** A forecast further away than this is not news. */
-export const FORECAST_HORIZON_DAYS = 60
-/** Reviews and certificates closer than this are listed. */
-export const SOON_DAYS = 30
 /** The most rows the list shows. */
 export const UPCOMING_SHOWN = 6
-/** A certificate with fewer days than this is a warning in the core. */
-const TLS_WARN_DAYS = 21
 
 const DAY_MS = 86_400_000
 const ORDER: Record<UpcomingKind, number> = { disk: 0, review: 1, quiet: 2, tls: 3 }
@@ -56,8 +54,8 @@ export function diskForecasts(facts: readonly ScanFact[]): Upcoming[] {
   const byHost = new Map<string, Upcoming>()
   for (const [key, { host, points }] of series) {
     const last = points[points.length - 1]
-    const days = daysUntil(points, DISK_LIMIT)
-    if (!last || days === null || days === 0 || days > FORECAST_HORIZON_DAYS) continue
+    const days = daysUntil(points, DISK_FORECAST_LIMIT_PCT)
+    if (!last || days === null || days === 0 || days > COMING_UP_HORIZON_DAYS) continue
     const known = byHost.get(host)
     if (known && (known.days ?? Infinity) <= days) continue
     byHost.set(host, { id: `disk|${key}`, kind: 'disk', tone: 'warn', subject: host, days })
@@ -83,7 +81,7 @@ export function ruleReviews(
   return rules.flatMap((rule) => {
     if (!rule.until || due.has(rule.id)) return []
     const days = Math.max(0, daysToDay(rule.until, now))
-    if (Number.isNaN(days) || days > SOON_DAYS) return []
+    if (Number.isNaN(days) || days > COMING_UP_SOON_DAYS) return []
     return [
       {
         id: `review|${rule.id}`,
@@ -139,14 +137,14 @@ export function certificateExpiries(report: Report): Upcoming[] {
       {
         id: `tls|${item.key.target}`,
         kind: 'tls' as const,
-        tone: days < TLS_WARN_DAYS ? ('warn' as const) : ('neutral' as const),
+        tone: days < CERT_WARN_DAYS ? ('warn' as const) : ('neutral' as const),
         subject: hostOf(item.key.target),
         days: Math.round(days),
       },
     ]
   })
   const sorted = [...all].sort((a, b) => (a.days ?? 0) - (b.days ?? 0))
-  const soon = sorted.filter((r) => (r.days ?? Infinity) <= SOON_DAYS)
+  const soon = sorted.filter((r) => (r.days ?? Infinity) <= COMING_UP_SOON_DAYS)
   return soon.length > 0 ? soon : sorted.slice(0, 1)
 }
 

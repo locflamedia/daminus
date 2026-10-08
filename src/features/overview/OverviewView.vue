@@ -106,13 +106,15 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       />
       <OverviewSummary v-else-if="scanned" :report="report" :servers="model.serverSummary.value" />
 
-      <OverviewCards :cards="model.cards.value" :old="model.oldDays.value !== null" />
-
-      <OverviewServers
-        v-if="scanned"
-        :cells="model.servers.value"
-        :neutral="model.oldDays.value !== null"
-      />
+      <OverviewCards :cards="model.cards.value" :old="model.oldDays.value !== null">
+        <template v-if="scanned" #tail="{ inCell }">
+          <OverviewServers
+            :cells="model.servers.value"
+            :neutral="model.oldDays.value !== null"
+            :as-list="inCell"
+          />
+        </template>
+      </OverviewCards>
 
       <div v-if="scanned" class="lists m-enter" style="--d: 520ms">
         <OverviewChanges

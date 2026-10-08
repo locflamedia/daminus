@@ -4,21 +4,30 @@
   place, and the order changes once, with a 350 ms spring, when the new results are saved.
 -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { vEnter } from '@/lib/motion'
+import { useLayoutRange } from '@/lib/viewport'
 import { useScanPanelStore } from '@/stores/scan-panel'
 import UiProjectCard from '@/ui/UiProjectCard.vue'
 import UiTlsChip from '@/ui/UiTlsChip.vue'
 import { nodeStateWords, type CardView } from './overview-card-text'
 
-defineProps<{ cards: readonly CardView[]; old: boolean }>()
+const props = defineProps<{ cards: readonly CardView[]; old: boolean }>()
 
 const { t } = useI18n()
 const router = useRouter()
 const panel = useScanPanelStore()
 
 const states = nodeStateWords()
+const range = useLayoutRange()
+
+/**
+ * Two across with an odd last card: the cell beside it is free and the servers take it, as the
+ * narrow window board draws. Otherwise the servers sit below the grid, full width.
+ */
+const tailInCell = computed(() => range.value === 'narrow' && props.cards.length % 2 === 1)
 
 function open(card: CardView, tab?: string) {
   void router.push({ name: 'project', params: { id: card.id, ...(tab ? { tab } : {}) } })
@@ -41,6 +50,7 @@ function act(card: CardView) {
       :domain="card.domain"
       :tint="card.tint"
       :state="card.state"
+      :still="card.still"
       :state-label="card.stateLabel"
       :where="card.where"
       :tags="card.tags"
@@ -61,6 +71,9 @@ function act(card: CardView) {
         <UiTlsChip :item="card.tls" />
       </template>
     </UiProjectCard>
+    <div v-if="$slots.tail" key="tail" class="tail" :class="{ cell: tailInCell }">
+      <slot name="tail" :in-cell="tailInCell" />
+    </div>
   </TransitionGroup>
 </template>
 
@@ -75,6 +88,21 @@ function act(card: CardView) {
 /* Narrow window: the cards go two across. */
 [data-range='narrow'] .cards {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* The slot after the cards: the servers, full width unless they take the free cell. */
+.tail {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.tail.cell {
+  display: flex;
+  grid-column: auto;
+}
+
+.tail.cell > :deep(*) {
+  flex: 1 1 auto;
 }
 
 /* Old results lose colour: nothing here claims to be current. */

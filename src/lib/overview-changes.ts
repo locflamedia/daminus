@@ -5,7 +5,7 @@
 // went quiet. Rows are facts; the screen words them.
 import type { Item, Level, MainIssue, Report, Severity } from '@/api'
 import type { JsonValue } from '@/api/bindings/serde_json/JsonValue'
-import { NOTABLE_GROWTH } from './overview-cards'
+import { GROWTH_SHARE } from './presentation-hints'
 import { isUnreachable } from './rollups'
 
 export type ChangeKind =
@@ -136,7 +136,7 @@ function growth(item: Item, before: Item | undefined): Change | null {
   const now = item.fact?.value
   const was = before?.fact?.value
   if (typeof now !== 'number' || typeof was !== 'number' || was <= 0) return null
-  if ((now - was) / was < NOTABLE_GROWTH || item.disposition.kind !== 'active') return null
+  if ((now - was) / was < GROWTH_SHARE || item.disposition.kind !== 'active') return null
   return {
     id: `grew|${keyOf(item)}`,
     kind: 'grew',
@@ -169,7 +169,7 @@ function tableGrowth(item: Item, before: Item | undefined): Change | null {
     const prior = was.get(name)
     if (prior === undefined || prior <= 0) continue
     const delta = size - prior
-    if (delta / prior >= NOTABLE_GROWTH && (!best || delta > best.delta)) best = { name, delta }
+    if (delta / prior >= GROWTH_SHARE && (!best || delta > best.delta)) best = { name, delta }
   }
   if (!best) return null
   return {

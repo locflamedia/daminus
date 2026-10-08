@@ -42,7 +42,8 @@
         "warn": "Cần xem",
         "crit": "Nghiêm trọng",
         "unknown": "Chưa kiểm tra"
-      }
+      },
+      "partial": "Kiểm tra một phần"
     },
     "tag": {
       "compose": "compose",
@@ -68,7 +69,8 @@
       "readingMeta": "kết quả cũ được giữ đến khi có kết quả mới",
       "firstScan": "Đang chờ lần quét đầu tiên",
       "firstScanMeta": "Nhấn Quét tất cả để đọc",
-      "tlsTitle": "Chứng chỉ của {host}"
+      "tlsTitle": "Chứng chỉ của {host}",
+      "partlyOld": "{n} kết quả là của lần quét trước"
     },
     "group": {
       "uptime": "Hoạt động",
