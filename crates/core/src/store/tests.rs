@@ -373,3 +373,102 @@ fn second_writer_waits_then_gets_store_busy() {
     drop(held);
     store.save_state(&Default::default()).unwrap();
 }
+
+#[test]
+fn update_settings_changes_one_section_and_keeps_the_rest() {
+    let (dir, store) = store();
+    fs::write(dir.path().join(SETTINGS_FILE), SETTINGS_V1).unwrap();
+    let before = store.load_settings().unwrap().value;
+    let saved = store
+        .update_settings(|s| {
+            s.appearance.theme = Theme::Light;
+            s.general.ai_language = Some("en".into());
+        })
+        .unwrap();
+    assert_eq!(saved.appearance.theme, Theme::Light);
+    assert_eq!(saved.scan, before.scan);
+    assert_eq!(saved.data, before.data);
+    assert_eq!(store.load_settings().unwrap().value, saved);
+}
+
+#[test]
+fn update_settings_refuses_a_scan_section_the_scan_could_misread() {
+    let (dir, store) = store();
+    fs::write(dir.path().join(SETTINGS_FILE), SETTINGS_V1).unwrap();
+    let on_disk = fs::read(dir.path().join(SETTINGS_FILE)).unwrap();
+    let changes: [fn(&mut crate::domain::settings::Settings); 7] = [
+        |s| s.scan.connect_timeout_s = 7,
+        |s| s.scan.hosts_at_once = Some(0),
+        |s| s.scan.hosts_at_once = Some(9),
+        |s| s.scan.large_file_mb = 0,
+        |s| s.scan.skip_paths = vec!["--help".into()],
+        |s| s.scan.skip_paths = vec!["a\nb".into()],
+        |s| {
+            s.scan.thresholds = vec![crate::domain::rule::ThresholdOverride {
+                check: "disk.fs".into(),
+                field: None,
+                warn: Some(f64::NAN),
+                crit: None,
+                min: None,
+            }]
+        },
+    ];
+    for change in changes {
+        let err = store.update_settings(change).unwrap_err();
+        assert_eq!(err.code, ErrorCode::SchemaInvalid);
+    }
+    assert_eq!(fs::read(dir.path().join(SETTINGS_FILE)).unwrap(), on_disk);
+}
+
+#[test]
+fn update_settings_keeps_a_valid_scan_section() {
+    let (_dir, store) = store();
+    let saved = store
+        .update_settings(|s| {
+            s.scan.connect_timeout_s = 30;
+            s.scan.hosts_at_once = Some(2);
+            s.scan.skip_paths.push("storage/logs".into());
+            s.scan.thresholds = vec![crate::domain::rule::ThresholdOverride {
+                check: "disk.fs".into(),
+                field: None,
+                warn: Some(70.0),
+                crit: Some(85.0),
+                min: None,
+            }];
+        })
+        .unwrap();
+    assert_eq!(store.load_settings().unwrap().value.scan, saved.scan);
+}
+
+#[test]
+fn update_settings_refuses_an_unknown_language_and_writes_nothing() {
+    let (dir, store) = store();
+    fs::write(dir.path().join(SETTINGS_FILE), SETTINGS_V1).unwrap();
+    let on_disk = fs::read(dir.path().join(SETTINGS_FILE)).unwrap();
+    for change in [
+        (|s: &mut crate::domain::settings::Settings| s.general.language = "xx".into())
+            as fn(&mut crate::domain::settings::Settings),
+        |s| s.general.language = "--help".into(),
+        |s| s.general.ai_language = Some("fr".into()),
+    ] {
+        let err = store.update_settings(change).unwrap_err();
+        assert_eq!(err.code, ErrorCode::SchemaInvalid);
+    }
+    assert_eq!(fs::read(dir.path().join(SETTINGS_FILE)).unwrap(), on_disk);
+}
+
+#[test]
+fn update_settings_never_writes_over_a_newer_file() {
+    let (dir, store) = store();
+    let text = r#"{"version": 99, "general": {"language": "vi"}}"#;
+    fs::write(dir.path().join(SETTINGS_FILE), text).unwrap();
+    assert!(
+        store
+            .update_settings(|s| s.appearance.clear_sky = false)
+            .is_err()
+    );
+    assert_eq!(
+        fs::read_to_string(dir.path().join(SETTINGS_FILE)).unwrap(),
+        text
+    );
+}

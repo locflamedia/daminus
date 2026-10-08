@@ -231,7 +231,7 @@ const noteClass = computed(() => {
 /* The card form: the clock follows the label, a gap apart, never against it. */
 .tile-note .line {
   justify-content: flex-start;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 /* The clock that says the number can lag: quiet, with the usual focus ring. */

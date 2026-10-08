@@ -45,6 +45,9 @@ pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + 
         commands::report_at,
         commands::history_facts,
         commands::rules_list,
+        commands::rules_add,
+        commands::rules_remove,
+        commands::host_key_check,
         commands::projects_list,
         commands::reveal_config_dir,
         commands::reveal_ssh_dir,
@@ -58,6 +61,19 @@ pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + 
         commands::projects_save,
         commands::projects_remove,
         commands::url_check,
+        commands::settings_get,
+        commands::settings_set_general,
+        commands::settings_set_appearance,
+        commands::settings_set_scan,
+        commands::settings_set_data,
+        commands::settings_reset,
+        commands::data_usage,
+        commands::data_export,
+        commands::data_clear,
+        commands::hosts_excluded,
+        commands::hosts_set_include,
+        commands::agent_status,
+        commands::diagnostics_collect,
     ]
 }
 
@@ -111,6 +127,10 @@ pub fn run() -> Result<(), tauri::Error> {
                 Arc::new(HttpProbe::new()),
                 FsStore::new(dir),
             );
+            let core = match app.path().app_log_dir() {
+                Ok(logs) => core.with_log_file(logs.join("daminus.log")),
+                Err(_) => core,
+            };
             app.manage(core);
 
             forward_events(app.handle(), events);

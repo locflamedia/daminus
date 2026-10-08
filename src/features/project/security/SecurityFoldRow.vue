@@ -12,6 +12,9 @@ import type { ExpectedRule } from '@/api'
 import type { Finding } from '@/lib/security-findings'
 import { formatDate } from '@/lib/format'
 import { vEnter } from '@/lib/motion'
+import ExpectedBroken from '@/features/expected/ExpectedBroken.vue'
+import ExpectedUndo from '@/features/expected/ExpectedUndo.vue'
+import FindingActions from '@/features/expected/FindingActions.vue'
 import UiCard from '@/ui/UiCard.vue'
 import SecurityFindingBody from './SecurityFindingBody.vue'
 import SecurityFindingHead from './SecurityFindingHead.vue'
@@ -72,7 +75,12 @@ const tone = computed(() =>
           {{ open ? t('projectSecurity.card.hide') : t('projectSecurity.card.details') }}
         </button>
       </template>
+      <template #actions>
+        <ExpectedUndo v-if="finding.ruleId" :rule-id="finding.ruleId" :check="finding.check" />
+        <FindingActions v-else-if="finding.items[0]" :item="finding.items[0]" />
+      </template>
     </SecurityFindingHead>
+    <ExpectedBroken :items="finding.items" />
     <p v-if="ruleLine" class="rule">{{ ruleLine }}</p>
     <div v-if="open" :id="bodyId"><SecurityFindingBody :finding="finding" /></div>
   </UiCard>

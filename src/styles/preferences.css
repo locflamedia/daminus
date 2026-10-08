@@ -1,0 +1,18 @@
+/* Settings › Appearance: the choices that act on the whole window. */
+
+/* Reduce transparency: the sidebar and the page ground lose their glow and their glass. */
+:root[data-transparency='reduced'] {
+  --side-1: var(--surface-1);
+  --side-2: var(--surface-1);
+  --side-3: var(--surface-1);
+  --side-search: var(--surface-0);
+  --side-hover: var(--surface-2);
+  --side-card: var(--surface-0);
+  --blob: transparent;
+}
+
+/* Animate charts off: a line is there at once instead of drawing in. */
+:root[data-charts='still'] .m-draw {
+  stroke-dasharray: none;
+  animation: none;
+}

@@ -31,7 +31,7 @@ use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument as _;
 
-pub use environment::{AgentState, SshEnvironment};
+pub use environment::{AgentState, AgentStatus, SshEnvironment};
 pub use event::{
     HostSetup, SetupEvent, SetupEventBody, SetupHostProgress, SetupResult, SetupRun, Started, Step,
 };
@@ -183,8 +183,12 @@ impl SetupService {
     /// Looks at the key of `host` without logging in: what is recorded and
     /// what the host offers. For the "Retry" of the host key screen, after the
     /// user accepted it in Terminal. `None` when `ssh` cannot say what the
-    /// connection uses.
+    /// connection uses, or when `host` is not a host of the ssh config.
     pub async fn host_key(&self, host: &HostAlias) -> Option<HostKeyInfo> {
+        let listed = self.list_hosts().ok()?;
+        if !listed.hosts.iter().any(|h| h.alias == *host) {
+            return None;
+        }
         let resolved = resolve(&self.shared.tools, host).await?;
         Some(hostkey::check(&self.shared.tools, &resolved).await)
     }
@@ -757,6 +761,7 @@ impl HostTask {
             state,
             offered: offered.clone(),
             known: looked.map(|i| i.known).unwrap_or_default(),
+            lookup_name: resolved.map(hostkey::lookup_name),
         };
         (info, offered.unwrap_or_default())
     }

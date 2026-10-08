@@ -3,7 +3,8 @@
 // control characters, no characters that hide text, and a visible warning for the few
 // shapes that run something unseen or delete things.
 
-export type CommandRisk = 'pipe-to-shell' | 'base64-decode' | 'remove' | 'destructive'
+export type CommandRisk =
+  'pipe-to-shell' | 'base64-decode' | 'remove' | 'destructive' | 'docker-group'
 
 // C0 and C1 controls (this includes ESC, so ANSI sequences lose their lead byte), DEL, the
 // zero-width and direction-mark characters, bidirectional overrides and isolates (they can
@@ -74,6 +75,17 @@ const DESTRUCTIVE = new RegExp(
   'm',
 )
 
+// Puts an account in the docker group: `usermod -aG docker deploy`, `usermod -G www,docker x`,
+// `gpasswd -a deploy docker`, `adduser deploy docker`. Anyone in that group can start a
+// container that mounts the whole disk, which is root on the server.
+const DOCKER_GROUP = new RegExp(
+  [
+    String.raw`\busermod\b[^|;&]*\s(?:-\w*G|--groups)\s+(?:[\w.-]+,)*docker(?:,|\s|$)`,
+    String.raw`\b(?:gpasswd\s+(?:-a|--add)|adduser|addgroup)\s+\S+\s+docker(?:\s|$)`,
+  ].join('|'),
+  'm',
+)
+
 /** Which warnings apply to `command`, in a fixed order. */
 export function commandRisks(command: string): CommandRisk[] {
   const risks: CommandRisk[] = []
@@ -87,6 +99,7 @@ export function commandRisks(command: string): CommandRisk[] {
   if (BASE64_DECODE.test(command)) risks.push('base64-decode')
   if (REMOVE.test(command)) risks.push('remove')
   if (DESTRUCTIVE.test(command)) risks.push('destructive')
+  if (DOCKER_GROUP.test(command)) risks.push('docker-group')
   return risks
 }
 

@@ -20,8 +20,17 @@ const props = withDefaults(
     disabled?: boolean
     /** A standing surface-1 row, like the select-all row above a list. */
     filled?: boolean
+    /** A bare 12 px line for a form panel: no row height, no hover fill, the meta as a pill. */
+    plain?: boolean
   }>(),
-  { mono: false, meta: undefined, indeterminate: false, disabled: false, filled: false },
+  {
+    mono: false,
+    meta: undefined,
+    indeterminate: false,
+    disabled: false,
+    filled: false,
+    plain: false,
+  },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
@@ -34,7 +43,7 @@ function onChange(event: Event) {
 </script>
 
 <template>
-  <label class="check" :class="{ off: disabled, filled, mixed: indeterminate }" :for="id">
+  <label class="check" :class="{ off: disabled, filled, mixed: indeterminate, plain }" :for="id">
     <input
       :id="id"
       class="native"
@@ -173,5 +182,39 @@ function onChange(event: Event) {
 
 .off .native:checked + .box {
   background: color-mix(in srgb, var(--ink-5) 40%, var(--surface-3));
+}
+
+.plain {
+  gap: var(--space-2);
+  height: auto;
+  padding: 0;
+  border-radius: 0;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+}
+
+.plain.filled,
+.plain:is(:hover, [data-force='hover']):not(.off),
+.plain.off {
+  background: transparent;
+}
+
+.plain .meta {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-0);
+  font-weight: var(--weight-medium);
+}
+
+.plain.off .meta {
+  color: var(--ink-3);
+}
+
+.plain.off .box,
+.plain.off .native:checked + .box {
+  background: var(--ink-5);
 }
 </style>

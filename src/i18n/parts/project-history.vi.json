@@ -36,13 +36,15 @@
         "ok": "ổn cả",
         "warn": "cảnh báo",
         "crit": "nghiêm trọng",
-        "none": "không chạy"
+        "none": "không chạy",
+        "expected": "đã chấp nhận"
       },
       "legend": {
         "ok": "ổn cả",
         "warn": "cảnh báo",
         "crit": "nghiêm trọng",
-        "none": "không chạy"
+        "none": "không chạy",
+        "expected": "đã chấp nhận"
       },
       "note": "Cột có viền là hai lần quét đang so sánh",
       "cell": "#{seq} · {group} · {state}"

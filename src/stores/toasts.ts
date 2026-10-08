@@ -5,6 +5,8 @@ export type ToastTone = 'ok' | 'neutral' | 'crit'
 
 export interface ToastAction {
   label: string
+  /** The keyboard shortcut for the action, shown beside the label (a platform glyph). */
+  hint?: string
   /** Runs when the action is pressed; the toast closes after it. */
   run: () => void
 }

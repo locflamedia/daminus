@@ -1,0 +1,85 @@
+{
+  "settingsScan": {
+    "saved": "Saved",
+    "saveFailed": "Could not save the scan settings.",
+    "checks": { "title": "What to check" },
+    "groups": {
+      "disk": { "name": "Disk and large files", "hint": "df -h, du -d 3" },
+      "containers": {
+        "name": "Containers and processes",
+        "hint": "docker ps, docker inspect, pm2 jlist"
+      },
+      "databases": { "name": "Databases", "hint": "sizes and connections via the project .env" },
+      "security": {
+        "name": "Security",
+        "hint": "open ports, sshd_config, files in the web root"
+      },
+      "uptime": {
+        "name": "Uptime and certificates",
+        "hint": "HTTPS from this Mac, not from the server"
+      },
+      "code": { "name": "Code changes", "hint": "files changed since the last deploy" }
+    },
+    "skip": {
+      "title": "Skip these paths",
+      "remark": "in du and file checks",
+      "add": "Add path",
+      "field": "Path to skip",
+      "placeholder": "storage/logs",
+      "remove": "Stop skipping {path}",
+      "floor": "List files larger than",
+      "mb": "{n} MB",
+      "problem": {
+        "empty": "Type a path.",
+        "duplicate": "Already skipped.",
+        "invalid": "Not a path a scan can skip."
+      }
+    },
+    "limits": {
+      "title": "Limits",
+      "timeout": "Connect timeout",
+      "timeoutHint": "Then the host is marked unreachable. A reachable host gets up to 90 s to finish.",
+      "seconds": "{n} s",
+      "atOnce": "Hosts at once",
+      "atOnceHint": "Auto runs all hosts together, up to 8. Lower it if a jump host is slow.",
+      "auto": "Auto"
+    },
+    "disk": {
+      "title": "Disk usage",
+      "hint": "Same for every server. A project can override it.",
+      "warn": "Warn {n}%",
+      "crit": "Critical {n}%",
+      "warnName": "Warn at, percent of disk used",
+      "critName": "Critical at, percent of disk used",
+      "memory": "Container memory",
+      "cert": "Certificate expires in",
+      "days": "{n} d",
+      "restarts": "Restarts between scans"
+    },
+    "runs": {
+      "title": "What runs on each host",
+      "readOnly": "read-only",
+      "as": "# as {who}, no sudo",
+      "asYou": "# as your ssh user, no sudo",
+      "estimate": "≈ {s} s for {n} host | ≈ {s} s for {n} hosts",
+      "where": "Time per group",
+      "time": "{n} s",
+      "fromScan": "Per host, from scan #{seq}.",
+      "noScan": "No scan yet.",
+      "copyAll": "Copy all",
+      "groups": {
+        "containers": "Containers",
+        "security": "Security",
+        "disk": "Disk",
+        "databases": "Databases",
+        "uptime": "Uptime"
+      },
+      "notes": {
+        "ifPm2": "(if pm2 exists)",
+        "sizesOnly": "sizes only",
+        "codeChanges": "# code changes",
+        "dbInside": "# databases: inside the container"
+      }
+    }
+  }
+}

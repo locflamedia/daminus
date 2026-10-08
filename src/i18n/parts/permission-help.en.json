@@ -1,0 +1,9 @@
+{
+  "permissionHelp": {
+    "checkAgain": "Check again",
+    "checking": "Checking…",
+    "checkNote": "Opens a fresh SSH session so a group change applies, then reads this tab again.",
+    "whyTitle": "Why we don’t ask for sudo",
+    "whyText": "A monitoring app with root is one more thing that can go wrong. Daminus reads as your normal user and tells you exactly which permission is missing, so you decide."
+  }
+}

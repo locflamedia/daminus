@@ -1,0 +1,56 @@
+{
+  "hostKey": {
+    "reading": "Đang đọc khoá…",
+    "offered": "Đang được đưa ra · {time}",
+    "offeredAlg": "Đang được đưa ra · {alg}",
+    "recorded": "Đã biết",
+    "recordedIn": "~/.ssh/known_hosts",
+    "result": {
+      "accepted": {
+        "title": "Đã chấp nhận khoá · {host} đã được tin",
+        "text": "Đang quét lại {host}."
+      },
+      "still_unknown": {
+        "title": "Vẫn chưa biết · known_hosts chưa có mục cho {host}",
+        "text": "Terminal có hỏi bạn gõ yes không? Chạy lại dòng lệnh, rồi Thử lại."
+      },
+      "changed": {
+        "title": "Khoá đã đổi từ lúc bạn xem · mở màn hình khoá thay đổi",
+        "text": "Khoá đang được đưa ra không phải khoá vừa hiện. Hãy dừng lại và kiểm tra."
+      }
+    },
+    "action": {
+      "retry": "Thử lại {host}",
+      "skipScan": "Bỏ qua lần quét này",
+      "skipHost": "Bỏ qua host",
+      "keep": "Giữ chặn",
+      "why": "Vì sao không có nút Tin?"
+    },
+    "whyText": "Daminus đọc known_hosts qua ssh và không bao giờ ghi vào đó. Tin một khoá là việc bạn làm trong Terminal, sau khi so sánh. Cùng một nguyên tắc ở mọi nơi: ứng dụng quan sát, bạn hành động.",
+    "review": "Xem khoá host",
+    "reviewFor": "Xem khoá host của {host}",
+    "face": {
+      "unknown": {
+        "title": "{host} · kết nối lần đầu, chưa biết khoá",
+        "text": "Daminus chưa từng thấy máy chủ này và không ghi vào known_hosts. Hãy so dấu vân tay với bảng điều khiển của nhà cung cấp, rồi chấp nhận một lần trong Terminal.",
+        "step": "Chạy, so sánh, trả lời yes"
+      },
+      "changed": {
+        "title": "{host} không còn là máy chủ cũ",
+        "text": "Nó trả về một khoá host khác với khoá trong known_hosts của bạn. Điều đó bình thường sau khi cài lại hoặc chuyển máy, và cũng là dấu hiệu của một vụ chặn nghe lén. Daminus đã dừng trước khi gửi bất cứ thứ gì.",
+        "warn": "Có thể ai đó đang giả làm {host}. Chỉ tiếp tục nếu bạn đã cài lại hoặc chuyển máy.",
+        "check": "Kiểm tra trước khi tin",
+        "step1": "Bạn hoặc nhà cung cấp có vừa cài lại, khôi phục hay chuyển {host} không? Nếu không, hãy dừng ở đây và hỏi họ.",
+        "step2": "Mở bảng điều khiển web của nhà cung cấp (hướng dẫn cho DigitalOcean, Vultr, Hetzner, Linode) và chạy ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub. Kết quả phải khớp với dấu vân tay màu đỏ.",
+        "step3": "Chỉ khi đó mới xoá khoá cũ và kết nối lại:",
+        "after": "Sau đó, khi đã chạy ssh-keygen -R {host}",
+        "run": "Tự chạy lệnh, rồi kết nối một lần trong Terminal để chấp nhận khoá mới. Daminus không bao giờ sửa known_hosts."
+      },
+      "unavailable": {
+        "title": "{host} · không đọc được dấu vân tay",
+        "text": "Daminus không đọc được khoá: máy nằm sau một host trung gian và bước nhảy lỗi, hoặc nó không trả lời. Terminal sẽ hiện khoá với đầy đủ cấu hình ssh của bạn.",
+        "step": "Tự xem"
+      }
+    }
+  }
+}

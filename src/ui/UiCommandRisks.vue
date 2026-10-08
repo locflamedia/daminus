@@ -19,6 +19,7 @@ const KEYS: Record<CommandRisk, string> = {
   'base64-decode': 'base64Decode',
   remove: 'remove',
   destructive: 'destructive',
+  'docker-group': 'dockerGroup',
 }
 </script>
 

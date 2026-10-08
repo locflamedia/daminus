@@ -22,9 +22,15 @@ import { cleanCommand, commandRisks } from '@/lib/command-safety'
 import UiCommandRisks from './UiCommandRisks.vue'
 import UiCopyButton from './UiCopyButton.vue'
 
-const props = withDefaults(defineProps<{ command: string; prompt?: string | false }>(), {
-  prompt: '$',
-})
+const props = withDefaults(
+  defineProps<{
+    command: string
+    prompt?: string | false
+    /** The 36 px bar with a white 28 px Copy button (the host key screen). */
+    large?: boolean
+  }>(),
+  { prompt: '$', large: false },
+)
 const emit = defineEmits<{ copied: [command: string] }>()
 
 const { t } = useI18n()
@@ -34,7 +40,7 @@ const risks = computed(() => commandRisks(cleaned.value.text))
 </script>
 
 <template>
-  <div class="command">
+  <div class="command" :class="{ large }">
     <div class="line">
       <span v-if="prompt" class="prompt" aria-hidden="true">{{ prompt }}</span>
       <span
@@ -44,7 +50,11 @@ const risks = computed(() => commandRisks(cleaned.value.text))
         :aria-label="t('ui.command.name')"
         >{{ cleaned.text }}</span
       >
-      <UiCopyButton :text="cleaned.text" @copied="emit('copied', $event)" />
+      <UiCopyButton
+        :text="cleaned.text"
+        :variant="large ? 'bar' : 'line'"
+        @copied="emit('copied', $event)"
+      />
     </div>
     <UiCommandRisks :risks="risks" :removed="cleaned.removed" />
   </div>
@@ -72,6 +82,13 @@ const risks = computed(() => commandRisks(cleaned.value.text))
   font: var(--weight-regular) var(--text-12) var(--font-mono);
 }
 
+.large .line {
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-1) 0 var(--space-3);
+  border-radius: var(--radius-sm);
+}
+
 .prompt {
   flex: none;
   color: var(--code-dim);
@@ -94,6 +111,10 @@ const risks = computed(() => commandRisks(cleaned.value.text))
   --scroll-inset: 0px;
   white-space: nowrap;
   line-height: 22px;
+}
+
+.large .text {
+  padding-top: 7px;
 }
 
 .text:focus-visible {

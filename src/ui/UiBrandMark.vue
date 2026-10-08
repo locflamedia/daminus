@@ -22,7 +22,7 @@ const lifted = computed(() => props.name !== null && DARK_ON_DARK.includes(props
   <img
     v-if="name"
     class="brand"
-    :class="{ lift: lifted }"
+    :class="{ 'brand-lift': lifted }"
     :src="BRAND_FILES[name]"
     :width="size"
     :height="size"
@@ -41,12 +41,12 @@ const lifted = computed(() => props.name !== null && DARK_ON_DARK.includes(props
 }
 
 @media (prefers-color-scheme: dark) {
-  :global(:root:not([data-theme='light'])) .lift {
+  :global(:root:not([data-theme='light']) .brand-lift) {
     filter: brightness(1.5);
   }
 }
 
-:global(:root[data-theme='dark']) .lift {
+:global(:root[data-theme='dark'] .brand-lift) {
   filter: brightness(1.5);
 }
 </style>

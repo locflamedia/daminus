@@ -120,7 +120,26 @@ describe('Containers tab', () => {
     const w = await mountTab(ProjectContainersTab, 'tab-docker-perm', 'tiemtra')
     expect(w.text()).toContain('Daminus can’t use Docker on vps-sg-2')
     expect(w.text()).toContain('sudo usermod -aG docker SSH_USER')
-    expect(w.text()).toContain('act as root')
+    expect(w.text()).toContain('Docker group is root access')
+    expect(w.text()).toContain('anyone in the docker group can take over this server')
+    expect(w.text()).toContain('Check again')
+  })
+
+  it('Check again scans only the host that needs permission', async () => {
+    const started: unknown[] = []
+    const w = await mountTab(ProjectContainersTab, 'tab-docker-perm', 'tiemtra')
+    mockCommands((cmd, args) => {
+      if (cmd === 'scan_start') {
+        started.push(args.scope)
+        return { scan_id: 's1', joined: false }
+      }
+      return null
+    })
+    await w
+      .findAll('button')
+      .find((b) => b.text().includes('Check again'))
+      ?.trigger('click')
+    expect(started).toEqual([{ projects: [], hosts: ['vps-sg-2'] }])
   })
 
   it('says a host did not answer and keeps the parts of the other host', async () => {

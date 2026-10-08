@@ -1,0 +1,67 @@
+{
+  "expected": {
+    "menu": {
+      "label": "Thao tác cho {check}",
+      "open": "Thêm thao tác",
+      "copyPath": "Sao chép đường dẫn",
+      "mark": "Đánh dấu là bình thường…"
+    },
+    "pop": {
+      "label": "Đánh dấu là bình thường",
+      "title": "Đánh dấu là bình thường",
+      "why": "Vì sao không sao?",
+      "reason": {
+        "intended": {
+          "title": "Cố ý để như vậy",
+          "text": "Tệp hoặc cài đặt do bạn hay framework đặt vào có chủ đích."
+        },
+        "accepted_risk": {
+          "title": "Tôi chấp nhận rủi ro lúc này",
+          "text": "Vấn đề đã biết, sẽ sửa sau. Cần một ngày."
+        },
+        "false_positive": {
+          "title": "Kiểm tra này sai ở đây",
+          "text": "Báo nhầm. Hãy cho chúng tôi biết để kiểm tra tốt hơn."
+        }
+      },
+      "covers": "Phạm vi",
+      "coversAsItIs": "Tệp này, đúng như hiện tại",
+      "coversAny": "Mọi tệp ở đường dẫn này",
+      "review": "Kiểm tra lại",
+      "review30": "30 ngày",
+      "review90": "90 ngày",
+      "reviewNever": "Không bao giờ",
+      "alert": "Báo lại nếu tệp thay đổi",
+      "alertLocked": "luôn bật với mức nghiêm trọng",
+      "note": "Ghi chú cho bạn sau này",
+      "saved": "Lưu trong projects.json · hiện ở Lịch sử",
+      "cancel": "Huỷ",
+      "submit": "Đánh dấu",
+      "saving": "Đang lưu…",
+      "error": {
+        "rule_no_result": "Kết quả này không còn trong lần quét mới nhất nên không thể đánh dấu.",
+        "rule_not_an_issue": "Kết quả này không còn là cảnh báo hay nghiêm trọng.",
+        "rule_needs_date": "Hãy chọn ngày để kiểm tra lại.",
+        "rule_critical_any": "Kết quả nghiêm trọng luôn gắn với bằng chứng của nó.",
+        "rule_review_days": "Hãy chọn 30 hoặc 90 ngày.",
+        "rule_note": "Ghi chú quá dài hoặc có ký tự không lưu được.",
+        "other": "Daminus không lưu được quy tắc. Chưa có gì thay đổi."
+      }
+    },
+    "toast": {
+      "until": "Đã đánh dấu bình thường đến {date}",
+      "always": "Đã đánh dấu bình thường",
+      "undo": "Hoàn tác",
+      "gone": "Đã bỏ quy tắc"
+    },
+    "undo": {
+      "label": "Hoàn tác",
+      "title": "Bỏ quy tắc trên {check}"
+    },
+    "broken": {
+      "title": "Từng bình thường, giờ đã khác",
+      "text": "Bằng chứng đã thay đổi từ khi bạn đánh dấu nên quy tắc không còn đúng.",
+      "note": "Ghi chú của bạn: “{note}”"
+    }
+  }
+}

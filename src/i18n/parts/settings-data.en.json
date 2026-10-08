@@ -1,0 +1,85 @@
+{
+  "settingsData": {
+    "failed": "Something went wrong. Nothing was changed.",
+    "navHint": "{used} of {limit}",
+    "reveal": "Show in Finder",
+    "storage": {
+      "title": "On this Mac",
+      "kind": "JSON, {n} files",
+      "bar": "Share of each kind in the folder",
+      "scans": "Scan results",
+      "ai": "AI replies",
+      "logs": "Logs"
+    },
+    "history": {
+      "title": "History",
+      "keep": "Keep scans",
+      "keepGroup": "How many scans to keep",
+      "keepHint": "{used} of {limit} used. Oldest go first.",
+      "keepAllHint": "{used} kept. None are removed.",
+      "all": "All",
+      "forget": "Forget AI replies after",
+      "forgetGroup": "When AI replies are forgotten",
+      "forgetHint": "Scans stay; only the AI text is removed.",
+      "days": "{n} d",
+      "never": "Never"
+    },
+    "stored": {
+      "stored": "Stored",
+      "never": "Never stored",
+      "scanNumbers": "Scan numbers, sizes and statuses",
+      "paths": "File names and paths",
+      "ai": "AI replies and your follow-ups",
+      "notes": "Marked-as-expected notes",
+      "secrets": "Passwords and .env values",
+      "keys": "SSH keys and passphrases",
+      "contents": "File contents",
+      "bodies": "Response bodies of exposed URLs",
+      "keychain": "AI keys live in the macOS Keychain under “Daminus”, not in this file."
+    },
+    "size": {
+      "title": "Size over scans",
+      "perScan": "≈ {size} per scan",
+      "levels": "At {keep} scans kept it levels off near {size}.",
+      "curve": "Size of the folder after each scan",
+      "oldest": "Oldest scan",
+      "oldestValue": "#{seq} · {date}",
+      "files": "Files",
+      "filesValue": "projects, settings, state, {n} scans",
+      "largest": "Largest part",
+      "largestValue": "{part} · {size}",
+      "partScans": "snapshots",
+      "partAi": "AI replies",
+      "partLogs": "logs"
+    },
+    "export": {
+      "title": "Export",
+      "remark": "JSON · same redaction as AI",
+      "sample": "A sample of the exported file",
+      "all": "Export all scans",
+      "import": "Import…",
+      "done": "{name} · Downloads"
+    },
+    "backups": {
+      "title": "Backups",
+      "timeMachine": "Time Machine includes this folder",
+      "icloud": "iCloud sync",
+      "icloudValue": "off by design"
+    },
+    "start": {
+      "title": "Start over",
+      "body": "Deletes scans, AI replies and notes from this Mac. Your servers, ssh config and Keychain keys are not touched.",
+      "hold": "Hold to delete history",
+      "action": "Delete history",
+      "holdHint": "Hold for 1.5 s. Letting go early cancels.",
+      "confirmTitle": "Delete history?",
+      "confirmBody": "Scans, AI replies and expected notes are deleted from this Mac. Your servers, ssh config and Keychain keys are not touched.",
+      "deleted": "Nothing to delete | Deleted 1 scan | Deleted {count} scans",
+      "reset": "Reset all settings too…",
+      "resetTitle": "Reset all settings?",
+      "resetBody": "Language, theme, scan limits and every other setting go back to what Daminus starts with. This cannot be undone. Your history stays.",
+      "resetConfirm": "Reset settings",
+      "resetDone": "Settings are back to their defaults."
+    }
+  }
+}

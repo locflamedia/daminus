@@ -1,7 +1,8 @@
 <!--
   The legend line under a chart: a small swatch and a word for each series or state, so a
   colour is always named. Swatches are 8 px dots or 10 px rounded squares; `ring` draws an
-  outline with no fill (the dashed average line of the bar chart). The words come from the
+  outline with no fill (the dashed average line of the bar chart); `hatch` is the diagonal
+  stripe of an "expected" cell (the colour is ignored). The words come from the
   caller and are rendered as text.
 -->
 <script setup lang="ts">
@@ -10,7 +11,7 @@ import { COLOR_VAR, type ChartColor } from './chart-colors'
 export interface LegendItem {
   color: ChartColor
   text: string
-  shape?: 'dot' | 'square' | 'ring'
+  shape?: 'dot' | 'square' | 'ring' | 'hatch'
 }
 
 withDefaults(defineProps<{ items: readonly LegendItem[]; size?: 'default' | 'small' }>(), {
@@ -72,6 +73,14 @@ withDefaults(defineProps<{ items: readonly LegendItem[]; size?: 'default' | 'sma
   width: 10px;
   height: 10px;
   border-radius: 3px;
+}
+
+.shape-hatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: repeating-linear-gradient(135deg, var(--hatch-1) 0 3px, var(--hatch-2) 3px 6px);
+  box-shadow: inset 0 0 0 1px var(--hatch-1);
 }
 
 .shape-ring {

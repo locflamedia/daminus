@@ -47,8 +47,16 @@ const props = withDefaults(
     compact?: boolean
     /** A quiet line above the rows ("Add metabase to"). */
     heading?: string
+    /** Pressing a row's key (a single letter in `keys`) while the menu is open picks that row. */
+    shortcuts?: boolean
   }>(),
-  { placement: 'bottom-start', inline: false, compact: false, heading: undefined },
+  {
+    placement: 'bottom-start',
+    inline: false,
+    compact: false,
+    heading: undefined,
+    shortcuts: false,
+  },
 )
 
 const open = defineModel<boolean>('open', { default: false })
@@ -142,10 +150,24 @@ function onKeydown(event: KeyboardEvent) {
       move('last')
       break
     default:
+      if (props.shortcuts && pickByKey(event)) break
       if (event.key.length === 1 && /\S/.test(event.key) && !event.metaKey && !event.ctrlKey) {
         typeahead(event.key.toLowerCase())
       }
   }
+}
+
+function pickByKey(event: KeyboardEvent): boolean {
+  if (event.metaKey || event.ctrlKey || event.altKey) return false
+  const key = event.key.toLowerCase()
+  const item = props.items.find(
+    (row) =>
+      !row.disabled && row.keys?.some((cap) => cap.length === 1 && cap.toLowerCase() === key),
+  )
+  if (!item) return false
+  event.preventDefault()
+  pick(item)
+  return true
 }
 
 function pick(item: MenuItem) {

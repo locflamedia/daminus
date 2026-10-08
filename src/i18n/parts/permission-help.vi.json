@@ -1,0 +1,9 @@
+{
+  "permissionHelp": {
+    "checkAgain": "Kiểm tra lại",
+    "checking": "Đang kiểm tra…",
+    "checkNote": "Mở một phiên SSH mới để thay đổi nhóm có hiệu lực, rồi đọc lại tab này.",
+    "whyTitle": "Vì sao chúng tôi không xin sudo",
+    "whyText": "Một ứng dụng giám sát có quyền root là thêm một thứ có thể hỏng. Daminus đọc bằng người dùng bình thường của bạn và nói rõ thiếu quyền nào, để bạn tự quyết định."
+  }
+}

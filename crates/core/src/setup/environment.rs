@@ -8,6 +8,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
 use super::SetupService;
+use crate::ssh::SshTools;
 
 /// How long `ssh-add -l` may take.
 const AGENT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -33,6 +34,29 @@ pub struct SshEnvironment {
     pub keys: u32,
     /// `Termius.app` is installed.
     pub termius_installed: bool,
+}
+
+/// What `ssh-add -l` says about the agent, for Settings › About and the
+/// diagnostics. Only whether an agent answers and how many keys it holds.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct AgentStatus {
+    /// An agent answered (with or without keys).
+    pub present: bool,
+    /// The agent holds at least one key.
+    pub has_keys: bool,
+    /// How many keys it holds (a count only, never names or fingerprints).
+    pub keys: u32,
+}
+
+impl AgentStatus {
+    pub fn new(state: AgentState, keys: u32) -> Self {
+        Self {
+            present: state != AgentState::Unavailable,
+            has_keys: keys > 0,
+            keys,
+        }
+    }
 }
 
 /// Reads `ssh-add -l`: exit 0 lists the keys, 1 says there are none, 2 means
@@ -72,22 +96,29 @@ impl SetupService {
     /// The agent and Termius, for the empty-app screens.
     pub async fn environment(&self) -> SshEnvironment {
         let tools = &self.shared.tools;
-        let cmd = tools.command(tools.ssh_add());
-        let (agent, keys) = match tools.capture(cmd_with_flag(cmd), b"", AGENT_TIMEOUT).await {
-            Some(out) => read_agent(out.code, &out.stdout),
-            None => (AgentState::Unavailable, 0),
-        };
+        let (agent, keys) = ask_agent(tools).await;
         SshEnvironment {
             agent,
             keys,
             termius_installed: termius_paths(tools.home()).iter().any(|p| p.is_dir()),
         }
     }
+
+    /// Whether the agent the app would use answers, and how many keys it holds.
+    pub async fn agent_status(&self) -> AgentStatus {
+        let (agent, keys) = ask_agent(&self.shared.tools).await;
+        AgentStatus::new(agent, keys)
+    }
 }
 
-fn cmd_with_flag(mut cmd: tokio::process::Command) -> tokio::process::Command {
+/// Runs `ssh-add -l` with the environment the app resolved at launch.
+async fn ask_agent(tools: &SshTools) -> (AgentState, u32) {
+    let mut cmd = tools.command(tools.ssh_add());
     cmd.arg("-l");
-    cmd
+    match tools.capture(cmd, b"", AGENT_TIMEOUT).await {
+        Some(out) => read_agent(out.code, &out.stdout),
+        None => (AgentState::Unavailable, 0),
+    }
 }
 
 fn termius_paths(home: Option<PathBuf>) -> Vec<PathBuf> {
@@ -124,6 +155,34 @@ mod tests {
     fn no_agent_is_unavailable() {
         assert_eq!(read_agent(Some(2), ""), (AgentState::Unavailable, 0));
         assert_eq!(read_agent(None, ""), (AgentState::Unavailable, 0));
+    }
+
+    #[test]
+    fn status_is_only_presence_and_a_count() {
+        assert_eq!(
+            AgentStatus::new(AgentState::Keys, 2),
+            AgentStatus {
+                present: true,
+                has_keys: true,
+                keys: 2
+            }
+        );
+        assert_eq!(
+            AgentStatus::new(AgentState::Empty, 0),
+            AgentStatus {
+                present: true,
+                has_keys: false,
+                keys: 0
+            }
+        );
+        assert_eq!(
+            AgentStatus::new(AgentState::Unavailable, 0),
+            AgentStatus {
+                present: false,
+                has_keys: false,
+                keys: 0
+            }
+        );
     }
 
     #[test]

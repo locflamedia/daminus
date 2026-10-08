@@ -4,7 +4,11 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRouter } from 'vue-router'
 import { LOCALES } from '@/i18n'
 import { useLayoutRange } from '@/lib/viewport'
+import { useDataStore } from '@/stores/data'
+import { groupsOn } from '@/lib/scan-settings'
+import { useScanSettingsStore } from '@/stores/scan-settings'
 import { useSettingsStore } from '@/stores/settings'
+import { useSetupStore } from '@/stores/setup'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiKbd from '@/ui/UiKbd.vue'
 import { SETTINGS_SECTIONS } from './settings-sections'
@@ -12,17 +16,34 @@ import { SETTINGS_SECTIONS } from './settings-sections'
 const { t } = useI18n()
 const router = useRouter()
 const settings = useSettingsStore()
+const scan = useScanSettingsStore()
+const setup = useSetupStore()
+const data = useDataStore()
 const range = useLayoutRange()
 
 /**
  * Right-hand hint of an item: the current value, where the app already knows it. Below 1080 px
  * the column keeps its labels and drops the values.
  */
+/** "12 of 20": the scans kept and the limit, once the core has told how many there are. */
+const dataHint = computed((): Record<string, string> => {
+  const scans = data.usage?.scans
+  if (scans === undefined) return {}
+  const keep = data.retention.keep_scans
+  return {
+    data: keep === null ? String(scans) : t('settingsData.navHint', { used: scans, limit: keep }),
+  }
+})
+
 const hints = computed((): Record<string, string> => {
   if (range.value === 'narrow') return {}
   return {
     general: LOCALES.map((l) => l.toUpperCase()).join(' / '),
     appearance: t(`theme.${settings.theme}`),
+    scan: t('settingsNav.scanValue', { n: groupsOn(scan.scan), total: 6 }),
+    hosts: setup.listing ? String(setup.entries.length) : '',
+    ...dataHint.value,
+    about: `v${__APP_VERSION__}`,
   }
 })
 
@@ -34,7 +55,10 @@ function onKeydown(e: KeyboardEvent) {
   if (e.key === 'Escape' && !e.defaultPrevented) leave()
 }
 
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  void data.load()
+})
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 

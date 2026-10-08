@@ -1,0 +1,23 @@
+{
+  "settingsAbout": {
+    "name": "Daminus",
+    "version": "Phiên bản {version}",
+    "credits": {
+      "made": "Làm tại Việt Nam · MIT",
+      "painting": "Đêm đầy sao, Vincent van Gogh, 1889 · phạm vi công cộng",
+      "open": "Biểu tượng của thesvg · Phông chữ Geist · Cờ của flag-icons"
+    },
+    "diagnostics": {
+      "title": "Chẩn đoán",
+      "agent": "SSH agent",
+      "agentKeys": "Đang chạy · {n} khóa | Đang chạy · 1 khóa | Đang chạy · {n} khóa",
+      "agentEmpty": "Đang chạy · chưa có khóa",
+      "agentNone": "Không chạy",
+      "agentUnknown": "Không hỏi được",
+      "copy": "Sao chép chẩn đoán",
+      "copyHint": "Phiên bản ứng dụng và hệ thống, ssh, cài đặt của bạn, kết quả gần nhất của từng máy chủ và nhật ký. Bí mật được xóa trước. Chỉ sao chép; không gửi đi đâu.",
+      "copied": "Đã sao chép chẩn đoán.",
+      "failed": "Không sao chép được chẩn đoán."
+    }
+  }
+}

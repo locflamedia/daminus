@@ -6,7 +6,9 @@
 mod canary_tests;
 pub mod event;
 mod history;
+mod hosts;
 mod report;
+mod rules;
 mod service;
 pub mod targets;
 #[cfg(test)]
@@ -18,7 +20,11 @@ pub use history::{
     MAX_SUMMARISED_SCANS, ProjectSummary, ScanFact, ScanSummary, history_bundle, history_facts,
     history_view, report_at,
 };
+pub use hosts::{excluded_hosts, set_host_included};
 pub use report::latest_report;
+pub use rules::{
+    Covers, ExpectedDraft, MAX_NOTE_CHARS, REVIEW_DAYS, add_rule, make_rule, remove_rule,
+};
 pub use service::{
     HOST_BUDGET, MAX_HOSTS_AT_ONCE, ScanService, ServiceOptions, Started, build_bundles,
 };

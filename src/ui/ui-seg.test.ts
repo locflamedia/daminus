@@ -89,4 +89,24 @@ describe('UiSeg', () => {
     expect(radios[0]?.attributes('aria-selected')).toBeUndefined()
     wrapper.unmount()
   })
+
+  it('draws a snug track and a quiet option only when asked', () => {
+    const wrapper = mount(UiSeg, {
+      props: {
+        modelValue: 'all',
+        label: 'Filter',
+        snug: true,
+        options: [
+          { value: 'all', label: 'All' },
+          { value: 'never', label: 'Never', quiet: true },
+        ],
+      },
+    })
+    expect(wrapper.classes()).toContain('snug')
+    const [all, never] = wrapper.findAll('[role="tab"]')
+    expect(never?.classes()).toContain('quiet')
+    expect(all?.classes()).not.toContain('quiet')
+    expect(make().classes()).not.toContain('snug')
+    wrapper.unmount()
+  })
 })

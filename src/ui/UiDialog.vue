@@ -9,10 +9,16 @@
   says `close` and the owner maps it to the safe choice. Focus starts on the first control
   (put the safe one first), Tab wraps, and focus returns to where it was. It fills the nearest
   positioned ancestor. Scale .98 to 1 with a fade, 200 ms; Reduce Motion keeps the fade.
+
+  `wide` is the board "Host key changed": a 680 px white card (padding 28, radius 20, gap 18) with
+  no tray, a 3 px blur on the scrim and a 48 px icon tile; a critical tile is a gradient with a
+  pulsing halo, and an `alert` that is wide comes in at scale .96 and nudges three times
+  sideways in 300 ms. `#title` replaces the plain title text (the host in mono); a button
+  marked `data-dialog-primary` takes focus first.
 -->
 <script setup lang="ts">
 import { ref, toRef, useId } from 'vue'
-import { useFocusTrap } from '@/lib/focus-trap'
+import { focusableIn, useFocusTrap } from '@/lib/focus-trap'
 import UiIcon from './UiIcon.vue'
 import type { IconName } from './icon-paths'
 
@@ -22,25 +28,32 @@ const props = withDefaults(
     title: string
     description?: string
     icon?: IconName
-    tone?: 'crit' | 'warn' | 'info'
+    tone?: 'crit' | 'warn' | 'info' | 'neutral'
     alert?: boolean
+    wide?: boolean
   }>(),
-  { description: undefined, icon: 'shield', tone: 'crit', alert: false },
+  { description: undefined, icon: 'shield', tone: 'crit', alert: false, wide: false },
 )
 
 const emit = defineEmits<{ close: [] }>()
-defineSlots<{ default?: () => unknown; footer?: () => unknown }>()
+defineSlots<{ default?: () => unknown; footer?: () => unknown; title?: () => unknown }>()
 
 const titleId = useId()
 const descId = useId()
 const panel = ref<HTMLElement>()
 
-useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
+useFocusTrap(panel, toRef(props, 'open'), {
+  onEscape: () => emit('close'),
+  initialFocus: (root) => {
+    const primary = root.querySelector<HTMLElement>('[data-dialog-primary]')
+    return primary && focusableIn(root).includes(primary) ? primary : null
+  },
+})
 </script>
 
 <template>
   <Transition name="dialog" appear>
-    <div v-if="open" class="layer">
+    <div v-if="open" class="layer" :class="{ wide, shakes: wide && alert }">
       <div class="scrim" aria-hidden="true" />
       <div
         ref="panel"
@@ -52,9 +65,13 @@ useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
       >
         <div class="card">
           <div class="head">
-            <span class="tile" :class="`tone-${tone}`"><UiIcon :name="icon" :size="18" /></span>
+            <span class="tile" :class="`tone-${tone}`"
+              ><UiIcon :name="icon" :size="wide ? 24 : 18"
+            /></span>
             <div class="texts">
-              <h2 :id="titleId" class="title">{{ title }}</h2>
+              <h2 :id="titleId" class="title">
+                <slot name="title">{{ title }}</slot>
+              </h2>
               <p v-if="description" :id="descId" class="description">{{ description }}</p>
             </div>
           </div>
@@ -135,6 +152,11 @@ useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
   color: var(--accent-ink);
 }
 
+.tone-neutral {
+  background: var(--surface-1);
+  color: var(--ink-3);
+}
+
 .texts {
   display: flex;
   flex-direction: column;
@@ -156,8 +178,63 @@ useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
 
 .foot {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: flex-end;
   gap: var(--space-2);
+}
+
+.wide .scrim {
+  backdrop-filter: blur(3px);
+}
+
+.wide .tray {
+  width: 680px;
+  padding: 0;
+  background: none;
+}
+
+.wide .card {
+  gap: 18px;
+  padding: 28px;
+  border-radius: var(--radius-lg);
+}
+
+.wide .head {
+  gap: var(--space-4);
+}
+
+.wide .texts {
+  gap: 6px;
+}
+
+.wide .tile {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+}
+
+.wide .tile.tone-crit {
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--crit-solid), var(--surface-0) 14%),
+    var(--crit-ink)
+  );
+  color: var(--surface-0);
+  animation: dialog-halo 1.8s var(--ease-out) 3;
+}
+
+.wide .title {
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.wide .description {
+  line-height: 1.5;
+}
+
+.wide .foot {
+  gap: 10px;
 }
 
 .dialog-enter-active,
@@ -180,10 +257,62 @@ useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
   transform: scale(0.98);
 }
 
+/* The critical dialog stops you: it lands at .96 and nudges three times sideways in 300 ms. */
+.shakes.dialog-enter-active .tray {
+  transition: none;
+  animation: dialog-shake 500ms var(--ease-out) both;
+}
+
+.shakes.dialog-enter-from .tray {
+  transform: none;
+}
+
+@keyframes dialog-shake {
+  0% {
+    transform: scale(0.96);
+  }
+
+  40% {
+    transform: none;
+  }
+
+  55% {
+    transform: translateX(-6px);
+  }
+
+  75% {
+    transform: translateX(5px);
+  }
+
+  90% {
+    transform: translateX(-3px);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes dialog-halo {
+  0% {
+    box-shadow: 0 0 0 0 var(--crit-halo);
+  }
+
+  70%,
+  100% {
+    box-shadow: 0 0 0 14px transparent;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dialog-enter-from .tray,
   .dialog-leave-to .tray {
     transform: none;
+  }
+
+  .shakes.dialog-enter-active .tray,
+  .wide .tile.tone-crit {
+    animation: none;
   }
 }
 </style>

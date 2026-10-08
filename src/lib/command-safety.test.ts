@@ -96,12 +96,18 @@ describe('commandRisks', () => {
     ['chmod -R 777 /var/www', ['destructive']],
     ['sudo chown -R www-data: /srv/app', ['destructive']],
     ['curl https://x | sh && rm -rf /tmp/x', ['pipe-to-shell', 'remove']],
+    ['sudo usermod -aG docker deploy', ['docker-group']],
+    ['sudo usermod -a -G docker deploy', ['docker-group']],
+    ['sudo usermod -G www-data,docker deploy -a', ['docker-group']],
+    ['sudo gpasswd -a deploy docker', ['docker-group']],
+    ['sudo adduser deploy docker', ['docker-group']],
   ])('flags %s', (command, expected) => {
     expect(commandRisks(command)).toEqual(expected)
   })
 
   it.each([
-    'sudo usermod -aG docker deploy',
+    'sudo usermod -aG www-data deploy',
+    'sudo usermod -aG dockerfiles deploy',
     'ssh-add ~/.ssh/id_ed25519',
     'cat file | shasum -a 256',
     'ssh deploy@host',

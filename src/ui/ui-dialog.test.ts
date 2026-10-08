@@ -68,6 +68,22 @@ describe('UiDialog', () => {
     expect(document.activeElement?.id).toBe('keep')
   })
 
+  it('falls back to the first control when the primary one is disabled', async () => {
+    wrapper = mount(UiDialog, {
+      props: { open: true, title: 'T', alert: true },
+      slots: {
+        footer: () => [
+          h('button', { id: 'keep', type: 'button' }, 'Keep paused'),
+          h('button', { id: 'trust', type: 'button', disabled: true, 'data-dialog-primary': '' }),
+        ],
+      },
+      attachTo: document.body,
+    })
+    await nextTick()
+    await nextTick()
+    expect(document.activeElement?.id).toBe('keep')
+  })
+
   it('wraps Tab and asks to close on Escape, but never closes by itself', async () => {
     make()
     await nextTick()

@@ -40,6 +40,7 @@ const level = computed(() => props.finding.level)
     <slot name="end"
       ><span v-if="since" class="since">{{ since }}</span></slot
     >
+    <slot name="actions" />
   </div>
 </template>
 

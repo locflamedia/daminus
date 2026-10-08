@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use daminus_core::data::{self, DataUsage};
+use daminus_core::diagnostics::{self, Diagnostics, DiagnosticsSource};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
@@ -14,16 +16,21 @@ use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::domain::project::ProjectsFile;
+use daminus_core::domain::settings::{
+    AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
+};
 use daminus_core::probe::UrlProbe;
 use daminus_core::scan::{
-    HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started, history_facts,
-    history_view, latest_report, report_at,
+    ExpectedDraft, HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started,
+    add_rule, excluded_hosts, history_facts, history_view, latest_report, remove_rule, report_at,
+    set_host_included,
 };
 use daminus_core::setup::{
-    Saved, SetupEvent, SetupResult, SetupRun, SetupService, SshEnvironment, Step, UrlCheck,
-    check_url,
+    AgentStatus, Saved, SetupEvent, SetupResult, SetupRun, SetupService, SshEnvironment, Step,
+    UrlCheck, check_url,
 };
 use daminus_core::ssh::config::HostListing;
+use daminus_core::ssh::hostkey::HostKeyInfo;
 use daminus_core::ssh::{SshTools, Transport};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
@@ -44,6 +51,8 @@ pub struct AppCore {
     service: ScanService,
     setup: SetupService,
     probe: Arc<dyn UrlProbe>,
+    tools: SshTools,
+    log_file: Option<PathBuf>,
 }
 
 /// The receivers of the two event streams; each must be drained continuously
@@ -70,19 +79,28 @@ impl AppCore {
             store.clone(),
             tx,
         );
-        let setup = SetupService::new(transport, tools, store.clone(), setup_tx);
+        let setup = SetupService::new(transport, tools.clone(), store.clone(), setup_tx);
         (
             Self {
                 store,
                 service,
                 setup,
                 probe,
+                tools,
+                log_file: None,
             },
             AppEvents {
                 scan: rx,
                 setup: setup_rx,
             },
         )
+    }
+
+    /// Sets the log file the diagnostics read the tail of.
+    #[must_use]
+    pub fn with_log_file(mut self, path: impl Into<PathBuf>) -> Self {
+        self.log_file = Some(path.into());
+        self
     }
 
     // ---------------------------------------------------------------- setup
@@ -96,6 +114,21 @@ impl AppCore {
     /// The SSH agent and Termius, for the empty-app screens.
     pub async fn ssh_environment(&self) -> SshEnvironment {
         self.setup.environment().await
+    }
+
+    /// Whether the SSH agent the app uses answers, and how many keys it holds.
+    pub async fn agent_status(&self) -> AgentStatus {
+        self.setup.agent_status().await
+    }
+
+    /// The redacted text Settings › About copies for a bug report. Returned
+    /// to the webview only; nothing is sent anywhere.
+    pub async fn diagnostics_collect(&self) -> Diagnostics {
+        let source = DiagnosticsSource {
+            app_version: daminus_core::VERSION.to_owned(),
+            log_file: self.log_file.clone(),
+        };
+        diagnostics::collect(&self.tools, &self.store, &source).await
     }
 
     /// Starts the login test or discover on `hosts`, or joins the run in progress.
@@ -199,9 +232,97 @@ impl AppCore {
         Ok(self.store.load_projects()?.value.rules)
     }
 
+    /// Saves a "mark as expected" rule for a result of the latest report. The fingerprint, the
+    /// review day and the id are set here, never by the webview.
+    pub fn rules_add(&self, draft: ExpectedDraft) -> Result<ExpectedRule, AppError> {
+        add_rule(
+            &self.store,
+            draft,
+            Timestamp::new(time::OffsetDateTime::now_utc()),
+        )
+    }
+
+    /// Takes a rule out again (the toast's Undo). `false` when it was not there.
+    pub fn rules_remove(&self, id: &str) -> Result<bool, AppError> {
+        remove_rule(&self.store, id)
+    }
+
+    /// Looks at the key `host` offers and the keys recorded for it, without logging in.
+    pub async fn host_key_check(&self, host: &HostAlias) -> Option<HostKeyInfo> {
+        self.setup.host_key(host).await
+    }
+
     /// `projects.json` as saved (names for the menu bar).
     pub fn projects(&self) -> Result<ProjectsFile, AppError> {
         Ok(self.store.load_projects()?.value)
+    }
+
+    /// `settings.json` as saved, with the defaults for what the file leaves out.
+    pub fn settings_get(&self) -> Result<Settings, AppError> {
+        Ok(self.store.load_settings()?.value)
+    }
+
+    /// Replaces the General section, checks the whole file again, then writes it.
+    pub fn settings_set_general(&self, general: GeneralSettings) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.general = general)
+    }
+
+    /// Replaces the Appearance section, checks the whole file again, then writes it.
+    pub fn settings_set_appearance(
+        &self,
+        appearance: AppearanceSettings,
+    ) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.appearance = appearance)
+    }
+
+    /// Replaces the Scan section (what to check, the limits, the thresholds), checks the whole
+    /// file again, then writes it. The next report reads the thresholds, so they apply at once.
+    pub fn settings_set_scan(&self, scan: ScanSettings) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.scan = scan)
+    }
+
+    /// Replaces the Data section (how many scans to keep, when AI replies go), checks the
+    /// whole file again, then writes it. The next scan prunes to the new limit.
+    pub fn settings_set_data(&self, data: DataSettings) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.data = data)
+    }
+
+    /// What the app's folder holds, for Settings › Data.
+    pub fn data_usage(&self) -> DataUsage {
+        data::usage(
+            &self.store,
+            self.log_file.as_deref(),
+            data::home_dir().as_deref(),
+        )
+    }
+
+    /// Every kept scan as one redacted JSON text, for the shell to write to Downloads.
+    pub fn data_export(&self) -> Result<String, AppError> {
+        data::export_scans(&self.store)
+    }
+
+    /// Deletes the scans and the expected notes; answers how many scans went.
+    pub fn data_clear(&self) -> Result<usize, AppError> {
+        data::clear_history(&self.store)
+    }
+
+    /// Puts every setting back to its default.
+    pub fn settings_reset(&self) -> Result<Settings, AppError> {
+        data::reset_settings(&self.store)
+    }
+
+    /// The hosts switched off for scans (Settings › Hosts).
+    pub fn hosts_excluded(&self) -> Result<Vec<HostAlias>, AppError> {
+        excluded_hosts(&self.store)
+    }
+
+    /// Switches a host on or off for scans; answers with the hosts that are off afterwards.
+    pub fn hosts_set_include(
+        &self,
+        host: &HostAlias,
+        include: bool,
+    ) -> Result<Vec<HostAlias>, AppError> {
+        set_host_included(&self.store, host, include)
     }
 
     /// The app language from Settings › General (`en` when unreadable).

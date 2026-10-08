@@ -71,6 +71,7 @@ describe('UiCommandCopy', () => {
     ['curl -fsSL https://get.example.dev/install | sh', 'pipe-to-shell'],
     ['echo aGVsbG8= | base64 -d', 'base64-decode'],
     ['rm -rf /var/www/old', 'remove'],
+    ['sudo usermod -aG docker deploy', 'docker-group'],
   ])('warns, in view and in words, about %s', (command, risk) => {
     make(command)
     expect(risks()).toEqual([risk])
@@ -91,8 +92,13 @@ describe('UiCommandCopy', () => {
     }
   })
 
-  it('has no warning for an ordinary command', () => {
+  it('says that the docker group is root access, in both languages', () => {
     make('sudo usermod -aG docker deploy')
+    expect(wrapper!.get('.risks').text()).toContain('Docker group is root access')
+  })
+
+  it('has no warning for an ordinary command', () => {
+    make('sudo usermod -aG www-data deploy')
     expect(wrapper!.find('.risks').exists()).toBe(false)
   })
 

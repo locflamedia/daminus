@@ -1,7 +1,7 @@
 // The servers strip of the Overview: one cell per host with a disk ring, the load and the
 // memory in use, read from the `disk.fs` and `sys.*` results of the latest report. A host that
 // did not answer fades and offers a retry. Like the cards, it returns facts, not sentences.
-import type { Item, Level, Report, ServerRollup } from '@/api'
+import type { HostOutcome, Item, Level, Report, ServerRollup } from '@/api'
 import { diskPercent, diskTone, isUnreachable, type DiskTone } from './rollups'
 
 export type ServerCellState = 'ok' | 'unreachable' | 'not-scanned'
@@ -21,6 +21,8 @@ export interface ServerCell {
   silentDays: number | null
   /** The results of this host were not checked in the latest scan. */
   stale: boolean
+  /** How the latest scan ended for the host; `null` when it was not part of it. */
+  outcome: HostOutcome | null
 }
 
 const DAY_MS = 86_400_000
@@ -52,6 +54,7 @@ export function buildServerCells(report: Report, now: number): ServerCell[] {
       memUsed: free === null ? null : Math.round(100 - free),
       silentDays: silentDays(s, now),
       stale: mine.length > 0 && mine.every((i) => i.disposition.kind === 'stale'),
+      outcome: s.outcome ?? null,
     }
   })
 }

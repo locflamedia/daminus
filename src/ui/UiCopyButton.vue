@@ -6,7 +6,8 @@
   the text it is given (the caller has already cleaned it) through the clipboard wrapper, and
   the status region is the only thing that announces the result.
 
-  `line` sits at the end of a command line; `block` floats in the top corner of a code block,
+  `line` sits at the end of a command line; `bar` is the white 28 px button of the tall bar
+  (board "Host key changed"), with the copy glyph; `block` floats in the top corner of a code block,
   with a fade of the block's own colour (`--copy-fade`) so text never runs under the button.
 -->
 <script setup lang="ts">
@@ -19,7 +20,7 @@ import UiTooltip from './UiTooltip.vue'
 const props = withDefaults(
   defineProps<{
     text: string
-    variant?: 'line' | 'block'
+    variant?: 'line' | 'block' | 'bar'
     /** Holds one face still, for the gallery that draws all three. */
     forceState?: CopyState
   }>(),
@@ -51,7 +52,7 @@ async function onCopy(text: string) {
         @blur="leave"
       >
         <span class="face" :data-on="state === 'idle'" aria-hidden="true">
-          <UiIcon v-if="variant === 'block'" name="copy" :size="12" :stroke="1.6" />{{
+          <UiIcon v-if="variant !== 'line'" name="copy" :size="12" :stroke="1.6" />{{
             t('ui.copy')
           }}
         </span>
@@ -70,7 +71,8 @@ async function onCopy(text: string) {
 </template>
 
 <style scoped>
-.copy-line {
+.copy-line,
+.copy-bar {
   display: contents;
 }
 
@@ -103,6 +105,19 @@ async function onCopy(text: string) {
 
 .copy:hover {
   background: color-mix(in srgb, var(--code-btn-ink) 22%, transparent);
+}
+
+.copy-bar .copy {
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--surface-0);
+  color: var(--ink);
+  font-size: var(--text-12);
+}
+
+.copy-bar .copy:hover {
+  background: var(--surface-1);
 }
 
 .copy-block .copy:hover {

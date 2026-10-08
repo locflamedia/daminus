@@ -1,0 +1,56 @@
+{
+  "settingsGeneral": {
+    "saveFailed": "Could not save the setting. Nothing was changed.",
+    "language": {
+      "title": "Language",
+      "app": "App language",
+      "appHint": "Menus, labels, dates and numbers.",
+      "search": "Search languages",
+      "notTranslated": "Not translated yet",
+      "notTranslatedHint": "Not translated yet. Help translate →",
+      "none": "No language found",
+      "help": "Help translate Daminus",
+      "ai": "AI answers in",
+      "aiHint": "AI can reply in a different language from the app.",
+      "aiGroup": "AI answer language",
+      "aiSame": "Same as app"
+    },
+    "formats": {
+      "title": "Region formats",
+      "follow": "follow language",
+      "numbers": "Numbers",
+      "dates": "Dates",
+      "time": "Time",
+      "relative": "Relative",
+      "hoursAgo": "{n} hour ago | {n} hours ago"
+    },
+    "open": {
+      "title": "When Daminus opens",
+      "scan": "Scan on open",
+      "scanHint": "Off: you decide when SSH runs.",
+      "intro": "Intro",
+      "introHint": "The full painting plays once; later launches take a second.",
+      "introGroup": "Intro on launch",
+      "first": "First launch",
+      "always": "Every launch",
+      "never": "Never"
+    },
+    "preview": {
+      "live": "Live preview",
+      "overview": "Overview",
+      "issues": "{n} issue | {n} issues",
+      "history": "Scan history",
+      "servers": "{n} server | {n} servers",
+      "critical": "{n} critical",
+      "finding": "PHP file in uploads",
+      "security": "Security ›",
+      "uptime": "Uptime",
+      "disk": "Disk",
+      "database": "Database",
+      "scan": "Scan #12 · today {clock} · {ago}",
+      "neverTitle": "Never translated",
+      "never": "disk.fs · vps-sg-2 · /var/www · ssh-add · Laravel",
+      "switched": "Switched to {language} · no restart needed"
+    }
+  }
+}

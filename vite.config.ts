@@ -1,6 +1,11 @@
+import { readFileSync } from 'node:fs'
 import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vite'
+
+// The app's version is the one in Cargo.toml (the Rust side and the bundle read the same line).
+const appVersion =
+  /^version\s*=\s*"([^"]+)"/m.exec(readFileSync('./Cargo.toml', 'utf8'))?.[1] ?? '0.0.0'
 
 // Tauri expects a fixed dev port and must see Rust errors in the terminal.
 export default defineConfig({
@@ -22,6 +27,7 @@ export default defineConfig({
   // vue-i18n's feature flags, set explicitly so the bundle does not warn about them. Message
   // compilation is JIT without `eval`, which the strict CSP (no unsafe-eval) requires.
   define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
     __VUE_I18N_FULL_INSTALL__: true,
     __VUE_I18N_LEGACY_API__: false,
     __INTLIFY_PROD_DEVTOOLS__: false,

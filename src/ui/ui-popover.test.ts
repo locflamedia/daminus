@@ -120,4 +120,17 @@ describe('UiPopover', () => {
     expect(panel()?.querySelector('img')).toBeNull()
     expect(panel()?.textContent).toBe('<img src=x onerror=alert(1)>')
   })
+
+  it('draws a roomy panel with 18 corners for a form', async () => {
+    wrapper = mount(UiPopover, {
+      props: { label: 'x', open: true, roomy: true },
+      slots: { default: () => 'form' },
+      attachTo: document.body,
+    })
+    await nextTick()
+    expect(document.querySelector('.popover')?.classList.contains('roomy')).toBe(true)
+    expect((document.querySelector('[role="dialog"]') as HTMLElement).style.borderRadius).toBe(
+      '18px',
+    )
+  })
 })

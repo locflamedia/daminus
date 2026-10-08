@@ -57,6 +57,11 @@ const legend = computed(() => [
     text: t('projectHistory.strip.legend.none'),
     shape: 'square' as const,
   },
+  {
+    color: 'heat-none' as const,
+    text: t('projectHistory.strip.legend.expected'),
+    shape: 'hatch' as const,
+  },
 ])
 const selected = computed(() =>
   props.pair ? [String(props.pair.from), String(props.pair.to)] : [],

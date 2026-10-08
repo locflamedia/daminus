@@ -1,9 +1,15 @@
 // Development only: answers the IPC commands with a fixed report so the window can be seen in
 // a plain browser (`?mock` in the address). The production bundle never imports it.
+import { diagnosticsAnswer } from './dev-mock-diagnostics'
+import { withExpectedAndHostKey } from './dev-mock-expected'
 import { ResultsMock, isResultsVariant } from './dev-mock-results'
+import { settingsAnswer } from './dev-mock-settings'
 import { SetupMock, isSetupVariant } from './dev-mock-setup'
 import type { ResultsBundle } from '@/testing/results-bundle'
 import { mockCommands } from './testing'
+
+/** What the scripted setup servers answer inside the result screens. */
+const HOST_COMMANDS = /^(hosts_list|ssh_environment|setup_)/
 
 /**
  * The result screens read the twelve-scan timeline (`dev-mock-results.ts` lists the variants:
@@ -21,6 +27,10 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
     mockCommands((cmd, args) => {
       const answered = setup.handle(cmd, args)
       if (answered !== undefined) return answered
+      const diagnostics = diagnosticsAnswer(cmd)
+      if (diagnostics !== undefined) return diagnostics
+      const settings = settingsAnswer(cmd, args)
+      if (settings !== undefined) return settings
       if (cmd === 'report_latest') return emptyReport()
       if (cmd === 'scan_status') return null
       if (cmd === 'history_list') return { scans: [], keep: 20, bytes: 0 }
@@ -31,7 +41,20 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
   }
   const bundle = await loadBundle(variant)
   const results = new ResultsMock(isResultsVariant(variant) ? variant : 'results', bundle, speed)
-  mockCommands((cmd, args) => results.handle(cmd, args) ?? null)
+  // The hosts and the login tests of the Settings screens come from the scripted setup servers,
+  // which carry the same aliases as the timeline.
+  const hosts = new SetupMock('setup', speed)
+  mockCommands(
+    withExpectedAndHostKey(
+      (cmd, args) =>
+        results.handle(cmd, args) ??
+        diagnosticsAnswer(cmd) ??
+        settingsAnswer(cmd, args) ??
+        (HOST_COMMANDS.test(cmd) ? hosts.handle(cmd, args) : undefined) ??
+        null,
+      variant,
+    ),
+  )
 }
 
 function emptyReport() {

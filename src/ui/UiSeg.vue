@@ -11,6 +11,8 @@ export interface SegOption {
   value: string
   label: string
   count?: number | string
+  /** Set the label in ink-4 while it is not selected (a "Never" beside real values). */
+  quiet?: boolean
 }
 
 const props = withDefaults(
@@ -20,8 +22,10 @@ const props = withDefaults(
     /** The group's accessible name (a segmented control has no visible label). */
     label: string
     semantics?: 'tabs' | 'radio'
+    /** A 30 px track with 24 px segments, for a control inside a popover. */
+    snug?: boolean
   }>(),
-  { semantics: 'tabs' },
+  { semantics: 'tabs', snug: false },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
@@ -50,14 +54,19 @@ function onKeydown(event: KeyboardEvent, index: number) {
 </script>
 
 <template>
-  <div class="seg" :role="semantics === 'tabs' ? 'tablist' : 'radiogroup'" :aria-label="label">
+  <div
+    class="seg"
+    :class="{ snug }"
+    :role="semantics === 'tabs' ? 'tablist' : 'radiogroup'"
+    :aria-label="label"
+  >
     <button
       v-for="(option, index) in options"
       :key="option.value"
       :ref="(el) => (buttons[index] = el as HTMLButtonElement)"
       type="button"
       class="segment"
-      :class="{ on: option.value === modelValue }"
+      :class="{ on: option.value === modelValue, quiet: option.quiet }"
       :role="semantics === 'tabs' ? 'tab' : 'radio'"
       :aria-selected="semantics === 'tabs' ? option.value === modelValue : undefined"
       :aria-checked="semantics === 'radio' ? option.value === modelValue : undefined"
@@ -103,6 +112,25 @@ function onKeydown(event: KeyboardEvent, index: number) {
 
 .segment:is(:hover, [data-force='hover']) {
   color: var(--ink);
+}
+
+.segment.quiet:not(.on) {
+  color: var(--ink-4);
+}
+
+.segment.quiet:not(.on):is(:hover, [data-force='hover']) {
+  color: var(--ink);
+}
+
+.snug {
+  height: 30px;
+  border-radius: 9px;
+}
+
+.snug .segment {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-xs);
 }
 
 .segment.on {

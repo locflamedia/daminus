@@ -16,6 +16,8 @@ import ProjectPermissionCard, { type PermissionStep } from '../common/ProjectPer
 import type { DbSection } from './use-database-model'
 
 const props = defineProps<{ section: DbSection }>()
+
+const ICONS = { refused: 'database', unsupported: 'file', missing: 'circle' } as const
 const { t } = useI18n()
 
 const host = computed(() => props.section.item.key.host)
@@ -55,11 +57,12 @@ const steps = computed<PermissionStep[]>(() => [
     :text="t('projectDatabase.perm.text')"
     :steps="steps"
     :note="t('projectDatabase.perm.again')"
+    :host="host"
   />
   <section v-else class="state">
     <header class="head">
       <span class="tile" :class="{ warm: section.problem === 'refused' }" aria-hidden="true">
-        <UiIcon :name="section.problem === 'refused' ? 'warn' : 'info'" :size="14" />
+        <UiIcon :name="ICONS[section.problem ?? 'missing']" :size="14" />
       </span>
       <h3 class="title">
         {{

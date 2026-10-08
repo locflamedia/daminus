@@ -106,6 +106,7 @@ const text = computed(() => {
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  line-height: 1.3;
 }
 
 .words b {

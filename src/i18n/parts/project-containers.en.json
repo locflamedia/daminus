@@ -73,7 +73,7 @@
       "text": "The SSH user is not allowed to run docker, so there is nothing to read. Nothing is broken on the server.",
       "tryTitle": "See it yourself",
       "fixTitle": "Let the SSH user run docker",
-      "fixText": "Add the SSH user to the docker group, then reconnect. Members of that group can act as root on the server; if that is too much, skip containers for this project.",
+      "fixText": "Add the SSH user to the docker group, then reconnect. If that is too much, skip containers for this project.",
       "again": "Group changes apply to new SSH sessions; the next scan opens a fresh one."
     },
     "unknown": {

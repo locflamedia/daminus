@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
+import HostKeyHost from '@/features/host-key/HostKeyHost.vue'
 import ProjectSheet from '@/features/project-sheet/ProjectSheet.vue'
 import ScanPanel from '@/features/scan-panel/ScanPanel.vue'
 import AppWindow from '@/layout/AppWindow.vue'
@@ -42,5 +43,6 @@ onBeforeUnmount(() => scan.dispose())
   <component :is="DevTrafficLights" v-if="DevTrafficLights && route.meta.bare !== true" />
   <ProjectSheet />
   <ScanPanel />
+  <HostKeyHost />
   <UiToastHost />
 </template>

@@ -4,6 +4,7 @@ import './styles/fonts.css'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/motion.css'
+import './styles/preferences.css'
 import App from './App.vue'
 import { i18n } from './i18n'
 import { createAppRouter } from './router'
@@ -26,6 +27,8 @@ async function start() {
       Number(new URLSearchParams(location.search).get('speed') ?? '1') || 1,
     )
   }
+  // The saved settings decide language and theme; read them before the first paint of the page.
+  await useSettingsStore(pinia).load()
   app.mount('#app')
 }
 

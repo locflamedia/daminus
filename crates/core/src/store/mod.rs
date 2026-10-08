@@ -129,6 +129,21 @@ impl FsStore {
         .save(value, base)
     }
 
+    /// Loads the settings, lets `change` edit them, checks the whole document again and
+    /// writes it. The write refuses a file from a newer version, and nothing is written
+    /// when the result is invalid. Returns the saved settings.
+    pub fn update_settings(
+        &self,
+        change: impl FnOnce(&mut Settings),
+    ) -> Result<Settings, AppError> {
+        let loaded = self.load_settings()?;
+        let mut next = loaded.value;
+        change(&mut next);
+        next.validate()?;
+        self.save_settings(&next, loaded.stamp)?;
+        Ok(next)
+    }
+
     /// Loads `state.json`. A damaged file is set aside and defaults are used.
     pub fn load_state(&self) -> Result<AppState, AppError> {
         let path = self.root.join(STATE_FILE);
@@ -174,6 +189,18 @@ impl FsStore {
     /// Total size of the snapshot files, in bytes.
     pub fn snapshot_bytes(&self) -> Result<u64, AppError> {
         snapshots::total_bytes(&self.snapshots_dir())
+    }
+
+    /// Size of each snapshot file, oldest scan first.
+    pub fn snapshot_sizes(&self) -> Result<Vec<u64>, AppError> {
+        snapshots::sizes(&self.snapshots_dir())
+    }
+
+    /// Deletes every snapshot; answers how many there were.
+    pub fn clear_snapshots(&self) -> Result<usize, AppError> {
+        let dir = self.snapshots_dir();
+        let _lock = StoreLock::acquire(&self.root)?;
+        snapshots::remove_all(&dir)
     }
 
     /// Reads one snapshot; `None` when missing or unreadable.

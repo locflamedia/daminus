@@ -126,6 +126,22 @@ impl SshTools {
         self.config.as_deref()
     }
 
+    /// What `ssh -V` prints (OpenSSH writes it to stderr), first line only.
+    /// `None` when `ssh` is not found or does not answer within `limit`.
+    pub(crate) async fn ssh_version(&self, limit: Duration) -> Option<String> {
+        let mut cmd = self.command(&self.ssh);
+        cmd.arg("-V")
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        let out = tokio::time::timeout(limit, cmd.output()).await.ok()?.ok()?;
+        let text = [out.stderr, out.stdout]
+            .into_iter()
+            .map(|b| String::from_utf8_lossy(&b).trim().to_owned())
+            .find(|t| !t.is_empty())?;
+        text.lines().next().map(str::to_owned)
+    }
+
     /// The value of `name` in the variables set here, else in this process.
     pub(crate) fn var(&self, name: &str) -> Option<OsString> {
         self.env

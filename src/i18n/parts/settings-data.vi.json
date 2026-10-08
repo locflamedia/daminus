@@ -1,0 +1,85 @@
+{
+  "settingsData": {
+    "failed": "Có lỗi xảy ra. Chưa có gì bị thay đổi.",
+    "navHint": "{used} / {limit}",
+    "reveal": "Hiện trong Finder",
+    "storage": {
+      "title": "Trên máy Mac này",
+      "kind": "JSON, {n} tệp",
+      "bar": "Tỷ lệ từng loại trong thư mục",
+      "scans": "Kết quả quét",
+      "ai": "Trả lời của AI",
+      "logs": "Nhật ký"
+    },
+    "history": {
+      "title": "Lịch sử",
+      "keep": "Giữ lại số lần quét",
+      "keepGroup": "Giữ lại bao nhiêu lần quét",
+      "keepHint": "Đã dùng {used} / {limit}. Cũ nhất sẽ bị xóa trước.",
+      "keepAllHint": "Đang giữ {used}. Không xóa lần nào.",
+      "all": "Tất cả",
+      "forget": "Quên trả lời của AI sau",
+      "forgetGroup": "Khi nào quên trả lời của AI",
+      "forgetHint": "Lần quét vẫn còn; chỉ phần chữ của AI bị xóa.",
+      "days": "{n} ngày",
+      "never": "Không bao giờ"
+    },
+    "stored": {
+      "stored": "Được lưu",
+      "never": "Không bao giờ lưu",
+      "scanNumbers": "Số liệu, dung lượng và trạng thái của lần quét",
+      "paths": "Tên tệp và đường dẫn",
+      "ai": "Trả lời của AI và câu hỏi tiếp theo của bạn",
+      "notes": "Ghi chú “đã dự kiến”",
+      "secrets": "Mật khẩu và giá trị trong .env",
+      "keys": "Khóa SSH và passphrase",
+      "contents": "Nội dung tệp",
+      "bodies": "Nội dung phản hồi của các URL bị lộ",
+      "keychain": "Khóa AI nằm trong Keychain của macOS dưới tên “Daminus”, không nằm trong tệp này."
+    },
+    "size": {
+      "title": "Dung lượng theo số lần quét",
+      "perScan": "≈ {size} mỗi lần quét",
+      "levels": "Khi giữ {keep} lần quét, dung lượng dừng ở khoảng {size}.",
+      "curve": "Dung lượng thư mục sau mỗi lần quét",
+      "oldest": "Lần quét cũ nhất",
+      "oldestValue": "#{seq} · {date}",
+      "files": "Tệp",
+      "filesValue": "dự án, cài đặt, trạng thái, {n} lần quét",
+      "largest": "Phần lớn nhất",
+      "largestValue": "{part} · {size}",
+      "partScans": "bản quét",
+      "partAi": "trả lời của AI",
+      "partLogs": "nhật ký"
+    },
+    "export": {
+      "title": "Xuất",
+      "remark": "JSON · che giống như gửi cho AI",
+      "sample": "Ví dụ về tệp được xuất",
+      "all": "Xuất mọi lần quét",
+      "import": "Nhập…",
+      "done": "{name} · Downloads"
+    },
+    "backups": {
+      "title": "Sao lưu",
+      "timeMachine": "Time Machine có sao lưu thư mục này",
+      "icloud": "Đồng bộ iCloud",
+      "icloudValue": "tắt có chủ ý"
+    },
+    "start": {
+      "title": "Bắt đầu lại",
+      "body": "Xóa các lần quét, trả lời của AI và ghi chú khỏi máy Mac này. Máy chủ, cấu hình ssh và khóa trong Keychain không bị đụng tới.",
+      "hold": "Giữ để xóa lịch sử",
+      "action": "Xóa lịch sử",
+      "holdHint": "Giữ 1,5 giây. Thả sớm là hủy.",
+      "confirmTitle": "Xóa lịch sử?",
+      "confirmBody": "Các lần quét, trả lời của AI và ghi chú “đã dự kiến” sẽ bị xóa khỏi máy Mac này. Máy chủ, cấu hình ssh và khóa trong Keychain không bị đụng tới.",
+      "deleted": "Không có gì để xóa | Đã xóa 1 lần quét | Đã xóa {count} lần quét",
+      "reset": "Đặt lại cả cài đặt…",
+      "resetTitle": "Đặt lại mọi cài đặt?",
+      "resetBody": "Ngôn ngữ, giao diện, giới hạn quét và mọi cài đặt khác trở về như lúc Daminus mới cài. Không hoàn tác được. Lịch sử vẫn còn.",
+      "resetConfirm": "Đặt lại cài đặt",
+      "resetDone": "Cài đặt đã về mặc định."
+    }
+  }
+}
