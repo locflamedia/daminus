@@ -1,0 +1,93 @@
+{
+  "projectContainers": {
+    "empty": {
+      "title": "Chưa có container để đọc",
+      "text": "Dự án này chưa có Docker Compose hay ứng dụng pm2 nào. Sửa dự án để thêm."
+    },
+    "context": {
+      "compose": "dự án compose",
+      "pm2": "ứng dụng pm2",
+      "image": "image",
+      "updated": "cập nhật ở #{seq}",
+      "services": "{n} dịch vụ · {up} đang chạy",
+      "apps": "{n} ứng dụng",
+      "source": "docker ps · docker stats --no-stream",
+      "sourcePm2": "pm2 jlist"
+    },
+    "state": {
+      "running": "Hoạt động {time}",
+      "runningRestarted": "Hoạt động {time} · khởi động lại {n} lần",
+      "restarting": "Đang khởi động lại",
+      "exited": "Đã dừng",
+      "paused": "Tạm dừng",
+      "dead": "Đã chết",
+      "created": "Mới tạo",
+      "other": "{state}",
+      "online": "Online {time}",
+      "stopped": "Đã dừng",
+      "errored": "Lỗi"
+    },
+    "cell": {
+      "cpu": "CPU",
+      "memory": "Bộ nhớ / giới hạn",
+      "memoryOnly": "Bộ nhớ",
+      "noLimit": "không giới hạn",
+      "restarts": "Khởi động lại",
+      "instances": "Tiến trình",
+      "since": "Bắt đầu"
+    },
+    "exit": {
+      "title": "{name} · lần thoát cuối",
+      "meta": "docker inspect",
+      "state": "Trạng thái",
+      "oom": "OOMKilled",
+      "yes": "true",
+      "no": "false",
+      "code": "ExitCode",
+      "started": "Bắt đầu",
+      "image": "image",
+      "restarts": "khởi động lại",
+      "seeWhy": "Xem lý do, trên máy chủ",
+      "noLogs": "Daminus không đọc log container: log có thể chứa token, email và giá trị truy vấn. Hãy tự chạy lệnh này để xem vài dòng cuối.",
+      "memoryTitle": "Bộ nhớ {name}, {n} lần quét gần nhất",
+      "memoryLabel": "Bộ nhớ của {name} qua {n} lần quét, đỉnh {peak}",
+      "limit": "giới hạn {size}",
+      "peak": "Mức cao nhất {peak} trên giới hạn {limit}.",
+      "peakOnly": "Mức cao nhất {peak}; container không có giới hạn."
+    },
+    "finding": {
+      "oomLimit": "{name} chạm giới hạn {limit}",
+      "oom": "{name} bị kill vì thiếu bộ nhớ",
+      "oomText": "OOMKilled, đã khởi động lại {n} lần từ khi chạy; bộ nhớ tăng tới giới hạn trước mỗi lần bị kill. Hãy nâng giới hạn, hoặc xem {name} làm gì ngay trước đó (lệnh xem log ở bên trái).",
+      "oomTextLimit": "OOMKilled, đã khởi động lại {n} lần từ khi chạy; bộ nhớ tăng tới giới hạn {limit} trước mỗi lần bị kill. Hãy nâng giới hạn, hoặc xem {name} làm gì ngay trước đó (lệnh xem log ở bên trái).",
+      "down": "{name} không chạy",
+      "downText": "Trạng thái {state}, mã thoát {exit}. Xem log của nó (lệnh ở bên trái), rồi khởi động lại.",
+      "restarted": "{name} đã khởi động lại {n} lần",
+      "restartedText": "Hiện đang chạy nhưng đã khởi động lại từ khi chạy. Xem log (lệnh ở bên trái) để biết nó dừng vì gì.",
+      "also": "Cũng trên {host}",
+      "hostMemory": "Bộ nhớ máy chủ đang dùng {used} trên {total}.",
+      "hostMemoryFits": "Bộ nhớ máy chủ {used} trên {total}, nên nâng giới hạn của {name} lên {target} vẫn đủ."
+    },
+    "perm": {
+      "title": "Daminus không dùng được Docker trên {host}",
+      "text": "Người dùng SSH không được phép chạy docker nên không có gì để đọc. Máy chủ không hỏng gì cả.",
+      "tryTitle": "Tự kiểm tra",
+      "fixTitle": "Cho người dùng SSH chạy docker",
+      "fixText": "Thêm người dùng SSH vào nhóm docker rồi kết nối lại. Thành viên nhóm này có quyền tương đương root trên máy chủ; nếu thấy quá rộng, hãy bỏ qua container cho dự án này.",
+      "again": "Đổi nhóm chỉ áp dụng cho phiên SSH mới; lần quét sau sẽ mở phiên mới."
+    },
+    "unknown": {
+      "title": "Không đọc được {name} trên {host}",
+      "timeout": "Kiểm tra bị quá giờ. Máy chủ có thể đang bận; lần quét sau sẽ thử lại.",
+      "unreachable": "Máy chủ không trả lời nên chưa đọc được gì mới.",
+      "missing": "Không thấy Docker hoặc dự án Compose này trên {host}. Sửa dự án và chọn lại tên dự án.",
+      "unsupported": "Phiên bản Docker này trả về dạng Daminus không đọc được."
+    },
+    "unknownPm2": {
+      "title": "Không đọc được {name} trên {host}",
+      "needs_perm": "Người dùng SSH không nói chuyện được với pm2 daemon. Ứng dụng pm2 thuộc người dùng đã chạy chúng; hãy kết nối bằng người dùng đó hoặc trỏ dự án tới PM2_HOME của nó.",
+      "missing": "Không thấy pm2 hoặc ứng dụng này trên {host}.",
+      "other": "pm2 không trả lời nên chưa đọc được gì mới."
+    }
+  }
+}

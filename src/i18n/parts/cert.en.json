@@ -1,0 +1,31 @@
+{
+  "cert": {
+    "chipDays": "TLS {n} d",
+    "chipUnchecked": "TLS ?",
+    "flag": {
+      "expired": "Expired",
+      "untrusted": "Not trusted",
+      "mismatch": "Wrong name"
+    },
+    "detail": {
+      "expires": "Expires in {n} day | Expires in {n} days",
+      "expiredAgo": "Expired {n} day ago | Expired {n} days ago",
+      "expiredToday": "Expires today",
+      "untrusted": "Not trusted by this Mac",
+      "untrustedSub": "self-signed or unknown issuer",
+      "mismatch": "Not valid for {host}",
+      "mismatchSub": "the certificate is for another name",
+      "joinUntrusted": "not trusted",
+      "joinMismatch": "wrong name",
+      "unchecked": "Not checked",
+      "reason": {
+        "dns": "no DNS answer",
+        "no_route": "no route to the site",
+        "refused": "connection refused",
+        "timeout": "timed out",
+        "tls": "not TLS",
+        "other": "no answer"
+      }
+    }
+  }
+}

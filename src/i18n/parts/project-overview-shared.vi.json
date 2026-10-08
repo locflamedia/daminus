@@ -1,0 +1,41 @@
+{
+  "projectShared": {
+    "group": {
+      "disk": "Kiểm tra ổ đĩa",
+      "containers": "Kiểm tra container",
+      "databases": "Kiểm tra cơ sở dữ liệu",
+      "uptime": "Kiểm tra URL"
+    },
+    "waiting": {
+      "title": "Chưa có kết quả",
+      "text": "Hãy quét để đọc dự án này. Số liệu sẽ hiện ở đây khi quét xong."
+    },
+    "error": {
+      "title": "Không đọc được kết quả",
+      "text": "Không tải được lần quét gần nhất từ máy này.",
+      "retry": "Thử lại"
+    },
+    "off": {
+      "title": "{group} đang tắt trong Cài đặt",
+      "text": "Bật lại ở Cài đặt › Quét, chúng sẽ chạy từ lần quét sau.",
+      "open": "Mở Cài đặt"
+    },
+    "unreachable": {
+      "title": "{hosts} không trả lời",
+      "text": "Lần quét #{seq} không kết nối được, nên chưa có gì để hiển thị.",
+      "kept": "Các phần chạy trên đó sẽ trống cho đến khi một lần quét kết nối lại được."
+    },
+    "stale": {
+      "title": "Chưa kiểm lại từ #{seq}",
+      "text": "Đây là những gì lần quét #{seq} thấy. Lần quét sau kết nối được máy chủ sẽ cập nhật."
+    },
+    "old": {
+      "title": "Kết quả đã cũ {n} ngày",
+      "text": "Quét lại để xem tình hình hiện tại."
+    },
+    "delta": {
+      "since": "so với #{seq}",
+      "same": "không đổi"
+    }
+  }
+}

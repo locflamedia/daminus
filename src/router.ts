@@ -1,7 +1,8 @@
 import { createRouter, createWebHashHistory, type RouteRecordRaw } from 'vue-router'
 import OverviewView from '@/features/overview/OverviewView.vue'
-import PlaceholderView from '@/features/placeholder/PlaceholderView.vue'
+import ScanHistoryView from '@/features/history/ScanHistoryView.vue'
 import ProjectView from '@/features/project/ProjectView.vue'
+import ServerView from '@/features/server/ServerView.vue'
 import SettingsView from '@/features/settings/SettingsView.vue'
 import DiscoverView from '@/features/setup/DiscoverView.vue'
 import GroupView from '@/features/setup/GroupView.vue'
@@ -10,14 +11,9 @@ import SetupView from '@/features/setup/SetupView.vue'
 
 export const routes: RouteRecordRaw[] = [
   { path: '/', name: 'overview', component: OverviewView },
-  {
-    path: '/history',
-    name: 'history',
-    component: PlaceholderView,
-    meta: { titleKey: 'nav.history' },
-  },
+  { path: '/history', name: 'history', component: ScanHistoryView },
   { path: '/project/:id/:tab?', name: 'project', component: ProjectView },
-  { path: '/server/:host', name: 'server', component: PlaceholderView },
+  { path: '/server/:host', name: 'server', component: ServerView },
   {
     path: '/settings/:section?',
     name: 'settings',

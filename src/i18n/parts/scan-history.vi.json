@@ -1,0 +1,78 @@
+{
+  "historyScreen": {
+    "title": "Lịch sử quét",
+    "retention": {
+      "count": "{n} lần quét từ {date} | {n} lần quét từ {date}",
+      "keeping": "giữ {n} lần gần nhất",
+      "keepingAll": "giữ mọi lần quét"
+    },
+    "filter": {
+      "label": "Xem các lần quét của",
+      "all": "Mọi dự án"
+    },
+    "chart": {
+      "title": "Vấn đề mỗi lần quét",
+      "label": "Vấn đề mỗi lần quét, {n} lần quét, hai lần đang so sánh được tô đậm",
+      "critical": "nghiêm trọng",
+      "warning": "cảnh báo",
+      "info": "thông tin",
+      "tipTitle": "{date} · lần quét #{seq}",
+      "count": "{n} vấn đề | {n} vấn đề",
+      "spoken": "Lần quét {seq}, {date}",
+      "none": "không có vấn đề",
+      "partCrit": "{n} nghiêm trọng",
+      "partWarn": "{n} cảnh báo | {n} cảnh báo",
+      "partInfo": "{n} thông tin"
+    },
+    "tally": {
+      "title": "Từ #{seq}",
+      "fixed": "Đã sửa",
+      "expected": "Đã chấp nhận",
+      "open": "Đang mở",
+      "oldest": "Mở lâu nhất",
+      "oldestValue": "{n} lần quét | {n} lần quét",
+      "none": "không có",
+      "unreachable": "{host} mất kết nối từ #{since}, nên các kiểm tra của nó vắng ở cột cuối. | {host} mất kết nối từ #{since}, nên các kiểm tra của nó vắng ở {n} cột cuối."
+    },
+    "list": {
+      "title": "Các lần quét",
+      "meta": "máy chủ · thời gian",
+      "label": "Các lần quét, mới nhất trước",
+      "row": "Lần quét #{seq}, {date}, {issues}, đọc được {reached} trên {total} máy chủ, {duration}",
+      "pick": "Chọn để so sánh",
+      "picked": "Đã chọn để so sánh",
+      "foot": "Đang hiện cả {n} lần. Chọn hai dòng để so sánh.",
+      "footCut": "Đang hiện {n} lần mới nhất trên {total}. Chọn hai dòng để so sánh.",
+      "seconds": "{n} giây"
+    },
+    "compare": {
+      "title": "So sánh",
+      "direction": "So sánh theo lần quét nào",
+      "newer": "#{seq}",
+      "older": "so với #{seq}",
+      "new": "mới",
+      "fixed": "đã sửa",
+      "still": "không đổi",
+      "tagNew": "Mới",
+      "tagFixed": "Đã sửa",
+      "tagStill": "Còn",
+      "scansOpen": "{owner} · {n} lần quét | {owner} · {n} lần quét",
+      "rows": "Điều gì đã đổi giữa hai lần quét",
+      "hosts": "Máy chủ đọc được",
+      "duration": "Thời gian",
+      "unchanged": "Hai lần quét này không có gì khác nhau.",
+      "pickTwo": "Chọn hai lần quét trong danh sách để so sánh.",
+      "pickOne": "Chọn thêm một lần quét nữa.",
+      "reading": "Đang đọc hai lần quét"
+    },
+    "empty": {
+      "title": "Chưa có lần quét nào",
+      "text": "Quét một lần, rồi mọi lần quét sau đó được giữ ở đây để bạn xem điều gì đã đổi.",
+      "scan": "Quét tất cả"
+    },
+    "failed": {
+      "title": "Không đọc được lịch sử quét",
+      "retry": "Thử lại"
+    }
+  }
+}

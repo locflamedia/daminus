@@ -13,7 +13,7 @@
   `form="note"` is the tile of a project card (board "Project card"): padding 8 10, no
   sparkline (trends live on the project page), and one note line under the value that says
   what changed, "no change", or what to do. The note is grey, 500 weight for a delta, amber
-  past a threshold, amber at 400 for an old result or a missing permission, rose when critical;
+  past a threshold, amber at 400 for a missing permission, grey for the age of an old result, rose when critical;
   a value that is not set up is written in grey, and while the host is read the value and the
   note give way to two skeleton bars of their final heights.
 
@@ -26,6 +26,7 @@ import UiIcon from './UiIcon.vue'
 import UiRoll from './UiRoll.vue'
 import UiSkeleton from './UiSkeleton.vue'
 import UiSparkline, { type SparkTone } from './UiSparkline.vue'
+import UiTooltip from './UiTooltip.vue'
 import type { IconName } from './icon-paths'
 
 export type MetricState =
@@ -57,6 +58,9 @@ const props = withDefaults(
     form?: 'trend' | 'note'
     /** How the note reads in the card form; follows the state when not given. */
     noteTone?: NoteTone
+    /** A clock beside the label of the card form, with this text as its tooltip: the number
+     * can lag behind (MySQL refreshes table sizes about once a day). */
+    hint?: string
   }>(),
   {
     icon: undefined,
@@ -71,6 +75,7 @@ const props = withDefaults(
     once: undefined,
     form: 'trend',
     noteTone: undefined,
+    hint: undefined,
   },
 )
 
@@ -98,6 +103,11 @@ const noteClass = computed(() => {
   <div v-if="form === 'note'" class="tile tile-note" :class="`state-${state}`" :data-state="state">
     <span class="line">
       <span class="label"> <UiIcon v-if="icon" :name="icon" :size="12" />{{ label }} </span>
+      <UiTooltip v-if="hint" :text="hint">
+        <span class="lag" tabindex="0" role="img" :aria-label="hint"
+          ><UiIcon name="clock" :size="12"
+        /></span>
+      </UiTooltip>
     </span>
     <template v-if="state === 'scanning'">
       <UiSkeleton class="sk-value" width="70%" height="16px" />
@@ -112,7 +122,7 @@ const noteClass = computed(() => {
           <span v-if="unit" class="unit">{{ ` ${unit}` }}</span>
         </template>
       </span>
-      <span v-if="note" class="note" :class="noteClass">{{ note }}</span>
+      <span v-if="note" class="note" :class="noteClass" :title="note">{{ note }}</span>
     </template>
   </div>
   <div v-else class="tile" :class="`state-${state}`" :data-state="state">
@@ -218,6 +228,24 @@ const noteClass = computed(() => {
     filter var(--dur-state) var(--ease-state);
 }
 
+/* The card form: the clock follows the label, a gap apart, never against it. */
+.tile-note .line {
+  justify-content: flex-start;
+  gap: var(--space-2);
+}
+
+/* The clock that says the number can lag: quiet, with the usual focus ring. */
+.lag {
+  display: inline-flex;
+  flex: none;
+  border-radius: var(--radius-xs);
+  color: var(--ink-4);
+}
+
+.lag:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
 /* Reading: the value blurs in place and the shape holds. */
 .tile-note {
   padding: var(--space-2) 10px;
@@ -237,6 +265,22 @@ const noteClass = computed(() => {
 
 .tile-note :is(.line, .value, .note) {
   line-height: normal;
+}
+
+/* The value and its unit stay on one line ("200 · 212 ms"). */
+.tile-note .value {
+  white-space: nowrap;
+}
+
+.tile-note .label {
+  overflow: hidden;
+}
+
+/* One line, always: a card keeps its height whatever the note says. */
+.tile-note .note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tile-note .note-plain {

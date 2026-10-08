@@ -1,32 +1,50 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount } from '@vue/test-utils'
+import { ref } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n } from '@/i18n'
+import { LAYOUT_RANGE, type SidebarRange } from '@/lib/viewport'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useScanStore } from '@/stores/scan'
 import { shellProjects, shellReport, shellScanRun } from '@/testing/shell-fixture'
 import OverviewView from './OverviewView.vue'
 
-async function mountOverview() {
+async function mountOverview(range: SidebarRange = 'wide') {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/', name: 'overview', component: { template: '<div />' } }],
+    routes: [
+      { path: '/', name: 'overview', component: { template: '<div />' } },
+      { path: '/history', name: 'history', component: { template: '<div />' } },
+      { path: '/project/:id/:tab?', name: 'project', component: { template: '<div />' } },
+      { path: '/server/:host', name: 'server', component: { template: '<div />' } },
+    ],
   })
   await router.push('/')
-  const wrapper = mount(OverviewView, { global: { plugins: [i18n, router] } })
+  const wrapper = mount(OverviewView, {
+    global: { plugins: [i18n, router], provide: { [LAYOUT_RANGE as symbol]: ref(range) } },
+  })
   await flushPromises()
   return wrapper
 }
 
 beforeEach(() => {
+  mockCommands((cmd) => {
+    if (cmd === 'rules_list') return []
+    if (cmd === 'history_list') return { scans: [], keep: null, bytes: 0 }
+    return null
+  })
   setActivePinia(createPinia())
   useReportStore().latest = shellReport()
   useProjectsStore().details = shellProjects()
 })
-afterEach(() => document.body.replaceChildren())
+afterEach(() => {
+  clearMocks()
+  document.body.replaceChildren()
+})
 
 describe('Overview while a scan runs', () => {
   it('titles the scan by its running time, in the mono face, with no scan number yet', async () => {
@@ -94,5 +112,20 @@ describe('Overview toolbar with results over a day old', () => {
     const wrapper = await mountOverview()
     expect(wrapper.get('.meta').text()).toMatch(/^Scan #12 · /)
     expect(wrapper.find('.age').exists()).toBe(false)
+  })
+})
+
+describe('Overview servers in a narrow window', () => {
+  it('puts the servers in the free fourth cell of the two-across grid when three cards sit there', async () => {
+    const wrapper = await mountOverview('narrow')
+    const tail = wrapper.get('.tail')
+    expect(tail.classes()).toContain('cell')
+    expect(tail.find('.list-card').exists()).toBe(true)
+  })
+
+  it('keeps the full-width strip below the cards at a wide window', async () => {
+    const wrapper = await mountOverview('wide')
+    expect(wrapper.get('.tail').classes()).not.toContain('cell')
+    expect(wrapper.find('.list-card').exists()).toBe(false)
   })
 })

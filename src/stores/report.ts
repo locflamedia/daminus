@@ -28,6 +28,16 @@ export const useReportStore = defineStore('report', () => {
     return bySeq.get(seq)
   }
 
+  /**
+   * Drops every cached report but the latest. A report of an older scan is `evaluate` with the
+   * projects, rules and thresholds of the moment it was read, so it must go when any of them
+   * changes; the latest report is replaced by the next `loadLatest`.
+   */
+  function forgetOlder() {
+    const keep = latest.value?.seq
+    for (const seq of [...bySeq.keys()]) if (seq !== keep) bySeq.delete(seq)
+  }
+
   let requests = 0
 
   /**
@@ -50,5 +60,5 @@ export const useReportStore = defineStore('report', () => {
     }
   }
 
-  return { latest, error, cached, remember, loadLatest }
+  return { latest, error, cached, remember, forgetOlder, loadLatest }
 })

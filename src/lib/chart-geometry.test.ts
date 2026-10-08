@@ -9,6 +9,7 @@ import {
   polar,
   scaleLinear,
   sparkline,
+  timeShares,
   type Point,
 } from './chart-geometry'
 
@@ -190,5 +191,20 @@ describe('sparkline', () => {
     const spark = sparkline([1, 2, 3, 4], { height: 24 })
     expect(spark?.end[1]).toBeGreaterThan(0)
     expect(spark?.end[1]).toBeLessThan(12)
+  })
+})
+
+describe('timeShares and time-placed points', () => {
+  it('places moments between the first and the last by the clock', () => {
+    expect(timeShares([0, 1, 5, 10])).toEqual([0, 0.1, 0.5, 1])
+    expect(timeShares([7])).toEqual([0.5])
+    expect(timeShares([3, 3])).toEqual([0.5, 0.5])
+  })
+
+  it('puts uneven scans where their time is, not evenly', () => {
+    const box = { x0: 0, x1: 100, y0: 0, y1: 10 }
+    const points = linePoints([1, 2, 3], box, [0, 4], timeShares([0, 1, 10]))
+    expect(points.map((p) => p[0])).toEqual([0, 10, 100])
+    expect(linePoints([1, 2, 3], box, [0, 4]).map((p) => p[0])).toEqual([0, 50, 100])
   })
 })

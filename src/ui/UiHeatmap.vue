@@ -228,6 +228,7 @@ const TICK = 'm3.5 8.4 3 3L12.5 5'
   align-items: center;
   gap: var(--space-4);
   padding-left: 136px;
+  line-height: normal;
 }
 
 .note {

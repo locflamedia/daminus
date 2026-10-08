@@ -177,14 +177,22 @@ fn basics(s: u32, cores: u32, load: f64, mem_free: f64, disk_pct: u32) -> Vec<Ch
     vec![
         CheckFact::new("sys.load", "")
             .with_value(load + jitter, "load")
-            .with_data(json!({ "cores": cores })),
+            .with_data(
+                json!({ "cores": cores, "load1": load + jitter + 0.3, "load15": load * 0.7 }),
+            ),
         CheckFact::new("sys.mem", "").with_value(mem_free - jitter, "%"),
         CheckFact::new("sys.swap", "").with_value(3.0, "%"),
         CheckFact::new("sys.oom", "").with_value(0.0, "count"),
         CheckFact::new("disk.fs", "/").with_data(json!({ "pct": disk_pct, "ipct": 12 })),
-        CheckFact::new("sec.miner", "").with_value(0.0, "count"),
+        CheckFact::new("sec.miner", "")
+            .with_value(0.0, "count")
+            .with_data(json!({ "seen": 64, "total": 64 })),
         CheckFact::new("sec.preload", "").with_value(0.0, "count"),
     ]
+}
+
+fn mb(x: u32) -> f64 {
+    f64::from(x) * 1024.0 * 1024.0
 }
 
 fn gb(x: f64) -> f64 {
@@ -228,18 +236,58 @@ fn scan(s: u32) -> Snapshot {
     let mut sg2 = basics(s, 4, 1.4, 24.0, sg2_disk);
     sg2.extend([
         CheckFact::new("docker.compose", "tiemtra").with_data(json!({
-            "containers": 3, "running": 3, "not_running": 0,
+            "containers": 4, "running": 4, "not_running": 0,
             "restarts": if s >= 11 { 1 } else { 0 }, "mem_pct": 61,
+            "services": [
+                {"name": "tiemtra-api-api-1", "svc": "api", "state": "running", "restarts": 0,
+                 "mem": mb(380 + s * 3), "limit": mb(512), "cpu": 3.2, "oom": false, "exit": 0,
+                 "started": "2026-09-20T09:12:03.412Z", "image": "tiemtra-api:1.5.0"},
+                {"name": "tiemtra-api-worker-1", "svc": "worker", "state": "running",
+                 "restarts": if s >= 11 { 1 } else { 0 },
+                 "mem": mb(120 + (s % 4) * 130), "limit": mb(512), "cpu": 0.8,
+                 "oom": s >= 11, "exit": if s >= 11 { 137 } else { 0 },
+                 "started": "2026-09-26T06:19:51.007Z", "image": "tiemtra-api:1.5.0"},
+                {"name": "tiemtra-api-db-1", "svc": "db", "state": "running", "restarts": 0,
+                 "mem": mb(1200), "limit": mb(2048), "cpu": 1.1, "oom": false, "exit": 0,
+                 "started": "2026-09-20T09:12:01.002Z", "image": "postgres:16.4"},
+                {"name": "tiemtra-api-redis-1", "svc": "redis", "state": "running", "restarts": 0,
+                 "mem": mb(38), "limit": mb(256), "cpu": 0.2, "oom": false, "exit": 0,
+                 "started": "2026-09-20T09:12:01.402Z", "image": "redis:7.2"},
+            ],
         })),
         CheckFact::new("db.size", "tiemtra")
             .with_value(gb(1.38 + f64::from(s) * 0.037), "bytes")
-            .with_data(json!({ "engine": "postgres", "tables": 42, "top": [["orders", gb(0.9)], ["order_items", gb(0.4)]] })),
-        CheckFact::new("disk.path", "/srv/booking").with_value(gb(6.0 + f64::from(s) * 0.01), "bytes"),
-        CheckFact::new("pm2.app", "booking-queue").with_data(json!({ "status": "online", "restarts": 1, "mem_mb": 84 })),
-        CheckFact::new("sec.upload_php", "/srv/booking/storage/app/public/uploads/index.php")
-            .with_value(1.0, "count")
-            .with_fp("52:1710400000:9f3a1c")
-            .with_data(json!({ "size": 52, "owner": "www-data" })),
+            .with_data(json!({
+                "engine": "postgres", "tables": 42,
+                "top": [["orders", gb(0.45 + f64::from(s) * 0.03)], ["order_items", gb(0.4)],
+                        ["events", gb(0.28)], ["products", gb(0.09)], ["users", gb(0.06)]],
+                "other": gb(0.1),
+            })),
+        CheckFact::new("docker.df", "")
+            .with_value(gb(18.2), "bytes")
+            .with_data(json!({
+                "images": {"count": 9, "active": 5, "size": gb(7.1), "reclaimable": gb(3.2)},
+                "containers": {"count": 7, "active": 7, "size": gb(0.4), "reclaimable": 0},
+                "volumes": {"count": 6, "active": 6, "size": gb(4.3), "reclaimable": 0},
+                "build_cache": {"count": 41, "active": 0, "size": gb(6.4), "reclaimable": gb(6.4)},
+            })),
+        CheckFact::new("disk.path", "/srv/booking")
+            .with_value(gb(6.0 + f64::from(s) * 0.01), "bytes")
+            .with_data(json!({
+                "top": [["storage", gb(3.9)], ["public", gb(1.4)], [".git", gb(0.4)]],
+                "other": gb(0.3),
+                "files": [["storage/app/backups/db-2026-09-01.sql.gz", mb(78)]],
+                "partial": false,
+            })),
+        CheckFact::new("pm2.app", "booking-queue")
+            .with_data(json!({ "status": "online", "restarts": 1, "mem_mb": 84 })),
+        CheckFact::new(
+            "sec.upload_php",
+            "/srv/booking/storage/app/public/uploads/index.php",
+        )
+        .with_value(1.0, "count")
+        .with_fp("52:1710400000:9f3a1c")
+        .with_data(json!({ "size": 52, "owner": "www-data" })),
         CheckFact::new("sec.ports", "").with_value(0.0, "count"),
     ]);
     add("vps-sg-2", HostOutcome::Reached, sg2);
@@ -247,7 +295,23 @@ fn scan(s: u32) -> Snapshot {
     // vps-sg-1: tiemtra web + cron worker, which restarts three times before #12.
     let mut sg1 = basics(s, 2, 0.4, 49.0, 64);
     sg1.extend([
-        CheckFact::new("disk.path", "/srv/tiemtra-web").with_value(gb(5.4), "bytes"),
+        CheckFact::new("disk.path", "/srv/tiemtra-web")
+            .with_value(gb(4.5 + f64::from(s) * 0.075), "bytes")
+            .with_data(json!({
+                "top": [
+                    ["public/uploads", gb(2.6)],
+                    ["storage/logs", gb(0.1 * f64::from(s))],
+                    ["storage/app", gb(1.1)],
+                    [".git", gb(0.4)],
+                ],
+                "other": gb(0.4),
+                "files": [
+                    ["storage/logs/laravel-2026-09-25.log", mb(640)],
+                    ["public/uploads/2026/07/promo-video.mov", mb(402)],
+                    ["public/uploads/2026/09/banner-4k.mp4", mb(96)],
+                ],
+                "partial": false,
+            })),
         CheckFact::new("pm2.app", "tiemtra-cron").with_data(json!({
             "status": "online", "restarts": if s >= 12 { 3 } else { 0 }, "mem_mb": 62,
         })),
@@ -264,7 +328,7 @@ fn scan(s: u32) -> Snapshot {
     hn3.push(if s >= 5 {
         CheckFact::new("sec.ports", "0.0.0.0:3306")
             .with_value(1.0, "count")
-            .with_data(json!({ "service": "mysql" }))
+            .with_data(json!({ "port": 3306, "proc": "mariadbd" }))
     } else {
         CheckFact::new("sec.ports", "").with_value(0.0, "count")
     });
@@ -275,7 +339,7 @@ fn scan(s: u32) -> Snapshot {
         )
         .with_value(1.0, "count")
         .with_fp("3481:1790200000:0b77e2")
-        .with_data(json!({ "size": 3481, "owner": "www-data" }))
+        .with_data(json!({ "size": 3481, "mtime": 1_790_300_000, "total": 137 }))
     } else {
         CheckFact::new("sec.upload_php", "").with_value(0.0, "count")
     });
@@ -289,7 +353,7 @@ fn scan(s: u32) -> Snapshot {
             .with_data(json!({ "engine": "mysql", "tables": 57 })),
         CheckFact::new("sec.ports", "0.0.0.0:6379")
             .with_value(1.0, "count")
-            .with_data(json!({ "service": "redis" })),
+            .with_data(json!({ "port": 6379, "proc": "redis-server" })),
     ]);
     add("db-main", HostOutcome::Reached, db);
 
@@ -329,7 +393,10 @@ fn scan(s: u32) -> Snapshot {
         if s >= 8 {
             CheckFact::new("url.exposed", "https://khohang.vn/.env")
                 .with_value(1.0, "count")
-                .with_data(json!({ "status": 200, "matched": "APP_KEY=" }))
+                .with_data(json!({
+                    "exposed": true,
+                    "matched_keys": ["/.env:APP_KEY", "/.env:DB_PASSWORD", "/.env:DB_USERNAME", "/.env:MAIL_PASSWORD"],
+                }))
         } else {
             CheckFact::new("url.exposed", "https://khohang.vn").with_value(0.0, "count")
         },

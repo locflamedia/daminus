@@ -145,7 +145,9 @@
         "value": 0.4,
         "unit": "load",
         "data": {
-          "cores": 2
+          "cores": 2,
+          "load1": 0.7,
+          "load15": 0.13999999999999999
         }
       },
       {
@@ -178,7 +180,11 @@
         "check": "sec.miner",
         "target": "",
         "value": 0.0,
-        "unit": "count"
+        "unit": "count",
+        "data": {
+          "seen": 64,
+          "total": 64
+        }
       },
       {
         "check": "sec.preload",
@@ -202,7 +208,8 @@
         "value": 1.0,
         "unit": "count",
         "data": {
-          "service": "redis"
+          "port": 6379,
+          "proc": "redis-server"
         }
       }
     ],
@@ -213,7 +220,9 @@
         "value": 0.5,
         "unit": "load",
         "data": {
-          "cores": 1
+          "cores": 1,
+          "load1": 0.8,
+          "load15": 0.21
         }
       },
       {
@@ -246,7 +255,11 @@
         "check": "sec.miner",
         "target": "",
         "value": 0.0,
-        "unit": "count"
+        "unit": "count",
+        "data": {
+          "seen": 64,
+          "total": 64
+        }
       },
       {
         "check": "sec.preload",
@@ -262,7 +275,9 @@
         "value": 1.1,
         "unit": "load",
         "data": {
-          "cores": 2
+          "cores": 2,
+          "load1": 1.4000000000000001,
+          "load15": 0.63
         }
       },
       {
@@ -295,7 +310,11 @@
         "check": "sec.miner",
         "target": "",
         "value": 0.0,
-        "unit": "count"
+        "unit": "count",
+        "data": {
+          "seen": 64,
+          "total": 64
+        }
       },
       {
         "check": "sec.preload",
@@ -329,7 +348,9 @@
         "value": 0.6000000000000001,
         "unit": "load",
         "data": {
-          "cores": 2
+          "cores": 2,
+          "load1": 0.9000000000000001,
+          "load15": 0.27999999999999997
         }
       },
       {
@@ -362,7 +383,11 @@
         "check": "sec.miner",
         "target": "",
         "value": 0.0,
-        "unit": "count"
+        "unit": "count",
+        "data": {
+          "seen": 64,
+          "total": 64
+        }
       },
       {
         "check": "sec.preload",
@@ -373,8 +398,44 @@
       {
         "check": "disk.path",
         "target": "/srv/tiemtra-web",
-        "value": 5798205850.0,
-        "unit": "bytes"
+        "value": 4992899482.0,
+        "unit": "bytes",
+        "data": {
+          "files": [
+            [
+              "storage/logs/laravel-2026-09-25.log",
+              671088640.0
+            ],
+            [
+              "public/uploads/2026/07/promo-video.mov",
+              421527552.0
+            ],
+            [
+              "public/uploads/2026/09/banner-4k.mp4",
+              100663296.0
+            ]
+          ],
+          "other": 429496730.0,
+          "partial": false,
+          "top": [
+            [
+              "public/uploads",
+              2791728742.0
+            ],
+            [
+              "storage/logs",
+              214748365.0
+            ],
+            [
+              "storage/app",
+              1181116006.0
+            ],
+            [
+              ".git",
+              429496730.0
+            ]
+          ]
+        }
       },
       {
         "check": "pm2.app",
@@ -399,7 +460,9 @@
         "value": 1.5999999999999999,
         "unit": "load",
         "data": {
-          "cores": 4
+          "cores": 4,
+          "load1": 1.9,
+          "load15": 0.9799999999999999
         }
       },
       {
@@ -432,7 +495,11 @@
         "check": "sec.miner",
         "target": "",
         "value": 0.0,
-        "unit": "count"
+        "unit": "count",
+        "data": {
+          "seen": 64,
+          "total": 64
+        }
       },
       {
         "check": "sec.preload",
@@ -444,11 +511,65 @@
         "check": "docker.compose",
         "target": "tiemtra",
         "data": {
-          "containers": 3,
+          "containers": 4,
           "mem_pct": 61,
           "not_running": 0,
           "restarts": 0,
-          "running": 3
+          "running": 4,
+          "services": [
+            {
+              "cpu": 3.2,
+              "exit": 0,
+              "image": "tiemtra-api:1.5.0",
+              "limit": 536870912.0,
+              "mem": 404750336.0,
+              "name": "tiemtra-api-api-1",
+              "oom": false,
+              "restarts": 0,
+              "started": "2026-09-20T09:12:03.412Z",
+              "state": "running",
+              "svc": "api"
+            },
+            {
+              "cpu": 0.8,
+              "exit": 0,
+              "image": "tiemtra-api:1.5.0",
+              "limit": 536870912.0,
+              "mem": 398458880.0,
+              "name": "tiemtra-api-worker-1",
+              "oom": false,
+              "restarts": 0,
+              "started": "2026-09-26T06:19:51.007Z",
+              "state": "running",
+              "svc": "worker"
+            },
+            {
+              "cpu": 1.1,
+              "exit": 0,
+              "image": "postgres:16.4",
+              "limit": 2147483648.0,
+              "mem": 1258291200.0,
+              "name": "tiemtra-api-db-1",
+              "oom": false,
+              "restarts": 0,
+              "started": "2026-09-20T09:12:01.002Z",
+              "state": "running",
+              "svc": "db"
+            },
+            {
+              "cpu": 0.2,
+              "exit": 0,
+              "image": "redis:7.2",
+              "limit": 268435456.0,
+              "mem": 39845888.0,
+              "name": "tiemtra-api-redis-1",
+              "oom": false,
+              "restarts": 0,
+              "started": "2026-09-20T09:12:01.402Z",
+              "state": "running",
+              "svc": "redis"
+            }
+          ]
         }
       },
       {
@@ -458,24 +579,93 @@
         "unit": "bytes",
         "data": {
           "engine": "postgres",
+          "other": 107374182.0,
           "tables": 42,
           "top": [
             [
               "orders",
-              966367642.0
+              547608330.0
             ],
             [
               "order_items",
               429496730.0
+            ],
+            [
+              "events",
+              300647711.0
+            ],
+            [
+              "products",
+              96636764.0
+            ],
+            [
+              "users",
+              64424509.0
             ]
           ]
+        }
+      },
+      {
+        "check": "docker.df",
+        "target": "",
+        "value": 19542101197.0,
+        "unit": "bytes",
+        "data": {
+          "build_cache": {
+            "active": 0,
+            "count": 41,
+            "reclaimable": 6871947674.0,
+            "size": 6871947674.0
+          },
+          "containers": {
+            "active": 7,
+            "count": 7,
+            "reclaimable": 0,
+            "size": 429496730.0
+          },
+          "images": {
+            "active": 5,
+            "count": 9,
+            "reclaimable": 3435973837.0,
+            "size": 7623566950.0
+          },
+          "volumes": {
+            "active": 6,
+            "count": 6,
+            "reclaimable": 0,
+            "size": 4617089843.0
+          }
         }
       },
       {
         "check": "disk.path",
         "target": "/srv/booking",
         "value": 6463925780.0,
-        "unit": "bytes"
+        "unit": "bytes",
+        "data": {
+          "files": [
+            [
+              "storage/app/backups/db-2026-09-01.sql.gz",
+              81788928.0
+            ]
+          ],
+          "other": 322122547.0,
+          "partial": false,
+          "top": [
+            [
+              "storage",
+              4187593114.0
+            ],
+            [
+              "public",
+              1503238554.0
+            ],
+            [
+              ".git",
+              429496730.0
+            ]
+          ]
+        }
       },
       {
         "check": "pm2.app",

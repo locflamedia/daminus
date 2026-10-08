@@ -66,6 +66,9 @@ export const ICON_PATHS = {
   'arrow-right': 'M3 8h10 M9 4l4 4-4 4',
   jump: 'M3 12.5V8.5A2 2 0 0 1 5 6.5h7.5 M9.5 3.5l3 3-3 3',
   key: 'M10.5 3a3 3 0 1 1 0 6 3 3 0 0 1 0-6z M8.4 7.1l-5.6 5.6V14.5h2v-1.5h1.5v-1.5h1.3',
+  // Server detail: a memory module and the swap arrows.
+  memory: 'M2.5 5h11v6h-11z M5 5V3.5 M8 5V3.5 M11 5V3.5 M5 11v1.5 M8 11v1.5 M11 11v1.5',
+  swap: 'M3 5h8l-2-2 M13 11H5l2 2',
 } as const
 
 export type IconName = keyof typeof ICON_PATHS

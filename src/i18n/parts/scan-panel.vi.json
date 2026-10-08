@@ -1,0 +1,43 @@
+{
+  "scanPanel": {
+    "label": "Lần quét",
+    "title": "Quét",
+    "titleDone": "Đã quét xong",
+    "titleStopped": "Đã dừng quét",
+    "running": "Đang chạy",
+    "done": "Xong",
+    "stopped": "Đã dừng",
+    "close": "Đóng bảng",
+    "progress": "{done}/{total} máy chủ xong",
+    "unreachable": "{n} mất kết nối",
+    "left": "còn khoảng {time}",
+    "hostsLabel": "Máy chủ trong lần quét này",
+    "noProject": "chưa thuộc dự án",
+    "checks": "{n} kiểm tra",
+    "waitSlot": "đợi đến lượt",
+    "retry": "Thử lại",
+    "retryLater": "Dùng được khi lần quét kết thúc",
+    "step": {
+      "connect": "Kết nối",
+      "system": "Thông tin máy",
+      "disk": "Ổ đĩa",
+      "containers": "Container",
+      "databases": "CSDL",
+      "security": "Bảo mật"
+    },
+    "found": "Đã đọc được",
+    "foundRead": "đọc {n} kiểm tra",
+    "trust": "Chỉ chạy lệnh chỉ-đọc. Không cài đặt hay thay đổi gì.",
+    "stop": "Dừng quét",
+    "background": "Chạy nền",
+    "finish": "Đóng",
+    "foundLine": "{projects}: {read}",
+    "mark": {
+      "done": "Xong",
+      "running": "Đang đọc",
+      "waiting": "Đang chờ",
+      "failed": "Lỗi",
+      "reading": "Đang đọc"
+    }
+  }
+}

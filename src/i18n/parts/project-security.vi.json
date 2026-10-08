@@ -1,0 +1,229 @@
+{
+  "projectSecurity": {
+    "state": {
+      "loading": "Đang đọc các kiểm tra bảo mật",
+      "emptyTitle": "Chưa có kết quả bảo mật",
+      "emptyText": "Bấm Quét tất cả để Daminus chạy chín kiểm tra cho dự án này.",
+      "errorTitle": "Không đọc được kết quả mới nhất",
+      "retry": "Thử lại",
+      "staleTitle": "Kết quả này đã {n} ngày tuổi",
+      "staleText": "Lần quét #{seq} là lần cuối được lưu. Chưa có gì ở đây được kiểm tra lại.",
+      "unreachableTitle": "{hosts} không trả lời lần quét #{seq}",
+      "unreachableText": "Kết quả của máy này là lần cuối Daminus đọc được; mỗi dòng ghi rõ từ lần quét nào.",
+      "allOffTitle": "Các kiểm tra bảo mật đang tắt trong Cài đặt",
+      "allOffText": "Các nhóm đứng sau chín kiểm tra này đã tắt nên chưa có gì được chạy.",
+      "openSettings": "Mở Cài đặt"
+    },
+    "sev": {
+      "crit": "Nghiêm trọng",
+      "warn": "Cảnh báo",
+      "info": "Thông tin"
+    },
+    "first": {
+      "label": "Làm việc này trước",
+      "copyRule": "Chép luật nginx",
+      "thisFile": "file đó",
+      "afterLine": "{list} làm sau.",
+      "title": {
+        "sec_miner": "Làm việc này trước: dừng tiến trình đào coin",
+        "sec_preload": "Làm việc này trước: xem /etc/ld.so.preload",
+        "sec_upload_php": "Làm việc này trước: không cho PHP chạy trong uploads",
+        "url_exposed": "Làm việc này trước: ngừng phát file .env và .git",
+        "url_tls": "Làm việc này trước: gia hạn chứng chỉ",
+        "url_http": "Làm việc này trước: tìm vì sao site không trả lời"
+      },
+      "next": {
+        "sec_miner": "Sau đó tìm xem cái gì đã khởi chạy nó và đổi mật khẩu, khóa mà máy này đang giữ.",
+        "sec_preload": "Sau đó gỡ thư viện bạn không thêm và khởi động lại các dịch vụ.",
+        "sec_upload_php": "Sau đó chép {file} ra khỏi máy chủ.",
+        "url_exposed": "Sau đó đổi mọi khóa được liệt kê.",
+        "url_tls": "Sau đó nạp lại web server và kiểm tra lại site.",
+        "url_http": "Sau đó xem web server và log của ứng dụng trên máy."
+      },
+      "after": {
+        "sec_miner": "dừng tiến trình đào coin và đổi thông tin đăng nhập",
+        "sec_preload": "kiểm tra ld.so.preload",
+        "sec_upload_php": "xóa các file PHP đã tải lên",
+        "url_exposed": "sửa root của nginx và đổi khóa",
+        "url_tls": "gia hạn chứng chỉ",
+        "url_http": "tìm vì sao site không trả lời"
+      }
+    },
+    "title": {
+      "uploadPhp": "File PHP trong thư mục uploads | {n} file PHP trong thư mục uploads",
+      "tmpExec": "File thực thi trong thư mục tạm | {n} file thực thi trong thư mục tạm",
+      "exposed": "{file} đọc được từ internet",
+      "miner": "Có thể là chương trình đào coin: {name}",
+      "preload": "ld.so.preload có nội dung",
+      "port3306": "MySQL hoặc MariaDB đang nghe trên mọi địa chỉ",
+      "port5432": "PostgreSQL đang nghe trên mọi địa chỉ",
+      "port6379": "Redis đang nghe trên mọi địa chỉ",
+      "port27017": "MongoDB đang nghe trên mọi địa chỉ",
+      "port2375": "API từ xa của Docker đang nghe trên mọi địa chỉ",
+      "portOther": "Cổng {port} đang nghe trên mọi địa chỉ",
+      "recentChange": "{n} file code đổi trong 3 ngày | {n} file code đổi trong 3 ngày",
+      "tlsExpired": "Chứng chỉ của {host} đã hết hạn",
+      "tlsUntrusted": "Chứng chỉ của {host} không được tin cậy",
+      "tlsMismatch": "Chứng chỉ của {host} cấp cho tên khác",
+      "tlsSoon": "Chứng chỉ của {host} sắp hết hạn",
+      "httpDown": "{host} không trả lời như mong đợi",
+      "httpSlow": "{host} trả lời chậm"
+    },
+    "card": {
+      "newThisScan": "mới ở lần quét này",
+      "firstSeen": "thấy lần đầu ở lần quét #{seq} · {when}",
+      "firstSeenToday": "thấy lần đầu ở lần quét #{seq} · hôm nay",
+      "days": "{n} ngày | {n} ngày",
+      "staleSince": "chưa kiểm tra lại từ #{seq}",
+      "expected": "đã chấp nhận",
+      "ruleUntil": "đến {date}",
+      "ruleReason": {
+        "intended": "chủ ý",
+        "accepted_risk": "chấp nhận rủi ro",
+        "false_positive": "báo nhầm"
+      },
+      "details": "Chi tiết",
+      "hide": "Ẩn",
+      "copyScp": "Chép lệnh scp",
+      "copyNginxFix": "Chép cách sửa nginx",
+      "checkedProcesses": "Đã kiểm tra {seen} trên {total} tiến trình",
+      "checkedProcessesWhy": "Chỉ đọc được các tiến trình mà tài khoản này thấy, nên chương trình đào coin chạy bằng người dùng khác có thể bị bỏ sót.",
+      "permissionHelp": "Cách cấp quyền rộng hơn cho kiểm tra này nằm ở màn Trợ giúp quyền, chưa được làm."
+    },
+    "evidence": {
+      "listLabel": "File tìm thấy, mới nhất trước",
+      "more": "Xem cả {n}",
+      "less": "Thu gọn",
+      "meta": "{size} · {owner} · sửa lúc {when}",
+      "metaNoOwner": "{size} · sửa lúc {when}",
+      "uploadHint": "uploads chỉ nên chứa ảnh",
+      "get": "GET",
+      "served": "ai cũng tải được",
+      "keysMatched": "khóa khớp",
+      "namesOnly": "chỉ tên, không lưu giá trị nào",
+      "moreKeys": "+{n} nữa",
+      "gitRef": "ref",
+      "gitMeaning": "tải được cả kho mã nguồn, gồm toàn bộ lịch sử",
+      "exe": "chạy từ {path}",
+      "deleted": "file của nó đã bị xóa",
+      "libraries": "{n} thư viện được liệt kê | {n} thư viện được liệt kê",
+      "http": "{status} · {time}",
+      "httpNone": "không trả lời · {why}",
+      "reason": {
+        "dns": "DNS không trả lời",
+        "no_route": "không có đường tới site",
+        "refused": "kết nối bị từ chối",
+        "timeout": "hết thời gian",
+        "tls": "TLS lỗi",
+        "redirects": "chuyển hướng quá nhiều",
+        "invalid_url": "địa chỉ không hợp lệ",
+        "other": "không rõ lý do"
+      },
+      "port": "{target} · {proc}",
+      "recentNewest": "Thay đổi mới nhất",
+      "noFiles": "Daminus không giữ tên file nào cho kết quả này."
+    },
+    "means": {
+      "sec_miner": "Đang chạy một tiến trình khớp chương trình đào coin đã biết, hoặc một tiến trình chạy từ file đã bị xóa. Hãy coi máy chủ đã bị xâm nhập.",
+      "sec_preload": "Một thư viện được nạp vào mọi chương trình trên máy chủ. Đây là thủ thuật rootkit phổ biến.",
+      "sec_upload_php": "File PHP ở nơi người dùng tải ảnh lên thường là dấu hiệu của web shell. Hãy coi site có thể đã bị xâm nhập.",
+      "sec_tmp_exec": "File thực thi trong thư mục tạm là nơi kẻ tấn công hay để công cụ. Script build hoặc deploy cũng có thể để lại vài file.",
+      "sec_ports": "Bất kỳ ai trên internet cũng có thể thử vào cổng này. Database nên chỉ nghe trên chính máy chủ hoặc mạng riêng.",
+      "sec_recent_change": "Bình thường nếu bạn vừa deploy trong vài ngày qua. Đáng xem nếu bạn không deploy.",
+      "url_exposed": "Ai hỏi cũng nhận được file này. Chỉ tên khóa được giữ làm bằng chứng; Daminus không bao giờ lưu giá trị.",
+      "url_tls": "Trình duyệt hiện cảnh báo cho mọi khách, và một số client từ chối kết nối.",
+      "url_http": "Khách thấy lỗi hoặc phải chờ quá lâu."
+    },
+    "do": {
+      "sec_miner": "Tìm xem cái gì khởi chạy nó, dừng và gỡ nó, rồi đổi mật khẩu và khóa mà máy chủ đang giữ.",
+      "sec_preload": "Mở /etc/ld.so.preload và xem từng thư viện được liệt kê. Nếu bạn không thêm chúng, hãy coi máy chủ đã bị xâm nhập.",
+      "sec_upload_php": "Chưa xóa vội. Chép nó ra khỏi máy chủ để xem xét, rồi xem log truy cập quanh {when}.",
+      "sec_tmp_exec": "Kiểm tra từng file là gì và của ai. Gỡ những file bạn không để ở đó.",
+      "sec_ports": "Gắn dịch vụ vào 127.0.0.1 hoặc địa chỉ riêng, hoặc đóng cổng trong tường lửa.",
+      "sec_recent_change": "So với lần deploy gần nhất. Xem các file mới nhất trước.",
+      "url_exposed": "Trỏ root của nginx vào public/, không phải thư mục dự án. Rồi đổi mọi khóa được liệt kê, vì ai cũng có thể đã đọc chúng.",
+      "url_tls": "Gia hạn chứng chỉ và nạp lại web server.",
+      "url_http": "Mở site, rồi xem web server và log của ứng dụng trên máy."
+    },
+    "exposed": {
+      "noMarkLine": "Phát hiện này không có Đánh dấu là chấp nhận",
+      "whyNoMarkLead": "Vì sao không có Đánh dấu là chấp nhận.",
+      "whyNoMark": "Không có lý do an toàn nào để phát file .env hay .git ra internet, và luật không phân biệt được khóa mới."
+    },
+    "cut": {
+      "showing": "Đang hiện",
+      "showingOf": "{listed} trên {total}",
+      "newestFirst": "mới nhất trước",
+      "notListed": "{n} cái còn lại không được liệt kê"
+    },
+    "value": {
+      "none": "không có",
+      "noneSeen": "không có · {seen} trên {total}",
+      "seenOf": "{seen} trên {total}",
+      "needsPermission": "cần quyền",
+      "minerFound": "thấy {name}",
+      "minerFoundPartial": "thấy {name} · mới xem {seen} trên {total}",
+      "empty": "trống",
+      "libraries": "{n} thư viện | {n} thư viện",
+      "files": "{n} file | {n} file",
+      "filesChanged": "{n} file | {n} file",
+      "portsPublic": "{ports} mở ra ngoài",
+      "http": "{status} · {time}",
+      "httpStatus": "{status}",
+      "httpDown": "không trả lời · {why}",
+      "served": "{file} bị phát công khai",
+      "more": "+{n}",
+      "unknownReason": "chưa kiểm tra · {reason}",
+      "off": "tắt trong Cài đặt",
+      "noResult": "chưa có kết quả",
+      "expected": "đã chấp nhận",
+      "staleSince": "kiểm tra lần cuối #{seq}"
+    },
+    "checks": {
+      "title": "Kiểm tra lần quét này",
+      "metaTime": "{n} trong {time}",
+      "meta": "{n} kiểm tra",
+      "critical": "nghiêm trọng",
+      "mix": "Cơ cấu mức độ của các kiểm tra: {crit} nghiêm trọng, {warn} cảnh báo, {info} thông tin, {ok} ổn",
+      "list": "Chín kiểm tra bảo mật"
+    },
+    "fold": {
+      "label": "Cảnh báo và thông tin",
+      "expectedLabel": "Đã chấp nhận"
+    },
+    "timeline": {
+      "title": "Diễn biến",
+      "meta": "{n} lần quét gần nhất",
+      "line": "{seq} · {date}",
+      "today": "hôm nay"
+    },
+    "event": {
+      "allClean": "Cả chín kiểm tra đều sạch",
+      "clean": "Không thấy gì",
+      "stillOpen": "{n} phát hiện vẫn còn | {n} phát hiện vẫn còn",
+      "uploadPhp": "{file} xuất hiện trong uploads",
+      "tmpExec": "{file} xuất hiện trong thư mục tạm",
+      "miner": "Thấy {name} đang chạy",
+      "preload": "ld.so.preload có nội dung",
+      "ports": "Cổng {port} mở ra internet",
+      "exposed": "Một file riêng tư đang bị phát công khai",
+      "tls": "Chứng chỉ cần xem",
+      "http": "Site không còn trả lời như mong đợi",
+      "recent": "{n} file code đổi | {n} file code đổi",
+      "more": "+{n} nữa",
+      "notRun": "Các kiểm tra bảo mật không chạy"
+    },
+    "limits": {
+      "title": "Chưa kiểm tra ở v0.1",
+      "text": "Kết quả sạch nghĩa là không có chín dấu hiệu này, không phải máy chủ sạch.",
+      "soon": "v0.2",
+      "scanner": "maldet hoặc ClamAV, chạy khi cần",
+      "baseline": "Mốc hash của web root",
+      "cron": "So sánh cron, systemd và authorized_keys"
+    },
+    "clean": {
+      "title": "Không thấy gì",
+      "text": "Cả chín kiểm tra đều trả lời và không cái nào thấy vấn đề."
+    }
+  }
+}

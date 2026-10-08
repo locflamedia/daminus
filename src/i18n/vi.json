@@ -283,7 +283,7 @@
       "app": "Ứng dụng pm2 {target} cần xem"
     },
     "db": {
-      "size": "Database {target} nặng {value}"
+      "size": "Database {target} có dung lượng {value}"
     },
     "sec": {
       "miner": "Có thể là chương trình đào coin: {target}",
@@ -309,6 +309,7 @@
     "scan_in_progress": "Đang có một lần quét chạy.",
     "nothing_to_scan": "Chưa có gì để quét. Hãy thêm máy chủ hoặc dự án trước.",
     "local_network_down": "Máy Mac này có vẻ đang mất mạng. Kiểm tra mạng rồi quét lại.",
+    "scan_not_found": "Lần quét đó không còn được giữ. Cài đặt › Dữ liệu quyết định số lần quét được giữ.",
     "config_invalid": "Không đọc được {path}. Hãy sửa file hoặc dời nó đi.",
     "config_invalid_at": "Không đọc được {path} ở dòng {line}. Hãy sửa file hoặc dời nó đi.",
     "config_from_newer_version": "{path} do bản Daminus mới hơn ghi (phiên bản {version}). Hãy cập nhật Daminus để sửa.",

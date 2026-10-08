@@ -104,6 +104,7 @@ describe('locale files', () => {
       scan_in_progress: true,
       nothing_to_scan: true,
       local_network_down: true,
+      scan_not_found: true,
       config_invalid: true,
       config_from_newer_version: true,
       config_changed_on_disk: true,

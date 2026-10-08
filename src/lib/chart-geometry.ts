@@ -29,18 +29,40 @@ export interface Box {
   y1: number
 }
 
-/** Evenly spaced x (a scan is a point, not a moment), y from `domain` onto the box. */
+/**
+ * Where each moment falls between the first and the last, 0 to 1; the middle for a single
+ * moment or when they are all the same.
+ */
+export function timeShares(times: readonly number[]): number[] {
+  const first = times[0]
+  const last = times[times.length - 1]
+  if (first === undefined || last === undefined || last === first) return times.map(() => 0.5)
+  return times.map((t) => (t - first) / (last - first))
+}
+
+/**
+ * Evenly spaced x (a scan is a point, not a moment), y from `domain` onto the box. With
+ * `shares` (see `timeShares`) the x follows the clock instead, for charts of scans that
+ * happen on demand and unevenly.
+ */
 export function linePoints(
   values: readonly number[],
   box: Box,
   domain: readonly [number, number],
+  shares?: readonly number[],
 ): Point[] {
   const y = scaleLinear(domain, [box.y1, box.y0])
   const n = values.length
-  return values.map((v, i) => [
-    n === 1 ? (box.x0 + box.x1) / 2 : box.x0 + ((box.x1 - box.x0) * i) / (n - 1),
-    y(v),
-  ])
+  return values.map((v, i) => {
+    const share = shares?.[i]
+    const x =
+      share !== undefined
+        ? box.x0 + (box.x1 - box.x0) * share
+        : n === 1
+          ? (box.x0 + box.x1) / 2
+          : box.x0 + ((box.x1 - box.x0) * i) / (n - 1)
+    return [x, y(v)]
+  })
 }
 
 /**

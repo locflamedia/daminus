@@ -1,0 +1,128 @@
+{
+  "serverScreen": {
+    "identity": {
+      "cores": "{n} core | {n} cores",
+      "memory": "{size} RAM",
+      "hostTime": "{time}"
+    },
+    "baseline": {
+      "label": "Compare with an earlier scan",
+      "option": "vs #{seq}",
+      "none": "No earlier scan"
+    },
+    "scan": "Scan server",
+    "scanning": "Scanning…",
+    "scanningHint": "A scan is already running",
+    "kpi": {
+      "load": "Load",
+      "memory": "Memory",
+      "disk": "Disk {mount}",
+      "diskBare": "Disk",
+      "swap": "Swap",
+      "ofCores": "/ {n} core | / {n} cores",
+      "ofSize": "/ {size}",
+      "busy": "CPU ≈ {pct}% busy",
+      "available": "{pct}% available",
+      "noSwap": "No swap",
+      "pts": "{n} pt | {n} pts",
+      "same": "no change",
+      "trend": "{name} over the last scans",
+      "noValue": "No value",
+      "tag": {
+        "ok": "ok",
+        "info": "info",
+        "warn": "warn",
+        "crit": "crit",
+        "unknown": "no data"
+      },
+      "up": "up",
+      "down": "down"
+    },
+    "disk": {
+      "title": "Disk {mount} over the last {n} scans",
+      "sizes": "{used} of {size} · {avail} free",
+      "crit": "crit ≥ {n}%",
+      "warn": "warn ≥ {n}%",
+      "tipTitle": "{date} · scan #{seq}",
+      "tipNow": "{date} · scan #{seq} · now",
+      "forecast": "{n}% in about {days} day at this pace | {n}% in about {days} days at this pace",
+      "atLimit": "At or over {n}% now",
+      "label": "Disk use of {mount} over the last scans",
+      "needsTwo": "A trend needs two scans of this disk.",
+      "today": "today",
+      "sinceOne": "{pts} since scan #{seq}"
+    },
+    "usage": {
+      "title": "What uses it",
+      "docker": "Docker: images, containers, volumes",
+      "log": "{name} {size}",
+      "reclaim": "docker system df says {size} is reclaimable build cache.",
+      "empty": "No folder sizes yet. They come from the folders of the projects on this server.",
+      "grew": "grew since scan #{seq}"
+    },
+    "containers": {
+      "title": "Containers",
+      "meta": "{projects} · {running} running",
+      "projects": "{n} project | {n} projects",
+      "name": "Name",
+      "project": "Project",
+      "cpu": "CPU",
+      "memory": "Memory",
+      "restarts": "Restarts",
+      "empty": "No Compose containers on this server.",
+      "list": "Containers on {host}",
+      "restartsGrew": "{n} more restart since the baseline | {n} more restarts since the baseline",
+      "state": "{name}: {state}"
+    },
+    "findings": {
+      "unread": "{check}: {target}, not read",
+      "title": "Findings",
+      "crit": "{n} critical",
+      "warn": "{n} warn",
+      "info": "{n} info",
+      "unknown": "{n} no answer",
+      "ok": "{n} ok",
+      "expected": "{n} expected",
+      "empty": "Nothing on this server needs a look.",
+      "list": "Findings of {host}"
+    },
+    "security": {
+      "title": "Security lite · {clean} of {total} clean",
+      "titleNone": "Security lite",
+      "list": "Security checks of {host}",
+      "clear": {
+        "sec": {
+          "miner": "none",
+          "preload": "empty",
+          "tmp_exec": "none",
+          "ports": "local only",
+          "upload_php": "none",
+          "recent_change": "none"
+        }
+      },
+      "files": "{n} file | {n} files",
+      "found": "{n} found",
+      "seen": "{seen} of {total} seen",
+      "seenFound": "{name} found · {seen} of {total} seen",
+      "off": "off in Settings",
+      "none": "no result"
+    },
+    "state": {
+      "unreachable": "{host} did not answer",
+      "unreachableText": "The last scan could not read this server ({cause}). What is shown is from scan #{seq}, {when}.",
+      "neverReached": "The last scan could not read this server ({cause}), and no earlier scan reached it.",
+      "notScanned": "{host} was left out of the last scan",
+      "notScannedText": "It is switched off in Settings or was not part of the scan you ran. Scan it to read it now.",
+      "missing": "Daminus does not know a server called {host}",
+      "missingText": "It may have been removed from your projects or from your SSH config.",
+      "back": "Back to Overview",
+      "stale": "These results are {n} day old | These results are {n} days old",
+      "staleText": "Scan this server to see where it stands now.",
+      "loadFailed": "Could not read the results",
+      "retry": "Try again",
+      "noScan": "No scan has run yet",
+      "noScanText": "Scan this server to read it for the first time."
+    },
+    "loading": "Reading {host}"
+  }
+}

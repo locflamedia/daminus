@@ -10,11 +10,15 @@ use std::time::{Duration, Instant};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
+use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::domain::project::ProjectsFile;
 use daminus_core::probe::UrlProbe;
-use daminus_core::scan::{ScanEvent, ScanRun, ScanScope, ScanService, Started, latest_report};
+use daminus_core::scan::{
+    HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started, history_facts,
+    history_view, latest_report, report_at,
+};
 use daminus_core::setup::{
     Saved, SetupEvent, SetupResult, SetupRun, SetupService, SshEnvironment, Step, UrlCheck,
     check_url,
@@ -169,6 +173,30 @@ impl AppCore {
     /// `evaluate` over the saved scans, as of now.
     pub fn report_latest(&self) -> Result<Report, AppError> {
         latest_report(&self.store, Timestamp::new(time::OffsetDateTime::now_utc()))
+    }
+
+    /// One summary per kept scan, oldest first.
+    pub fn history_list(&self) -> Result<HistoryView, AppError> {
+        history_view(&self.store)
+    }
+
+    /// The report as scan `seq` saw it.
+    pub fn report_at(&self, seq: u32) -> Result<Report, AppError> {
+        report_at(&self.store, seq)
+    }
+
+    /// The facts of `checks` in the newest `last` scans.
+    pub fn history_facts(&self, checks: &[String], last: u32) -> Result<Vec<ScanFact>, AppError> {
+        history_facts(
+            &self.store,
+            checks,
+            usize::try_from(last).unwrap_or(usize::MAX),
+        )
+    }
+
+    /// The expected rules as saved: what each covers, why, and until when.
+    pub fn rules_list(&self) -> Result<Vec<ExpectedRule>, AppError> {
+        Ok(self.store.load_projects()?.value.rules)
     }
 
     /// `projects.json` as saved (names for the menu bar).

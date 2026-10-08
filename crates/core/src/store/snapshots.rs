@@ -77,3 +77,12 @@ pub(super) fn prune(dir: &Path, keep: usize) -> Result<Vec<u32>, AppError> {
     }
     Ok(removed)
 }
+
+/// Bytes the snapshot files take on disk; a file that vanished meanwhile counts as zero.
+pub(super) fn total_bytes(dir: &Path) -> Result<u64, AppError> {
+    Ok(list(dir)?
+        .into_iter()
+        .filter_map(|seq| fs::metadata(dir.join(file_name(seq))).ok())
+        .map(|m| m.len())
+        .sum())
+}

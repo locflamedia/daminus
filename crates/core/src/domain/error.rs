@@ -21,6 +21,8 @@ pub enum ErrorCode {
     NothingToScan,
     /// No host and no URL could be reached for network reasons: the Mac is offline.
     LocalNetworkDown,
+    /// A past scan was asked for that is not kept (retention dropped it, or it never existed).
+    ScanNotFound,
     /// A config file could not be parsed; it was moved aside to `*.corrupt-<ts>`.
     ConfigInvalid {
         path: String,

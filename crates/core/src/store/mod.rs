@@ -171,9 +171,31 @@ impl FsStore {
         snapshots::list(&self.snapshots_dir())
     }
 
+    /// Total size of the snapshot files, in bytes.
+    pub fn snapshot_bytes(&self) -> Result<u64, AppError> {
+        snapshots::total_bytes(&self.snapshots_dir())
+    }
+
     /// Reads one snapshot; `None` when missing or unreadable.
     pub fn load_snapshot(&self, seq: u32) -> Option<Snapshot> {
         snapshots::read(&self.snapshots_dir(), seq)
+    }
+
+    /// The history as of scan `seq`: that scan and the older ones, newest first, at most `limit`.
+    pub fn load_history_up_to(
+        &self,
+        seq: u32,
+        limit: Option<usize>,
+    ) -> Result<Vec<Snapshot>, AppError> {
+        let dir = self.snapshots_dir();
+        let seqs = snapshots::list(&dir)?;
+        Ok(seqs
+            .into_iter()
+            .rev()
+            .filter(|s| *s <= seq)
+            .filter_map(|s| snapshots::read(&dir, s))
+            .take(limit.unwrap_or(usize::MAX))
+            .collect())
     }
 
     /// The retained history, newest first, as `evaluate` expects. Unreadable

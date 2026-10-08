@@ -1,0 +1,54 @@
+{
+  "projectDisk": {
+    "empty": {
+      "title": "No folder to measure",
+      "text": "This project has no folder on a server. Add one by editing the project."
+    },
+    "tiles": {
+      "title": "Where {size} goes",
+      "meta": "{paths} · du -sk, top folders",
+      "label": "Folders by size",
+      "other": "other",
+      "partial": "du could not read every subfolder, so some sizes are lower than they are.",
+      "none": "No folder sizes in the last scan."
+    },
+    "growth": {
+      "title": "Growth",
+      "meta": "{n} scans · {delta}",
+      "label": "Size of the project over {n} scans, from {from} to {to}",
+      "grew": "{name} grew the most since #{seq}: {delta}.",
+      "flat": "No folder grew since #{seq}.",
+      "first": "The next scan shows what grew."
+    },
+    "logs": {
+      "title": "Large log files",
+      "meta": "logs.big",
+      "text": "{n} log file is over 500 MB, the largest is {name} at {size}. Daminus never deletes anything; look at them yourself. | {n} log files are over 500 MB, the largest is {name} at {size}. Daminus never deletes anything; look at them yourself.",
+      "command": "List the largest files in that folder"
+    },
+    "files": {
+      "title": "Largest files",
+      "meta": "find -size +{mb}M, read only",
+      "label": "Largest files",
+      "skipped": "{paths} skipped · change in Settings › Scan",
+      "none": "No file over the size set in Settings › Scan.",
+      "finding": "Named by the large logs finding"
+    },
+    "servers": {
+      "title": "On the servers",
+      "meta": "shared with other projects",
+      "fill": "{host} /",
+      "docker": "docker",
+      "none": "No disk reading for these servers yet.",
+      "notMeasured": "not measured"
+    },
+    "free": {
+      "title": "What would free space",
+      "note": "Estimates. Daminus only shows the command; you run it.",
+      "buildCache": "Prune Docker build cache",
+      "images": "Remove unused Docker images",
+      "logs": "Remove or rotate the large log files",
+      "on": "{what} · {host}"
+    }
+  }
+}
