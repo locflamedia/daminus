@@ -40,6 +40,7 @@ struct Fixed {
     client: Arc<dyn AiClient>,
     claude: ClaudeCodeStatus,
     key_seen: std::sync::Mutex<Option<String>>,
+    status_calls: std::sync::atomic::AtomicUsize,
 }
 
 impl ClientFactory for Fixed {
@@ -58,6 +59,8 @@ impl ClientFactory for Fixed {
     }
 
     fn claude_code_status(&self) -> BoxFuture<'_, ClaudeCodeStatus> {
+        self.status_calls
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let status = self.claude.clone();
         Box::pin(async move { status })
     }
@@ -82,6 +85,7 @@ fn rig_with(client: Arc<dyn AiClient>) -> Rig {
             auth_method: Some("claude.ai".into()),
         }),
         key_seen: std::sync::Mutex::default(),
+        status_calls: std::sync::atomic::AtomicUsize::new(0),
     });
     let (core, events) = AppCore::new(
         Arc::new(FakeTransport::new()),
@@ -157,6 +161,7 @@ async fn the_payload_sent_is_the_payload_previewed() {
         .ai_payload_preview(PreviewScope::Whole, options())
         .await
         .unwrap();
+    let kept = r.core.ai.payload(&preview.hash).unwrap();
     r.core.ai_analyze("req-1", &preview.hash).await.unwrap();
     let events = until_end(&mut r.events).await;
 
@@ -167,7 +172,6 @@ async fn the_payload_sent_is_the_payload_previewed() {
         (preview.system.as_str(), preview.user.as_str())
     );
     assert_eq!(sent[0].model.as_deref(), Some("m1"));
-    let kept = r.core.ai.payload(&preview.hash).unwrap();
     assert_eq!(kept.current_hash(), preview.hash);
 
     assert!(events.iter().all(|e| e.request_id == "req-1"));
@@ -589,4 +593,60 @@ fn a_half_written_placeholder_is_held_back() {
         }
     }
     assert_eq!(all, "ok web-1 and [x]");
+}
+
+#[tokio::test]
+async fn a_new_send_cancels_the_one_still_running() {
+    let mut r = rig_with(Arc::new(Hanging));
+    select(&r.core, "ollama").await;
+    let preview = r
+        .core
+        .ai_payload_preview(PreviewScope::Whole, options())
+        .await
+        .unwrap();
+    r.core.ai_analyze("first", &preview.hash).await.unwrap();
+    r.core.ai_analyze("second", &preview.hash).await.unwrap();
+    let ended = r.events.recv().await.unwrap();
+    assert_eq!(ended.request_id, "first");
+    assert_eq!(ended.body, AiEventBody::Cancelled);
+    assert!(r.core.ai_cancel("second"));
+}
+
+#[tokio::test]
+async fn claude_code_status_is_asked_once_until_something_changes_it() {
+    use std::sync::atomic::Ordering::SeqCst;
+    let (r, _client) = rig(FakeReply::Deltas(vec![]));
+    r.core.ai_providers().await.unwrap();
+    r.core.ai_providers().await.unwrap();
+    assert_eq!(r.factory.status_calls.load(SeqCst), 1);
+    r.core.ai_test("ollama").await.unwrap();
+    r.core.ai_providers().await.unwrap();
+    assert_eq!(r.factory.status_calls.load(SeqCst), 2);
+    select(&r.core, "ollama").await;
+    r.core.ai_providers().await.unwrap();
+    assert_eq!(r.factory.status_calls.load(SeqCst), 3);
+}
+
+#[tokio::test]
+async fn kept_payloads_go_when_ai_is_switched_off_or_the_send_ends() {
+    let (mut r, _client) = rig(FakeReply::Deltas(reply("ok")));
+    select(&r.core, "ollama").await;
+    let preview = r
+        .core
+        .ai_payload_preview(PreviewScope::Whole, options())
+        .await
+        .unwrap();
+    r.core.ai_analyze("a", &preview.hash).await.unwrap();
+    until_end(&mut r.events).await;
+    tokio::time::sleep(Duration::from_millis(50)).await;
+    assert!(r.core.ai.payload(&preview.hash).is_none());
+
+    let preview = r
+        .core
+        .ai_payload_preview(PreviewScope::Whole, options())
+        .await
+        .unwrap();
+    assert!(r.core.ai.payload(&preview.hash).is_some());
+    r.core.ai_settings_set(AiSettings::default()).await.unwrap();
+    assert!(r.core.ai.payload(&preview.hash).is_none());
 }

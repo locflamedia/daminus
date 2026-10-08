@@ -20,7 +20,7 @@
     "adapterNoKey": "bộ chuyển đổi {adapter} · không cần khoá",
     "key": {
       "label": "Khoá API",
-      "placeholder": "{hint}…",
+      "placeholder": "Dán khoá API, ví dụ {hint}…",
       "placeholderGeneric": "Dán khóa vào đây…",
       "hint": "Chỉ gửi một lần vào Keychain. Daminus không bao giờ hiện lại khoá.",
       "inKeychain": "trong Keychain",
@@ -72,7 +72,7 @@
     "beta": "Beta",
     "sub": "dùng ứng dụng Claude Code đã có trên máy này · không cần khoá API",
     "program": "Chương trình",
-    "programFound": "claude · {version}",
+    "programFound": "claude · phiên bản {version}",
     "programMissing": "Không tìm thấy",
     "signedIn": "Đăng nhập",
     "signedInValue": "{method} · do chính Claude Code kiểm tra",

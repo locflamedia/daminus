@@ -93,6 +93,8 @@ export function resetAiSend() {
  * request id once Rust took it, or `null` when it did not (`status` is `error`, `error` says why).
  */
 async function send(previewedHash: string): Promise<string | null> {
+  // A send that is still running is stopped first: forgetting its id would leave it billed.
+  await cancel()
   resetAiSend()
   const id = newRequestId()
   requestId.value = id

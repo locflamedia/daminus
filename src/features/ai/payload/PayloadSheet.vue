@@ -55,7 +55,11 @@ const showReview = computed(() => payload.reviewedSends > 0 && !payload.offerSto
 
 function onEnter(event: KeyboardEvent) {
   const target = event.target as HTMLElement | null
-  if (target?.closest('button, a') || event.isComposing) return
+  if (event.isComposing) return
+  // Enter on a switch, checkbox or field toggles or submits there; only the Send button (which
+  // clicks itself) or the panel itself sends.
+  if (target?.closest('button, a, input, textarea, select, [role="switch"], [role="checkbox"]'))
+    return
   event.preventDefault()
   void payload.send()
 }
@@ -155,7 +159,7 @@ function onEnter(event: KeyboardEvent) {
         size="medium"
         lifted
         shortcut="⏎"
-        :disabled="!payload.sendable || sender.busy.value"
+        :disabled="!payload.sendable"
         :busy="sender.busy.value"
         @click="payload.send()"
       >

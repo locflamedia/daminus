@@ -4,6 +4,7 @@
 // no longer in the report, is kept and shown without a severity.
 import type { AiFinding, CheckKey, Item, Report, Severity } from '@/api'
 import { currentLocale, type Locale } from '@/i18n'
+import { cleanText } from '@/lib/command-safety'
 import { issueText, severityText } from '@/lib/issue-text'
 import type { AskedFinding } from '@/stores/ai-thread'
 
@@ -69,7 +70,7 @@ export function resolveFindings(
     return {
       id: finding.id,
       rank: finding.rank,
-      why: finding.why,
+      why: cleanText(finding.why),
       command: finding.suggested_command,
       item,
       severity,
@@ -86,12 +87,4 @@ export function resolveFindings(
 /** The words for the chip: the check's severity ("Critical"), nothing for an unresolved id. */
 export function severityWords(finding: ResolvedFinding, locale: Locale = currentLocale()) {
   return finding.severity ? severityText(finding.severity, locale) : null
-}
-
-/** The worst severity among resolved findings, for the "Health" pill; `null` when none. */
-export function worstTone(findings: readonly ResolvedFinding[]): 'crit' | 'warn' | 'info' | null {
-  for (const tone of ['crit', 'warn', 'info'] as const) {
-    if (findings.some((f) => f.tone === tone)) return tone
-  }
-  return null
 }

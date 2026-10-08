@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cleanBlock, cleanCommand, commandRisks } from './command-safety'
+import { cleanBlock, cleanCommand, cleanText, commandRisks } from './command-safety'
 
 const ESC = String.fromCharCode(0x1b)
 const NUL = String.fromCharCode(0)
@@ -127,5 +127,11 @@ describe('commandRisks', () => {
     'source ~/.profile',
   ])('does not flag %s', (command) => {
     expect(commandRisks(command)).toEqual([])
+  })
+})
+
+describe('cleanText', () => {
+  it('drops direction overrides and zero-width characters but keeps lines and spaces', () => {
+    expect(cleanText('a\u202Eb\u202Dc\u200Bd\u2066e\nline two  x')).toBe('abcde\nline two  x')
   })
 })

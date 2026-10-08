@@ -8,13 +8,13 @@ mod send;
 
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use daminus_core::ai::payload::{OsNonce, Payload, PayloadOptions, Scope, build_payload};
 use daminus_core::ai::profiles::{ModelList, ProviderProfile, merge_models, profile, profiles};
 use daminus_core::ai::view::{
-    AiProviderEntry, AiProvidersView, AiStreamEvent, AiTestResult, PayloadPreview, PreviewOptions,
-    PreviewScope, check_ai_settings,
+    AiProviderEntry, AiProvidersView, AiStreamEvent, AiTestResult, ClaudeCodeStatus,
+    PayloadPreview, PreviewOptions, PreviewScope, check_ai_settings,
 };
 use daminus_core::ai::{AiClient, SecretString};
 use daminus_core::domain::error::{AppError, ErrorCode};
@@ -31,6 +31,8 @@ pub const AI_EVENT: &str = "ai://event";
 
 /// Previewed payloads kept, so a few sheets can be open at once; the oldest goes first.
 const KEPT_PAYLOADS: usize = 8;
+/// How long what `claude` reported is trusted before it is asked again.
+const CLAUDE_STATUS_TTL: Duration = Duration::from_secs(10);
 /// Longest request id taken.
 const MAX_REQUEST_ID_CHARS: usize = 64;
 /// Longest key taken. Real keys are well under a kilobyte.
@@ -47,6 +49,7 @@ pub(crate) struct AiRuntime {
     events: mpsc::Sender<AiStreamEvent>,
     payloads: Arc<Mutex<Kept>>,
     sends: Arc<Mutex<HashMap<String, CancellationToken>>>,
+    claude_status: Arc<Mutex<Option<(Instant, ClaudeCodeStatus)>>>,
 }
 
 impl AiRuntime {
@@ -57,6 +60,7 @@ impl AiRuntime {
             events,
             payloads: Arc::default(),
             sends: Arc::default(),
+            claude_status: Arc::default(),
         }
     }
 
@@ -66,6 +70,30 @@ impl AiRuntime {
 
     fn sends(&self) -> MutexGuard<'_, HashMap<String, CancellationToken>> {
         self.sends.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    fn forget_claude_status(&self) {
+        *self
+            .claude_status
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = None;
+    }
+
+    fn fresh_claude_status(&self) -> Option<ClaudeCodeStatus> {
+        let cached = self
+            .claude_status
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        cached
+            .as_ref()
+            .filter(|(at, _)| at.elapsed() < CLAUDE_STATUS_TTL)
+            .map(|(_, status)| status.clone())
+    }
+
+    /// Forgets a kept payload once its send ended.
+    fn drop_payload(&self, hash: &str) {
+        self.payloads()
+            .retain(|(h, _)| !h.eq_ignore_ascii_case(hash));
     }
 
     fn keep(&self, payload: Payload) {
@@ -171,7 +199,19 @@ impl AppCore {
             Ok((settings, key_set))
         })
         .await?;
-        let claude_code = self.ai.clients.claude_code_status().await;
+        let claude_code = match self.ai.fresh_claude_status() {
+            Some(status) => status,
+            None => {
+                let status = self.ai.clients.claude_code_status().await;
+                *self
+                    .ai
+                    .claude_status
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner) =
+                    Some((Instant::now(), status.clone()));
+                status
+            }
+        };
         Ok(AiProvidersView {
             providers: profiles()
                 .iter()
@@ -227,11 +267,18 @@ impl AppCore {
     /// the whole file is checked again; nothing is written when one is not valid.
     pub async fn ai_settings_set(&self, ai: AiSettings) -> Result<Settings, AppError> {
         let core = self.clone();
-        blocking("ai_settings_set", move || {
+        let result = blocking("ai_settings_set", move || {
             check_ai_settings(&ai)?;
-            core.settings_set_ai(ai)
+            let off = ai.provider.is_none();
+            let settings = core.settings_set_ai(ai)?;
+            if off {
+                core.ai.payloads().clear();
+            }
+            Ok(settings)
         })
-        .await
+        .await;
+        self.ai.forget_claude_status();
+        result
     }
 
     /// The models of a provider: its own list merged with the suggestions, or the suggestions
@@ -255,6 +302,7 @@ impl AppCore {
     /// A failure is the answer, not an error.
     pub async fn ai_test(&self, provider_id: &str) -> Result<AiTestResult, AppError> {
         let profile = known_profile(provider_id)?;
+        self.ai.forget_claude_status();
         let started = Instant::now();
         let core = self.clone();
         let outcome = async {

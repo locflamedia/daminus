@@ -1,5 +1,5 @@
 <!--
-  The right column of board 09b: the honest warning with the "I understand" switch that gates
+  The right column of the Claude Code page: the honest warning with the "I understand" switch that gates
   everything, the one-glance comparison with an API key, and what each way of failing says.
 -->
 <script setup lang="ts">

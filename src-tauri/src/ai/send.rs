@@ -86,11 +86,13 @@ impl<'a> DisplayStream<'a> {
 struct Running {
     core: AppCore,
     request_id: String,
+    hash: String,
 }
 
 impl Drop for Running {
     fn drop(&mut self) {
         self.core.ai.sends().remove(&self.request_id);
+        self.core.ai.drop_payload(&self.hash);
     }
 }
 
@@ -142,6 +144,11 @@ impl AppCore {
             if sends.contains_key(request_id) {
                 return Err(invalid("request_id_in_use"));
             }
+            // One send at a time: a new request replaces the one still running, which ends
+            // with `Cancelled` (it must not go on being billed with nobody reading it).
+            for older in sends.values() {
+                older.cancel();
+            }
             sends.insert(request_id.to_owned(), cancel.clone());
         }
         let job = Job {
@@ -176,6 +183,7 @@ async fn run(job: Job) {
     let _running = Running {
         core: job.core.clone(),
         request_id: job.request_id.clone(),
+        hash: job.hash.clone(),
     };
     let mut out = Emitter {
         tx: job.core.ai.events.clone(),

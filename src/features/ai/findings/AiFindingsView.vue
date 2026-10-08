@@ -23,6 +23,7 @@ import UiCard from '@/ui/UiCard.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiSeg from '@/ui/UiSeg.vue'
 import { openReview } from '../ask/use-ask-session'
+import { cleanText } from '@/lib/command-safety'
 import FindingDetail from './FindingDetail.vue'
 import FindingsList from './FindingsList.vue'
 import {
@@ -157,7 +158,7 @@ if (providers.view === null) void providers.load()
         <UiIcon name="spark" :size="16" />{{ t('aiFindings.inShort')
         }}<span class="note">{{ t('aiFindings.inShortNote') }}</span>
       </div>
-      <p class="summary">{{ turn.summary }}</p>
+      <p class="summary">{{ cleanText(turn.summary) }}</p>
     </UiCard>
     <div v-if="all.length > 0 || !turn" class="body">
       <UiCard class="listcard card16">

@@ -50,3 +50,22 @@ describe('useAiSend', () => {
     expect(ai.error.value?.code.kind).toBe('provider_auth')
   })
 })
+
+describe('a second send', () => {
+  it('cancels the request that is still running before it starts', async () => {
+    const calls: { cmd: string; id: string }[] = []
+    mockCommands((cmd, args) => {
+      calls.push({ cmd, id: String(args.requestId) })
+      return cmd === 'ai_cancel' ? true : null
+    })
+    const ai = useAiSend()
+    const first = await ai.send('h1')
+    await emitAiEvent({ request_id: first!, seq: 0, kind: 'summary_delta', text: 'Hi' })
+    await flushPromises()
+    expect(ai.status.value).toBe('streaming')
+    const second = await ai.send('h2')
+    expect(calls.filter((c) => c.cmd === 'ai_cancel')).toEqual([{ cmd: 'ai_cancel', id: first }])
+    expect(second).not.toBe(first)
+    expect(ai.requestId.value).toBe(second)
+  })
+})

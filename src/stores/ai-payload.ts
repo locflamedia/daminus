@@ -71,7 +71,12 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
 
   /** True when the text on screen is exactly what a send would carry. */
   const sendable = computed(
-    () => open.value && !loading.value && error.value === null && preview.value !== null,
+    () =>
+      open.value &&
+      !loading.value &&
+      error.value === null &&
+      preview.value !== null &&
+      !ai.busy.value,
   )
 
   async function refresh() {

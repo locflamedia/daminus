@@ -149,6 +149,13 @@ describe('Ask drawer', () => {
     expect(view.find('.summary b').exists()).toBe(false)
   })
 
+  it('removes hidden and direction characters from the streamed summary', async () => {
+    const view = await open()
+    await sendFromSheet()
+    await emit(0, { kind: 'summary_delta', text: 'safe\u202Etxt\u200Bok\u202D' })
+    expect(view.find('.summary').text()).toBe('safetxtok')
+  })
+
   it('says why it failed in words and tries again through the review sheet', async () => {
     const view = await open()
     await sendFromSheet('What now?')

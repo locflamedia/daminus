@@ -2,7 +2,9 @@
 //! `dev.daminus.app`, account = the provider id). A key is read only to build
 //! a client and is wrapped in a [`SecretString`] at once; nothing here logs it.
 
+#[cfg(test)]
 use std::collections::HashMap;
+#[cfg(test)]
 use std::sync::{Mutex, PoisonError};
 
 use daminus_core::ai::SecretString;
@@ -90,18 +92,29 @@ impl SecretStore for KeychainStore {
     }
 }
 
-/// Keys kept in memory, for tests.
-#[derive(Debug, Default)]
+/// Keys kept in memory, for tests. Not compiled into the app.
+#[cfg(test)]
+#[derive(Default)]
 pub struct MemoryStore {
     keys: Mutex<HashMap<String, String>>,
 }
 
+#[cfg(test)]
+impl std::fmt::Debug for MemoryStore {
+    /// Never prints what is stored.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemoryStore").finish_non_exhaustive()
+    }
+}
+
+#[cfg(test)]
 impl MemoryStore {
     fn keys(&self) -> std::sync::MutexGuard<'_, HashMap<String, String>> {
         self.keys.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }
 
+#[cfg(test)]
 impl SecretStore for MemoryStore {
     fn get(&self, account: &str) -> Result<Option<SecretString>, AppError> {
         Ok(self.keys().get(account).map(SecretString::new))

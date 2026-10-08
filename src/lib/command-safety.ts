@@ -38,6 +38,19 @@ export function cleanCommand(raw: string): CleanCommand {
   return { text, removed }
 }
 
+/**
+ * Model or server prose made safe to show: the same hidden and direction-changing characters as
+ * `cleanCommand` are removed, but line breaks and spaces stay (tabs become a space).
+ */
+export function cleanText(raw: string): string {
+  return raw
+    .replace(/\r\n?/g, '\n')
+    .replace(/\t/g, ' ')
+    .split('\n')
+    .map((line) => line.replace(CONTROL, ''))
+    .join('\n')
+}
+
 // The part that names a shell or an interpreter after a pipe, with an optional path
 // (`/bin/sh`, `/usr/bin/env bash`), `sudo` and `env` in front.
 const RUNNER_PREFIX = String.raw`\|\s*(?:sudo\s+(?:-\S+\s+)*)?(?:(?:\S*\/)?env\s+(?:\S+=\S*\s+)*)?(?:\S*\/)?`

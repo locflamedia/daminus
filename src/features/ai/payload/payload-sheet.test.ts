@@ -72,6 +72,17 @@ describe('payload sheet', () => {
     expect(document.querySelector('.mask')?.textContent).toBe('[host-1]')
   })
 
+  it('does not send when Enter is pressed on a section switch', async () => {
+    await open()
+    const box = document.querySelector<HTMLInputElement>('.sec .in')!
+    box.focus()
+    box.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+    )
+    await flushPromises()
+    expect(calls.some((c) => c.cmd === 'ai_analyze')).toBe(false)
+  })
+
   it('previews again when a section is toggled and the hash that is sent follows the change', async () => {
     const store = await open()
     const first = store.preview?.hash

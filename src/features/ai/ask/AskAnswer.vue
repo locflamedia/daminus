@@ -16,6 +16,7 @@ import { useOverviewStore } from '@/stores/overview'
 import { useReportStore } from '@/stores/report'
 import UiButton from '@/ui/UiButton.vue'
 import { countInScope, inScope } from './ask-scope'
+import { cleanText } from '@/lib/command-safety'
 import AskFindingCard from './AskFindingCard.vue'
 import { resolveFindings } from '../findings/resolve-findings'
 import { severityMix } from './use-ask-session'
@@ -47,7 +48,8 @@ const WORD_STEP_MS = 45
 // Words that arrive fade in 45 ms apart, counted from the batch they came in; an answer that
 // is already finished when it is shown (another scope's thread, opened again) just appears.
 const animated = props.turn.status === 'waiting' || props.turn.status === 'streaming'
-const words = computed(() => props.turn.summary.match(/\S+\s*|\s+/g) ?? [])
+const summaryText = computed(() => cleanText(props.turn.summary))
+const words = computed(() => summaryText.value.match(/\S+\s*|\s+/g) ?? [])
 const delays = ref<number[]>([])
 watch(
   () => words.value.length,
@@ -102,7 +104,7 @@ const failure = computed(() => (props.turn.error ? errorText(props.turn.error) :
             :style="{ animationDelay: `${delays[i] ?? 0}ms` }"
             >{{ word }}</span
           ></template
-        ><template v-else>{{ turn.summary }}</template
+        ><template v-else>{{ summaryText }}</template
         ><Transition name="caret"><span v-if="live" class="caret" aria-hidden="true" /></Transition>
       </p>
       <p v-else-if="turn.status === 'done' && resolved.length === 0" class="quiet">

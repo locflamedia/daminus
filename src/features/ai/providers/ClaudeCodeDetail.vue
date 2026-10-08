@@ -1,5 +1,5 @@
 <!--
-  Claude Code (Beta), the left card of board 09b: what Daminus found (the program, the sign-in,
+  Claude Code (Beta), the left card of the Claude Code page: what Daminus found (the program, the sign-in,
   what it never reads), the model that is passed through, the exact way it is called and the
   test. Everything below the warning stays dimmed and out of reach until "I understand".
 -->

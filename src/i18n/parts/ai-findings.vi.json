@@ -29,7 +29,7 @@
     "providers": "Nhà cung cấp AI",
     "nothingToShow": "Không có phát hiện nào trong chế độ xem này.",
     "detail": "Chi tiết phát hiện {n}",
-    "provenanceNoSize": "{model} · {time}",
+    "provenanceNoSize": "{model} · {time} · chưa rõ kích thước",
     "passed": "{n} phép kiểm tra đạt",
     "expectedCount": "{n} đã đánh dấu là bình thường",
     "notScanned": "{host} chưa được quét",

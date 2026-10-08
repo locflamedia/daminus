@@ -69,6 +69,15 @@ describe('resolving findings', () => {
     expect(rows[2]?.item).toBeNull()
   })
 
+  it('removes direction and zero-width characters from why', () => {
+    const [row] = resolveFindings(
+      [finding('c2', 1, 'rm\u202E -rf\u200B / \u202Dok\nnext')],
+      base,
+      'en',
+    )
+    expect(row?.why).toBe('rm -rf / ok\nnext')
+  })
+
   it('lists the checks’ own critical and warn results, worst first, when nothing was asked', () => {
     const rows = fallbackFindings(base, 'en')
     expect(rows.map((r) => r.tone)).toEqual(['crit', 'warn'])
