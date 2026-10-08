@@ -1,0 +1,66 @@
+{
+  "settingsHosts": {
+    "reload": "Tải lại cấu hình",
+    "add": "Thêm máy chủ",
+    "saveFailed": "Không lưu được cài đặt của máy chủ.",
+    "list": {
+      "title": "{n} máy chủ | {n} máy chủ",
+      "columns": "dự án dùng · lần kết nối gần nhất",
+      "via": "qua {host}",
+      "noProject": "chưa có dự án",
+      "never": "chưa bao giờ",
+      "off": "không quét"
+    },
+    "termius": {
+      "title": "Máy chủ nằm trong Termius?",
+      "guide": "hướng dẫn, 2 phút",
+      "body": "Termius giữ máy chủ trong kho riêng của nó. Chép từng máy vào {file} một lần; Termius và terminal của bạn vẫn dùng bình thường, còn Daminus đọc tệp đó.",
+      "block": "Khối Host cho ~/.ssh/config",
+      "show": "Chỉ tôi cách làm",
+      "copy": "Sao chép mẫu"
+    },
+    "leftOut": {
+      "title": "Đã bỏ qua ({n})",
+      "toggle": "Hiện hoặc ẩn các mục đã bỏ qua",
+      "read": "đọc từ ~/.ssh/config | đọc từ ~/.ssh/config và {n} tệp kèm theo | đọc từ ~/.ssh/config và {n} tệp kèm theo",
+      "again": "Đọc lại",
+      "addAnyway": "Vẫn thêm",
+      "addAnywayOff": "Chưa dùng được",
+      "reasons": {
+        "wildcard": "một mẫu, đặt giá trị mặc định cho nhiều máy chủ",
+        "match": "một khối Match, chỉ áp dụng khi đúng điều kiện",
+        "noHostName": "chưa đặt HostName",
+        "invalidAlias": "không phải tên dùng được (có dấu cách)"
+      }
+    },
+    "detail": {
+      "reachedAt": "Kết nối được {time}",
+      "reachedIn": "Kết nối được · {time}",
+      "from": "Nguồn",
+      "fromLine": "{file}, dòng {line}",
+      "agentNone": "ssh-agent chưa chạy",
+      "agentEmpty": "ssh-agent chưa có khóa",
+      "agentKeys": "ssh-agent giữ {n} khóa | ssh-agent giữ {n} khóa",
+      "hostKey": "Khóa máy chủ",
+      "keyNote": {
+        "known": "Đã ghi trong known_hosts. Khóa đổi thì lần quét máy chủ này dừng lại.",
+        "unknown": "Chưa được tin cậy. Lần quét hoặc kiểm tra đầu tiên sẽ hỏi trước.",
+        "changed": "Khóa đã đổi. Máy chủ này sẽ không được quét cho đến khi bạn xem lại.",
+        "none": "Không đọc được khóa nếu không đăng nhập."
+      },
+      "canRead": "{user} đọc được gì",
+      "canReadNobody": "Tài khoản SSH đọc được gì",
+      "untested": "Bấm Kiểm tra để xem tài khoản này làm được gì trên máy chủ.",
+      "connect": "Thời gian kết nối SSH",
+      "connectMeta": "{n} lần quét gần nhất · trung vị {median}",
+      "slowest": "Kết nối chậm nhất: lần quét #{seq}, {time}.",
+      "include": "Đưa vào các lần quét",
+      "includeOff": "Không được quét. Các dự án của nó hiện “chưa quét”.",
+      "test": "Kiểm tra",
+      "testing": "Đang kiểm tra…",
+      "testedIn": "Kiểm tra · {time}",
+      "terminal": "Mở trong Terminal",
+      "terminalOff": "Chưa dùng được"
+    }
+  }
+}

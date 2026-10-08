@@ -1,0 +1,66 @@
+{
+  "settingsHosts": {
+    "reload": "Reload config",
+    "add": "Add host",
+    "saveFailed": "Could not save the host setting.",
+    "list": {
+      "title": "{n} host | {n} hosts",
+      "columns": "used by · last reached",
+      "via": "via {host}",
+      "noProject": "no project",
+      "never": "never",
+      "off": "not scanned"
+    },
+    "termius": {
+      "title": "Hosts in Termius?",
+      "guide": "guide, 2 minutes",
+      "body": "Termius keeps hosts in its own vault. Copy each one into {file} once; Termius and your terminal keep working, and Daminus reads that file.",
+      "block": "Host block for ~/.ssh/config",
+      "show": "Show me how",
+      "copy": "Copy template"
+    },
+    "leftOut": {
+      "title": "Left out ({n})",
+      "toggle": "Show or hide the entries left out",
+      "read": "read from ~/.ssh/config | read from ~/.ssh/config and {n} included file | read from ~/.ssh/config and {n} included files",
+      "again": "Read again",
+      "addAnyway": "Add anyway",
+      "addAnywayOff": "Not available yet",
+      "reasons": {
+        "wildcard": "a pattern, sets defaults for many hosts",
+        "match": "a Match block, applies conditionally",
+        "noHostName": "no HostName set",
+        "invalidAlias": "not a usable alias (has a space)"
+      }
+    },
+    "detail": {
+      "reachedAt": "Reached {time}",
+      "reachedIn": "Reached · {time}",
+      "from": "From",
+      "fromLine": "{file}, line {line}",
+      "agentNone": "ssh-agent not running",
+      "agentEmpty": "ssh-agent has no key",
+      "agentKeys": "ssh-agent holds {n} key | ssh-agent holds {n} keys",
+      "hostKey": "Host key",
+      "keyNote": {
+        "known": "Recorded in known_hosts. A change stops the scan for this host.",
+        "unknown": "Not trusted yet. The first scan or test asks before it is.",
+        "changed": "The key changed. Scans for this host stay stopped until you review it.",
+        "none": "No key could be read without logging in."
+      },
+      "canRead": "What {user} can read",
+      "canReadNobody": "What the SSH user can read",
+      "untested": "Press Test to read what this user may do on the host.",
+      "connect": "SSH connect time",
+      "connectMeta": "last {n} scans · median {median}",
+      "slowest": "Slowest connect: scan #{seq}, {time}.",
+      "include": "Include in scans",
+      "includeOff": "Left out of scans. Its projects show “not scanned”.",
+      "test": "Test",
+      "testing": "Testing…",
+      "testedIn": "Test · {time}",
+      "terminal": "Open in Terminal",
+      "terminalOff": "Not available yet"
+    }
+  }
+}

@@ -18,6 +18,7 @@ const titleId = useId()
   <section class="card" :class="{ tight }" :aria-labelledby="titleId">
     <h3 :id="titleId" class="title">
       {{ title }}<span v-if="remark" class="remark"> · {{ remark }}</span>
+      <span v-if="$slots.after" class="after"><slot name="after" /></span>
     </h3>
     <slot />
   </section>
@@ -47,6 +48,13 @@ const titleId = useId()
 
 .card.tight .title {
   padding-bottom: 6px;
+}
+
+.after {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-2);
+  vertical-align: middle;
 }
 
 .remark {

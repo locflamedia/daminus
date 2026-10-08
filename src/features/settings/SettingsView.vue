@@ -27,8 +27,11 @@ const description = computed(() =>
 
 <template>
   <header class="head">
-    <h2 class="title">{{ t(`settingsNav.${section}`) }}</h2>
-    <p v-if="description" class="sub">{{ description }}</p>
+    <div class="words">
+      <h2 class="title">{{ t(`settingsNav.${section}`) }}</h2>
+      <p v-if="description" class="sub">{{ description }}</p>
+    </div>
+    <div id="settings-actions" class="actions" />
   </header>
   <component :is="body" v-if="body" :key="section" />
 </template>
@@ -36,10 +39,24 @@ const description = computed(() =>
 <style scoped>
 .head {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: flex-end;
+  gap: var(--space-3);
   padding-top: 28px;
   line-height: normal;
+}
+
+.words {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  flex: none;
+  gap: var(--space-2);
 }
 
 .title {

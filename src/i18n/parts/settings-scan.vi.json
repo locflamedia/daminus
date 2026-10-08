@@ -1,0 +1,88 @@
+{
+  "settingsScan": {
+    "saved": "Đã lưu",
+    "saveFailed": "Không lưu được cài đặt quét.",
+    "checks": { "title": "Kiểm tra gì" },
+    "groups": {
+      "disk": { "name": "Ổ đĩa và tệp lớn", "hint": "df -h, du -d 3" },
+      "containers": {
+        "name": "Container và tiến trình",
+        "hint": "docker ps, docker inspect, pm2 jlist"
+      },
+      "databases": {
+        "name": "Cơ sở dữ liệu",
+        "hint": "dung lượng và kết nối qua .env của dự án"
+      },
+      "security": {
+        "name": "Bảo mật",
+        "hint": "cổng mở, sshd_config, tệp trong thư mục web"
+      },
+      "uptime": {
+        "name": "Uptime và chứng chỉ",
+        "hint": "HTTPS từ máy Mac này, không phải từ máy chủ"
+      },
+      "code": { "name": "Thay đổi mã", "hint": "tệp đã đổi từ lần triển khai trước" }
+    },
+    "skip": {
+      "title": "Bỏ qua các đường dẫn này",
+      "remark": "trong du và kiểm tra tệp",
+      "add": "Thêm đường dẫn",
+      "field": "Đường dẫn cần bỏ qua",
+      "placeholder": "storage/logs",
+      "remove": "Ngừng bỏ qua {path}",
+      "floor": "Liệt kê tệp lớn hơn",
+      "mb": "{n} MB",
+      "problem": {
+        "empty": "Hãy nhập một đường dẫn.",
+        "duplicate": "Đã bỏ qua rồi.",
+        "invalid": "Đường dẫn này không thể bỏ qua khi quét."
+      }
+    },
+    "limits": {
+      "title": "Giới hạn",
+      "timeout": "Thời gian chờ kết nối",
+      "timeoutHint": "Sau đó máy chủ được đánh dấu là không kết nối được. Máy chủ đã kết nối có tối đa 90 giây để hoàn tất.",
+      "seconds": "{n} giây",
+      "atOnce": "Số máy chủ cùng lúc",
+      "atOnceHint": "Tự động chạy tất cả máy chủ cùng lúc, tối đa 8. Giảm xuống nếu máy chủ trung gian chậm.",
+      "auto": "Tự động"
+    },
+    "disk": {
+      "title": "Dung lượng ổ đĩa",
+      "hint": "Áp dụng cho mọi máy chủ. Mỗi dự án có thể đặt riêng.",
+      "warn": "Cảnh báo {n}%",
+      "crit": "Nghiêm trọng {n}%",
+      "warnName": "Cảnh báo khi, phần trăm ổ đĩa đã dùng",
+      "critName": "Nghiêm trọng khi, phần trăm ổ đĩa đã dùng",
+      "memory": "Bộ nhớ container",
+      "cert": "Chứng chỉ hết hạn trong",
+      "days": "{n} ngày",
+      "restarts": "Số lần khởi động lại giữa hai lần quét"
+    },
+    "runs": {
+      "title": "Lệnh chạy trên mỗi máy chủ",
+      "readOnly": "chỉ đọc",
+      "as": "# với {who}, không dùng sudo",
+      "asYou": "# với tài khoản ssh của bạn, không dùng sudo",
+      "estimate": "≈ {s} giây cho {n} máy chủ | ≈ {s} giây cho {n} máy chủ",
+      "where": "Thời gian theo nhóm",
+      "time": "{n} giây",
+      "fromScan": "Mỗi máy chủ, từ lần quét #{seq}.",
+      "noScan": "Chưa có lần quét nào.",
+      "copyAll": "Sao chép tất cả",
+      "groups": {
+        "containers": "Container",
+        "security": "Bảo mật",
+        "disk": "Ổ đĩa",
+        "databases": "Cơ sở dữ liệu",
+        "uptime": "Uptime"
+      },
+      "notes": {
+        "ifPm2": "(nếu có pm2)",
+        "sizesOnly": "chỉ dung lượng",
+        "codeChanges": "# thay đổi mã",
+        "dbInside": "# cơ sở dữ liệu: bên trong container"
+      }
+    }
+  }
+}

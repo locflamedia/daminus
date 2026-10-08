@@ -1,0 +1,23 @@
+{
+  "settingsAbout": {
+    "name": "Daminus",
+    "version": "Version {version}",
+    "credits": {
+      "made": "Made in Việt Nam · MIT",
+      "painting": "The Starry Night, Vincent van Gogh, 1889 · public domain",
+      "open": "Marks by thesvg · Type by Geist · Flags by flag-icons"
+    },
+    "diagnostics": {
+      "title": "Diagnostics",
+      "agent": "SSH agent",
+      "agentKeys": "Running · {n} keys | Running · 1 key | Running · {n} keys",
+      "agentEmpty": "Running · no keys",
+      "agentNone": "Not running",
+      "agentUnknown": "Could not ask",
+      "copy": "Copy diagnostics",
+      "copyHint": "App and system versions, ssh, your settings, the last result of each host and the log. Secrets are removed first. It is only copied; nothing is sent.",
+      "copied": "Diagnostics copied.",
+      "failed": "Couldn't copy the diagnostics."
+    }
+  }
+}

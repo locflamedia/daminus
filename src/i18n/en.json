@@ -138,6 +138,7 @@
     "general": "General",
     "appearance": "Appearance",
     "scan": "Scan",
+    "scanValue": "{n} of {total}",
     "hosts": "Hosts",
     "ai": "AI providers",
     "data": "Data",

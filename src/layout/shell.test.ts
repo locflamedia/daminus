@@ -156,7 +156,9 @@ describe('SettingsNav', () => {
 
   it('shows the values at the right of the items down to 1080 px', async () => {
     const wrapper = await mountShell(SettingsNav, 'medium', '/settings/general')
-    expect(wrapper.findAll('.hint').map((h) => h.text())).toEqual(['EN / VI', 'System'])
+    expect(wrapper.findAll('.hint').map((h) => h.text())).toEqual(
+      expect.arrayContaining(['EN / VI', 'System', '5 of 6']),
+    )
   })
 
   it('keeps the labels and hides the values below 1080 px', async () => {

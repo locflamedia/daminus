@@ -138,6 +138,7 @@
     "general": "Chung",
     "appearance": "Giao diện",
     "scan": "Quét",
+    "scanValue": "{n} trên {total}",
     "hosts": "Máy chủ",
     "ai": "Nhà cung cấp AI",
     "data": "Dữ liệu",
