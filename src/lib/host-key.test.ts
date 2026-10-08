@@ -54,7 +54,12 @@ describe('the outcome of a scan', () => {
   it('names the key problem and carries the offered fingerprint', () => {
     const unknown = { state: 'host_key_unknown', fp: OFFERED } as const
     expect(keyProblemOf(unknown)).toBe('unknown')
-    expect(infoFromOutcome(unknown)).toEqual({ state: 'unknown', offered: OFFERED, known: [] })
+    expect(infoFromOutcome(unknown)).toEqual({
+      state: 'unknown',
+      offered: OFFERED,
+      known: [],
+      lookup_name: null,
+    })
     expect(keyProblemOf({ state: 'timeout' })).toBeNull()
     expect(infoFromOutcome({ state: 'timeout' })).toBeNull()
   })
@@ -90,6 +95,8 @@ describe('commands', () => {
   it('connects once to accept, and forgets the old key by name', () => {
     expect(connectCommand('db-main')).toBe('ssh db-main')
     expect(forgetCommand('db-main')).toBe('ssh-keygen -R db-main')
+    expect(forgetCommand('db-main', '[10.0.0.5]:2222')).toBe("ssh-keygen -R '[10.0.0.5]:2222'")
+    expect(forgetCommand('db-main', "x'; id")).toBe("ssh-keygen -R 'x'\\''; id'")
     expect(connectCommand("a b'c")).toBe("ssh 'a b'\\''c'")
   })
 })

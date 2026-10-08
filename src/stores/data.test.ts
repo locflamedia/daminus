@@ -79,4 +79,37 @@ describe('data store', () => {
     await data.clearHistory()
     expect(data.exported).toBeNull()
   })
+
+  it('sends nothing before the first successful read', async () => {
+    const data = useDataStore()
+    data.setKeep(50)
+    await flushPromises()
+    expect(sent.filter((c) => c.cmd === 'settings_set_data')).toHaveLength(0)
+  })
+
+  it('reads the report, the history and the scan settings again after the history is deleted or the settings reset', async () => {
+    const data = useDataStore()
+    await data.load()
+    sent.length = 0
+    await data.clearHistory()
+    expect(sent.map((c) => c.cmd)).toEqual(
+      expect.arrayContaining(['data_clear', 'report_latest', 'history_list', 'rules_list']),
+    )
+    sent.length = 0
+    await data.resetAll()
+    expect(sent.map((c) => c.cmd)).toEqual(
+      expect.arrayContaining(['settings_reset', 'settings_get', 'report_latest', 'history_list']),
+    )
+  })
+
+  it('does not undo a newer choice when an earlier save fails', async () => {
+    const data = useDataStore()
+    await data.load()
+    refuse = 'settings_set_data'
+    data.setKeep(50)
+    refuse = null
+    data.setForget(null)
+    await flushPromises()
+    expect(data.retention.forget_ai_after_days).toBeNull()
+  })
 })

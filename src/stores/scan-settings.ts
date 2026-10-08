@@ -87,14 +87,17 @@ export const useScanSettingsStore = defineStore('scanSettings', () => {
     pending += 1
     queue = queue
       .then(async () => {
-        const answer = (await settingsSetScan(send)).scan
-        pending -= 1
+        let answer: ScanSettings
+        try {
+          answer = (await settingsSetScan(send)).scan
+        } finally {
+          pending -= 1
+        }
         if (pending === 0) adopt(answer)
         flashSaved()
         await useReportStore().loadLatest()
       })
       .catch(async (error: unknown) => {
-        pending = Math.max(0, pending - 1)
         useToastStore().push({ tone: 'crit', title: failureText(error) })
         if (pending === 0) await load()
       })

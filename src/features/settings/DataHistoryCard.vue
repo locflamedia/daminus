@@ -43,6 +43,7 @@ const keepHint = computed(() =>
         :options="keepOptions"
         :label="t('settingsData.history.keepGroup')"
         semantics="radio"
+        :inert="!data.loaded"
         @update:model-value="(v) => data.setKeep(choiceLimit(v))"
       />
     </SettingsRow>
@@ -55,6 +56,7 @@ const keepHint = computed(() =>
         :options="forgetOptions"
         :label="t('settingsData.history.forgetGroup')"
         semantics="radio"
+        :inert="!data.loaded"
         @update:model-value="(v) => data.setForget(choiceLimit(v))"
       />
     </SettingsRow>

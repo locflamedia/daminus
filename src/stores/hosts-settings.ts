@@ -31,6 +31,8 @@ export const useHostsSettingsStore = defineStore('hostsSettings', () => {
   const loading = ref(false)
   /** What the open host offers and what is recorded for it; `null` until it is looked at. */
   const hostKey = ref<HostKeyInfo | null>(null)
+  // Changes go one after the other, so the file ends as the last choice left it.
+  let queue: Promise<unknown> = Promise.resolve()
 
   const rows = computed(() =>
     hostsRows(setup.entries, report.latest?.servers ?? [], projects.details, excluded.value),
@@ -79,17 +81,27 @@ export const useHostsSettingsStore = defineStore('hostsSettings', () => {
     void loadHostKey(alias)
   }
 
+  function withHost(list: string[], alias: string, include: boolean): string[] {
+    const rest = list.filter((h) => h !== alias)
+    return include ? rest : [...rest, alias]
+  }
+
   /** "Include in scans": takes effect on the next scan; the report shows it at once. */
-  async function setInclude(alias: string, include: boolean) {
-    const before = excluded.value
-    excluded.value = include ? before.filter((h) => h !== alias) : [...before, alias]
-    try {
-      excluded.value = await hostsSetInclude(alias, include)
-      await report.loadLatest()
-    } catch {
-      excluded.value = before
-      useToastStore().push({ tone: 'crit', title: t('settingsHosts.saveFailed') })
-    }
+  function setInclude(alias: string, include: boolean): Promise<void> {
+    excluded.value = withHost(excluded.value, alias, include)
+    const run: Promise<void> = queue.then(async () => {
+      try {
+        const answer = await hostsSetInclude(alias, include)
+        // Only the last answer is the file as it ends; an earlier one would undo a later click.
+        if (queue === run) excluded.value = answer
+        await report.loadLatest()
+      } catch {
+        if (queue === run) excluded.value = withHost(excluded.value, alias, !include)
+        useToastStore().push({ tone: 'crit', title: t('settingsHosts.saveFailed') })
+      }
+    })
+    queue = run
+    return run
   }
 
   /** Tests the open host again: connect, read the system and the permissions, disconnect. */

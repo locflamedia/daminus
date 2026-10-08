@@ -21,7 +21,7 @@ export function keyProblemOf(outcome: HostOutcome | null | undefined): HostKeySt
 export function infoFromOutcome(outcome: HostOutcome): HostKeyInfo | null {
   const state = keyProblemOf(outcome)
   if (!state || !('fp' in outcome)) return null
-  return { state, offered: outcome.fp || null, known: [] }
+  return { state, offered: outcome.fp || null, known: [], lookup_name: null }
 }
 
 /**
@@ -96,7 +96,11 @@ export function connectCommand(alias: string): string {
   return `ssh ${shellQuote(alias)}`
 }
 
-/** The line that forgets the recorded key of a host, for a key that really did change. */
-export function forgetCommand(alias: string): string {
-  return `ssh-keygen -R ${shellQuote(alias)}`
+/**
+ * The line that forgets the recorded key of a host, for a key that really did change. known_hosts
+ * files the key under the resolved name (`lookupName`), not under the alias, so that name is
+ * what `ssh-keygen -R` gets; the alias stands in only when the lookup has not named it.
+ */
+export function forgetCommand(alias: string, lookupName?: string | null): string {
+  return `ssh-keygen -R ${shellQuote(lookupName || alias)}`
 }

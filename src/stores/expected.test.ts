@@ -75,6 +75,22 @@ describe('expected store', () => {
     expect(calls.filter((c) => c.cmd === 'rules_remove')).toHaveLength(1)
   })
 
+  it('leaves ⌘Z to a text field that has focus', async () => {
+    const calls = backend((cmd) =>
+      cmd === 'rules_add' ? RULE : cmd === 'rules_remove' ? true : reads(cmd),
+    )
+    const store = useExpectedStore()
+    await store.mark(KEY as never, startForm(), 'warn')
+    const field = document.createElement('textarea')
+    document.body.append(field)
+    field.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'z', metaKey: true, bubbles: true, cancelable: true }),
+    )
+    field.remove()
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls.filter((c) => c.cmd === 'rules_remove')).toHaveLength(0)
+  })
+
   it('keeps the error and shows no toast when Rust refuses', async () => {
     backend((cmd) => {
       if (cmd === 'rules_add') {

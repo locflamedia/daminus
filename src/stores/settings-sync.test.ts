@@ -123,4 +123,38 @@ describe('settings kept by the core', () => {
     const saved = settingsAnswer('settings_get', {}) as Settings
     expect(saved.scan.connect_timeout_s).toBe(10)
   })
+
+  it('keeps a choice made before the first read and sends it once the core answers', async () => {
+    install()
+    const store = fresh()
+    store.setScanOnOpen(true)
+    expect(calls).toHaveLength(0)
+    await store.load()
+    await flushPromises()
+    expect(store.general.scan_on_open).toBe(true)
+    expect(calls.some((c) => c.cmd === 'settings_set_general')).toBe(true)
+  })
+
+  it('drops a read that began before a later choice', async () => {
+    let release: () => void = () => undefined
+    const gate = new Promise<void>((r) => (release = r))
+    mockCommands(async (cmd, args) => {
+      calls.push({ cmd, args })
+      if (cmd === 'settings_get' && calls.filter((c) => c.cmd === 'settings_get').length === 2) {
+        const stale = settingsAnswer(cmd, args)
+        await gate
+        return stale
+      }
+      return settingsAnswer(cmd, args) ?? null
+    })
+    const store = fresh()
+    await store.load()
+    const reading = store.load()
+    await flushPromises()
+    store.setScanOnOpen(true)
+    release()
+    await reading
+    await flushPromises()
+    expect(store.general.scan_on_open).toBe(true)
+  })
 })

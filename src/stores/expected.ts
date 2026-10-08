@@ -15,6 +15,17 @@ import { UNDO_MS, useToastStore } from './toasts'
 // One Undo shortcut at a time for the window, whichever toast it belongs to.
 let stopKey: (() => void) | null = null
 
+/** Whether a key press landed in a field where Cmd+Z undoes typing, not the rule. */
+function isEditable(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target.isContentEditable ||
+    target.closest('[contenteditable]:not([contenteditable="false"])') !== null
+  )
+}
+
 export const useExpectedStore = defineStore('expected', () => {
   const reports = useReportStore()
   const history = useHistoryStore()
@@ -27,6 +38,7 @@ export const useExpectedStore = defineStore('expected', () => {
 
   function listenForUndo(run: () => void): () => void {
     const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || isEditable(e.target)) return
       if (e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
         e.preventDefault()
         run()

@@ -93,7 +93,7 @@ function skip() {
           <li>{{ t('hostKey.face.changed.step2') }}</li>
           <li>{{ t('hostKey.face.changed.step3') }}</li>
         </ol>
-        <UiCommandCopy :command="forgetCommand(host)" />
+        <UiCommandCopy :command="forgetCommand(host, store.info?.lookup_name)" />
         <span class="step">{{ t('hostKey.face.changed.after', { host }) }}</span>
         <UiCommandCopy :command="connectCommand(host)" />
         <p class="quiet">{{ t('hostKey.face.changed.run') }}</p>

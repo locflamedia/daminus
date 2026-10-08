@@ -63,6 +63,10 @@ export const useSettingsStore = defineStore('settings', () => {
   const synced = ref(false)
   // Saves go one after the other, so the file ends as the last choice left it.
   let queue: Promise<unknown> = Promise.resolve()
+  /** Counts the saves queued, so a read that began before one never overwrites its choice. */
+  let saves = 0
+  /** Sections the user changed before the core first answered; they are sent once it does. */
+  const unsent = { general: false, appearance: false }
 
   function persist() {
     writeJson(KEY, {
@@ -100,23 +104,27 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   /** Sends one section to the core, after the saves before it; a refusal reloads what is saved. */
-  function save(send: () => Promise<Settings>) {
-    if (!synced.value) return
+  function save(section: keyof typeof unsent, send: () => Promise<Settings>) {
+    if (!synced.value) {
+      unsent[section] = true
+      return
+    }
+    saves += 1
     queue = queue.then(send).then(
       () => undefined,
       async (error: unknown) => {
         useToastStore().push({ tone: 'crit', title: failureText(error) })
-        await load()
+        await read()
       },
     )
   }
 
   function saveGeneral() {
-    save(() => settingsSetGeneral({ ...general.value }))
+    save('general', () => settingsSetGeneral({ ...general.value }))
   }
 
   function saveAppearance() {
-    save(() => settingsSetAppearance({ ...appearance.value }))
+    save('appearance', () => settingsSetAppearance({ ...appearance.value }))
   }
 
   /** Takes what the core saved as the truth: the sections, the language, the theme, the flags. */
@@ -132,14 +140,47 @@ export const useSettingsStore = defineStore('settings', () => {
     persist()
   }
 
-  /** Reads `settings.json` from the core. A failed read leaves the local copy in place. */
-  async function load() {
+  /** Puts back the sections chosen before the first answer and sends them. */
+  function keepChosen(general_: GeneralSettings | null, appearance_: AppearanceSettings | null) {
+    if (general_) {
+      general.value = general_
+      chosen.language = localeFromTag(general_.language)
+      applyLanguage(chosen.language)
+    }
+    if (appearance_) {
+      appearance.value = appearance_
+      chosen.theme = isTheme(appearance_.theme) ? appearance_.theme : 'system'
+      theme.value = chosen.theme
+      applyTheme(chosen.theme)
+      applyAppearance(appearance_)
+    }
+    persist()
+    if (general_) saveGeneral()
+    if (appearance_) saveAppearance()
+  }
+
+  async function read() {
+    const started = saves
     try {
-      adopt(await settingsGet())
+      const answer = await settingsGet()
+      if (saves !== started) return
+      const keepGeneral = unsent.general ? { ...general.value } : null
+      const keepAppearance = unsent.appearance ? { ...appearance.value } : null
+      unsent.general = false
+      unsent.appearance = false
+      adopt(answer)
       synced.value = true
+      if (keepGeneral || keepAppearance) keepChosen(keepGeneral, keepAppearance)
     } catch {
       // The local copy of language and theme stays; nothing is sent until a read succeeds.
     }
+  }
+
+  /** Reads `settings.json` after the saves already queued; a failed read leaves the local copy. */
+  function load(): Promise<void> {
+    const run = queue.then(read)
+    queue = run
+    return run
   }
 
   function setLanguage(next: Locale) {
