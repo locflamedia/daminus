@@ -35,7 +35,7 @@ const version = __APP_VERSION__
   padding: 18px;
   border-radius: 18px;
   background: var(--surface-0);
-  box-shadow: var(--shadow-seg);
+  box-shadow: var(--shadow-hairline);
 }
 
 .icon {

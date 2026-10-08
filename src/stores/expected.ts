@@ -1,5 +1,5 @@
 // "Mark as expected": saves a rule through Rust, refreshes what the screens read, and offers
-// Undo in a toast (button or ⌘Z) for as long as the toast stays. Rust adds the fingerprint, the
+// Undo in a toast (button or ⌘Z / Ctrl+Z) for as long as the toast stays. Rust adds the fingerprint, the
 // review day and the id; this only sends what the person chose.
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
@@ -14,6 +14,12 @@ import { UNDO_MS, useToastStore } from './toasts'
 
 // One Undo shortcut at a time for the window, whichever toast it belongs to.
 let stopKey: (() => void) | null = null
+
+/** The Undo shortcut as the person's keyboard writes it: the glyph on a Mac, Ctrl+Z elsewhere. */
+export function undoHint(): string {
+  const mac = /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent)
+  return mac ? '⌘Z' : 'Ctrl+Z'
+}
 
 /** Whether a key press landed in a field where Cmd+Z undoes typing, not the rule. */
 function isEditable(target: EventTarget | null): boolean {
@@ -39,7 +45,7 @@ export const useExpectedStore = defineStore('expected', () => {
   function listenForUndo(run: () => void): () => void {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || isEditable(e.target)) return
-      if (e.metaKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
+      if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
         e.preventDefault()
         run()
       }
@@ -73,7 +79,7 @@ export const useExpectedStore = defineStore('expected', () => {
     toasts.push({
       tone: 'ok',
       title: until ? t('expected.toast.until', { date: until }) : t('expected.toast.always'),
-      action: { label: t('expected.toast.undo'), run: () => void undo(rule.id) },
+      action: { label: t('expected.toast.undo'), hint: undoHint(), run: () => void undo(rule.id) },
       duration: UNDO_MS,
     })
     stopKey?.()

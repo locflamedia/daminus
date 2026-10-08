@@ -166,6 +166,35 @@ describe('UiMenu', () => {
   })
 })
 
+describe('UiMenu shortcuts', () => {
+  const marked: MenuItem[] = [
+    { id: 'path', label: 'Copy path' },
+    { id: 'mark', label: 'Mark as expected…', keys: ['E'] },
+  ]
+
+  it('picks the row whose key is pressed while the menu is open', async () => {
+    make({ items: marked, shortcuts: true })
+    await open()
+    press('e')
+    await nextTick()
+    expect(wrapper?.emitted('select')).toEqual([['mark']])
+    expect(wrapper?.emitted('update:open')?.at(-1)).toEqual([false])
+  })
+
+  it('leaves the key to the typeahead when shortcuts are off, and ignores modified keys', async () => {
+    make({ items: marked })
+    await open()
+    press('e')
+    expect(wrapper?.emitted('select')).toBeUndefined()
+    wrapper?.unmount()
+    document.body.replaceChildren()
+    make({ items: marked, shortcuts: true })
+    await open()
+    press('e', { metaKey: true })
+    expect(wrapper?.emitted('select')).toBeUndefined()
+  })
+})
+
 describe('UiMenu compact (project tabs)', () => {
   const tabs: MenuItem[] = [
     { id: 'overview', label: 'Overview', hint: '⌘1' },

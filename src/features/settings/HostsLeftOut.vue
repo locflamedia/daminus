@@ -76,7 +76,7 @@ const extra = computed(() => includedFiles(setup.entries, setup.skipped))
   padding: var(--space-4);
   border-radius: 16px;
   background: var(--surface-0);
-  box-shadow: var(--shadow-seg);
+  box-shadow: var(--shadow-hairline);
 }
 
 .head {

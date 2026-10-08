@@ -62,6 +62,7 @@ const GLYPH: Record<string, string> = {
 function tone(state: RowState): 'ok' | 'crit' | 'warn' | 'info' | 'quiet' {
   if (state === 'ok') return 'ok'
   if (state === 'crit' || state === 'warn' || state === 'info') return state
+  if (state === 'expected') return 'info'
   if (state === 'needs_perm' || state === 'unknown') return 'warn'
   return 'quiet'
 }

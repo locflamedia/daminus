@@ -13,12 +13,19 @@ import type { Placement } from '@/lib/anchor'
 import UiFloating from './UiFloating.vue'
 
 const props = withDefaults(
-  defineProps<{ label: string; placement?: Placement; width?: string; inline?: boolean }>(),
-  { placement: 'bottom-start', width: '320px', inline: false },
+  defineProps<{
+    label: string
+    placement?: Placement
+    width?: string
+    inline?: boolean
+    /** A larger panel for a form: padding and corners of 18 instead of 12. */
+    roomy?: boolean
+  }>(),
+  { placement: 'bottom-start', width: '320px', inline: false, roomy: false },
 )
 
-/** The popover is a step tighter than a menu (12 against 14). */
-const RADIUS = '12px'
+/** The popover is a step tighter than a menu (12 against 14); a form popover is 18. */
+const radius = computed(() => (props.roomy ? '18px' : '12px'))
 
 const open = defineModel<boolean>('open', { default: false })
 defineSlots<{
@@ -53,12 +60,12 @@ function toggle() {
     :anchor="anchor"
     :placement="props.placement"
     :inline="inline"
-    :radius="RADIUS"
+    :radius="radius"
     role="dialog"
     :label="label"
     @close="open = false"
   >
-    <div :id="id" class="popover" :style="{ width }">
+    <div :id="id" class="popover" :class="{ roomy }" :style="{ width }">
       <slot />
     </div>
   </UiFloating>
@@ -80,5 +87,10 @@ function toggle() {
   color: var(--ink);
   font-size: var(--text-12);
   line-height: normal;
+}
+
+.popover.roomy {
+  padding: 18px;
+  border-radius: 18px;
 }
 </style>

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { HostKeyInfo } from '@/api'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n, setI18nLocale } from '@/i18n'
@@ -34,6 +34,7 @@ const buttons = () => [...document.body.querySelectorAll('button')].map((b) => b
 
 beforeEach(() => setI18nLocale('en'))
 afterEach(() => {
+  vi.useRealTimers()
   wrapper?.unmount()
   wrapper = undefined
   clearMocks()
@@ -41,6 +42,15 @@ afterEach(() => {
 })
 
 describe('host key screen', () => {
+  it('prints midnight as 00:05, not 24:05', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 0, 2, 0, 5, 0))
+    const changed: HostKeyInfo = { state: 'changed', offered: OFFERED, known: [RECORDED] }
+    show(changed, changed)
+    await flushPromises()
+    expect(text()).toMatch(/Presented now · 00:05/)
+  })
+
   it('first connection: the offered fingerprint, `ssh db-main`, Retry and Skip, no Trust', async () => {
     show({ state: 'unknown', offered: OFFERED, known: [] })
     await flushPromises()

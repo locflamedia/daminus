@@ -58,7 +58,7 @@ function reset() {
   padding: var(--space-4);
   border-radius: 16px;
   background: linear-gradient(180deg, var(--crit-soft), var(--surface-0) 90px);
-  box-shadow: var(--shadow-seg);
+  box-shadow: var(--shadow-hairline);
 }
 
 .title {

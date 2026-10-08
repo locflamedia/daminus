@@ -1,9 +1,9 @@
 // @vitest-environment happy-dom
 import { createPinia, setActivePinia } from 'pinia'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { startForm } from '@/lib/expected-form'
-import { useExpectedStore } from './expected'
+import { undoHint, useExpectedStore } from './expected'
 import { useToastStore } from './toasts'
 
 const KEY = { host: 'vps-sg-2', check: 'sec.upload_php', target: '/srv/uploads/index.php' }
@@ -51,6 +51,7 @@ describe('expected store', () => {
     expect(toasts).toHaveLength(1)
     expect(toasts[0]?.title).toBe('Marked expected until 26 Oct')
     expect(toasts[0]?.action?.label).toBe('Undo')
+    expect(toasts[0]?.action?.hint).toBe(undoHint())
   })
 
   it('removes the rule and reads again when Undo is pressed', async () => {
@@ -73,6 +74,23 @@ describe('expected store', () => {
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', metaKey: true }))
     await new Promise((r) => setTimeout(r, 0))
     expect(calls.filter((c) => c.cmd === 'rules_remove')).toHaveLength(1)
+  })
+
+  it('undoes with Ctrl+Z too, and the hint follows the platform', async () => {
+    const calls = backend((cmd) =>
+      cmd === 'rules_add' ? RULE : cmd === 'rules_remove' ? true : reads(cmd),
+    )
+    const store = useExpectedStore()
+    await store.mark(KEY as never, startForm(), 'warn')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true }))
+    await new Promise((r) => setTimeout(r, 0))
+    expect(calls.filter((c) => c.cmd === 'rules_remove')).toHaveLength(1)
+    const platform = vi.spyOn(navigator, 'platform', 'get')
+    platform.mockReturnValue('MacIntel')
+    expect(undoHint()).toBe('⌘Z')
+    platform.mockReturnValue('Win32')
+    expect(undoHint()).toBe('Ctrl+Z')
+    platform.mockRestore()
   })
 
   it('leaves ⌘Z to a text field that has focus', async () => {

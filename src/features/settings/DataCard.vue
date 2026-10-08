@@ -34,7 +34,7 @@ const titleId = useId()
   line-height: 1.3;
   border-radius: 16px;
   background: var(--surface-0);
-  box-shadow: var(--shadow-seg);
+  box-shadow: var(--shadow-hairline);
 }
 
 .head {

@@ -1,9 +1,9 @@
-// Just enough colouring for the snippets Daminus shows (a shell command, an nginx block, a
-// SQL statement): comments, quoted strings, and the first word of an nginx statement or the
-// SQL keywords. It returns text pieces and a kind; the component renders them as text, so a
+// Just enough colouring for the snippets Daminus shows (a shell command, an nginx block, an
+// ssh config block, a SQL statement): comments, quoted strings, and the first word of an nginx
+// or ssh statement or the SQL keywords. It returns text pieces and a kind; the component renders them as text, so a
 // hostile snippet cannot add markup whatever it contains.
 
-export type CodeLanguage = 'plain' | 'shell' | 'sql' | 'nginx'
+export type CodeLanguage = 'plain' | 'shell' | 'sql' | 'nginx' | 'ssh'
 export type TokenKind = 'plain' | 'comment' | 'string' | 'key' | 'prompt'
 
 export interface Token {
@@ -67,7 +67,7 @@ export function tokenizeLine(line: string, language: CodeLanguage): Token[] {
       i = prompt[0].length - 1
     }
   }
-  if (language === 'nginx') {
+  if (language === 'nginx' || language === 'ssh') {
     const first = /^(\s*)([A-Za-z_][\w-]*)/.exec(body)
     if (first) {
       push(out, first[1] ?? '', 'plain')

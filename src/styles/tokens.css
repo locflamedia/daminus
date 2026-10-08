@@ -168,6 +168,7 @@
   --shadow-lift: 0 1px 2px rgba(40, 48, 90, 0.08);
   --shadow-node: 0 1px 2px rgba(40, 48, 90, 0.06);
   --shadow-seg: 0 1px 2px rgba(40, 48, 90, 0.1);
+  --shadow-hairline: 0 1px 2px rgba(40, 48, 90, 0.05);
   --shadow-knob: 0 1px 2px rgba(40, 48, 90, 0.2);
   --shadow-knob-on: none;
   --shadow-control: 0 1px 2px rgba(40, 48, 90, 0.08), 0 4px 12px -6px rgba(40, 48, 90, 0.14);
@@ -458,6 +459,7 @@
     --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
     --shadow-node: none;
     --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-hairline: 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-knob: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 3px rgba(0, 0, 0, 0.5);
     --shadow-knob-on: 0 1px 3px rgba(0, 0, 0, 0.5);
     --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -640,6 +642,7 @@
   --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-node: none;
   --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
+  --shadow-hairline: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-knob: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow-knob-on: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow-control: 0 0 0 1px rgba(255, 255, 255, 0.06);

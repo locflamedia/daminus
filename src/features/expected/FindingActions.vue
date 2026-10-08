@@ -58,12 +58,14 @@ async function submit(form: ExpectedForm) {
     :label="t('expected.pop.label')"
     placement="bottom-end"
     width="452px"
+    roomy
   >
     <template #trigger>
       <UiMenu
         :items="items"
         :label="t('expected.menu.label', { check: item.key.check })"
         placement="bottom-end"
+        shortcuts
         @select="pick"
       >
         <template #trigger="{ attrs, toggle }">

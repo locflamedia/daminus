@@ -36,13 +36,15 @@
         "ok": "ok",
         "warn": "warning",
         "crit": "critical",
-        "none": "not run"
+        "none": "not run",
+        "expected": "expected"
       },
       "legend": {
         "ok": "ok",
         "warn": "warn",
         "crit": "crit",
-        "none": "not run"
+        "none": "not run",
+        "expected": "expected"
       },
       "note": "Ringed columns are the two scans being compared",
       "cell": "#{seq} · {group} · {state}"

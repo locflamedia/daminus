@@ -85,6 +85,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
     </span>
     <button v-if="action" type="button" class="action" @click="runAction">
       {{ action.label }}
+      <kbd v-if="action.hint" class="hint">{{ action.hint }}</kbd>
     </button>
     <span v-if="duration > 0" class="timer" aria-hidden="true">
       <i class="timer-fill" :class="{ paused }" :style="{ animationDuration: `${duration}ms` }" />
@@ -176,6 +177,12 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
   line-height: normal;
+}
+
+.hint {
+  margin-left: var(--space-1);
+  font: inherit;
+  opacity: 0.7;
 }
 
 .action:hover {

@@ -18,7 +18,7 @@
 -->
 <script setup lang="ts">
 import { ref, toRef, useId } from 'vue'
-import { useFocusTrap } from '@/lib/focus-trap'
+import { focusableIn, useFocusTrap } from '@/lib/focus-trap'
 import UiIcon from './UiIcon.vue'
 import type { IconName } from './icon-paths'
 
@@ -44,7 +44,10 @@ const panel = ref<HTMLElement>()
 
 useFocusTrap(panel, toRef(props, 'open'), {
   onEscape: () => emit('close'),
-  initialFocus: (root) => root.querySelector<HTMLElement>('[data-dialog-primary]'),
+  initialFocus: (root) => {
+    const primary = root.querySelector<HTMLElement>('[data-dialog-primary]')
+    return primary && focusableIn(root).includes(primary) ? primary : null
+  },
 })
 </script>
 
@@ -218,7 +221,7 @@ useFocusTrap(panel, toRef(props, 'open'), {
     var(--crit-ink)
   );
   color: var(--surface-0);
-  animation: dialog-halo 1.8s var(--ease-out) infinite;
+  animation: dialog-halo 1.8s var(--ease-out) 3;
 }
 
 .wide .title {

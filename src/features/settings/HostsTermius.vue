@@ -26,6 +26,7 @@ const setup = useSetupStore()
     </i18n-t>
     <UiCodeBlock
       :code="TERMIUS_TEMPLATE"
+      language="ssh"
       :copyable="false"
       :label="t('settingsHosts.termius.block')"
     />
@@ -49,7 +50,7 @@ const setup = useSetupStore()
   padding: var(--space-4);
   border-radius: 16px;
   background: linear-gradient(180deg, var(--accent-soft), var(--surface-0) 90px);
-  box-shadow: var(--shadow-seg);
+  box-shadow: var(--shadow-hairline);
 }
 
 .ct {

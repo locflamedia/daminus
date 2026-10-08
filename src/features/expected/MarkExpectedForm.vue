@@ -53,7 +53,7 @@ const coversOptions = computed(() => [
 const reviewOptions = computed(() => [
   { value: '30', label: t('expected.pop.review30') },
   { value: '90', label: t('expected.pop.review90') },
-  { value: 'never', label: t('expected.pop.reviewNever') },
+  { value: 'never', label: t('expected.pop.reviewNever'), quiet: true },
 ])
 
 const error = computed(() => {
@@ -115,6 +115,7 @@ function onKeydown(e: KeyboardEvent) {
           :options="coversOptions"
           :label="t('expected.pop.covers')"
           semantics="radio"
+          snug
           @update:model-value="
             !locked && change({ covers: $event === 'any_evidence' ? 'any_evidence' : 'as_it_is' })
           "
@@ -127,6 +128,7 @@ function onKeydown(e: KeyboardEvent) {
           :options="reviewOptions"
           :label="t('expected.pop.review')"
           semantics="radio"
+          snug
           @update:model-value="(v) => (v !== 'never' || !dated) && change({ review: v as Review })"
         />
       </div>
@@ -136,6 +138,7 @@ function onKeydown(e: KeyboardEvent) {
       <UiCheckbox
         :model-value="form.covers === 'as_it_is'"
         :disabled="locked"
+        plain
         :meta="locked ? t('expected.pop.alertLocked') : undefined"
         @update:model-value="change({ covers: $event ? 'as_it_is' : 'any_evidence' })"
       >
@@ -164,7 +167,7 @@ function onKeydown(e: KeyboardEvent) {
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 14px;
 }
 
 .head {
@@ -210,7 +213,7 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .option.on {
-  background: var(--surface-1);
+  background: var(--surface-well);
 }
 
 .native {
@@ -271,8 +274,8 @@ function onKeydown(e: KeyboardEvent) {
   flex-direction: column;
   gap: 6px;
   padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: var(--surface-1);
+  border-radius: 12px;
+  background: var(--surface-well);
 }
 
 .foot {

@@ -71,4 +71,13 @@ describe('UiCheckbox', () => {
     })
     expect(wrapper.attributes('data-force')).toBe('focus')
   })
+
+  it('is a bare line with a pill for its trailing text when plain', () => {
+    const wrapper = mount(UiCheckbox, {
+      props: { modelValue: true, disabled: true, plain: true, meta: 'always on' },
+      slots: { default: 'Alert again' },
+    })
+    expect(wrapper.get('label').classes()).toEqual(expect.arrayContaining(['plain', 'off']))
+    expect(wrapper.get('.meta').text()).toBe('always on')
+  })
 })

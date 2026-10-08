@@ -45,7 +45,7 @@ const presentedAt = computed(() =>
   (store.readAt ?? new Date()).toLocaleTimeString(undefined, {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hourCycle: 'h23',
   }),
 )
 
@@ -221,7 +221,7 @@ function skip() {
   color: var(--crit-ink);
   font-size: 18px;
   font-weight: var(--weight-semibold);
-  animation: neq-breathe 1.6s ease-in-out infinite;
+  animation: neq-breathe 1.6s ease-in-out 3;
 }
 
 .step {

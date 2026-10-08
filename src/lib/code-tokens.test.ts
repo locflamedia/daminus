@@ -28,6 +28,14 @@ describe('tokenizeLine', () => {
     ])
   })
 
+  it('marks the keyword of an ssh config line', () => {
+    expect(kinds('  HostName 203.0.113.12', 'ssh')).toEqual([
+      ['plain', '  '],
+      ['key', 'HostName'],
+      ['plain', ' 203.0.113.12'],
+    ])
+  })
+
   it('marks the first word of an nginx statement', () => {
     expect(kinds('root /var/www/tiemtra/public;', 'nginx')).toEqual([
       ['key', 'root'],
