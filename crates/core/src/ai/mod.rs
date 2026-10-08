@@ -3,7 +3,11 @@
 //! and [`SecretString`] for keys. The core has no secret store: callers pass
 //! the key in.
 
+pub mod claude_cli;
+pub mod client;
+pub mod payload;
 pub mod profiles;
+pub mod summary_stream;
 
 #[cfg(any(test, feature = "fake"))]
 pub mod fake;
