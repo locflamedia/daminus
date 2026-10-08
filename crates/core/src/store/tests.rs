@@ -392,6 +392,55 @@ fn update_settings_changes_one_section_and_keeps_the_rest() {
 }
 
 #[test]
+fn update_settings_refuses_a_scan_section_the_scan_could_misread() {
+    let (dir, store) = store();
+    fs::write(dir.path().join(SETTINGS_FILE), SETTINGS_V1).unwrap();
+    let on_disk = fs::read(dir.path().join(SETTINGS_FILE)).unwrap();
+    let changes: [fn(&mut crate::domain::settings::Settings); 7] = [
+        |s| s.scan.connect_timeout_s = 7,
+        |s| s.scan.hosts_at_once = Some(0),
+        |s| s.scan.hosts_at_once = Some(9),
+        |s| s.scan.large_file_mb = 0,
+        |s| s.scan.skip_paths = vec!["--help".into()],
+        |s| s.scan.skip_paths = vec!["a\nb".into()],
+        |s| {
+            s.scan.thresholds = vec![crate::domain::rule::ThresholdOverride {
+                check: "disk.fs".into(),
+                field: None,
+                warn: Some(f64::NAN),
+                crit: None,
+                min: None,
+            }]
+        },
+    ];
+    for change in changes {
+        let err = store.update_settings(change).unwrap_err();
+        assert_eq!(err.code, ErrorCode::SchemaInvalid);
+    }
+    assert_eq!(fs::read(dir.path().join(SETTINGS_FILE)).unwrap(), on_disk);
+}
+
+#[test]
+fn update_settings_keeps_a_valid_scan_section() {
+    let (_dir, store) = store();
+    let saved = store
+        .update_settings(|s| {
+            s.scan.connect_timeout_s = 30;
+            s.scan.hosts_at_once = Some(2);
+            s.scan.skip_paths.push("storage/logs".into());
+            s.scan.thresholds = vec![crate::domain::rule::ThresholdOverride {
+                check: "disk.fs".into(),
+                field: None,
+                warn: Some(70.0),
+                crit: Some(85.0),
+                min: None,
+            }];
+        })
+        .unwrap();
+    assert_eq!(store.load_settings().unwrap().value.scan, saved.scan);
+}
+
+#[test]
 fn update_settings_refuses_an_unknown_language_and_writes_nothing() {
     let (dir, store) = store();
     fs::write(dir.path().join(SETTINGS_FILE), SETTINGS_V1).unwrap();

@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use daminus_core::data::{self, DataUsage};
 use daminus_core::diagnostics::{self, Diagnostics, DiagnosticsSource};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
@@ -15,11 +16,14 @@ use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
 use daminus_core::domain::project::ProjectsFile;
-use daminus_core::domain::settings::{AppearanceSettings, GeneralSettings, Settings};
+use daminus_core::domain::settings::{
+    AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
+};
 use daminus_core::probe::UrlProbe;
 use daminus_core::scan::{
     ExpectedDraft, HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started,
-    add_rule, history_facts, history_view, latest_report, remove_rule, report_at,
+    add_rule, excluded_hosts, history_facts, history_view, latest_report, remove_rule, report_at,
+    set_host_included,
 };
 use daminus_core::setup::{
     AgentStatus, Saved, SetupEvent, SetupResult, SetupRun, SetupService, SshEnvironment, Step,
@@ -269,6 +273,56 @@ impl AppCore {
         appearance: AppearanceSettings,
     ) -> Result<Settings, AppError> {
         self.store.update_settings(|s| s.appearance = appearance)
+    }
+
+    /// Replaces the Scan section (what to check, the limits, the thresholds), checks the whole
+    /// file again, then writes it. The next report reads the thresholds, so they apply at once.
+    pub fn settings_set_scan(&self, scan: ScanSettings) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.scan = scan)
+    }
+
+    /// Replaces the Data section (how many scans to keep, when AI replies go), checks the
+    /// whole file again, then writes it. The next scan prunes to the new limit.
+    pub fn settings_set_data(&self, data: DataSettings) -> Result<Settings, AppError> {
+        self.store.update_settings(|s| s.data = data)
+    }
+
+    /// What the app's folder holds, for Settings › Data.
+    pub fn data_usage(&self) -> DataUsage {
+        data::usage(
+            &self.store,
+            self.log_file.as_deref(),
+            data::home_dir().as_deref(),
+        )
+    }
+
+    /// Every kept scan as one redacted JSON text, for the shell to write to Downloads.
+    pub fn data_export(&self) -> Result<String, AppError> {
+        data::export_scans(&self.store)
+    }
+
+    /// Deletes the scans and the expected notes; answers how many scans went.
+    pub fn data_clear(&self) -> Result<usize, AppError> {
+        data::clear_history(&self.store)
+    }
+
+    /// Puts every setting back to its default.
+    pub fn settings_reset(&self) -> Result<Settings, AppError> {
+        data::reset_settings(&self.store)
+    }
+
+    /// The hosts switched off for scans (Settings › Hosts).
+    pub fn hosts_excluded(&self) -> Result<Vec<HostAlias>, AppError> {
+        excluded_hosts(&self.store)
+    }
+
+    /// Switches a host on or off for scans; answers with the hosts that are off afterwards.
+    pub fn hosts_set_include(
+        &self,
+        host: &HostAlias,
+        include: bool,
+    ) -> Result<Vec<HostAlias>, AppError> {
+        set_host_included(&self.store, host, include)
     }
 
     /// The app language from Settings › General (`en` when unreadable).

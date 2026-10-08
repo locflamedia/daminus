@@ -7,13 +7,16 @@
 
 use std::time::Duration;
 
+use daminus_core::data::{DataUsage, ExportedFile};
 use daminus_core::diagnostics::Diagnostics;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
 use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
-use daminus_core::domain::settings::{AppearanceSettings, GeneralSettings, Settings};
+use daminus_core::domain::settings::{
+    AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
+};
 use daminus_core::scan::{ExpectedDraft, HistoryView, ScanFact, ScanRun, ScanScope, Started};
 use daminus_core::setup::{
     AgentStatus, ProjectIssue, Saved, SetupResult, SetupRun, SshEnvironment,
@@ -21,7 +24,7 @@ use daminus_core::setup::{
 };
 use daminus_core::ssh::config::HostListing;
 use daminus_core::ssh::hostkey::HostKeyInfo;
-use tauri::{AppHandle, Runtime, State};
+use tauri::{AppHandle, Manager, Runtime, State};
 
 use crate::app::AppCore;
 use crate::tray;
@@ -294,6 +297,126 @@ pub async fn settings_set_appearance(
     let core = core.inner().clone();
     run_blocking("settings_set_appearance", move || {
         core.settings_set_appearance(appearance)
+    })
+    .await
+}
+
+/// Replaces Settings › Scan; checked and answered like `settings_set_general`. Thresholds take
+/// effect on the next report, without a new scan.
+#[tauri::command]
+pub async fn settings_set_scan(
+    core: State<'_, AppCore>,
+    scan: ScanSettings,
+) -> Result<Settings, AppError> {
+    let core = core.inner().clone();
+    run_blocking("settings_set_scan", move || core.settings_set_scan(scan)).await
+}
+
+/// Replaces Settings › Data; checked and answered like `settings_set_general`.
+#[tauri::command]
+pub async fn settings_set_data(
+    core: State<'_, AppCore>,
+    data: DataSettings,
+) -> Result<Settings, AppError> {
+    let core = core.inner().clone();
+    run_blocking("settings_set_data", move || core.settings_set_data(data)).await
+}
+
+/// Puts every setting back to its default (the General language too, so the tray is re-worded).
+#[tauri::command]
+pub async fn settings_reset<R: Runtime>(
+    app: AppHandle<R>,
+    core: State<'_, AppCore>,
+) -> Result<Settings, AppError> {
+    let core = core.inner().clone();
+    let saved = run_blocking("settings_reset", move || core.settings_reset()).await?;
+    tauri::async_runtime::spawn(async move { tray::refresh(&app) });
+    Ok(saved)
+}
+
+/// What the app's folder holds: path, files and bytes by kind, the size of each scan.
+#[tauri::command]
+pub async fn data_usage(core: State<'_, AppCore>) -> Result<DataUsage, AppError> {
+    let core = core.inner().clone();
+    run_blocking("data_usage", move || Ok(core.data_usage())).await
+}
+
+/// Writes every kept scan, redacted, to a new JSON file in Downloads and answers with its name.
+/// The folder and the name are fixed here; the webview sends none and gets no content back.
+#[tauri::command]
+pub async fn data_export<R: Runtime>(
+    app: AppHandle<R>,
+    core: State<'_, AppCore>,
+) -> Result<ExportedFile, AppError> {
+    let core = core.inner().clone();
+    let dir = app.path().download_dir().map_err(|_| {
+        AppError::from(ErrorCode::Io {
+            path: "Downloads".to_owned(),
+        })
+    })?;
+    run_blocking("data_export", move || {
+        let text = core.data_export()?;
+        write_new_file(&dir, "daminus-scans", &text)
+    })
+    .await
+}
+
+/// Deletes the scans and the expected notes from this Mac; answers how many scans went.
+#[tauri::command]
+pub async fn data_clear(core: State<'_, AppCore>) -> Result<usize, AppError> {
+    let core = core.inner().clone();
+    run_blocking("data_clear", move || core.data_clear()).await
+}
+
+/// Writes `text` to `<dir>/<stem>.json`, or `<stem>-2.json` and on when the name is taken;
+/// an existing file is never replaced.
+fn write_new_file(dir: &std::path::Path, stem: &str, text: &str) -> Result<ExportedFile, AppError> {
+    use std::io::Write as _;
+    let io = |path: &std::path::Path| {
+        AppError::from(ErrorCode::Io {
+            path: path.display().to_string(),
+        })
+    };
+    for n in 1..100 {
+        let name = if n == 1 {
+            format!("{stem}.json")
+        } else {
+            format!("{stem}-{n}.json")
+        };
+        let path = dir.join(&name);
+        match std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&path)
+        {
+            Ok(mut file) => {
+                file.write_all(text.as_bytes()).map_err(|_| io(&path))?;
+                return Ok(ExportedFile { name });
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
+            Err(_) => return Err(io(&path)),
+        }
+    }
+    Err(io(dir))
+}
+
+/// The hosts switched off for scans in Settings › Hosts.
+#[tauri::command]
+pub async fn hosts_excluded(core: State<'_, AppCore>) -> Result<Vec<HostAlias>, AppError> {
+    let core = core.inner().clone();
+    run_blocking("hosts_excluded", move || core.hosts_excluded()).await
+}
+
+/// Switches one host on or off for scans and answers with the hosts that are off.
+#[tauri::command]
+pub async fn hosts_set_include(
+    core: State<'_, AppCore>,
+    host: HostAlias,
+    include: bool,
+) -> Result<Vec<HostAlias>, AppError> {
+    let core = core.inner().clone();
+    run_blocking("hosts_set_include", move || {
+        core.hosts_set_include(&host, include)
     })
     .await
 }

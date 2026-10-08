@@ -191,6 +191,18 @@ impl FsStore {
         snapshots::total_bytes(&self.snapshots_dir())
     }
 
+    /// Size of each snapshot file, oldest scan first.
+    pub fn snapshot_sizes(&self) -> Result<Vec<u64>, AppError> {
+        snapshots::sizes(&self.snapshots_dir())
+    }
+
+    /// Deletes every snapshot; answers how many there were.
+    pub fn clear_snapshots(&self) -> Result<usize, AppError> {
+        let dir = self.snapshots_dir();
+        let _lock = StoreLock::acquire(&self.root)?;
+        snapshots::remove_all(&dir)
+    }
+
     /// Reads one snapshot; `None` when missing or unreadable.
     pub fn load_snapshot(&self, seq: u32) -> Option<Snapshot> {
         snapshots::read(&self.snapshots_dir(), seq)

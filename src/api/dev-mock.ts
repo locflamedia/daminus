@@ -8,6 +8,9 @@ import { SetupMock, isSetupVariant } from './dev-mock-setup'
 import type { ResultsBundle } from '@/testing/results-bundle'
 import { mockCommands } from './testing'
 
+/** What the scripted setup servers answer inside the result screens. */
+const HOST_COMMANDS = /^(hosts_list|ssh_environment|setup_)/
+
 /**
  * The result screens read the twelve-scan timeline (`dev-mock-results.ts` lists the variants:
  * the default `results`, `stale`, `scanning`, `scan-live`, `loading`, `error`, `first-scan`,
@@ -38,10 +41,17 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
   }
   const bundle = await loadBundle(variant)
   const results = new ResultsMock(isResultsVariant(variant) ? variant : 'results', bundle, speed)
+  // The hosts and the login tests of the Settings screens come from the scripted setup servers,
+  // which carry the same aliases as the timeline.
+  const hosts = new SetupMock('setup', speed)
   mockCommands(
     withExpectedAndHostKey(
       (cmd, args) =>
-        results.handle(cmd, args) ?? diagnosticsAnswer(cmd) ?? settingsAnswer(cmd, args) ?? null,
+        results.handle(cmd, args) ??
+        diagnosticsAnswer(cmd) ??
+        settingsAnswer(cmd, args) ??
+        (HOST_COMMANDS.test(cmd) ? hosts.handle(cmd, args) : undefined) ??
+        null,
       variant,
     ),
   )

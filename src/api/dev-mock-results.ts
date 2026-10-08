@@ -10,7 +10,9 @@ import { TAB_CASES, isTabCase, withTabCase } from '@/testing/results-tab-states'
 import { shellScanRun } from '@/testing/shell-fixture'
 import type {
   CheckGroup,
+  HistoryView,
   HostOutcome,
+  HostSummary,
   Report,
   ScanEvent,
   ScanEventBody,
@@ -111,7 +113,7 @@ export class ResultsMock {
       case 'history_list':
         return v === 'first-scan'
           ? { scans: [], keep: 20, bytes: 0 }
-          : { ...this.data.history, bytes: 184_000 }
+          : { ...withSteps(this.data.history), bytes: 184_000 }
       case 'history_facts': {
         const checks = args.checks as string[]
         const last = Number(args.last)
@@ -335,4 +337,29 @@ function midScan(hosts: string[]): ScanRun {
       ),
     },
   } as ScanRun
+}
+
+/** The share of a host's time each group took, as the last scans of the board measured it. */
+const STEP_SHARE = { containers: 0.88, security: 0.79, disk: 0.5, databases: 0.33, uptime: 0.25 }
+
+/** The saved scans carry no per-group times: give each reached host the board's. */
+function withSteps(history: HistoryView): HistoryView {
+  const timed = (summary: HostSummary, seq: number): HostSummary => {
+    const reached = summary.outcome.state === 'reached'
+    const ms = summary.ms ?? (reached ? (seq === 7 ? 2600 : 380 + ((seq * 53) % 160)) : 0)
+    if (ms === 0) return summary
+    const steps = Object.fromEntries(
+      Object.entries(STEP_SHARE).map(([group, share]) => [group, Math.round(ms * share)]),
+    )
+    return { ...summary, ms, steps }
+  }
+  const scans = history.scans.map((scan) => ({
+    ...scan,
+    hosts: Object.fromEntries(
+      Object.entries(scan.hosts).flatMap(([host, summary]) =>
+        summary ? [[host, timed(summary, scan.seq)]] : [],
+      ),
+    ),
+  }))
+  return { ...history, scans }
 }

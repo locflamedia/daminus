@@ -4,7 +4,10 @@
 import { invoke } from '@tauri-apps/api/core'
 import type { AgentStatus } from './bindings/AgentStatus'
 import type { AppError } from './bindings/AppError'
+import type { DataSettings } from './bindings/DataSettings'
+import type { DataUsage } from './bindings/DataUsage'
 import type { Diagnostics } from './bindings/Diagnostics'
+import type { ExportedFile } from './bindings/ExportedFile'
 import type { AppearanceSettings } from './bindings/AppearanceSettings'
 import type { ExpectedDraft } from './bindings/ExpectedDraft'
 import type { ExpectedRule } from './bindings/ExpectedRule'
@@ -21,6 +24,7 @@ import type { ScanRun } from './bindings/ScanRun'
 import type { ScanScope } from './bindings/ScanScope'
 import type { SaveOutcome } from './bindings/SaveOutcome'
 import type { ScanStarted } from './bindings/ScanStarted'
+import type { ScanSettings } from './bindings/ScanSettings'
 import type { Settings } from './bindings/Settings'
 import type { SetupResult } from './bindings/SetupResult'
 import type { SetupRun } from './bindings/SetupRun'
@@ -57,6 +61,14 @@ export const COMMANDS = [
   'settings_get',
   'settings_set_general',
   'settings_set_appearance',
+  'settings_set_scan',
+  'settings_set_data',
+  'settings_reset',
+  'data_usage',
+  'data_export',
+  'data_clear',
+  'hosts_excluded',
+  'hosts_set_include',
   'agent_status',
   'diagnostics_collect',
 ] as const
@@ -221,4 +233,47 @@ export function settingsSetGeneral(general: GeneralSettings): Promise<Settings> 
 /** Replaces Settings › Appearance; checked and answered like `settingsSetGeneral`. */
 export function settingsSetAppearance(appearance: AppearanceSettings): Promise<Settings> {
   return invoke<Settings>('settings_set_appearance', { appearance })
+}
+
+/**
+ * Replaces Settings › Scan (what to check, the limits, the thresholds); checked and answered like
+ * `settingsSetGeneral`. Thresholds apply to the next report, no new scan is needed.
+ */
+export function settingsSetScan(scan: ScanSettings): Promise<Settings> {
+  return invoke<Settings>('settings_set_scan', { scan })
+}
+
+/** Replaces Settings › Data (scans kept, AI replies forgotten); checked like `settingsSetGeneral`. */
+export function settingsSetData(data: DataSettings): Promise<Settings> {
+  return invoke<Settings>('settings_set_data', { data })
+}
+
+/** Puts every setting back to its default; answers with what was saved. */
+export function settingsReset(): Promise<Settings> {
+  return invoke<Settings>('settings_reset')
+}
+
+/** What the app's folder holds: path, files, bytes by kind and the size of each scan. */
+export function dataUsage(): Promise<DataUsage> {
+  return invoke<DataUsage>('data_usage')
+}
+
+/** Writes every kept scan, redacted, to a new file in Downloads; answers with the file's name. */
+export function dataExport(): Promise<ExportedFile> {
+  return invoke<ExportedFile>('data_export')
+}
+
+/** Deletes the scans and the expected notes from this Mac; answers how many scans went. */
+export function dataClear(): Promise<number> {
+  return invoke<number>('data_clear')
+}
+
+/** The hosts switched off for scans in Settings › Hosts. */
+export function hostsExcluded(): Promise<HostAlias[]> {
+  return invoke<HostAlias[]>('hosts_excluded')
+}
+
+/** Switches one host on or off for scans; answers with the hosts that are off afterwards. */
+export function hostsSetInclude(host: HostAlias, include: boolean): Promise<HostAlias[]> {
+  return invoke<HostAlias[]>('hosts_set_include', { host, include })
 }

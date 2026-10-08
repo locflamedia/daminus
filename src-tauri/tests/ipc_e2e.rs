@@ -571,6 +571,90 @@ mod ipc {
     }
 
     #[test]
+    fn data_settings_are_saved_checked_and_reset() {
+        let app = mock_app(FakeTransport::new());
+        let saved = app
+            .invoke(
+                "settings_set_data",
+                json!({ "data": { "keep_scans": 50, "forget_ai_after_days": null } }),
+            )
+            .unwrap();
+        assert_eq!(saved["data"]["keep_scans"], json!(50));
+        assert_eq!(saved["data"]["forget_ai_after_days"], json!(null));
+        assert_eq!(app.invoke("settings_get", json!({})).unwrap(), saved);
+
+        let refused = app.invoke(
+            "settings_set_data",
+            json!({ "data": { "keep_scans": 0, "forget_ai_after_days": 30 } }),
+        );
+        assert!(refused.is_err());
+        assert_eq!(app.invoke("settings_get", json!({})).unwrap(), saved);
+
+        let reset = app.invoke("settings_reset", json!({})).unwrap();
+        assert_eq!(reset["data"]["keep_scans"], json!(20));
+        assert_eq!(reset["general"]["language"], json!("en"));
+    }
+
+    #[test]
+    fn data_usage_counts_the_folder_and_clear_empties_the_history() {
+        let app = mock_app(FakeTransport::new());
+        let usage = app.invoke("data_usage", json!({})).unwrap();
+        assert_eq!(usage["scans"], json!(0));
+        assert!(usage["path"].as_str().is_some());
+        assert_eq!(app.invoke("data_clear", json!({})).unwrap(), json!(0));
+    }
+
+    #[test]
+    fn scan_settings_are_saved_checked_and_read_back() {
+        let app = mock_app(FakeTransport::new());
+        let first = app.invoke("settings_get", json!({})).unwrap();
+        let mut scan = first["scan"].clone();
+        scan["connect_timeout_s"] = json!(30);
+        scan["thresholds"] = json!([{ "check": "disk.fs", "warn": 70.0, "crit": 85.0 }]);
+        let saved = app
+            .invoke("settings_set_scan", json!({ "scan": scan }))
+            .unwrap();
+        assert_eq!(saved["scan"]["connect_timeout_s"], json!(30));
+        assert_eq!(app.invoke("settings_get", json!({})).unwrap(), saved);
+
+        let mut bad = saved["scan"].clone();
+        bad["skip_paths"] = json!(["--help"]);
+        assert!(
+            app.invoke("settings_set_scan", json!({ "scan": bad }))
+                .is_err()
+        );
+        assert_eq!(app.invoke("settings_get", json!({})).unwrap(), saved);
+    }
+
+    #[test]
+    fn a_host_can_be_left_out_of_scans_and_put_back() {
+        let app = mock_app(FakeTransport::new());
+        assert_eq!(app.invoke("hosts_excluded", json!({})).unwrap(), json!([]));
+        let off = app
+            .invoke(
+                "hosts_set_include",
+                json!({ "host": "vps-a", "include": false }),
+            )
+            .unwrap();
+        assert_eq!(off, json!(["vps-a"]));
+        assert_eq!(app.invoke("hosts_excluded", json!({})).unwrap(), off);
+        assert!(
+            app.invoke(
+                "hosts_set_include",
+                json!({ "host": "-oProxyCommand=x", "include": false })
+            )
+            .is_err()
+        );
+        let on = app
+            .invoke(
+                "hosts_set_include",
+                json!({ "host": "vps-a", "include": true }),
+            )
+            .unwrap();
+        assert_eq!(on, json!([]));
+    }
+
+    #[test]
     fn ssh_environment_has_the_agent_and_termius_but_no_key_material() {
         let app = mock_app(FakeTransport::new());
         let env = app.invoke("ssh_environment", json!({})).unwrap();

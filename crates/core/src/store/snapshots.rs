@@ -86,3 +86,21 @@ pub(super) fn total_bytes(dir: &Path) -> Result<u64, AppError> {
         .map(|m| m.len())
         .sum())
 }
+
+/// Size of each snapshot file, in scan order (oldest first); a vanished file counts as zero.
+pub(super) fn sizes(dir: &Path) -> Result<Vec<u64>, AppError> {
+    Ok(list(dir)?
+        .into_iter()
+        .map(|seq| fs::metadata(dir.join(file_name(seq))).map_or(0, |m| m.len()))
+        .collect())
+}
+
+/// Deletes every snapshot file.
+pub(super) fn remove_all(dir: &Path) -> Result<usize, AppError> {
+    let seqs = list(dir)?;
+    for seq in &seqs {
+        let path: PathBuf = dir.join(file_name(*seq));
+        fs::remove_file(&path).map_err(|e| io_error(&path, &e))?;
+    }
+    Ok(seqs.len())
+}

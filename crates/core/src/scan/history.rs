@@ -12,7 +12,7 @@ use crate::domain::error::{AppError, ErrorCode};
 use crate::domain::evaluate::{Config, Counts, Item, Owner, Report, evaluate};
 use crate::domain::fact::CheckFact;
 use crate::domain::host::HostRef;
-use crate::domain::manifest::Manifest;
+use crate::domain::manifest::{CheckGroup, Manifest};
 use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::severity::Level;
@@ -44,6 +44,9 @@ pub struct HostSummary {
     /// Wall time on this Mac, when the scan recorded it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ms: Option<u32>,
+    /// Milliseconds each group took on the server, for the groups that finished.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub steps: BTreeMap<CheckGroup, u32>,
 }
 
 /// One project as one scan saw it: open issues by level, and the worst level
@@ -177,6 +180,11 @@ fn summarize(snap: &Snapshot, report: &Report) -> ScanSummary {
                 HostSummary {
                     outcome: outcome.clone(),
                     ms: snap.timing.get(host).map(|t| t.ms),
+                    steps: snap
+                        .timing
+                        .get(host)
+                        .map(|t| t.steps.clone())
+                        .unwrap_or_default(),
                 },
             )
         })
