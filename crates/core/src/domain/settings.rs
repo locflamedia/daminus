@@ -6,6 +6,7 @@ use std::collections::BTreeSet;
 
 use serde::{Deserialize, Serialize};
 
+use super::error::{AppError, ErrorCode};
 use super::manifest::CheckGroup;
 use super::rule::ThresholdOverride;
 
@@ -34,6 +35,35 @@ impl Default for Settings {
             ai: AiSettings::default(),
             data: DataSettings::default(),
         }
+    }
+}
+
+/// The app languages with a complete translation, as language tags.
+pub const LANGUAGES: [&str; 2] = ["en", "vi"];
+
+impl Settings {
+    /// Checks every field the app reads; a hand-edited or forged value is refused with
+    /// `SchemaInvalid` and the name of the field, never the value.
+    pub fn validate(&self) -> Result<(), AppError> {
+        self.general.validate()
+    }
+}
+
+fn invalid(field: &str) -> AppError {
+    AppError::from(ErrorCode::SchemaInvalid).with_param("detail", field)
+}
+
+impl GeneralSettings {
+    pub fn validate(&self) -> Result<(), AppError> {
+        if !LANGUAGES.contains(&self.language.as_str()) {
+            return Err(invalid("general.language"));
+        }
+        if let Some(tag) = &self.ai_language
+            && !LANGUAGES.contains(&tag.as_str())
+        {
+            return Err(invalid("general.ai_language"));
+        }
+        Ok(())
     }
 }
 

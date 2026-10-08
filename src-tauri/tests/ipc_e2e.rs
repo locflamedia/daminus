@@ -226,6 +226,13 @@ mod ipc {
 
     /// The app's own command handler and event forwarding, over a fake transport.
     fn mock_app(transport: FakeTransport) -> MockApp {
+        mock_app_with(transport, false)
+    }
+
+    /// Like [`mock_app`]; with `fake_programs` the ssh tools are scripts in a
+    /// temp folder (`ssh-add` lists two keys, `ssh -V` answers on stderr) and
+    /// the log file holds a credential-looking line.
+    fn mock_app_with(transport: FakeTransport, fake_programs: bool) -> MockApp {
         let dir = TempDir::new().unwrap();
         let store = FsStore::new(dir.path());
         store.save_projects(&projects(), None).unwrap();
@@ -239,14 +246,35 @@ mod ipc {
             "Host vps-a\n  HostName 203.0.113.14\n  User deploy\nHost *\n  ServerAliveInterval 30\n",
         )
         .unwrap();
+        let mut env = vec![("HOME", dir.path().as_os_str().to_owned())];
+        let mut log = None;
+        if fake_programs {
+            let bin = dir.path().join("bin");
+            std::fs::create_dir(&bin).unwrap();
+            write_script(
+                &bin.join("ssh-add"),
+                "echo '256 SHA256:CanaryFp me@mac (ED25519)'\necho '3072 SHA256:CanaryFp2 me@mac (RSA)'",
+            );
+            write_script(&bin.join("ssh"), "echo 'OpenSSH_9.9p1 fake' >&2");
+            env.push(("PATH", format!("{}:/usr/bin:/bin", bin.display()).into()));
+            let file = dir.path().join("daminus.log");
+            std::fs::write(
+                &file,
+                format!("INFO started\nERROR provider said {CANARY}\n"),
+            )
+            .unwrap();
+            log = Some(file);
+        }
         let (core, events) = AppCore::new(
             Arc::new(transport),
-            SshTools::new()
-                .with_config(&ssh_config)
-                .with_env([("HOME", dir.path().as_os_str())]),
+            SshTools::new().with_config(&ssh_config).with_env(env),
             Arc::new(FakeProbe::new().status("https://shop.example", 200, 42.0)),
             store,
         );
+        let core = match log {
+            Some(file) => core.with_log_file(file),
+            None => core,
+        };
         app.manage(core);
         // `forward_events` spawns on Tauri's runtime.
         let handle = app.handle().clone();
@@ -264,6 +292,14 @@ mod ipc {
             webview,
             events,
         }
+    }
+
+    const CANARY: &str = "sk-ant-api03-CanaryCanaryCanary0123456789abcdef";
+
+    fn write_script(path: &std::path::Path, body: &str) {
+        use std::os::unix::fs::PermissionsExt as _;
+        std::fs::write(path, format!("#!/bin/sh\n{body}\n")).unwrap();
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).unwrap();
     }
 
     impl MockApp {
@@ -488,6 +524,53 @@ mod ipc {
     }
 
     #[test]
+    fn settings_sections_are_saved_checked_and_kept_apart() {
+        let app = mock_app(FakeTransport::new());
+        let first = app.invoke("settings_get", json!({})).unwrap();
+        assert_eq!(first["general"]["language"], json!("en"));
+        assert_eq!(first["appearance"]["theme"], json!("system"));
+
+        let mut general = first["general"].clone();
+        general["language"] = json!("vi");
+        general["scan_on_open"] = json!(true);
+        let saved = app
+            .invoke("settings_set_general", json!({ "general": general }))
+            .unwrap();
+        assert_eq!(saved["general"]["language"], json!("vi"));
+        assert_eq!(saved["appearance"], first["appearance"]);
+
+        let mut appearance = first["appearance"].clone();
+        appearance["theme"] = json!("dark");
+        appearance["completion_chime"] = json!(true);
+        let saved = app
+            .invoke(
+                "settings_set_appearance",
+                json!({ "appearance": appearance }),
+            )
+            .unwrap();
+        assert_eq!(saved["appearance"]["theme"], json!("dark"));
+        assert_eq!(saved["general"]["language"], json!("vi"));
+        assert_eq!(app.invoke("settings_get", json!({})).unwrap(), saved);
+
+        let mut bad = saved["general"].clone();
+        bad["language"] = json!("--help");
+        assert!(
+            app.invoke("settings_set_general", json!({ "general": bad }))
+                .is_err()
+        );
+        let mut unknown_theme = saved["appearance"].clone();
+        unknown_theme["theme"] = json!("neon");
+        assert!(
+            app.invoke(
+                "settings_set_appearance",
+                json!({ "appearance": unknown_theme })
+            )
+            .is_err()
+        );
+        assert_eq!(app.invoke("settings_get", json!({})).unwrap(), saved);
+    }
+
+    #[test]
     fn ssh_environment_has_the_agent_and_termius_but_no_key_material() {
         let app = mock_app(FakeTransport::new());
         let env = app.invoke("ssh_environment", json!({})).unwrap();
@@ -498,11 +581,80 @@ mod ipc {
     }
 
     #[test]
+    fn agent_status_is_presence_and_a_key_count_only() {
+        let app = mock_app_with(FakeTransport::new(), true);
+        let status = app.invoke("agent_status", json!({})).unwrap();
+        assert_eq!(
+            status,
+            json!({ "present": true, "has_keys": true, "keys": 2 })
+        );
+        assert!(!status.to_string().contains("Canary"));
+    }
+
+    #[test]
+    fn agent_status_without_ssh_add_says_no_agent() {
+        let app = mock_app(FakeTransport::new());
+        let status = app.invoke("agent_status", json!({})).unwrap();
+        assert_eq!(status.as_object().map(serde_json::Map::len), Some(3));
+        assert!(status["present"].is_boolean() && status["has_keys"].is_boolean());
+    }
+
+    #[test]
+    fn diagnostics_collect_returns_redacted_text_and_nothing_else() {
+        let app = mock_app_with(FakeTransport::new().host("vps-a", healthy()), true);
+        app.invoke("scan_start", json!({ "scope": null })).unwrap();
+        app.events_until_end();
+        let got = app.invoke("diagnostics_collect", json!({})).unwrap();
+        assert_eq!(got.as_object().map(serde_json::Map::len), Some(1));
+        let text = got["text"].as_str().unwrap();
+        assert!(text.contains("OpenSSH_9.9p1 fake"), "{text}");
+        assert!(text.contains("/bin:/usr/bin:/bin"), "{text}");
+        assert!(text.contains("\"language\": \"en\""), "{text}");
+        assert!(text.contains("vps-a: reached"), "{text}");
+        assert!(text.contains("ERROR provider said"), "{text}");
+        assert!(!text.contains("CanaryCanary"), "{text}");
+    }
+
+    #[test]
+    fn diagnostics_collect_works_without_a_log_or_scans() {
+        let app = mock_app(FakeTransport::new());
+        let got = app.invoke("diagnostics_collect", json!({})).unwrap();
+        let text = got["text"].as_str().unwrap();
+        assert!(text.starts_with("Daminus "));
+        assert!(text.contains("## Log"));
+    }
+
+    #[test]
     fn reveal_ssh_dir_without_a_ssh_folder_is_an_io_error_and_creates_nothing() {
         let app = mock_app(FakeTransport::new());
         let err = app.invoke("reveal_ssh_dir", json!({})).unwrap_err();
         assert_eq!(err["code"]["kind"], json!("io"));
         assert_eq!(err["code"]["path"], json!("~/.ssh"));
         assert!(!app._dir.path().join(".ssh").exists());
+    }
+
+    fn draft(check: &str) -> serde_json::Value {
+        json!({
+            "host": "vps-a", "check": check, "target": "/srv/shop/uploads/index.php",
+            "reason": "intended", "covers": "as_it_is", "review_days": 30, "note": "",
+        })
+    }
+
+    #[test]
+    fn rules_add_refuses_a_result_the_latest_report_does_not_have() {
+        let app = mock_app(FakeTransport::new());
+        let err = app
+            .invoke("rules_add", json!({ "draft": draft("sec.upload_php") }))
+            .unwrap_err();
+        assert_eq!(err["code"]["kind"], json!("schema_invalid"));
+        assert_eq!(err["params"]["detail"], json!("rule_no_result"));
+        assert_eq!(app.invoke("rules_list", json!({})).unwrap(), json!([]));
+    }
+
+    #[test]
+    fn rules_remove_says_false_for_a_rule_that_is_not_there() {
+        let app = mock_app(FakeTransport::new());
+        let got = app.invoke("rules_remove", json!({ "id": "r1-0" })).unwrap();
+        assert_eq!(got, json!(false));
     }
 }

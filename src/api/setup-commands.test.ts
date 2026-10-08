@@ -1,6 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  agentStatus,
+  diagnosticsCollect,
   hostsList,
   projectsRemove,
   projectsSave,
@@ -37,6 +39,8 @@ describe('setup command wrappers', () => {
     await projectsRemove('shop')
     await urlCheck('https://shop.example')
     await revealSshDir()
+    await agentStatus()
+    await diagnosticsCollect()
     expect(calls).toEqual([
       { cmd: 'hosts_list', args: {} },
       { cmd: 'ssh_environment', args: {} },
@@ -50,6 +54,8 @@ describe('setup command wrappers', () => {
       { cmd: 'projects_remove', args: { id: 'shop' } },
       { cmd: 'url_check', args: { url: 'https://shop.example' } },
       { cmd: 'reveal_ssh_dir', args: {} },
+      { cmd: 'agent_status', args: {} },
+      { cmd: 'diagnostics_collect', args: {} },
     ])
   })
 })

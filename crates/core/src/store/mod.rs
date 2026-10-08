@@ -129,6 +129,21 @@ impl FsStore {
         .save(value, base)
     }
 
+    /// Loads the settings, lets `change` edit them, checks the whole document again and
+    /// writes it. The write refuses a file from a newer version, and nothing is written
+    /// when the result is invalid. Returns the saved settings.
+    pub fn update_settings(
+        &self,
+        change: impl FnOnce(&mut Settings),
+    ) -> Result<Settings, AppError> {
+        let loaded = self.load_settings()?;
+        let mut next = loaded.value;
+        change(&mut next);
+        next.validate()?;
+        self.save_settings(&next, loaded.stamp)?;
+        Ok(next)
+    }
+
     /// Loads `state.json`. A damaged file is set aside and defaults are used.
     pub fn load_state(&self) -> Result<AppState, AppError> {
         let path = self.root.join(STATE_FILE);

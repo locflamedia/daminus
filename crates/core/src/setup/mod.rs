@@ -31,7 +31,7 @@ use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
 use tracing::Instrument as _;
 
-pub use environment::{AgentState, SshEnvironment};
+pub use environment::{AgentState, AgentStatus, SshEnvironment};
 pub use event::{
     HostSetup, SetupEvent, SetupEventBody, SetupHostProgress, SetupResult, SetupRun, Started, Step,
 };

@@ -10,6 +10,9 @@ const COMMANDS: &[&str] = &[
     "report_at",
     "history_facts",
     "rules_list",
+    "rules_add",
+    "rules_remove",
+    "host_key_check",
     "projects_list",
     "reveal_config_dir",
     "reveal_ssh_dir",
@@ -23,6 +26,11 @@ const COMMANDS: &[&str] = &[
     "projects_save",
     "projects_remove",
     "url_check",
+    "settings_get",
+    "settings_set_general",
+    "settings_set_appearance",
+    "agent_status",
+    "diagnostics_collect",
 ];
 
 fn main() {

@@ -7,17 +7,20 @@
 
 use std::time::Duration;
 
+use daminus_core::diagnostics::Diagnostics;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
 use daminus_core::domain::expected::ExpectedRule;
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::project::Project;
-use daminus_core::scan::{HistoryView, ScanFact, ScanRun, ScanScope, Started};
+use daminus_core::domain::settings::{AppearanceSettings, GeneralSettings, Settings};
+use daminus_core::scan::{ExpectedDraft, HistoryView, ScanFact, ScanRun, ScanScope, Started};
 use daminus_core::setup::{
-    ProjectIssue, Saved, SetupResult, SetupRun, SshEnvironment, Started as SetupStarted, Step,
-    UrlCheck,
+    AgentStatus, ProjectIssue, Saved, SetupResult, SetupRun, SshEnvironment,
+    Started as SetupStarted, Step, UrlCheck,
 };
 use daminus_core::ssh::config::HostListing;
+use daminus_core::ssh::hostkey::HostKeyInfo;
 use tauri::{AppHandle, Runtime, State};
 
 use crate::app::AppCore;
@@ -108,6 +111,35 @@ pub async fn rules_list(core: State<'_, AppCore>) -> Result<Vec<ExpectedRule>, A
     run_blocking("rules_list", move || core.rules_list()).await
 }
 
+/// Saves a "mark as expected" rule for a result of the latest report. Rust adds the evidence
+/// fingerprint, the review day and the id, and refuses what the board forbids (a critical result
+/// without a review day or without its evidence, a note that is too long).
+#[tauri::command]
+pub async fn rules_add(
+    core: State<'_, AppCore>,
+    draft: ExpectedDraft,
+) -> Result<ExpectedRule, AppError> {
+    let core = core.inner().clone();
+    run_blocking("rules_add", move || core.rules_add(draft)).await
+}
+
+/// Takes an expected rule out (Undo). `false` when it was not there.
+#[tauri::command]
+pub async fn rules_remove(core: State<'_, AppCore>, id: String) -> Result<bool, AppError> {
+    let core = core.inner().clone();
+    run_blocking("rules_remove", move || core.rules_remove(&id)).await
+}
+
+/// What `host` offers as its key and what is recorded for it, without logging in. For the host
+/// key screen's Retry after the key was accepted once in Terminal. `None` when ssh cannot say.
+#[tauri::command]
+pub async fn host_key_check(
+    core: State<'_, AppCore>,
+    host: HostAlias,
+) -> Result<Option<HostKeyInfo>, AppError> {
+    Ok(core.host_key_check(&host).await)
+}
+
 /// The saved projects (name, colour, URLs, components), for the marks in the
 /// sidebar, the rail and the project header. Only the projects: host settings
 /// and expected rules stay in Rust.
@@ -133,6 +165,20 @@ pub async fn hosts_list(core: State<'_, AppCore>) -> Result<HostListing, AppErro
 #[tauri::command]
 pub async fn ssh_environment(core: State<'_, AppCore>) -> Result<SshEnvironment, AppError> {
     Ok(core.ssh_environment().await)
+}
+
+/// Whether an SSH agent answers `ssh-add -l` with the app's resolved
+/// environment, and how many keys it holds (a count, nothing else).
+#[tauri::command]
+pub async fn agent_status(core: State<'_, AppCore>) -> Result<AgentStatus, AppError> {
+    Ok(core.agent_status().await)
+}
+
+/// App and system versions, `ssh -V`, the resolved `PATH`, settings, the last
+/// result of each host and the log tail, redacted, as text to copy. Sends nothing.
+#[tauri::command]
+pub async fn diagnostics_collect(core: State<'_, AppCore>) -> Result<Diagnostics, AppError> {
+    Ok(core.diagnostics_collect().await)
 }
 
 /// Starts the login test or discover on `hosts` (or joins the run in progress).
@@ -213,6 +259,43 @@ pub async fn projects_remove(core: State<'_, AppCore>, id: String) -> Result<boo
 #[tauri::command]
 pub async fn url_check(core: State<'_, AppCore>, url: String) -> Result<UrlCheck, AppError> {
     Ok(core.url_check(&url).await)
+}
+
+/// `settings.json` as saved (no key or secret is ever in it).
+#[tauri::command]
+pub async fn settings_get(core: State<'_, AppCore>) -> Result<Settings, AppError> {
+    let core = core.inner().clone();
+    run_blocking("settings_get", move || core.settings_get()).await
+}
+
+/// Replaces Settings › General; the whole file is checked again and nothing is written when
+/// a field is not valid. Answers with the settings as saved and re-words the tray menu.
+#[tauri::command]
+pub async fn settings_set_general<R: Runtime>(
+    app: AppHandle<R>,
+    core: State<'_, AppCore>,
+    general: GeneralSettings,
+) -> Result<Settings, AppError> {
+    let core = core.inner().clone();
+    let saved = run_blocking("settings_set_general", move || {
+        core.settings_set_general(general)
+    })
+    .await?;
+    tauri::async_runtime::spawn(async move { tray::refresh(&app) });
+    Ok(saved)
+}
+
+/// Replaces Settings › Appearance; checked and answered like `settings_set_general`.
+#[tauri::command]
+pub async fn settings_set_appearance(
+    core: State<'_, AppCore>,
+    appearance: AppearanceSettings,
+) -> Result<Settings, AppError> {
+    let core = core.inner().clone();
+    run_blocking("settings_set_appearance", move || {
+        core.settings_set_appearance(appearance)
+    })
+    .await
 }
 
 /// Runs file work off the async threads; a panic is logged and becomes `Internal`.
