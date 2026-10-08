@@ -1,5 +1,5 @@
 <!--
-  A finding inside an Ask answer, from the board "AI · Ask": a grey card (radius 12, padding
+  A finding inside an Ask answer, from the board "AI · Ask": a well-grey card (#F7F8FC, radius 12, padding
   12) with a mono severity tag, the title, the check at the right, the cause and each command
   the AI suggested as a copy-only line. The tag and the title come from the check the finding
   names, never from the AI; the model supplies the cause and the command. All of it is text,
@@ -27,7 +27,7 @@ const { t } = useI18n()
       <dt class="k">{{ t('aiAsk.cause') }}</dt>
       <dd class="v">{{ finding.why }}</dd>
     </dl>
-    <UiCommandCopy v-if="finding.command" :command="finding.command" />
+    <UiCommandCopy v-if="finding.command" :command="finding.command" compact />
   </article>
 </template>
 
@@ -38,8 +38,8 @@ const { t } = useI18n()
   gap: var(--space-2);
   min-width: 0;
   padding: var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
+  border-radius: 12px;
+  background: var(--surface-well);
 }
 
 .head {

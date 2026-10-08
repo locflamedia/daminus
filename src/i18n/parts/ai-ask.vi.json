@@ -15,6 +15,7 @@
     "readingDiff": "Đang đọc {n} kết quả kiểm tra và chênh lệch so với #{seq}",
     "health": "Sức khoẻ: {level}",
     "healthLevel": {
+      "ok": "ổn",
       "crit": "nghiêm trọng",
       "warn": "cần chú ý",
       "info": "ổn, có vài ghi chú"

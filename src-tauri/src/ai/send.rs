@@ -122,7 +122,7 @@ impl AppCore {
             let id = settings
                 .provider
                 .as_deref()
-                .ok_or_else(|| invalid("ai.provider"))?;
+                .ok_or_else(|| AppError::from(ErrorCode::ProviderAuth))?;
             let profile = known_profile(id)?;
             // The kept bytes are the ones previewed; a hash with no kept payload, or bytes that
             // no longer hash to it, is refused before a client is even built.

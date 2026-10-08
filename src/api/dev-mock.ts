@@ -25,6 +25,16 @@ const HOST_COMMANDS = /^(hosts_list|ssh_environment|setup_)/
  * broken sends, a refusing Keychain); the send is scripted: summary pieces, three findings, done.
  */
 export async function installDevMock(variant = '', speed = 1): Promise<void> {
+  // The window opens as for a person who finished the AI step of Settings: a provider with its
+  // key and a model, so a question can be sent. (Tests start from the plain defaults.)
+  settingsAnswer('ai_settings_set', {
+    ai: {
+      provider: 'anthropic',
+      model: 'claude-sonnet-5',
+      claude_code_acknowledged: false,
+      base_url: null,
+    },
+  })
   if (isSetupVariant(variant)) {
     const setup = new SetupMock(variant, speed)
     const ai = new AiMock(variant, speed)

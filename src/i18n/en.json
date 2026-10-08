@@ -119,6 +119,7 @@
   },
   "nav": {
     "search": "Search",
+    "aiProvider": "AI provider: {name}",
     "overview": "Overview",
     "history": "Scan history",
     "projects": "Projects",

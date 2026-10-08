@@ -251,4 +251,71 @@ describe('Ask drawer', () => {
     expect(calls.filter((c) => /run|exec|ssh|shell/.test(c))).toEqual([])
     expect(Object.keys(api).filter((name) => /^(run|exec)/i.test(name))).toEqual([])
   })
+
+  it('shows the health of the scope even when no finding is matched', async () => {
+    const view = await open()
+    await sendFromSheet()
+    await emit(0, { kind: 'summary_delta', text: 'Looking.' })
+    expect(view.text()).toContain('Health: critical')
+    await emit(1, {
+      kind: 'done',
+      summary: 'Looking.',
+      reviewed_sends: 1,
+      offer_turning_off_review: false,
+    })
+    expect(view.text()).toContain('Health: critical')
+  })
+
+  it('fades each word in 45 ms after the one before and drops the caret when done', async () => {
+    const view = await open()
+    await sendFromSheet()
+    await emit(0, { kind: 'summary_delta', text: 'One two three ' })
+    const words = view.findAll('.summary .w')
+    expect(words.map((w) => w.attributes('style'))).toEqual([
+      expect.stringContaining('animation-delay: 0ms'),
+      expect.stringContaining('animation-delay: 45ms'),
+      expect.stringContaining('animation-delay: 90ms'),
+    ])
+    expect(view.find('.caret').exists()).toBe(true)
+    await emit(1, {
+      kind: 'done',
+      summary: 'One two three ',
+      reviewed_sends: 1,
+      offer_turning_off_review: false,
+    })
+    await flushPromises()
+    expect(view.find('.caret').exists()).toBe(false)
+  })
+
+  it('draws a command as the 30 px compact line', async () => {
+    const view = await open()
+    await sendFromSheet()
+    await emit(0, {
+      kind: 'finding',
+      finding: { id: 'c1', why: 'x', suggested_command: 'ls -la', rank: 1 },
+      key: { host: 'vps-a', check: 'sec.upload_php', target: '/var/www/uploads/x.php' },
+    })
+    expect(view.find('.command.compact').exists()).toBe(true)
+  })
+
+  it('opens without focus on the close button, and the token link opens the review sheet', async () => {
+    const view = await open()
+    await sendFromSheet('Is it hacked?')
+    await emit(0, {
+      kind: 'done',
+      summary: 'x',
+      reviewed_sends: 1,
+      offer_turning_off_review: false,
+    })
+    useAiPayloadStore().open = false
+    await useAiPayloadStore().refresh()
+    const close = view.find('button.close')
+    expect(document.activeElement).not.toBe(close.element)
+    const link = view.find('button.sent')
+    expect(link.exists()).toBe(true)
+    await link.trigger('click')
+    await flushPromises()
+    expect(useAiPayloadStore().open).toBe(true)
+    expect(useAiPayloadStore().scope).toEqual({ kind: 'whole' })
+  })
 })

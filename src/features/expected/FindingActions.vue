@@ -10,12 +10,17 @@ import type { Item } from '@/api'
 import { useCopy } from '@/lib/use-copy'
 import { markLevel, type ExpectedForm } from '@/lib/expected-form'
 import { useExpectedStore } from '@/stores/expected'
+import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiMenu, { type MenuItem } from '@/ui/UiMenu.vue'
 import UiPopover from '@/ui/UiPopover.vue'
 import MarkExpectedForm from './MarkExpectedForm.vue'
 
-const props = defineProps<{ item: Item }>()
+const props = defineProps<{
+  item: Item
+  /** A labelled "Mark as expected" button (the Findings page) instead of the ⋯ menu. */
+  button?: boolean
+}>()
 
 const { t } = useI18n()
 const store = useExpectedStore()
@@ -53,14 +58,19 @@ async function submit(form: ExpectedForm) {
 
 <template>
   <UiPopover
-    v-if="items.length > 0"
+    v-if="button ? level !== null : items.length > 0"
     v-model:open="open"
     :label="t('expected.pop.label')"
     placement="bottom-end"
     width="452px"
     roomy
   >
-    <template #trigger>
+    <template v-if="button" #trigger="{ attrs, toggle }">
+      <UiButton variant="secondary" size="small" v-bind="attrs" @click="toggle">{{
+        t('expected.menu.markShort')
+      }}</UiButton>
+    </template>
+    <template v-else #trigger>
       <UiMenu
         :items="items"
         :label="t('expected.menu.label', { check: item.key.check })"

@@ -25,7 +25,13 @@ import UiSeg from '@/ui/UiSeg.vue'
 import { openReview } from '../ask/use-ask-session'
 import FindingDetail from './FindingDetail.vue'
 import FindingsList from './FindingsList.vue'
-import { applyFilter, fallbackFindings, filterCounts, type FindingsFilter } from './findings-model'
+import {
+  applyFilter,
+  fallbackFindings,
+  filterCounts,
+  footerRows,
+  type FindingsFilter,
+} from './findings-model'
 import { resolveFindings } from './resolve-findings'
 
 const { t } = useI18n()
@@ -49,6 +55,7 @@ const all = computed(() =>
 )
 const ranked = computed(() => turn.value !== null)
 const counts = computed(() => filterCounts(all.value))
+const footer = computed(() => footerRows(report.value))
 const filter = ref<FindingsFilter>('all')
 const shown = computed(() => applyFilter(all.value, filter.value))
 const options = computed(() => [
@@ -83,9 +90,8 @@ const provenance = computed(() => {
   const a = turn.value
   if (!a) return ''
   const size = payload.preview ? formatMeasure(payload.preview.total_bytes, 'bytes').text : ''
-  return [model.value, fmt.clock(a.startedAt), size ? `${size}` : '']
-    .filter((p) => p !== '')
-    .join(' · ')
+  const args = { model: model.value, time: fmt.clock(a.startedAt), size }
+  return size ? t('aiFindings.provenance', args) : t('aiFindings.provenanceNoSize', args)
 })
 
 function again() {
@@ -103,7 +109,7 @@ if (providers.view === null) void providers.load()
 <template>
   <div class="findings">
     <header class="top">
-      <span class="tile" aria-hidden="true"><UiIcon name="spark" :size="18" /></span>
+      <span class="tile" aria-hidden="true"><UiIcon name="spark" :size="20" /></span>
       <div class="titles">
         <b class="title">{{ title }}</b>
         <span v-if="provenance" class="sub"
@@ -120,9 +126,9 @@ if (providers.view === null) void providers.load()
         :options="options"
         :label="t('aiFindings.filter')"
       />
-      <UiButton variant="secondary" icon="refresh" @click="again">{{
-        t('aiFindings.runAgain')
-      }}</UiButton>
+      <UiButton class="again" variant="secondary" @click="again"
+        ><UiIcon name="refresh" :size="16" />{{ t('aiFindings.runAgain') }}</UiButton
+      >
     </header>
 
     <UiBanner
@@ -148,28 +154,13 @@ if (providers.view === null) void providers.load()
 
     <UiCard v-if="turn?.summary" class="short m-enter" style="--d: 80ms">
       <div class="ct">
-        <UiIcon name="spark" :size="14" />{{ t('aiFindings.inShort')
+        <UiIcon name="spark" :size="16" />{{ t('aiFindings.inShort')
         }}<span class="note">{{ t('aiFindings.inShortNote') }}</span>
       </div>
       <p class="summary">{{ turn.summary }}</p>
     </UiCard>
-    <UiCard v-else-if="!turn" class="empty">
-      <b>{{ t('aiFindings.none') }}</b>
-      <p class="summary">{{ t('aiFindings.noneBody') }}</p>
-      <div class="empty-actions">
-        <UiButton variant="primary" size="small" icon="spark" @click="followUp">{{
-          t('aiFindings.ask')
-        }}</UiButton>
-        <UiButton
-          variant="link"
-          @click="router.push({ name: 'settings', params: { section: 'ai' } })"
-          >{{ t('aiFindings.providers') }}</UiButton
-        >
-      </div>
-    </UiCard>
-
-    <div v-if="all.length > 0" class="body">
-      <UiCard class="listcard">
+    <div v-if="all.length > 0 || !turn" class="body">
+      <UiCard class="listcard card16">
         <div class="ct">
           {{ ranked ? t('aiFindings.ranked') : t('aiFindings.fromChecks')
           }}<span class="note">{{ t('aiFindings.count', { n: counts.all }) }}</span>
@@ -177,13 +168,34 @@ if (providers.view === null) void providers.load()
         <FindingsList
           :findings="shown"
           :selected="selected?.id ?? ''"
-          :ranked="ranked"
           @select="selectedId = $event"
         />
         <p v-if="shown.length === 0" class="note">{{ t('aiFindings.nothingToShow') }}</p>
-        <p v-if="ranked" class="note order">{{ t('aiFindings.orderNote') }}</p>
+        <div class="foot">
+          <div v-if="footer.passed > 0" class="frow">
+            <UiIcon name="check" :size="14" />
+            <span>{{ t('aiFindings.passed', { n: footer.passed }, footer.passed) }}</span>
+          </div>
+          <div v-if="footer.expected > 0" class="frow">
+            <UiIcon name="check" :size="14" />
+            <span>{{ t('aiFindings.expectedCount', { n: footer.expected }) }}</span>
+          </div>
+          <div v-for="host in footer.unreachable" :key="host" class="frow">
+            <UiIcon name="warn" :size="14" />
+            <span>{{ t('aiFindings.notScanned', { host }) }}</span>
+            <span class="note">{{ t('aiFindings.unreachableWord') }}</span>
+          </div>
+          <p v-if="ranked" class="note order">{{ t('aiFindings.orderNote') }}</p>
+          <UiButton
+            v-else
+            class="quiet"
+            variant="link"
+            @click="router.push({ name: 'settings', params: { section: 'ai' } })"
+            >{{ t('aiFindings.providers') }}</UiButton
+          >
+        </div>
       </UiCard>
-      <FindingDetail v-if="selected" :finding="selected" @follow-up="followUp" />
+      <FindingDetail v-if="selected" class="card16" :finding="selected" @follow-up="followUp" />
     </div>
   </div>
 </template>
@@ -192,8 +204,14 @@ if (providers.view === null) void providers.load()
 .findings {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-width: 0;
+  min-height: 100%;
+}
+
+.findings .card16 {
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(40, 48, 90, 0.05);
 }
 
 .top {
@@ -210,10 +228,27 @@ if (providers.view === null) void providers.load()
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   background: var(--surface-0);
   box-shadow: var(--shadow-lift);
-  color: var(--accent-ink);
+  color: #4f6bed;
+}
+
+/* The filter pill sits in the middle of the 72 px header, on the board's translucent track. */
+.top :deep(.seg) {
+  align-self: center;
+  background: rgba(236, 238, 246, 0.9);
+}
+
+@media (prefers-color-scheme: dark) {
+  .top :deep(.seg) {
+    background: var(--surface-1);
+  }
+}
+
+.again {
+  --shadow: 0 1px 2px rgba(40, 48, 90, 0.08);
+  gap: 8px;
 }
 
 .titles {
@@ -251,7 +286,7 @@ if (providers.view === null) void providers.load()
 .ct {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
 }
@@ -280,26 +315,52 @@ if (providers.view === null) void providers.load()
   white-space: pre-wrap;
 }
 
-.empty {
-  --card-gap: 8px;
-}
-
-.empty-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
 .body {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
   gap: var(--space-3);
+  flex: 1 1 auto;
   min-height: 0;
 }
 
 .listcard {
   --card-gap: 6px;
   --card-pad: 12px;
-  align-self: start;
+}
+
+.listcard > .ct {
+  padding: 4px 4px 6px;
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: auto;
+  padding: 8px 4px 0;
+}
+
+.frow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  color: var(--ink-2);
+  font-size: var(--text-12);
+}
+
+.frow .icon {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.foot .note.order {
+  margin: 0;
+  padding-top: 6px;
+}
+
+.quiet {
+  align-self: flex-start;
+  margin-top: 6px;
 }
 </style>

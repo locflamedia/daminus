@@ -2,12 +2,12 @@
   One answer in the Ask thread, from the board "AI · Ask": while the model is waited for, a
   line that names what is being read over three shimmer bars; then the health pill and how long
   it took, the summary as it streams (a caret marks the end while more may come) and the
-  findings as cards. The health and every card's severity come from the checks the findings
-  name, never from the AI. A send that failed shows the words for its error code and a way to
+  findings as cards. The health comes from the scope's own results and every card's severity from the check the
+  finding names, never from the AI. A send that failed shows the words for its error code and a way to
   try again; a stopped one says so quietly. Text is always text.
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import { errorText } from '@/lib/issue-text'
@@ -15,9 +15,10 @@ import type { AiTurn } from '@/stores/ai-thread'
 import { useOverviewStore } from '@/stores/overview'
 import { useReportStore } from '@/stores/report'
 import UiButton from '@/ui/UiButton.vue'
-import { countInScope } from './ask-scope'
+import { countInScope, inScope } from './ask-scope'
 import AskFindingCard from './AskFindingCard.vue'
-import { resolveFindings, worstTone } from '../findings/resolve-findings'
+import { resolveFindings } from '../findings/resolve-findings'
+import { severityMix } from './use-ask-session'
 
 const props = defineProps<{ turn: AiTurn }>()
 const emit = defineEmits<{ stop: []; retry: [] }>()
@@ -32,7 +33,33 @@ const waiting = computed(
   () => live.value && props.turn.summary === '' && props.turn.findings.length === 0,
 )
 const resolved = computed(() => resolveFindings(props.turn.findings, report.value))
-const health = computed(() => (props.turn.status === 'done' ? worstTone(resolved.value) : null))
+// The health is the scope's own: the worst active result of what the question was about, not
+// only of the findings the model happened to name.
+const health = computed<'crit' | 'warn' | 'ok' | null>(() => {
+  if (props.turn.status !== 'done' && props.turn.status !== 'streaming') return null
+  const items = report.value?.items.filter((i) => inScope(i, props.turn.scope)) ?? []
+  if (items.length === 0) return null
+  const mix = severityMix(items, props.turn.scope)
+  return mix.crit > 0 ? 'crit' : mix.warn > 0 ? 'warn' : 'ok'
+})
+
+const WORD_STEP_MS = 45
+// Words that arrive fade in 45 ms apart, counted from the batch they came in; an answer that
+// is already finished when it is shown (another scope's thread, opened again) just appears.
+const animated = props.turn.status === 'waiting' || props.turn.status === 'streaming'
+const words = computed(() => props.turn.summary.match(/\S+\s*|\s+/g) ?? [])
+const delays = ref<number[]>([])
+watch(
+  () => words.value.length,
+  (n) => {
+    const had = delays.value.length
+    delays.value =
+      n < had
+        ? []
+        : [...delays.value, ...Array.from({ length: n - had }, (_, i) => i * WORD_STEP_MS)]
+  },
+  { immediate: true, flush: 'sync' },
+)
 const reading = computed(() => {
   const n = countInScope(report.value, props.turn.scope)
   return baseline.value === null
@@ -67,7 +94,16 @@ const failure = computed(() => (props.turn.error ? errorText(props.turn.error) :
         <span v-if="took" class="took">{{ took }}</span>
       </div>
       <p v-if="turn.summary" class="summary">
-        {{ turn.summary }}<span v-if="live" class="caret" aria-hidden="true" />
+        <template v-if="animated"
+          ><span
+            v-for="(word, i) in words"
+            :key="i"
+            class="w"
+            :style="{ animationDelay: `${delays[i] ?? 0}ms` }"
+            >{{ word }}</span
+          ></template
+        ><template v-else>{{ turn.summary }}</template
+        ><Transition name="caret"><span v-if="live" class="caret" aria-hidden="true" /></Transition>
       </p>
       <p v-else-if="turn.status === 'done' && resolved.length === 0" class="quiet">
         {{ t('aiAsk.noAnswerText') }}
@@ -138,6 +174,10 @@ const failure = computed(() => (props.turn.error ? errorText(props.turn.error) :
 .bar {
   height: 12px;
   max-width: 100%;
+  border-radius: 5px;
+  /* The board's shimmer is grey-blue (surface-2, well, surface-2), not the accent tint. */
+  background: linear-gradient(90deg, var(--surface-2), var(--surface-well), var(--surface-2));
+  background-size: 200% 100%;
 }
 
 .meta {
@@ -174,9 +214,9 @@ const failure = computed(() => (props.turn.error ? errorText(props.turn.error) :
   color: var(--warn-ink);
 }
 
-.health.info {
-  background: var(--info-soft);
-  color: var(--info-ink);
+.health.ok {
+  background: var(--ok-soft);
+  color: var(--ok-ink);
 }
 
 .took {
@@ -201,6 +241,28 @@ const failure = computed(() => (props.turn.error ? errorText(props.turn.error) :
   background: var(--accent);
   vertical-align: -2px;
   animation: ask-caret 1s steps(1) infinite;
+}
+
+.w {
+  white-space: pre-wrap;
+  animation: ask-word 300ms var(--ease-out) both;
+}
+
+.caret-enter-active,
+.caret-leave-active {
+  transition: opacity 200ms ease;
+}
+
+.caret-enter-from,
+.caret-leave-to {
+  opacity: 0;
+}
+
+@keyframes ask-word {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
 }
 
 .quiet {
@@ -236,8 +298,14 @@ const failure = computed(() => (props.turn.error ? errorText(props.turn.error) :
 
 @media (prefers-reduced-motion: reduce) {
   .dots i,
-  .caret {
+  .caret,
+  .w {
     animation: none;
+  }
+
+  .caret-enter-active,
+  .caret-leave-active {
+    transition: none;
   }
 }
 </style>

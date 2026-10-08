@@ -4,7 +4,8 @@
       "label": "Actions for {check}",
       "open": "More actions",
       "copyPath": "Copy path",
-      "mark": "Mark as expected…"
+      "mark": "Mark as expected…",
+      "markShort": "Mark as expected"
     },
     "pop": {
       "label": "Mark as expected",

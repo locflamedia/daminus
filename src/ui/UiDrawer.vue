@@ -19,15 +19,25 @@ import { ref, toRef } from 'vue'
 import { useFocusTrap } from '@/lib/focus-trap'
 
 const props = withDefaults(
-  defineProps<{ open: boolean; label: string; variant?: 'glass' | 'card'; width?: string }>(),
-  { variant: 'glass', width: undefined },
+  defineProps<{
+    open: boolean
+    label: string
+    variant?: 'glass' | 'card'
+    width?: string
+    /** Where focus lands on open; the first control when absent. `'panel'` is the drawer itself. */
+    initialFocus?: 'panel'
+  }>(),
+  { variant: 'glass', width: undefined, initialFocus: undefined },
 )
 
 const emit = defineEmits<{ close: [] }>()
 defineSlots<{ default?: () => unknown }>()
 
 const panel = ref<HTMLElement>()
-useFocusTrap(panel, toRef(props, 'open'), { onEscape: () => emit('close') })
+useFocusTrap(panel, toRef(props, 'open'), {
+  onEscape: () => emit('close'),
+  initialFocus: (el) => (props.initialFocus === 'panel' ? el : undefined),
+})
 </script>
 
 <template>

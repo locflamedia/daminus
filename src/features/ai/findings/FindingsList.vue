@@ -12,8 +12,6 @@ import { severityWords, type ResolvedFinding } from './resolve-findings'
 defineProps<{
   findings: readonly ResolvedFinding[]
   selected: string
-  /** Whether the order is the AI's (numbers shown) or the checks' own (no numbers). */
-  ranked: boolean
 }>()
 const emit = defineEmits<{ select: [id: string] }>()
 const { t } = useI18n()
@@ -45,7 +43,7 @@ function move(event: KeyboardEvent, list: readonly ResolvedFinding[], index: num
       @keydown.enter.prevent="emit('select', finding.id)"
       @keydown="move($event, findings, i)"
     >
-      <span class="rank">{{ ranked ? i + 1 : '' }}</span>
+      <span class="rank">{{ i + 1 }}</span>
       <span class="text">
         <b class="title">{{ finding.item ? finding.title : t('aiFindings.unmatched') }}</b>
         <span v-if="finding.item" class="where">{{ finding.owner }} · {{ finding.where }}</span>
@@ -72,13 +70,21 @@ function move(event: KeyboardEvent, list: readonly ResolvedFinding[], index: num
   align-items: center;
   min-height: 52px;
   padding: 0 var(--space-3);
-  border-radius: var(--radius-md);
+  border-radius: 12px;
   background: var(--surface-0);
   cursor: default;
 }
 
 .row.on {
   box-shadow: var(--shadow-lift);
+}
+
+.row.on.crit {
+  box-shadow: 0 1px 2px rgba(180, 47, 87, 0.12);
+}
+
+.row.on.warn {
+  box-shadow: 0 1px 2px rgba(143, 82, 7, 0.12);
 }
 
 .row.on.crit {

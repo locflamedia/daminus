@@ -125,25 +125,25 @@ const PROFILES: ProviderProfile[] = [
 ]
 
 const SUMMARY =
-  'Two things need you today. [host-1] is short of memory and the OOM killer already stopped a worker; ' +
-  'the shop certificate expires in 6 days. The backup gap on [host-2] can wait until the others are done.'
+  'Two things need you today. A PHP file sits in the uploads folder of [host-1] and the .env of the shop is ' +
+  'public; the database port of [host-1] can wait until those are closed.'
 
 const FINDINGS = [
   {
     id: 'c1',
-    why: 'The OOM killer stopped a PHP worker on [host-1] twice this week, so orders are being dropped.',
-    suggested_command: 'free -m && journalctl -k --since "-7d" | grep -i oom',
+    why: 'A PHP file in the uploads folder can be run by anyone who knows its address; it is likely a web shell.',
+    suggested_command: 'ls -la /var/www/khohang/public/uploads/ | head',
     rank: 1,
   },
   {
     id: 'c2',
-    why: 'The certificate for shop.example expires in 6 days and the renewal job last ran 61 days ago.',
-    suggested_command: 'sudo certbot renew --dry-run',
+    why: 'The .env of the shop is served over HTTP, so its keys and passwords are public; rotate them after the fix.',
+    suggested_command: 'curl -sI https://khohang.vn/.env | head -1',
     rank: 2,
   },
   {
     id: 'c3',
-    why: 'The last backup on [host-2] is 9 days old; nothing is lost yet.',
+    why: 'The database port is open to every address; close it once the first two are done.',
     suggested_command: null,
     rank: 3,
   },
@@ -151,9 +151,13 @@ const FINDINGS = [
 
 /** The result each finding id names, as Rust resolves them from the payload that was sent. */
 const FINDING_KEYS: Record<string, CheckKey> = {
-  c1: { host: 'vps-hn-3', check: 'sys.oom', target: '' },
-  c2: { host: 'vps-sg-1', check: 'tls.expiry', target: 'shop.example' },
-  c3: { host: 'vps-sg-2', check: 'backup.age', target: '' },
+  c1: {
+    host: 'vps-hn-3',
+    check: 'sec.upload_php',
+    target: '/var/www/khohang/public/uploads/shell.php',
+  },
+  c2: { host: '@local', check: 'url.exposed', target: 'https://khohang.vn/.env' },
+  c3: { host: 'vps-hn-3', check: 'sec.ports', target: '0.0.0.0:3306' },
 }
 
 const SECTION_SIZES: Record<SectionId, [number, number]> = {
@@ -372,7 +376,8 @@ export class AiMock {
   private analyze(requestId: string, hash: string): void {
     if (!this.hashes.has(hash)) throw error({ kind: 'schema_invalid' }, 'payload_changed')
     if (this.running.has(requestId)) throw error({ kind: 'schema_invalid' }, 'request_id_in_use')
-    if (this.settings().provider === null) throw error({ kind: 'schema_invalid' }, 'ai.provider')
+    // Rust answers schema_invalid here; the mock shows what a person should read instead.
+    if (this.settings().provider === null) throw error({ kind: 'provider_auth' })
     this.running.set(requestId, [])
     this.seqs.set(requestId, 0)
     const refused: Partial<Record<string, ErrorCode>> = {

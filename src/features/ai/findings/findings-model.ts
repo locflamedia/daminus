@@ -2,8 +2,9 @@
 // ranking; without one (no provider, nothing asked yet) it is the checks' own list, worst first,
 // and says so. Severity is always the check's.
 import type { Item, Report } from '@/api'
+import { isUnreachable } from '@/lib/rollups'
 import { currentLocale, type Locale } from '@/i18n'
-import { checkName, issueText } from '@/lib/issue-text'
+import { issueText } from '@/lib/issue-text'
 import { toneOf, type FindingTone, type ResolvedFinding } from './resolve-findings'
 
 export type FindingsFilter = 'all' | 'crit' | 'warn'
@@ -48,6 +49,28 @@ export function fallbackFindings(
     tone,
     title: issueText({ key: item.key, params: {}, severity: item.severity }, locale),
     owner: item.owner.kind === 'project' ? item.owner.id : item.owner.host,
-    where: `${item.key.host} · ${item.key.target || checkName(item.key.check, locale)}`,
+    where: item.key.target || item.key.host,
   }))
+}
+
+export interface FindingsFooter {
+  /** Results that are fine and count. */
+  passed: number
+  /** Results marked as expected. */
+  expected: number
+  /** Servers the latest scan did not reach (or did not include). */
+  unreachable: string[]
+}
+
+/** The rows under the list: what the report already knows about everything that is not listed. */
+export function footerRows(report: Report | null): FindingsFooter {
+  const items = report?.items ?? []
+  return {
+    passed: items.filter((i) => i.disposition.kind === 'active' && i.severity.level === 'ok')
+      .length,
+    expected: items.filter((i) => i.disposition.kind === 'expected').length,
+    unreachable: (report?.servers ?? [])
+      .filter((s) => isUnreachable(s.outcome) || !s.included)
+      .map((s) => s.host),
+  }
 }

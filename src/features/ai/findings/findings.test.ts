@@ -8,10 +8,10 @@ import { i18n } from '@/i18n'
 import { type AskedFinding, useAiThreadStore } from '@/stores/ai-thread'
 import { useReportStore } from '@/stores/report'
 import { item } from '@/testing/item-fixture'
-import { report } from '@/testing/report-fixture'
+import { report, server } from '@/testing/report-fixture'
 import { countInScope, scopeFromRoute, scopeKey } from '../ask/ask-scope'
 import AiFindingsView from './AiFindingsView.vue'
-import { applyFilter, fallbackFindings, filterCounts } from './findings-model'
+import { applyFilter, fallbackFindings, filterCounts, footerRows } from './findings-model'
 import { resolveFindings } from './resolve-findings'
 
 const items = [
@@ -75,6 +75,23 @@ describe('resolving findings', () => {
     expect(rows.every((r) => r.rank === 0 && r.why === '')).toBe(true)
   })
 
+  it('counts what the list leaves out from the report', () => {
+    const r = report({
+      items: [
+        ...items,
+        item({ check: 'x.y', level: { level: 'ok' } }),
+        item({
+          check: 'x.z',
+          level: { level: 'warn' },
+          disposition: { kind: 'expected', rule: 'r1' },
+        }),
+      ],
+      servers: [server('vps-a'), server('legacy', { outcome: { state: 'unreachable' } as never })],
+    })
+    expect(footerRows(r)).toEqual({ passed: 2, expected: 1, unreachable: ['legacy'] })
+    expect(footerRows(null)).toEqual({ passed: 0, expected: 0, unreachable: [] })
+  })
+
   it('filters by the check’s severity', () => {
     const rows = fallbackFindings(base, 'en')
     expect(filterCounts(rows)).toEqual({ all: 2, crit: 1, warn: 1 })
@@ -124,9 +141,19 @@ describe('Findings page', () => {
 
   it('falls back to the checks’ list, unranked, when there is no answer', async () => {
     const view = await page()
-    expect(view.text()).toContain('No AI review yet')
+    expect(view.text()).not.toContain('No AI review yet')
     expect(view.text()).toContain('From the checks, not ranked')
-    expect(view.findAll('[role="option"]')).toHaveLength(2)
+    expect(view.text()).toContain('AI providers')
+    const rows = view.findAll('[role="option"]')
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.text()).toContain('1')
+  })
+
+  it('draws the note on what the AI saw and the Mark as expected button', async () => {
+    answer([finding('c2', 1, 'A PHP file can run.')])
+    const view = await page()
+    expect(view.text()).toContain('The AI saw the file name, size and time.')
+    expect(view.findAll('button').some((b) => b.text() === 'Mark as expected')).toBe(true)
   })
 
   it('opens the Ask panel for a follow-up', async () => {

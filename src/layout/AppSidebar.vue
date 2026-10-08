@@ -17,6 +17,7 @@ import UiIcon from '@/ui/UiIcon.vue'
 import UiKbd from '@/ui/UiKbd.vue'
 import DiskRing from './DiskRing.vue'
 import ProjectDot from './ProjectDot.vue'
+import SidebarAiChip from './SidebarAiChip.vue'
 import SidebarSnapshots from './SidebarSnapshots.vue'
 
 const { t } = useI18n()
@@ -170,6 +171,7 @@ const serverRows = computed(() =>
 
     <div class="foot">
       <SidebarAiCard v-if="firstLaunch && !helpScreen" />
+      <SidebarAiChip />
       <RouterLink to="/settings" class="item" active-class="on">
         <UiIcon name="settings" />
         {{ t('nav.settings') }}

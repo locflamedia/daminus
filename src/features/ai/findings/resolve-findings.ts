@@ -4,7 +4,7 @@
 // no longer in the report, is kept and shown without a severity.
 import type { AiFinding, CheckKey, Item, Report, Severity } from '@/api'
 import { currentLocale, type Locale } from '@/i18n'
-import { checkName, issueText, severityText } from '@/lib/issue-text'
+import { issueText, severityText } from '@/lib/issue-text'
 import type { AskedFinding } from '@/stores/ai-thread'
 
 export type FindingTone = 'crit' | 'warn' | 'info' | 'plain'
@@ -25,7 +25,7 @@ export interface ResolvedFinding {
   title: string
   /** The project (or the server) the result belongs to, for the chip. */
   owner: string | null
-  /** The host and target, for the line under the title. */
+  /** The target (or the host when it has none), for the line under the title after the owner. */
   where: string | null
 }
 
@@ -78,9 +78,7 @@ export function resolveFindings(
         ? issueText({ key: item.key, params: {}, severity: item.severity }, locale)
         : finding.id,
       owner: item ? ownerName(item) : null,
-      where: item
-        ? `${item.key.host} · ${item.key.target || checkName(item.key.check, locale)}`
-        : null,
+      where: item ? item.key.target || item.key.host : null,
     }
   })
 }

@@ -28,6 +28,14 @@
     "fromChecks": "From the checks, not ranked",
     "providers": "AI providers",
     "nothingToShow": "No findings in this view.",
-    "detail": "Details of finding {n}"
+    "detail": "Details of finding {n}",
+    "provenanceNoSize": "{model} · {time}",
+    "passed": "{n} check passed | {n} checks passed",
+    "expectedCount": "{n} marked as expected",
+    "notScanned": "{host} not scanned",
+    "unreachableWord": "unreachable",
+    "seenNote": "The AI saw the file name, size and time. It did not see the file’s contents.",
+    "stepRun": "Copy this command and run it on {host}:",
+    "step": "Step {n}"
   }
 }

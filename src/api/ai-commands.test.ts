@@ -120,4 +120,12 @@ describe('AI dev mock', () => {
     expect(kinds[0]).toBe('summary_delta')
     expect(events.map((e) => e.seq)).toEqual(events.map((_, i) => i + 1))
   })
+
+  it('answers a send with no provider selected as a rejected key, not a schema error', async () => {
+    install('ai')
+    resetSettingsMock()
+    const preview = await aiPayloadPreview({ kind: 'whole' }, options)
+    const refused = await aiAnalyze('r2', preview.hash).catch((e: unknown) => e)
+    expect(refused).toMatchObject({ code: { kind: 'provider_auth' } })
+  })
 })

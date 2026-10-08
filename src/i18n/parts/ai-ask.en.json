@@ -15,6 +15,7 @@
     "readingDiff": "Reading {n} check results and the diff from #{seq}",
     "health": "Health: {level}",
     "healthLevel": {
+      "ok": "fine",
       "crit": "critical",
       "warn": "needs attention",
       "info": "fine, with notes"

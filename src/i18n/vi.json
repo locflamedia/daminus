@@ -119,6 +119,7 @@
   },
   "nav": {
     "search": "Tìm kiếm",
+    "aiProvider": "Nhà cung cấp AI: {name}",
     "overview": "Tổng quan",
     "history": "Lịch sử quét",
     "projects": "Dự án",
