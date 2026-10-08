@@ -2,6 +2,7 @@
 import { toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useNow } from '@/composables/use-now'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiTag from '@/ui/UiTag.vue'
 import ProjectTabShell from '../common/ProjectTabShell.vue'
 import ComposeSection from './ComposeSection.vue'
@@ -37,6 +38,7 @@ const m = useContainersModel(toRef(props, 'id'))
     <section v-if="m.apps.value.length > 0" class="pm2">
       <div class="strip">
         <UiTag>
+          <UiBrandMark name="pm2" :size="14" />
           {{ t('projectContainers.context.pm2') }}
           <b class="count">{{
             t('projectContainers.context.apps', { n: m.apps.value.length }, m.apps.value.length)
@@ -92,6 +94,11 @@ const m = useContainersModel(toRef(props, 'id'))
   gap: 10px;
 }
 
+.strip :deep(.tag) {
+  height: 26px;
+  padding: 0 10px;
+}
+
 .count {
   font-weight: var(--weight-medium);
 }
@@ -110,7 +117,7 @@ const m = useContainersModel(toRef(props, 'id'))
 
 .unknown {
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
   font-size: var(--text-12);

@@ -2,6 +2,7 @@
 // `pm2.app` facts, which service is the troubled one, and the two commands the tab offers. The
 // tab never reads logs; it only shows what `docker inspect` and `pm2 jlist` gave.
 import type { Item, ScanFact } from '@/api'
+import { LIMIT_RAISE_FACTOR, LIMIT_RAISE_STEP_BYTES } from './presentation-hints'
 import { bool, dataOf, num, str } from './project-facts'
 
 /** A container or host name that can be put in a command without quoting trouble. */
@@ -87,9 +88,6 @@ export function parseCompose(item: Item): ComposeView | null {
 export function troubled(s: ServiceView): boolean {
   return s.state !== 'running' || s.oom || s.restarts > 0
 }
-
-/** Memory bars turn amber above this share of the limit. */
-export const MEM_WARN_PCT = 90
 
 /** The service the "last exit" block and the finding speak about: down, killed, restarted. */
 export function troubledService(services: readonly ServiceView[]): ServiceView | null {
@@ -238,4 +236,20 @@ export function hostMemory(
   return total !== null && available !== null && total > 0
     ? { used: Math.max(0, total - available), total }
     : null
+}
+
+/**
+ * The memory limit a service could be raised to, when the host has the room for the rise:
+ * `limit` times the raise factor, rounded up to a step, if what the rise adds is no more than
+ * the host's free memory. `null` without a limit, without the host's totals, or when it does
+ * not fit.
+ */
+export function raisedLimit(
+  limit: number | null,
+  host: { used: number; total: number } | null,
+): number | null {
+  if (limit === null || limit <= 0 || host === null) return null
+  const target =
+    Math.ceil((limit * LIMIT_RAISE_FACTOR) / LIMIT_RAISE_STEP_BYTES) * LIMIT_RAISE_STEP_BYTES
+  return target - limit <= host.total - host.used ? target : null
 }

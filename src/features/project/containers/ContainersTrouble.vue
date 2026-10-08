@@ -2,7 +2,13 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
-import { logsCommand, statsCommand, troubleKind, type ServiceView } from '@/lib/project-containers'
+import {
+  logsCommand,
+  raisedLimit,
+  statsCommand,
+  troubleKind,
+  type ServiceView,
+} from '@/lib/project-containers'
 import UiCommandCopy from '@/ui/UiCommandCopy.vue'
 import ProjectCard from '../common/ProjectCard.vue'
 import ProjectCurve from '../common/ProjectCurve.vue'
@@ -20,6 +26,9 @@ const props = defineProps<{
 const { t } = useI18n()
 const fmt = useFormat()
 
+/** A service name starts the sentence: the board writes "Worker hits its limit". */
+const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1)
+
 const kind = computed(() => troubleKind(props.service))
 const logs = computed(() => logsCommand(props.host, props.service.name))
 const stats = computed(() => statsCommand(props.host, props.service.name))
@@ -28,7 +37,8 @@ const limit = computed(() =>
 )
 const time = (iso: string | null) => (iso ? fmt.when(iso) : '—')
 
-const title = computed(() => {
+const title = computed(() => sentence(rawTitle.value))
+const rawTitle = computed(() => {
   const name = props.service.svc
   if (kind.value === 'oom') {
     return limit.value
@@ -53,6 +63,21 @@ const text = computed(() => {
   return kind.value === 'down'
     ? t('projectContainers.finding.downText', { state: s.state, exit: s.exit ?? '—' })
     : t('projectContainers.finding.restartedText')
+})
+const raised = computed(() => raisedLimit(props.service.limit, props.hostMemory))
+const hostNote = computed(() => {
+  const m = props.hostMemory
+  if (!m) return ''
+  const used = fmt.measure(m.used, 'bytes').text
+  const total = fmt.measure(m.total, 'bytes').text
+  return raised.value !== null && kind.value === 'oom'
+    ? t('projectContainers.finding.hostMemoryFits', {
+        used,
+        total,
+        name: props.service.svc,
+        target: fmt.measure(raised.value, 'bytes').text,
+      })
+    : t('projectContainers.finding.hostMemory', { used, total })
 })
 const peakNote = computed(() => {
   if (props.peak === null) return ''
@@ -107,6 +132,7 @@ const memoryLabel = computed(() =>
         <ProjectCurve
           :values="memory.map((p) => p.value)"
           tone="amber"
+          straight
           :height="120"
           :limit="service.limit ?? undefined"
           :limit-label="limit ? t('projectContainers.exit.limit', { size: limit }) : undefined"
@@ -135,14 +161,7 @@ const memoryLabel = computed(() =>
           </li>
         </ul>
       </template>
-      <span v-if="hostMemory" class="note">
-        {{
-          t('projectContainers.finding.hostMemory', {
-            used: fmt.measure(hostMemory.used, 'bytes').text,
-            total: fmt.measure(hostMemory.total, 'bytes').text,
-          })
-        }}
-      </span>
+      <span v-if="hostNote" class="note">{{ hostNote }}</span>
     </ProjectCard>
   </div>
 </template>

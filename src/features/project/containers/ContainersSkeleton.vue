@@ -34,7 +34,7 @@ import UiSkeleton from '@/ui/UiSkeleton.vue'
   flex-direction: column;
   gap: 10px;
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
 }

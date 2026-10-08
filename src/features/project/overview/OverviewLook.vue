@@ -122,7 +122,10 @@ const sub = (r: LookRow) => `${r.issue.key.check} · ${r.issue.key.target || r.i
 }
 
 .title {
+  overflow: hidden;
   color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
 }
@@ -143,6 +146,7 @@ const sub = (r: LookRow) => `${r.issue.key.check} · ${r.issue.key.target || r.i
 
 .link {
   color: inherit;
+  white-space: nowrap;
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
 }

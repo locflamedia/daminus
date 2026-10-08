@@ -17,6 +17,8 @@ const props = defineProps<{
   mysql: boolean
   index: number
   projectId: string
+  /** How long ago the numbers were read, when the saved results are over a day old. */
+  age?: string | null
 }>()
 
 const { t } = useI18n()
@@ -59,6 +61,7 @@ const lineTone = computed(() => {
 // Disk reads amber when it grew, as the board draws it; a calm size stays accent.
 const growing = computed(() => (props.tile.delta ?? 0) > 0)
 const sparkTone = computed(() => {
+  if (props.age) return 'stale'
   if (props.tile.id === 'disk' && !growing.value && props.tile.tone === 'accent') return 'accent'
   return lineTone.value
 })
@@ -67,15 +70,14 @@ const tls = computed(() => (props.tile.id === 'tls' ? tlsState(props.tile.item) 
 const flagged = computed(
   () => tls.value !== null && (tls.value.tone !== 'ok' || tls.value.flags.length > 0),
 )
-const renewed = computed(
-  () =>
-    props.tile.id === 'tls' &&
-    props.tile.series.length > 1 &&
-    (props.tile.series.at(-1) ?? 0) > (props.tile.series.at(-2) ?? 0),
-)
+const statusText = computed(() => {
+  const code = props.tile.status
+  return code === 200 ? t('projectOverview.tile.statusOk', { code }) : String(code ?? '')
+})
 
 const deltaText = computed(() => {
   const d = props.tile.delta
+  if (props.age) return ''
   if (d === null || d === 0 || props.tile.id === 'uptime' || props.tile.id === 'tls') return ''
   return fmt.delta(d, props.tile.unit).text
 })
@@ -90,7 +92,7 @@ const sparkLabel = computed(() =>
 </script>
 
 <template>
-  <article v-enter="{ index }" class="tile">
+  <article v-enter="{ index }" class="tile" :class="{ old: age }">
     <header class="head">
       <UiIcon :name="ICON[tile.id]" :size="16" class="glyph" />
       <span class="label">{{ label }}</span>
@@ -108,9 +110,13 @@ const sparkLabel = computed(() =>
         </span>
       </UiTooltip>
       <span class="status">
-        <UiTlsChip v-if="flagged && tile.item" :item="tile.item" />
-        <span v-else-if="tile.id === 'uptime' && tile.status" class="ok">{{ tile.status }}</span>
-        <span v-else-if="renewed" class="ok">{{ t('projectOverview.tile.renewed') }}</span>
+        <UiTlsChip v-if="flagged && tile.item && !age" :item="tile.item" />
+        <span v-else-if="tile.id === 'uptime' && tile.status" :class="age ? 'delta' : 'ok'">{{
+          statusText
+        }}</span>
+        <span v-else-if="tile.renewed && !age" class="ok">{{
+          t('projectOverview.tile.renewed')
+        }}</span>
         <span v-else-if="deltaText" class="delta" :class="{ warn: growing }">{{ deltaText }}</span>
       </span>
     </header>
@@ -130,6 +136,7 @@ const sparkLabel = computed(() =>
         />
       </div>
     </div>
+    <span v-if="age" class="age">{{ age }}</span>
   </article>
 </template>
 
@@ -140,7 +147,7 @@ const sparkLabel = computed(() =>
   gap: var(--space-2);
   min-width: 0;
   padding: 14px var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
 }
@@ -167,6 +174,7 @@ const sparkLabel = computed(() =>
 
 .clock {
   display: inline-grid;
+  margin-left: calc(-1 * var(--space-1));
   color: var(--ink-4);
 }
 
@@ -210,6 +218,11 @@ const sparkLabel = computed(() =>
   font-size: var(--text-13);
   font-weight: var(--weight-regular);
   letter-spacing: 0;
+}
+
+.age {
+  color: var(--ink-3);
+  font-size: var(--text-11);
 }
 
 .empty {

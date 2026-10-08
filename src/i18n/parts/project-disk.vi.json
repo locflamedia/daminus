@@ -6,7 +6,7 @@
     },
     "tiles": {
       "title": "{size} nằm ở đâu",
-      "meta": "{paths} · du, thư mục lớn nhất",
+      "meta": "{paths} · du -sk, thư mục lớn nhất",
       "label": "Thư mục theo dung lượng",
       "other": "khác",
       "partial": "du không đọc được hết thư mục con, nên một số dung lượng thấp hơn thực tế.",
@@ -28,7 +28,7 @@
     },
     "files": {
       "title": "File lớn nhất",
-      "meta": "find, chỉ đọc",
+      "meta": "find -size +{mb}M, chỉ đọc",
       "label": "File lớn nhất",
       "skipped": "Bỏ qua {paths} · đổi ở Cài đặt › Quét",
       "none": "Không có file nào vượt ngưỡng đặt ở Cài đặt › Quét.",
@@ -39,7 +39,8 @@
       "meta": "dùng chung với dự án khác",
       "fill": "{host} /",
       "docker": "docker",
-      "none": "Chưa có số đo ổ đĩa của các máy chủ này."
+      "none": "Chưa có số đo ổ đĩa của các máy chủ này.",
+      "notMeasured": "chưa đo"
     },
     "free": {
       "title": "Giải phóng được gì",

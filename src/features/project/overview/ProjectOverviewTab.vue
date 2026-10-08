@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useFormat } from '@/composables/use-format'
+import { useNow } from '@/composables/use-now'
+import { staleDays } from '@/lib/staleness'
 import { useLayoutRange } from '@/lib/viewport'
 import { dataOf, str } from '@/lib/project-facts'
 import { tabState } from '@/lib/project-tab-state'
@@ -21,6 +24,8 @@ const m = useOverviewModel(toRef(props, 'id'))
 const reports = useReportStore()
 const projects = useProjectsStore()
 const range = useLayoutRange()
+const fmt = useFormat()
+const now = useNow()
 const narrow = computed(() => range.value === 'narrow')
 
 /** Overview has no group of its own: it is off only when there is nothing saved to show. */
@@ -39,6 +44,11 @@ const empty = computed(
 const status = computed(() =>
   state.value.status === 'empty' && !empty.value ? 'normal' : state.value.status,
 )
+/** Results over a day old: the tiles go grey and say how old they are, as the board draws it. */
+const age = computed(() => {
+  const at = reports.latest?.scanned_at
+  return staleDays(at, now.value) === null || !at ? null : fmt.when(at)
+})
 const mysql = computed(() => {
   const db = m.items.value.find((i) => i.key.check === 'db.size')
   return str(dataOf(db?.fact).engine) === 'mysql'
@@ -76,6 +86,7 @@ const host = computed(() => {
         :mysql="mysql"
         :index="i"
         :project-id="id"
+        :age="age"
       />
     </div>
     <div class="two" :class="{ narrow }">

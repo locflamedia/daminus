@@ -7,6 +7,7 @@
       "database": "Cơ sở dữ liệu",
       "tls": "TLS",
       "renewed": "đã gia hạn",
+      "statusOk": "{code} OK",
       "days": "ngày",
       "notSetUp": "chưa thiết lập",
       "needsPermission": "cần quyền",

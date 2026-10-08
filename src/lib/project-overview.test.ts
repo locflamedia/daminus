@@ -6,6 +6,7 @@ import {
   partRows,
   responseStrip,
   slowestBad,
+  tlsRenewed,
   toneOf,
   wiring,
 } from './project-overview'
@@ -69,11 +70,41 @@ describe('parts and wiring', () => {
     expect(rows[3]?.state).toMatchObject({ kind: 'db', bytes: 500, tables: 3 })
   })
 
-  it('groups parts by tier and marks a data band on a host another band uses', () => {
+  it('draws one band per server and tier and marks a data band on a server another band shows', () => {
     const bands = wiring(partRows(project, items))
     expect(bands.map((b) => b.tier)).toEqual(['fe', 'app', 'db'])
+    expect(bands.map((b) => b.host)).toEqual(['a', 'b', 'b'])
     expect(bands.map((b) => b.data)).toEqual([false, false, true])
     expect(bands[1]?.nodes.map((n) => n.role)).toEqual(['be', 'worker'])
+  })
+})
+
+describe('technology marks and renewal', () => {
+  it('names a mark only where the data names the technology', () => {
+    const rows = partRows(project, [])
+    expect(rows.map((r) => r.brand)).toEqual([null, 'docker', 'pm2', 'postgresql'])
+  })
+
+  it('reads a step up in a certificate days-left as a renewal', () => {
+    expect(tlsRenewed([70, 69, 68, 90, 89])).toBe(true)
+    expect(tlsRenewed([70, 69, 68])).toBe(false)
+    expect(tlsRenewed([])).toBe(false)
+  })
+
+  it('splits one tier over servers into separate bands', () => {
+    const two: Project = {
+      ...project,
+      components: [
+        { role: 'be', host: 'x', kind: 'pm2', app: 'one' },
+        { role: 'worker', host: 'y', kind: 'pm2', app: 'two' },
+        { role: 'be', host: 'x', kind: 'pm2', app: 'three' },
+      ],
+    }
+    const bands = wiring(partRows(two, []))
+    expect(bands.map((b) => [b.host, b.nodes.length])).toEqual([
+      ['x', 2],
+      ['y', 1],
+    ])
   })
 })
 
@@ -162,7 +193,7 @@ describe('the four numbers', () => {
     })
     expect(overviewTiles([http], [], ['https://p.dev'])[0]).toMatchObject({
       value: 142,
-      status: '200',
+      status: 200,
     })
   })
 

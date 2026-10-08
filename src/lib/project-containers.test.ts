@@ -6,6 +6,7 @@ import {
   parseCompose,
   parsePm2,
   peak,
+  raisedLimit,
   troubledService,
   uptimeMs,
 } from './project-containers'
@@ -129,5 +130,19 @@ describe('pm2 and peaks', () => {
   it('takes the highest value of a series', () => {
     expect(peak([{ value: 1 }, { value: 9 }, { value: 4 }])).toBe(9)
     expect(peak([])).toBeNull()
+  })
+})
+
+describe('raising a memory limit', () => {
+  const MIB = 1024 * 1024
+  it('names 1.5 times the limit when the free memory of the host holds the rise', () => {
+    const host = { used: 5900 * MIB, total: 7800 * MIB }
+    expect(raisedLimit(512 * MIB, host)).toBe(768 * MIB)
+  })
+
+  it('says nothing when the rise does not fit, or the limit or the host totals are unknown', () => {
+    expect(raisedLimit(512 * MIB, { used: 7700 * MIB, total: 7800 * MIB })).toBeNull()
+    expect(raisedLimit(null, { used: 1, total: 2 })).toBeNull()
+    expect(raisedLimit(512 * MIB, null)).toBeNull()
   })
 })

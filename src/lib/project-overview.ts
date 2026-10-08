@@ -2,6 +2,7 @@
 // what needs a look, and the response strip. Everything is read from the latest report, the saved
 // project and the facts of past scans; severity, delta and staleness are the core's.
 import type { Component, HistoryView, Item, Level, MainIssue, Project, ScanFact } from '@/api'
+import { brandOfEngine, brandOfKind, type BrandName } from '@/ui/brand-marks'
 import { dataOf, isRecord, itemsOf, num, str } from './project-facts'
 import { parseCompose, parsePm2 } from './project-containers'
 import { parseDb } from './project-database'
@@ -46,8 +47,10 @@ export interface OverviewTile {
   tone: SparkLine
   /** Why there is no value: not set up, or the reason the core gave. */
   empty: 'none' | 'needs_perm' | 'other' | null
-  /** The status word on the right of the label: "200", or the certificate's tone. */
-  status: string | null
+  /** The HTTP status code on the right of the label (200); `null` when there is none. */
+  status: number | null
+  /** The certificate was renewed inside the window the sparkline covers (days jumped up). */
+  renewed: boolean
   item?: Item
 }
 
@@ -69,6 +72,11 @@ function emptyOf(items: readonly Item[]): OverviewTile['empty'] {
   const reasons = items.map((i) => (i.severity.level === 'unknown' ? i.severity.reason : null))
   if (reasons.some((r) => r === 'needs_perm')) return 'needs_perm'
   return reasons.every((r) => r !== null) ? 'other' : null
+}
+
+/** A certificate's days-left only ever falls; a step up between two scans is a renewal. */
+export function tlsRenewed(days: readonly number[]): boolean {
+  return days.some((d, i) => i > 0 && d > (days[i - 1] ?? d))
 }
 
 function change(series: readonly number[]): number | null {
@@ -101,6 +109,7 @@ function sumTile(
     tone: lineTone(items),
     empty: value === null ? emptyOf(items) : null,
     status: null,
+    renewed: false,
     item: items[0],
   }
 }
@@ -138,7 +147,8 @@ export function overviewTiles(
       series: uptimeSeries,
       tone: lineTone(first ? [first] : []),
       empty: first ? (num(first.fact?.value) === null ? emptyOf([first]) : null) : 'none',
-      status: code === null ? null : String(code),
+      status: code,
+      renewed: false,
       item: first,
     },
     sumTile('disk', 'bytes', itemsOf(items, 'disk.path'), facts),
@@ -152,6 +162,7 @@ export function overviewTiles(
       tone: lineTone(worst ? [worst] : []),
       empty: worst ? null : emptyOf(tlsItems),
       status: null,
+      renewed: tlsRenewed(tlsSeries),
       item: worst,
     },
   ]
@@ -176,6 +187,8 @@ export interface PartRow {
     | { kind: 'none' }
   cpu: number | null
   mem: number | null
+  /** The technology the data names (compose is Docker, pm2, the database engine); else none. */
+  brand: BrandName | null
   item?: Item
 }
 
@@ -189,7 +202,15 @@ function findItem(items: readonly Item[], check: string, host: string, target: s
 export function partRows(project: Project | undefined, items: readonly Item[]): PartRow[] {
   return (project?.components ?? []).map((c, n): PartRow => {
     const id = `${c.kind}-${n}`
-    const base = { id, role: c.role, kind: c.kind, host: c.host, cpu: null, mem: null }
+    const base = {
+      id,
+      role: c.role,
+      kind: c.kind,
+      host: c.host,
+      cpu: null,
+      mem: null,
+      brand: c.kind === 'db' ? brandOfEngine(c.engine) : brandOfKind(c.kind),
+    }
     if (c.kind === 'path') {
       const item = findItem(items, 'disk.path', c.host, c.path)
       return {
@@ -254,8 +275,9 @@ export interface WireNode extends PartRow {
 
 export interface WireBand {
   tier: Tier
-  hosts: string[]
-  /** The band repeats a host named by another band: it holds the data. */
+  /** One band per server: the parts of this tier that run on it. */
+  host: string
+  /** The band repeats a server another band already shows: it holds that server's data. */
   data: boolean
   nodes: WireNode[]
 }
@@ -263,15 +285,15 @@ export interface WireBand {
 const TIER_OF: Record<Component['role'], Tier> = { fe: 'fe', be: 'app', worker: 'app', db: 'db' }
 const TIER_ORDER: Tier[] = ['fe', 'app', 'db']
 
-/** Parts grouped by tier (front end, back end and workers, databases) in request order. */
+/** Parts grouped by server inside each tier (front end, back end and workers, databases). */
 export function wiring(rows: readonly PartRow[]): WireBand[] {
   const bands: WireBand[] = []
   for (const tier of TIER_ORDER) {
-    const nodes = rows.filter((r) => TIER_OF[r.role] === tier).map((r) => ({ ...r, tier }))
-    if (nodes.length === 0) continue
-    const hosts = [...new Set(nodes.map((n) => n.host))]
-    const used = new Set(bands.flatMap((b) => b.hosts))
-    bands.push({ tier, hosts, nodes, data: tier === 'db' && hosts.some((h) => used.has(h)) })
+    const inTier = rows.filter((r) => TIER_OF[r.role] === tier).map((r) => ({ ...r, tier }))
+    for (const host of new Set(inTier.map((n) => n.host))) {
+      const data = tier === 'db' && bands.some((b) => b.host === host)
+      bands.push({ tier, host, data, nodes: inTier.filter((n) => n.host === host) })
+    }
   }
   return bands
 }

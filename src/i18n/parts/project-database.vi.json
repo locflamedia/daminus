@@ -44,7 +44,9 @@
       "arrow": "→",
       "result": "{tables} bảng · {size}",
       "resultSize": "{size}",
-      "text": "Script trên máy chủ đọc giá trị và dùng ngay tại đó. Chỉ dung lượng và số lượng được gửi về."
+      "text": "Script trên máy chủ đọc giá trị và dùng ngay tại đó. Chỉ dung lượng và số lượng được gửi về. Nên dùng một user chỉ đọc: user chỉ được đọc cơ sở dữ liệu này là đủ.",
+      "slowPostgres": "Truy vấn chậm cần pg_stat_statements; Daminus chưa đọc chúng ở v0.1.",
+      "slowMysql": "Truy vấn chậm cần slow query log của MySQL; Daminus chưa đọc nó ở v0.1."
     },
     "perm": {
       "title": "Daminus không đọc được .env của {name} trên {host}",

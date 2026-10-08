@@ -1,6 +1,6 @@
 <!--
   The soft curve of the project tabs (size over scans, project size, a service's memory): a
-  2 px monotone line on a faint fill, a dot at the newest value, and optionally a dashed line
+  2 px monotone line (or straight segments) on a faint fill, a dot at the newest value, and optionally a dashed line
   at a limit. It draws once when it arrives. The values are described for screen readers by the
   caller; the drawing is decorative.
 -->
@@ -17,10 +17,19 @@ const props = withDefaults(
     /** A dashed line at this value; the domain grows to hold it. */
     limit?: number
     limitLabel?: string
+    /** Straight segments between readings (a sawtooth stays sharp) instead of a soft curve. */
+    straight?: boolean
     label: string
     once?: string
   }>(),
-  { tone: 'accent', height: 110, limit: undefined, limitLabel: undefined, once: undefined },
+  {
+    tone: 'accent',
+    height: 110,
+    limit: undefined,
+    limitLabel: undefined,
+    straight: false,
+    once: undefined,
+  },
 )
 
 const W = 300
@@ -37,6 +46,11 @@ const limitY = computed(() => {
   const [lo, hi] = domain.value
   return BOX.value.y1 - ((props.limit - lo) / (hi - lo)) * (BOX.value.y1 - BOX.value.y0)
 })
+const linePath = computed(() =>
+  props.straight
+    ? points.value.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]} ${p[1]}`).join(' ')
+    : monotonePath(points.value),
+)
 const end = computed(() => points.value[points.value.length - 1])
 </script>
 
@@ -71,15 +85,16 @@ const end = computed(() => points.value[points.value.length - 1])
         vector-effect="non-scaling-stroke"
       />
       <path
+        v-if="!straight"
         class="fill"
         :class="{ 'm-fade-in': play }"
         :d="areaPath(points, BOX.y1)"
         :fill="`url(#${gradient})`"
       />
-      <path class="line" :d="monotonePath(points)" fill="none" vector-effect="non-scaling-stroke" />
+      <path class="line" :d="linePath" fill="none" vector-effect="non-scaling-stroke" />
     </svg>
     <i
-      v-if="end"
+      v-if="end && !straight"
       class="dot"
       :style="{ left: `${(end[0] / W) * 100}%`, top: `${(end[1] / height) * 100}%` }"
     />

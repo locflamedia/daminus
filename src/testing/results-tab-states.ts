@@ -17,6 +17,7 @@ export const TAB_CASES = [
   'mysql',
   'stale',
   'unreachable',
+  'neighbours',
 ] as const
 export type TabCase = (typeof TAB_CASES)[number]
 
@@ -123,6 +124,48 @@ const EDITS: Record<TabCase, (report: Report) => Report> = {
           ],
         },
       }
+    }),
+  neighbours: (r) =>
+    patch(r, (items) => {
+      const mem = find(items, 'sys.mem', 'vps-sg-2')
+      if (mem?.fact)
+        mem.fact = { ...mem.fact, data: { total: 8_375_186_227, available: 2_040_109_466 } }
+      const base = find(items, 'docker.compose', 'vps-sg-2', 'tiemtra')
+      if (!base?.fact) return
+      const svc = (name: string, cpu: number, mem: number) => ({
+        name: `booking-${name}-1`,
+        svc: name,
+        state: 'running',
+        restarts: 0,
+        mem,
+        limit: 0,
+        cpu,
+        oom: false,
+        exit: 0,
+        started: '2026-09-20T09:12:03.412Z',
+        image: `booking-${name}:2.3.1`,
+      })
+      items.push({
+        ...base,
+        key: { host: 'vps-sg-2', check: 'docker.compose', target: 'booking' },
+        owner: { kind: 'project', id: 'booking' },
+        severity: { level: 'ok' },
+        fact: {
+          ...base.fact,
+          target: 'booking',
+          data: {
+            containers: 3,
+            running: 3,
+            not_running: 0,
+            restarts: 0,
+            services: [
+              svc('app', 4.6, 671_088_640),
+              svc('queue', 0.4, 163_577_856),
+              svc('scheduler', 0.1, 96_468_992),
+            ],
+          },
+        },
+      })
     }),
   stale: (r) =>
     patch(r, (items) => {

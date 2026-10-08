@@ -5,7 +5,8 @@ import type { PartRow } from '@/lib/project-overview'
 import UiIcon from '@/ui/UiIcon.vue'
 import type { IconName } from '@/ui/icon-paths'
 import ProjectCard from '../common/ProjectCard.vue'
-import { stateCell } from './part-text'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
+import { restartsShown, stateCell } from './part-text'
 
 defineProps<{ rows: readonly PartRow[] }>()
 const { t } = useI18n()
@@ -39,11 +40,17 @@ const mem = (r: PartRow) => (r.mem === null ? '—' : bytes(r.mem))
         <b class="role" :class="`role-${r.role}`">{{
           t(`projectOverview.wiring.role.${r.role}`)
         }}</b>
-        <UiIcon :name="ICON[r.kind]" :size="16" class="glyph" />
+        <span class="glyph"
+          ><UiBrandMark :name="r.brand" :size="16"
+            ><UiIcon :name="ICON[r.kind]" :size="16" /></UiBrandMark
+        ></span>
         <span class="muted">{{ source(r) }}</span>
         <span class="name mono">{{ r.name }}</span>
         <span class="muted mono">{{ r.host }}</span>
-        <span class="state" :class="r.tone">{{ cell(r) }}</span>
+        <span class="state" :class="r.tone"
+          >{{ cell(r)
+          }}<span v-if="restartsShown(r) > 0" class="tri" aria-hidden="true"> ▲</span></span
+        >
         <span class="muted mono">{{ cpu(r) }}</span>
         <span class="muted mono">{{ mem(r) }}</span>
       </li>
@@ -107,7 +114,13 @@ const mem = (r: PartRow) => (r.mem === null ? '—' : bytes(r.mem))
 }
 
 .glyph {
+  display: grid;
+  place-items: center;
   color: var(--ink-3);
+}
+
+.tri {
+  color: var(--warn-ink);
 }
 
 .muted {

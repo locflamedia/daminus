@@ -69,6 +69,22 @@ describe('Disk tab', () => {
     expect(w.text()).toContain('ssh vps-sg-1 "ls -lhS /srv/tiemtra-web/storage/logs | head"')
   })
 
+  it('lists every server that holds a part of the project, and says which was not measured', async () => {
+    const w = await mountTab(ProjectDiskTab, 'results', 'tiemtra', (reports) => {
+      const latest = reports.latest
+      if (latest)
+        reports.latest = {
+          ...latest,
+          items: latest.items.filter(
+            (i) => !(i.key.check === 'disk.fs' && i.key.host === 'vps-sg-2'),
+          ),
+        }
+    })
+    const servers = w.findAll('.disk').map((d) => d.text())
+    expect(servers).toHaveLength(2)
+    expect(servers.find((d) => d.includes('vps-sg-2'))).toContain('not measured')
+  })
+
   it('says the group is off in Settings and draws nothing of it', async () => {
     const w = await mountTab(ProjectDiskTab, 'results', 'tiemtra', (reports) => {
       const latest = reports.latest
@@ -118,6 +134,18 @@ describe('Containers tab', () => {
     expect(w.text()).toContain('Not re-checked since #7')
   })
 
+  it('names the other projects on the host and whether raising the limit fits', async () => {
+    const w = await mountTab(ProjectContainersTab, 'tab-neighbours', 'tiemtra')
+    expect(w.text()).toContain('Also on vps-sg-2')
+    expect(w.text()).toContain('booking-app-1')
+    expect(w.text()).toContain('so raising the worker limit to 768 MB fits')
+  })
+
+  it('draws the memory of the troubled service as straight segments', async () => {
+    const w = await mountTab(ProjectContainersTab, 'tab-neighbours', 'tiemtra')
+    expect(w.find('.curve .line').attributes('d')).not.toContain('C')
+  })
+
   it('says a pm2 app is stopped', async () => {
     const w = await mountTab(ProjectContainersTab, 'tab-pm2-stopped', 'tiemtra')
     expect(w.text()).toContain('Stopped')
@@ -130,6 +158,14 @@ describe('Database tab', () => {
     expect(w.text()).toContain('PostgreSQL')
     expect(w.text()).toContain('orders')
     expect(w.text()).not.toContain('about once a day')
+  })
+
+  it('says plainly that slow queries are not read, per engine, and recommends a read-only user', async () => {
+    const pg = await mountTab(ProjectDatabaseTab, 'results', 'tiemtra')
+    expect(pg.text()).toContain('Slow queries need pg_stat_statements')
+    expect(pg.text()).toContain('A read-only user is recommended')
+    const my = await mountTab(ProjectDatabaseTab, 'tab-mysql', 'booking')
+    expect(my.text()).toContain('MySQL slow query log')
   })
 
   it('adds the clock note under the size and the tables of a MySQL database', async () => {
@@ -157,6 +193,22 @@ describe('Overview tab', () => {
     expect(w.text()).toContain('Needs a look')
     expect(w.text()).toContain('Certificate · tiemtra.vn')
     expect(w.findAll('.tile').length).toBeGreaterThanOrEqual(4)
+  })
+
+  it('groups the wiring by server, with the databases of a shared server in a data band', async () => {
+    const w = await mountTab(ProjectOverviewTab, 'results', 'tiemtra')
+    expect(w.findAll('.band .host').map((h) => h.text())).toEqual([
+      'vps-sg-1',
+      'vps-sg-1',
+      'vps-sg-2',
+      'vps-sg-2 · data',
+    ])
+  })
+
+  it('writes the status next to the uptime and marks restarts in the parts table', async () => {
+    const w = await mountTab(ProjectOverviewTab, 'results', 'tiemtra')
+    expect(w.text()).toContain('200 OK')
+    expect(w.find('.rows .tri').text()).toContain('▲')
   })
 
   it('names the shared server a warning comes from and links to it', async () => {

@@ -44,7 +44,9 @@
       "arrow": "→",
       "result": "{tables} tables · {size}",
       "resultSize": "{size}",
-      "text": "Values are read by the script on the server and used there. Only sizes and counts come back."
+      "text": "Values are read by the script on the server and used there. Only sizes and counts come back. A read-only user is recommended: one that can only read this database is enough.",
+      "slowPostgres": "Slow queries need pg_stat_statements; Daminus does not read them in v0.1.",
+      "slowMysql": "Slow queries need the MySQL slow query log; Daminus does not read it in v0.1."
     },
     "perm": {
       "title": "Daminus can’t read {name}’s .env on {host}",

@@ -49,7 +49,7 @@ defineProps<{
   flex-direction: column;
   gap: var(--space-4);
   padding: 20px;
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: linear-gradient(180deg, var(--card-wash-warn), var(--surface-0) 110px);
   box-shadow: var(--shadow-card);
 }

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
-import { DEFAULT_SKIP_PATHS, type LargeFile } from '@/lib/project-disk'
+import { DEFAULT_LARGE_FILE_MB, DEFAULT_SKIP_PATHS, type LargeFile } from '@/lib/project-disk'
 import UiIcon from '@/ui/UiIcon.vue'
 import ProjectCard from '../common/ProjectCard.vue'
 
@@ -17,7 +17,7 @@ const skipped = computed(() => DEFAULT_SKIP_PATHS.join(', '))
   <ProjectCard
     icon="file"
     :title="t('projectDisk.files.title')"
-    :meta="t('projectDisk.files.meta')"
+    :meta="t('projectDisk.files.meta', { mb: DEFAULT_LARGE_FILE_MB })"
     :gap="6"
   >
     <ul v-if="files.length > 0" class="rows" :aria-label="t('projectDisk.files.label')">

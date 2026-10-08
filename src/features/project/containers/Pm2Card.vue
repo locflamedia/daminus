@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import type { Pm2View } from '@/lib/project-containers'
 import { vEnter } from '@/lib/motion'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 
@@ -31,7 +32,9 @@ const text = computed(() => {
 <template>
   <article v-enter class="card" :class="{ bad }" :style="{ '--d': `${index * 70}ms` }">
     <header class="head">
-      <span class="mark" aria-hidden="true"><UiIcon name="terminal" :size="18" /></span>
+      <span class="mark" aria-hidden="true"
+        ><UiBrandMark name="pm2" :size="18"><UiIcon name="terminal" :size="18" /></UiBrandMark
+      ></span>
       <div class="names">
         <b class="svc">{{ app.app }}</b>
         <span class="container">pm2 · {{ app.host }}</span>
@@ -86,7 +89,7 @@ const text = computed(() => {
   gap: 10px;
   min-width: 0;
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
 }

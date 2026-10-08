@@ -39,7 +39,7 @@ withDefaults(
   flex-direction: column;
   min-width: 0;
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
 }

@@ -60,3 +60,8 @@ export function shortName(row: PartRow): string {
   if (row.kind !== 'path') return row.name
   return row.name.split('/').filter(Boolean).pop() ?? row.name
 }
+
+/** Restarts the state cell speaks of; the row marks them with the amber triangle. */
+export function restartsShown(row: PartRow): number {
+  return row.state.kind === 'compose' ? row.state.restarts : 0
+}

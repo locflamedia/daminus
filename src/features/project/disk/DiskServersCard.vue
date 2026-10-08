@@ -19,21 +19,22 @@ const fmt = useFormat()
     :meta="t('projectDisk.servers.meta')"
     :gap="10"
   >
-    <div v-if="disks.some((d) => d.pct !== null)" class="disks">
+    <div v-if="disks.length > 0" class="disks">
       <div v-for="d in disks" :key="d.host" class="disk">
         <span class="line">
           <span class="host">{{ t('projectDisk.servers.fill', { host: d.host }) }}</span>
           <b v-if="d.pct !== null" class="pct" :class="diskTone(d.pct)">{{
             fmt.measure(d.pct, '%').text
           }}</b>
+          <span v-else class="shares">{{ t('projectDisk.servers.notMeasured') }}</span>
         </span>
         <div
+          v-if="d.pct !== null"
           class="bar"
           role="img"
           :aria-label="d.pct === null ? '' : fmt.measure(d.pct, '%').text"
         >
           <i
-            v-if="d.pct !== null"
             class="fill m-grow"
             :class="diskTone(d.pct)"
             :style="{ width: `${Math.min(100, d.pct)}%` }"

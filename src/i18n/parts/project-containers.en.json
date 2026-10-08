@@ -65,7 +65,8 @@
       "restarted": "{name} restarted {n}×",
       "restartedText": "It is running now but has restarted since it started. Look at its logs (command on the left) for what it stops on.",
       "also": "Also on {host}",
-      "hostMemory": "Host memory {used} of {total} in use."
+      "hostMemory": "Host memory {used} of {total} in use.",
+      "hostMemoryFits": "Host memory {used} of {total}, so raising the {name} limit to {target} fits."
     },
     "perm": {
       "title": "Daminus can’t use Docker on {host}",

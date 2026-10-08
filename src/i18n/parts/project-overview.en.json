@@ -7,6 +7,7 @@
       "database": "Database",
       "tls": "TLS",
       "renewed": "renewed",
+      "statusOk": "{code} OK",
       "days": "days",
       "notSetUp": "not set up",
       "needsPermission": "needs permission",

@@ -18,6 +18,14 @@ const command = computed(() => {
   const client = postgres ? 'psql -At -c "select …"' : 'mysql -N -e "select …"'
   return part.value?.container ? `docker exec ${part.value.container} ${client}` : client
 })
+const slow = computed(() => {
+  const engine = view.value?.engine
+  return engine === 'postgres'
+    ? t('projectDatabase.reads.slowPostgres')
+    : engine === 'mysql'
+      ? t('projectDatabase.reads.slowMysql')
+      : ''
+})
 const result = computed(() => {
   const size = view.value?.size
   if (size == null) return ''
@@ -47,6 +55,7 @@ const result = computed(() => {
       <div class="ok">{{ result }}</div>
     </div>
     <span class="text">{{ t('projectDatabase.reads.text') }}</span>
+    <span v-if="slow" class="gap">{{ slow }}</span>
   </ProjectCard>
 </template>
 
@@ -72,6 +81,11 @@ const result = computed(() => {
 
 .ok {
   color: var(--code-ok);
+}
+
+.gap {
+  color: var(--ink-3);
+  font-size: var(--text-11);
 }
 
 .text {

@@ -3,6 +3,7 @@
 // be freed, all from real facts. Sizes are bytes; the components format them.
 import type { Item, ScanFact } from '@/api'
 import type { TreemapTile } from '@/ui/UiTreemap.vue'
+import { GROWTH_SHARE, MIN_ROW_GROWTH_BYTES } from './presentation-hints'
 import { bool, dataOf, itemsOf, num, pairs } from './project-facts'
 import { factsFor, type SeriesPoint } from './project-series'
 
@@ -15,8 +16,8 @@ export const DEFAULT_SKIP_PATHS = [
   'storage/framework/cache',
 ] as const
 
-/** A folder grows enough to be ringed when it gained at least this share of its previous size. */
-export const GROW_SHARE = 0.1
+/** The large-file size Settings › Scan starts with (the core's default), in MB. */
+export const DEFAULT_LARGE_FILE_MB = 50
 
 export interface DiskPathView {
   item: Item
@@ -55,6 +56,24 @@ export interface DiskTileModel {
   growth: number | null
 }
 
+/**
+ * A folder is ringed when it gained a notable share of its previous size, and the folder that
+ * grew the most since the previous scan is ringed too once it gained a row-worthy amount: the
+ * board draws "the grower" with an amber outline even when it is a small share of a big folder.
+ */
+function growers(rows: readonly { id: string; growth: number | null; before: number }[]) {
+  const ringed = new Set<string>()
+  let top: { id: string; growth: number } | null = null
+  for (const r of rows) {
+    if (r.growth === null || r.growth <= 0) continue
+    if (r.growth >= r.before * GROWTH_SHARE) ringed.add(r.id)
+    if (r.growth >= MIN_ROW_GROWTH_BYTES && r.growth > (top?.growth ?? 0))
+      top = { ...r, growth: r.growth }
+  }
+  if (top) ringed.add(top.id)
+  return ringed
+}
+
 /** Treemap tiles for every folder of every `disk.path` result. `format` writes bytes and deltas. */
 export function diskTiles(
   views: readonly DiskPathView[],
@@ -62,30 +81,37 @@ export function diskTiles(
   format: { size: (b: number) => string; delta: (b: number) => string; none: string },
 ): DiskTileModel[] {
   const many = views.length > 1
-  const out: DiskTileModel[] = []
-  let other = 0
-  for (const v of views) {
-    other += v.other
-    for (const f of v.top) {
+  const rows = views.flatMap((v) =>
+    v.top.map((f) => {
       const id = `${v.host}:${v.path}/${f.name}`
       const before = previous.get(id)
-      const growth = before === undefined ? null : f.bytes - before
-      const grow = growth !== null && growth > 0 && growth >= (before ?? 1) * GROW_SHARE
-      out.push({
-        growth,
-        tile: {
-          id,
-          label: many ? `${baseName(v.path)}/${f.name}` : f.name,
-          value: f.bytes,
-          display: format.size(f.bytes),
-          delta: growth === null ? undefined : growth > 0 ? format.delta(growth) : format.none,
-          deltaTone: growth !== null && growth > 0 ? 'warn' : 'neutral',
-          grow,
-          growth: grow ? (growth ?? 0) : undefined,
-        },
-      })
+      return {
+        id,
+        f,
+        v,
+        before: before ?? 0,
+        growth: before === undefined ? null : f.bytes - before,
+      }
+    }),
+  )
+  const ringed = growers(rows)
+  const out: DiskTileModel[] = rows.map(({ id, f, v, growth }) => {
+    const grow = ringed.has(id)
+    return {
+      growth,
+      tile: {
+        id,
+        label: many ? `${baseName(v.path)}/${f.name}` : f.name,
+        value: f.bytes,
+        display: format.size(f.bytes),
+        delta: growth === null ? undefined : growth > 0 ? format.delta(growth) : format.none,
+        deltaTone: growth !== null && growth > 0 ? 'warn' : 'neutral',
+        grow,
+        growth: grow ? (growth ?? 0) : undefined,
+      },
     }
-  }
+  })
+  const other = views.reduce((sum, v) => sum + v.other, 0)
   if (other > 0) {
     out.push({
       growth: null,

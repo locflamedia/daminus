@@ -15,8 +15,8 @@
       "sourcePm2": "pm2 jlist"
     },
     "state": {
-      "running": "Chạy {time}",
-      "runningRestarted": "Chạy {time} · khởi động lại {n} lần",
+      "running": "Hoạt động {time}",
+      "runningRestarted": "Hoạt động {time} · khởi động lại {n} lần",
       "restarting": "Đang khởi động lại",
       "exited": "Đã dừng",
       "paused": "Tạm dừng",
@@ -65,7 +65,8 @@
       "restarted": "{name} đã khởi động lại {n} lần",
       "restartedText": "Hiện đang chạy nhưng đã khởi động lại từ khi chạy. Xem log (lệnh ở bên trái) để biết nó dừng vì gì.",
       "also": "Cũng trên {host}",
-      "hostMemory": "Bộ nhớ máy chủ đang dùng {used} trên {total}."
+      "hostMemory": "Bộ nhớ máy chủ đang dùng {used} trên {total}.",
+      "hostMemoryFits": "Bộ nhớ máy chủ {used} trên {total}, nên nâng giới hạn của {name} lên {target} vẫn đủ."
     },
     "perm": {
       "title": "Daminus không dùng được Docker trên {host}",

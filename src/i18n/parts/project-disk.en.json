@@ -6,7 +6,7 @@
     },
     "tiles": {
       "title": "Where {size} goes",
-      "meta": "{paths} · du, top folders",
+      "meta": "{paths} · du -sk, top folders",
       "label": "Folders by size",
       "other": "other",
       "partial": "du could not read every subfolder, so some sizes are lower than they are.",
@@ -28,7 +28,7 @@
     },
     "files": {
       "title": "Largest files",
-      "meta": "find, read only",
+      "meta": "find -size +{mb}M, read only",
       "label": "Largest files",
       "skipped": "{paths} skipped · change in Settings › Scan",
       "none": "No file over the size set in Settings › Scan.",
@@ -39,7 +39,8 @@
       "meta": "shared with other projects",
       "fill": "{host} /",
       "docker": "docker",
-      "none": "No disk reading for these servers yet."
+      "none": "No disk reading for these servers yet.",
+      "notMeasured": "not measured"
     },
     "free": {
       "title": "What would free space",

@@ -2,8 +2,11 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
-import { MEM_WARN_PCT, troubled, uptimeMs, type ServiceView } from '@/lib/project-containers'
+import { MEMORY_HINT_PCT } from '@/lib/presentation-hints'
+import { troubled, uptimeMs, type ServiceView } from '@/lib/project-containers'
 import { vEnter } from '@/lib/motion'
+import { brandOfImage } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import CpuLine from './CpuLine.vue'
@@ -35,13 +38,16 @@ const chipText = computed(() => {
     ? t(`projectContainers.state.${s.state}`)
     : t('projectContainers.state.other', { state: s.state })
 })
-const memBad = computed(() => (props.service.memPct ?? 0) >= MEM_WARN_PCT)
+const memBad = computed(() => (props.service.memPct ?? 0) >= MEMORY_HINT_PCT)
 </script>
 
 <template>
   <article v-enter class="card" :class="{ bad }" :style="{ '--d': `${index * 70}ms` }">
     <header class="head">
-      <span class="mark" aria-hidden="true"><UiIcon name="container" :size="18" /></span>
+      <span class="mark" aria-hidden="true"
+        ><UiBrandMark :name="brandOfImage(service.image) ?? 'docker'" :size="18"
+          ><UiIcon name="container" :size="18" /></UiBrandMark
+      ></span>
       <div class="names">
         <b class="svc">{{ service.svc }}</b>
         <span class="container">{{ service.name }}</span>
@@ -126,7 +132,7 @@ const memBad = computed(() => (props.service.memPct ?? 0) >= MEM_WARN_PCT)
   gap: 10px;
   min-width: 0;
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
 }

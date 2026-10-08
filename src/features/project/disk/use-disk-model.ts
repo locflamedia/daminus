@@ -73,14 +73,16 @@ export function useDiskModel(id: Ref<string>) {
   const change = computed(() => totalChange(series.value))
   const partial = computed(() => views.value.some((v) => v.partial))
   const logs = computed(() => logFindings(reports.latest?.items ?? []))
-  const projectLogs = computed(() => logs.value.filter((l) => hosts.value.includes(l.host)))
+  const pathHosts = computed(() => [...new Set(parts.value.map((p) => p.host))])
+  const projectLogs = computed(() => logs.value.filter((l) => pathHosts.value.includes(l.host)))
   const files = computed(() =>
     largeFiles(
       views.value,
       logs.value.map((l) => l.item),
     ),
   )
-  const hosts = computed(() => [...new Set(parts.value.map((p) => p.host))])
+  /** Every server that holds a part of the project, whatever the part is. */
+  const hosts = computed(() => [...new Set((saved.value?.components ?? []).map((c) => c.host))])
   const disks = computed(() => serverDisks(reports.latest?.items ?? [], hosts.value))
   const free = computed(() => freeable(reports.latest?.items ?? [], hosts.value))
 

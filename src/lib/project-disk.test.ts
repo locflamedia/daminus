@@ -11,6 +11,7 @@ import {
   parseDiskPath,
   previousSizes,
   serverDisks,
+  type DiskPathView,
 } from './project-disk'
 
 const fmt = { size: (b: number) => `${b} B`, delta: (b: number) => `+${b}`, none: 'same' }
@@ -66,6 +67,31 @@ describe('disk tiles', () => {
     expect(uploads?.tile.delta).toBe('+10')
     expect(logs?.tile.grow).toBe(true)
     expect(logs?.growth).toBe(200)
+  })
+
+  it('also rings the fastest grower when it is a small share of a big folder, once it gained a row-worthy amount', () => {
+    const MB = 1024 * 1024
+    const big: DiskPathView = {
+      ...views[0]!,
+      top: [
+        { name: 'storage', bytes: 1200 * MB },
+        { name: 'uploads', bytes: 2600 * MB },
+      ],
+    }
+    const before = new Map([
+      ['h:/srv/app/storage', 1098 * MB],
+      ['h:/srv/app/uploads', 2600 * MB],
+    ])
+    const [storage, uploads] = diskTiles([big], before, fmt)
+    expect(storage?.tile.grow).toBe(true)
+    expect(uploads?.tile.grow).toBe(false)
+  })
+
+  it('does not ring a growth too small to be worth a row', () => {
+    const MB = 1024 * 1024
+    const small: DiskPathView = { ...views[0]!, top: [{ name: 'storage', bytes: 1200 * MB }] }
+    const [storage] = diskTiles([small], new Map([['h:/srv/app/storage', 1195 * MB]]), fmt)
+    expect(storage?.tile.grow).toBe(false)
   })
 
   it('has no growth for a folder the previous scan did not list', () => {

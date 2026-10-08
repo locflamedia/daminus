@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { imagesOf, isSafeName, type ServiceView } from '@/lib/project-containers'
 import { useLayoutRange } from '@/lib/viewport'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiTag from '@/ui/UiTag.vue'
 import ProjectPermissionCard, { type PermissionStep } from '../common/ProjectPermissionCard.vue'
@@ -62,7 +63,7 @@ const reason = computed(() => props.section.problem ?? 'other')
     <template v-else-if="view">
       <div class="strip">
         <UiTag>
-          <UiIcon name="container" :size="12" />
+          <UiBrandMark name="docker" :size="14"><UiIcon name="container" :size="12" /></UiBrandMark>
           {{ t('projectContainers.context.compose') }} <b class="mono">{{ name }}</b>
         </UiTag>
         <UiTag v-if="images[0]">
@@ -110,6 +111,11 @@ const reason = computed(() => props.section.problem ?? 'other')
   gap: 10px;
 }
 
+.strip :deep(.tag) {
+  height: 26px;
+  padding: 0 10px;
+}
+
 .mono {
   font-family: var(--font-mono);
   font-weight: var(--weight-medium);
@@ -133,7 +139,7 @@ const reason = computed(() => props.section.problem ?? 'other')
 
 .unknown {
   padding: var(--space-4);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);
   font-size: var(--text-12);
