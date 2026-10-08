@@ -51,7 +51,6 @@ const linePath = computed(() =>
     ? points.value.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0]} ${p[1]}`).join(' ')
     : monotonePath(points.value),
 )
-const end = computed(() => points.value[points.value.length - 1])
 </script>
 
 <template>
@@ -93,11 +92,6 @@ const end = computed(() => points.value[points.value.length - 1])
       />
       <path class="line" :d="linePath" fill="none" vector-effect="non-scaling-stroke" />
     </svg>
-    <i
-      v-if="end && !straight"
-      class="dot"
-      :style="{ left: `${(end[0] / W) * 100}%`, top: `${(end[1] / height) * 100}%` }"
-    />
     <span v-if="limitLabel && limitY !== null" class="limit-label">{{ limitLabel }}</span>
   </div>
 </template>
@@ -155,16 +149,6 @@ const end = computed(() => points.value[points.value.length - 1])
   stroke: var(--crit-solid);
   stroke-width: 1.2;
   fill: none;
-}
-
-.dot {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  margin: -4px 0 0 -4px;
-  border-radius: var(--radius-full);
-  background: var(--c);
-  box-shadow: 0 0 0 2px var(--surface-0);
 }
 
 .limit-label {

@@ -17,7 +17,8 @@ export function useFormat() {
   const settings = useSettingsStore()
   return {
     number: (n: number) => formatNumber(n, settings.language),
-    measure: (value: number, unit?: string | null) => formatMeasure(value, unit, settings.language),
+    measure: (value: number, unit?: string | null, options?: Intl.NumberFormatOptions) =>
+      formatMeasure(value, unit, settings.language, options),
     delta: (value: number, unit?: string | null) => formatDelta(value, unit, settings.language),
     duration: (ms: number) => formatDuration(ms, settings.language),
     clock: (when: string | number | Date) => formatClock(when, settings.language),

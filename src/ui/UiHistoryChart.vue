@@ -62,6 +62,8 @@ const props = withDefaults(
     times?: readonly number[]
     /** A small ring on every scan, not only the newest. */
     dots?: boolean
+    /** The newest point is a solid dot in the line colour, not a ring. */
+    solidEnd?: boolean
     /** Labels under the axis at scan positions; the first is left aligned, the last right. */
     xLabels?: readonly { index: number; text: string; anchor?: 'start' | 'middle' | 'end' }[]
     /** Value range; defaults to the data with 10 % headroom. */
@@ -90,6 +92,7 @@ const props = withDefaults(
     formatY: undefined,
     times: undefined,
     dots: false,
+    solidEnd: false,
     xLabels: () => [],
     domain: undefined,
     grid: undefined,
@@ -485,10 +488,12 @@ const gid = (name: string) => `${name}-${uid}`
             v-if="e.point"
             :cx="e.point[0]"
             :cy="e.point[1]"
-            r="4.5"
+            :r="solidEnd ? 4 : 4.5"
             class="dot"
+            :class="{ solid: solidEnd }"
             stroke-width="2.5"
             :stroke="e.color"
+            :style="solidEnd ? { fill: e.color } : undefined"
           />
         </g>
 

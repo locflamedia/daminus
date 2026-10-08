@@ -381,6 +381,7 @@ function onCardClick(event: MouseEvent) {
 .foot {
   display: flex;
   align-items: center;
+  margin-top: auto;
   gap: var(--space-2);
   height: var(--h-control);
   padding: 0 var(--space-1) 0 var(--space-3);

@@ -69,6 +69,7 @@ const grew = computed(() => (props.section.delta ?? 0) > 0)
   gap: 6px;
   min-width: 0;
   padding: 14px var(--space-4);
+  line-height: normal;
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-card);

@@ -82,7 +82,9 @@ function tooltip(row: SecurityRow): string {
 }
 
 function detailItems(row: SecurityRow): Item[] {
-  return row.id === 'url.tls' && row.staleSince === null ? tlsNeedingDetail(row) : []
+  if (row.id !== 'url.tls' || row.staleSince !== null) return []
+  const lead = row.tls?.key.target
+  return tlsNeedingDetail(row).filter((i) => i.key.target !== lead)
 }
 
 const label = (id: string) => checkName(id)

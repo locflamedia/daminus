@@ -316,7 +316,11 @@ function sizeMetric(
   addHint: string,
 ): ProjectCardMetric {
   const base: ProjectCardMetric = { label, icon }
-  if (look.reading) return { ...base, state: 'scanning' }
+  if (look.reading) {
+    // Nothing to read for a tile that is not set up, but the hint to set it up stays.
+    const hint = cell.kind === 'not-set-up' ? note(addHint, 'plain') : {}
+    return { ...base, state: 'scanning', ...hint }
+  }
   if (cell.kind === 'off')
     return { ...base, state: 'needs-permission', ...note(t('overviewScreen.metric.off'), 'plain') }
   if (cell.kind === 'not-set-up') {
@@ -361,7 +365,7 @@ function metricsOf(data: ProjectCardData, ctx: CardContext): ProjectCardMetric[]
   })
   const db = sizeMetric(
     data.db,
-    look(scan?.db),
+    look(scan?.db || (scan !== null && scan.phase !== 'idle' && data.db.kind === 'not-set-up')),
     t('overviewScreen.metric.database'),
     'database',
     t('overviewScreen.metric.addEnv'),

@@ -104,7 +104,6 @@ function value(row: ChangeRow): string {
 .meta {
   margin-left: auto;
   color: var(--ink-3);
-  font-family: var(--font-mono);
   font-size: var(--text-11);
   font-weight: var(--weight-regular);
 }
@@ -130,7 +129,7 @@ function value(row: ChangeRow): string {
 .tone-warn {
   --tone-bg: var(--warn-soft);
   --tone-ink: var(--warn-ink);
-  background: color-mix(in srgb, var(--warn-soft) 40%, var(--surface-0));
+  background: color-mix(in srgb, var(--warn-soft) 30%, var(--surface-0));
 }
 
 .tone-info {
@@ -168,6 +167,7 @@ function value(row: ChangeRow): string {
   overflow: hidden;
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
+  line-height: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -176,6 +176,7 @@ function value(row: ChangeRow): string {
   overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-11);
+  line-height: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

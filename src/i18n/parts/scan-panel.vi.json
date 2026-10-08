@@ -26,7 +26,6 @@
       "security": "Bảo mật"
     },
     "found": "Đã đọc được",
-    "foundEmpty": "Máy chủ xong đến đâu hiện ở đây đến đó.",
     "foundRead": "đọc {n} kiểm tra",
     "trust": "Chỉ chạy lệnh chỉ-đọc. Không cài đặt hay thay đổi gì.",
     "stop": "Dừng quét",

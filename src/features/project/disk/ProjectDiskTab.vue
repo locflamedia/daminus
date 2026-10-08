@@ -62,7 +62,7 @@ const narrow = computed(() => range.value === 'narrow')
 .grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  gap: var(--space-3);
+  gap: var(--space-4) var(--space-3);
   align-items: stretch;
 }
 

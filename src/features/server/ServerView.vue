@@ -97,7 +97,7 @@ const unreachableText = computed(() =>
 )
 
 function runScan() {
-  if (!scan.scanning) void scan.start({ projects: [], hosts: [host.value] })
+  if (known.value && !scan.scanning) void scan.start({ projects: [], hosts: [host.value] })
 }
 
 function onKeydown(e: KeyboardEvent) {
@@ -115,6 +115,7 @@ const errorMessage = computed(() => (failure.value ? errorText(failure.value) : 
   <div class="server">
     <ServerHeader
       :host="host"
+      :known="known"
       :meta="meta"
       :baselines="data.earlier.value"
       :baseline="data.baselineSeq.value"
@@ -238,20 +239,20 @@ const errorMessage = computed(() => (failure.value ? errorText(failure.value) : 
 .server {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-4);
   min-width: 0;
 }
 
 .kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .pair {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 /* A narrow page puts the four numbers two by two and the side cards under the wide ones. */

@@ -60,6 +60,7 @@ const level = computed(() => props.finding.level)
   border-radius: 6px;
   font: var(--weight-semibold) 10px var(--font-mono);
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .sev.crit {
@@ -78,6 +79,7 @@ const level = computed(() => props.finding.level)
 }
 
 .title {
+  flex: 0 1 auto;
   min-width: 0;
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
@@ -96,6 +98,7 @@ const level = computed(() => props.finding.level)
 
 .chip {
   flex: none;
+  white-space: nowrap;
   height: 20px;
   padding: 0 6px;
   border-radius: 6px;

@@ -24,7 +24,8 @@ const source = (r: PartRow) =>
     ? t(`projectOverview.parts.source.${r.state.engine}`)
     : t(`projectOverview.parts.source.${r.kind}`)
 const cell = (r: PartRow) => stateCell(r, t, bytes)
-const cpu = (r: PartRow) => (r.cpu === null ? '—' : fmt.measure(r.cpu, '%').text)
+const cpu = (r: PartRow) =>
+  r.cpu === null ? '—' : fmt.measure(r.cpu, '%', { maximumFractionDigits: 1 }).text
 const mem = (r: PartRow) => (r.mem === null ? '—' : bytes(r.mem))
 </script>
 
@@ -70,9 +71,9 @@ const mem = (r: PartRow) => (r.mem === null ? '—' : bytes(r.mem))
 
 .row {
   display: grid;
-  grid-template-columns: 56px 20px 70px minmax(0, 1fr) 80px minmax(80px, 120px) 56px 64px;
+  grid-template-columns: 52px 20px 64px minmax(0, 1fr) 72px minmax(72px, 112px) 48px 60px;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-height: 36px;
   padding: 0 10px;
   border-radius: var(--radius-sm);

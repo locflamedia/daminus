@@ -104,7 +104,7 @@ const error = computed(() => (history.error ? errorText(history.error) : ''))
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
   gap: var(--space-3);
-  align-items: start;
+  align-items: stretch;
   min-height: 0;
 }
 

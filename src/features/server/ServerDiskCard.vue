@@ -24,7 +24,7 @@ const settings = useSettingsStore()
 const now = useNow()
 const hovered = ref<number | null>(null)
 
-const SIZE = { width: 704, height: 222 }
+const SIZE = { width: 704, height: 255 }
 const PLOT = { left: 12, right: 12, top: 8, bottom: 26 }
 
 const sizes = computed(() => {
@@ -97,6 +97,7 @@ const model = computed(() => {
         :plot="PLOT"
         :date-inset="6"
         dots
+        solid-end
         :label="t('serverScreen.disk.label', { mount: chart.mount })"
         :once="`${scope}:disk`"
       />
@@ -124,6 +125,7 @@ const model = computed(() => {
   margin: 0;
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
+  line-height: 17px;
 }
 
 .mark {

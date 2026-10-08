@@ -162,6 +162,18 @@ describe('shared disks and free space', () => {
     ])
   })
 
+  it('lists the fullest host first', () => {
+    const two = [
+      ...all,
+      {
+        key: { host: 'a', check: 'disk.fs', target: '/' },
+        owner: { kind: 'server', host: 'a' },
+        fact: { check: 'disk.fs', target: '/', data: { pct: 64 } },
+      },
+    ] as unknown as Item[]
+    expect(serverDisks(two, ['a', 'h']).map((d) => d.host)).toEqual(['h', 'a'])
+  })
+
   it('offers only what Docker says it can reclaim and the large logs', () => {
     expect(freeable(all, ['h'])).toEqual([{ kind: 'buildCache', host: 'h', bytes: 500 }])
   })

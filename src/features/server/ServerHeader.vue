@@ -12,17 +12,22 @@ import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiMenu from '@/ui/UiMenu.vue'
 
-const props = defineProps<{
-  host: string
-  /** "4 cores · 7.8 GB RAM · scan #12, 13:42"; empty before anything is known. */
-  meta: string
-  /** Scans the baseline can be, newest first. */
-  baselines: readonly number[]
-  baseline: number | null
-  scanning: boolean
-  /** Scanning is not possible now (a project-wide scan runs, or there is nothing to scan). */
-  busyReason?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    host: string
+    /** The host is one the reports know; an unknown one has no scan to read or start. */
+    known?: boolean
+    /** "4 cores · 7.8 GB RAM · scan #12, 13:42"; empty before anything is known. */
+    meta: string
+    /** Scans the baseline can be, newest first. */
+    baselines: readonly number[]
+    baseline: number | null
+    scanning: boolean
+    /** Scanning is not possible now (a project-wide scan runs, or there is nothing to scan). */
+    busyReason?: string
+  }>(),
+  { known: true, busyReason: undefined },
+)
 
 const emit = defineEmits<{ baseline: [seq: number]; scan: [] }>()
 
@@ -46,12 +51,12 @@ const items = computed(() =>
       <span class="line">
         <UiIcon name="server" :size="16" class="mark" />
         <b class="name mono">{{ host }}</b>
-        <span v-if="meta" class="meta">{{ meta }}</span>
+        <span v-if="known && meta" class="meta">{{ meta }}</span>
       </span>
     </div>
     <span class="grow" />
     <UiMenu
-      v-if="baselines.length > 0"
+      v-if="known && baselines.length > 0"
       :items="items"
       :label="t('serverScreen.baseline.label')"
       placement="bottom-end"
@@ -65,6 +70,7 @@ const items = computed(() =>
       </template>
     </UiMenu>
     <UiButton
+      v-if="known"
       variant="primary"
       shortcut="⌘R"
       :busy="scanning"

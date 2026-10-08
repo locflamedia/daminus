@@ -68,6 +68,7 @@ const glow = computed(() => props.view.tag.tone === 'warn' || props.view.tag.ton
           :values="view.spark.values"
           :tone="view.spark.tone"
           :height="40"
+          solid
           :label="sparkLabel"
           :once="`${scope}:spark:${view.id}`"
         />
@@ -194,8 +195,9 @@ const glow = computed(() => props.view.tag.tone === 'warn' || props.view.tag.ton
 .delta {
   position: relative;
   z-index: 1;
-  min-height: 14px;
+  height: 14px;
   color: var(--ink-3);
+  line-height: 14px;
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
   white-space: nowrap;

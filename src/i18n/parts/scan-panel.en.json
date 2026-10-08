@@ -26,7 +26,6 @@
       "security": "Security"
     },
     "found": "Found so far",
-    "foundEmpty": "Hosts show up here as they finish.",
     "foundRead": "{n} check read | {n} checks read",
     "trust": "Read-only commands. Nothing is installed or changed.",
     "stop": "Stop scan",

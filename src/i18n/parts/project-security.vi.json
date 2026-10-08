@@ -146,7 +146,7 @@
       "url_http": "Mở site, rồi xem web server và log của ứng dụng trên máy."
     },
     "exposed": {
-      "noMarkLine": "Finding này không có Đánh dấu là chấp nhận",
+      "noMarkLine": "Phát hiện này không có Đánh dấu là chấp nhận",
       "whyNoMarkLead": "Vì sao không có Đánh dấu là chấp nhận.",
       "whyNoMark": "Không có lý do an toàn nào để phát file .env hay .git ra internet, và luật không phân biệt được khóa mới."
     },

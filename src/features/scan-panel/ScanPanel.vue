@@ -150,7 +150,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
           <h2>{{ title }}</h2>
           <UiChip :tone="chip.tone" class="state">
             <i v-if="running" class="live" aria-hidden="true" />
-            {{ chip.label }} · <span class="mono">{{ clock }}</span>
+            {{ chip.label }} · <span class="clock">{{ clock }}</span>
           </UiChip>
           <span class="grow" />
           <UiKbd>esc</UiKbd>
@@ -203,7 +203,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
             <span class="where mono">{{ h.host }}</span>
           </li>
         </ul>
-        <p v-else class="none">{{ t('scanPanel.foundEmpty') }}</p>
       </section>
 
       <footer class="foot">
@@ -303,11 +302,15 @@ h2 {
   flex-grow: 1;
 }
 
+.clock {
+  font-variant-numeric: tabular-nums;
+}
+
 .close {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 16px;
   border-radius: var(--radius-xs);
   color: var(--ink-3);
 }
@@ -392,6 +395,7 @@ h2 {
   justify-content: space-between;
   color: var(--ink-2);
   font-size: var(--text-12);
+  line-height: normal;
 }
 
 .counts b {
@@ -434,6 +438,7 @@ h2 {
 .found ul {
   display: flex;
   flex-direction: column;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -473,12 +478,6 @@ h2 {
 .where {
   color: var(--ink-3);
   font-size: var(--text-11);
-}
-
-.none {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: var(--text-12);
 }
 
 .foot {

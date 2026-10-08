@@ -50,7 +50,7 @@ withDefaults(
 }
 
 .card.warn {
-  background: var(--card-wash-warn);
+  background: color-mix(in srgb, var(--card-wash-warn) 55%, var(--surface-0));
 }
 
 .head {

@@ -259,13 +259,13 @@ const cursorLeft = computed(() => (cursor.value === null ? null : tipLeft(cursor
   >
     <span :id="`${uid}-hint`" class="sr-only">{{ t('projectHistory.chart.hint') }}</span>
     <span class="sr-only" role="status" aria-live="polite">{{ reading }}</span>
-    <div v-for="(row, i) in rows" :key="row.id" class="sm" :class="{ last: i === rows.length - 1 }">
+    <div v-for="(row, i) in rows" :key="row.id" class="sm">
       <div class="meta">
         <span class="name"
           ><UiIcon :name="row.icon" :size="14" />{{ t(`projectHistory.chart.${row.id}`) }}</span
         >
         <span v-if="row.value" class="big"
-          >{{ row.value.value }}<span class="unit"> {{ row.value.unit }}</span></span
+          >{{ row.value.value }}<span class="unit">&nbsp;{{ row.value.unit }}</span></span
         >
         <span v-else class="none">{{ t('projectHistory.chart.noData') }}</span>
         <span class="sub">{{ row.sub }}</span>
@@ -385,11 +385,6 @@ const cursorLeft = computed(() => (cursor.value === null ? null : tipLeft(cursor
   gap: var(--space-3);
   align-items: center;
   height: 150px;
-  border-bottom: 1px solid var(--surface-1);
-}
-
-.sm.last {
-  border-bottom: 0;
 }
 
 .meta {

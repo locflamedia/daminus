@@ -19,7 +19,7 @@
       "disk": "Disk {mount}",
       "diskBare": "Disk",
       "swap": "Swap",
-      "ofCores": "/ {n} cores | / {n} cores",
+      "ofCores": "/ {n} core | / {n} cores",
       "ofSize": "/ {size}",
       "busy": "CPU ≈ {pct}% busy",
       "available": "{pct}% available",
@@ -75,6 +75,7 @@
       "state": "{name}: {state}"
     },
     "findings": {
+      "unread": "{check}: {target}, not read",
       "title": "Findings",
       "crit": "{n} critical",
       "warn": "{n} warn",

@@ -75,6 +75,7 @@
       "state": "{name}: {state}"
     },
     "findings": {
+      "unread": "{check}: {target}, chưa đọc được",
       "title": "Phát hiện",
       "crit": "{n} nghiêm trọng",
       "warn": "{n} cảnh báo",

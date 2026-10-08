@@ -186,7 +186,7 @@ const tone = computed(() => props.finding.level)
 
 .foot {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) fit-content(240px);
   gap: var(--space-4);
   align-items: end;
 }

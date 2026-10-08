@@ -195,6 +195,12 @@ describe('metrics', () => {
     })
   })
 
+  it('shimmers a database that is not set up while its scan runs, keeping the hint', () => {
+    const waiting = run({ 'vps-hn-3': { ...idle, state: 'queued' } })
+    const card = view('kho-hang', { scan: cardScan(project('kho-hang'), waiting) })
+    expect(metric(card, 'Database')).toMatchObject({ state: 'scanning', note: 'add .env path' })
+  })
+
   it('puts the clock with its tooltip on a MySQL database only', () => {
     expect(metric(view('booking'), 'Database').hint).toBe(
       'MySQL updates table sizes about once a day',

@@ -121,12 +121,14 @@ function stepState(s: { state: string }): MarkState {
 .name {
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
+  line-height: normal;
 }
 
 .sub {
   overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-11);
+  line-height: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

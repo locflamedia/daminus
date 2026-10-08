@@ -88,6 +88,13 @@ describe('Server page', () => {
     expect(wrapper.find('article.kpi').exists()).toBe(false)
   })
 
+  it('hides the scan controls and the scan line for a server it does not know', async () => {
+    const { wrapper } = await mountServer('nope')
+    expect(wrapper.text()).not.toContain('Scan server')
+    expect(wrapper.text()).not.toContain('scan #')
+    expect(wrapper.text()).not.toContain('vs #')
+  })
+
   it('scans only this server when asked', async () => {
     const { wrapper, calls } = await mountServer('vps-sg-2')
     const button = wrapper.findAll('button').find((b) => b.text().includes('Scan server'))

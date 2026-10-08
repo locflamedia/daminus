@@ -10,7 +10,7 @@ import { useFormat } from '@/composables/use-format'
 import { formatMeasure } from '@/lib/format'
 import { useSettingsStore } from '@/stores/settings'
 import type { Containers, ContainerRow } from '@/lib/server-containers'
-import UiIcon from '@/ui/UiIcon.vue'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import { vEnter } from '@/lib/motion'
 
 const props = defineProps<{
@@ -65,7 +65,7 @@ function groupColor(row: ContainerRow): string {
 <template>
   <section class="card" :aria-label="t('serverScreen.containers.title')">
     <h3 class="head">
-      <UiIcon name="container" :size="16" class="mark" />
+      <UiBrandMark name="docker" :size="16" class="mark" />
       {{ t('serverScreen.containers.title') }}
       <span class="meta">{{ meta }}</span>
     </h3>

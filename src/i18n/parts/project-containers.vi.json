@@ -56,7 +56,7 @@
       "peakOnly": "Mức cao nhất {peak}; container không có giới hạn."
     },
     "finding": {
-      "oomLimit": "{name} chạm giới hạn bộ nhớ {limit}",
+      "oomLimit": "{name} chạm giới hạn {limit}",
       "oom": "{name} bị kill vì thiếu bộ nhớ",
       "oomText": "OOMKilled, đã khởi động lại {n} lần từ khi chạy; bộ nhớ tăng tới giới hạn trước mỗi lần bị kill. Hãy nâng giới hạn, hoặc xem {name} làm gì ngay trước đó (lệnh xem log ở bên trái).",
       "oomTextLimit": "OOMKilled, đã khởi động lại {n} lần từ khi chạy; bộ nhớ tăng tới giới hạn {limit} trước mỗi lần bị kill. Hãy nâng giới hạn, hoặc xem {name} làm gì ngay trước đó (lệnh xem log ở bên trái).",

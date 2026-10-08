@@ -219,7 +219,7 @@ export interface ServerDisk {
 
 /** The filesystem fill of each host and who takes the space, from the whole report's items. */
 export function serverDisks(all: readonly Item[], hosts: readonly string[]): ServerDisk[] {
-  return hosts.map((host) => {
+  const disks = hosts.map((host) => {
     const fs = all.filter((i) => i.key.check === 'disk.fs' && i.key.host === host)
     const pcts = fs.flatMap((i) => {
       const p = num(dataOf(i.fact).pct)
@@ -236,6 +236,7 @@ export function serverDisks(all: readonly Item[], hosts: readonly string[]): Ser
     if (dockerBytes) shares.push({ label: 'docker', bytes: dockerBytes, docker: true })
     return { host, pct: pcts.length ? Math.max(...pcts) : null, shares }
   })
+  return disks.sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1))
 }
 
 export type FreeKind = 'buildCache' | 'images' | 'logs'

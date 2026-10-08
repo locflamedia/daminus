@@ -81,6 +81,13 @@ const legend = computed(() => [
   box-shadow: 0 1px 2px rgba(40, 48, 90, 0.05);
 }
 
+/* The scan numbers hang below the columns inside the card's own 32 px bottom padding. */
+.card :deep(.well) {
+  --cursor-bottom: 0;
+
+  padding-bottom: 0;
+}
+
 .head {
   display: flex;
   align-items: center;

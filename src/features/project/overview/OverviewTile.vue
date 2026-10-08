@@ -122,7 +122,7 @@ const sparkLabel = computed(() =>
     </header>
     <div class="body">
       <b v-if="measure" class="value">
-        {{ measure.value }}<small v-if="measure.unit" class="unit"> {{ measure.unit }}</small>
+        {{ measure.value }}<small v-if="measure.unit" class="unit">{{ measure.unit }}</small>
       </b>
       <b v-else class="value empty" aria-hidden="true">—</b>
       <span v-if="measure === null" class="why">{{ emptyText }}</span>
@@ -213,7 +213,7 @@ const sparkLabel = computed(() =>
 }
 
 .unit {
-  margin-left: 2px;
+  margin-left: 4px;
   color: var(--ink-3);
   font-size: var(--text-13);
   font-weight: var(--weight-regular);

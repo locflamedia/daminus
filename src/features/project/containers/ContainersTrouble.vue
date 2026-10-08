@@ -153,7 +153,7 @@ const memoryLabel = computed(() =>
             <i class="dot" :class="{ off: s.state !== 'running' }" />
             <span class="mono">{{ s.name }}</span>
             <span class="muted mono">{{
-              s.cpu === null ? '—' : fmt.measure(s.cpu, '%').text
+              s.cpu === null ? '—' : fmt.measure(s.cpu, '%', { maximumFractionDigits: 1 }).text
             }}</span>
             <span class="muted mono">{{
               s.mem === null ? '—' : fmt.measure(s.mem, 'bytes').text
@@ -171,7 +171,7 @@ const memoryLabel = computed(() =>
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
   gap: var(--space-3);
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (max-width: 1079px) {

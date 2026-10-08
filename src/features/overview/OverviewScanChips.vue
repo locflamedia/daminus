@@ -96,7 +96,7 @@ function word(chip: ChipState, agentWait: boolean): string {
 }
 
 .host-chip.idle {
-  background: var(--surface-1);
+  background: transparent;
   color: var(--ink-3);
 }
 

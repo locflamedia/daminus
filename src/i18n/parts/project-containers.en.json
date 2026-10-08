@@ -56,7 +56,7 @@
       "peakOnly": "Highest reading {peak}; the container has no limit."
     },
     "finding": {
-      "oomLimit": "{name} hits its {limit} memory limit",
+      "oomLimit": "{name} hits its {limit} limit",
       "oom": "{name} was killed for lack of memory",
       "oomText": "OOMKilled, restarted {n}× since it started; memory climbs to the limit before each kill. Raise the limit, or look at what {name} does just before it (logs command on the left).",
       "oomTextLimit": "OOMKilled, restarted {n}× since it started; memory climbs to the {limit} limit before each kill. Raise the limit, or look at what {name} does just before it (logs command on the left).",

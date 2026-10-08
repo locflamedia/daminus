@@ -222,6 +222,7 @@ const foot = computed(() =>
 
 .time {
   color: var(--ink-3);
+  white-space: nowrap;
 }
 
 .go {

@@ -237,6 +237,7 @@ const noteClass = computed(() => {
 /* The clock that says the number can lag: quiet, with the usual focus ring. */
 .lag {
   display: inline-flex;
+  flex: none;
   border-radius: var(--radius-xs);
   color: var(--ink-4);
 }
@@ -264,6 +265,15 @@ const noteClass = computed(() => {
 
 .tile-note :is(.line, .value, .note) {
   line-height: normal;
+}
+
+/* The value and its unit stay on one line ("200 · 212 ms"). */
+.tile-note .value {
+  white-space: nowrap;
+}
+
+.tile-note .label {
+  overflow: hidden;
 }
 
 /* One line, always: a card keeps its height whatever the note says. */

@@ -23,12 +23,14 @@ const props = withDefaults(
     height?: number
     /** Share of the series' range left above and below the line. */
     headroom?: number
+    /** The newest value is a solid dot in the line colour, not a ring. */
+    solid?: boolean
     /** When set, the arrival plays only the first time this key is seen. */
     once?: string
     /** A description for screen readers; without it the drawing is decorative. */
     label?: string
   }>(),
-  { tone: 'accent', height: 24, headroom: 0.15, once: undefined, label: undefined },
+  { tone: 'accent', height: 24, headroom: 0.15, solid: false, once: undefined, label: undefined },
 )
 
 const gradient = `spark-${useId()}`
@@ -88,7 +90,7 @@ const dot = computed(() => {
         fill="none"
       />
     </svg>
-    <i class="dot" :class="{ 'm-pop': play }" :style="{ ...dot, '--d': '500ms' }" />
+    <i class="dot" :class="{ 'm-pop': play, solid }" :style="{ ...dot, '--d': '500ms' }" />
   </div>
 </template>
 
@@ -146,5 +148,13 @@ const dot = computed(() => {
   border-radius: 50%;
   background: var(--chart-knob);
   box-shadow: inset 0 0 0 2px var(--spark);
+}
+
+.dot.solid {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: var(--spark);
+  box-shadow: none;
 }
 </style>

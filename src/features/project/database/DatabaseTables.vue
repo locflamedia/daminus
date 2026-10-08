@@ -108,7 +108,7 @@ const deltaText = (d: number | null) =>
   height: 6px;
   overflow: hidden;
   border-radius: 3px;
-  background: var(--seg-track);
+  background: var(--surface-2);
 }
 
 .fill {

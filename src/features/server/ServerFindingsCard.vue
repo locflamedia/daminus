@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { issueText } from '@/lib/issue-text'
+import { checkName, issueText } from '@/lib/issue-text'
 import { itemIssue } from '@/lib/server-issue'
 import type { Finding, FindingTally, SecurityLite, SecurityRow } from '@/lib/server-security'
 import { useSettingsStore } from '@/stores/settings'
@@ -47,10 +47,21 @@ const meta = computed(() => {
   return pieces.filter(Boolean).join(' · ')
 })
 
+function findingTitle(item: Finding['item']): string {
+  const value = item.fact?.value
+  if (item.severity.level === 'unknown' && typeof value !== 'number') {
+    return t('serverScreen.findings.unread', {
+      check: checkName(item.key.check, settings.language),
+      target: item.key.target,
+    })
+  }
+  return issueText(itemIssue(item), settings.language)
+}
+
 const rows = computed(() =>
   props.findings.map((f) => ({
     f,
-    title: issueText(itemIssue(f.item), settings.language),
+    title: findingTitle(f.item),
     evidence: findingEvidence(f.item, settings.language),
   })),
 )
@@ -227,6 +238,7 @@ const SEC_ICON: Record<SecurityRow['state'], IconName> = {
 }
 
 .title {
+  overflow-wrap: anywhere;
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
 }
@@ -303,9 +315,7 @@ const SEC_ICON: Record<SecurityRow['state'], IconName> = {
 }
 
 .check {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: none;
   white-space: nowrap;
 }
 

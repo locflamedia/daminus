@@ -63,7 +63,11 @@ const memBad = computed(() => (props.service.memPct ?? 0) >= MEMORY_HINT_PCT)
     <div class="cells">
       <div class="cell">
         <span class="label">{{ t('projectContainers.cell.cpu') }}</span>
-        <b class="value">{{ service.cpu === null ? '—' : fmt.measure(service.cpu, '%').text }}</b>
+        <b class="value">{{
+          service.cpu === null
+            ? '—'
+            : fmt.measure(service.cpu, '%', { maximumFractionDigits: 1 }).text
+        }}</b>
         <CpuLine
           v-if="cpu.length > 2"
           :values="cpu"
@@ -203,10 +207,12 @@ const memBad = computed(() => (props.service.memPct ?? 0) >= MEMORY_HINT_PCT)
 .label {
   color: var(--ink-3);
   font-size: var(--text-11);
+  line-height: normal;
 }
 
 .value {
   font-family: var(--font-mono);
+  line-height: normal;
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
 }
