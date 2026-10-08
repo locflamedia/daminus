@@ -65,9 +65,13 @@ export const useHistoryStore = defineStore('history', () => {
   async function report(seq: number): Promise<Report | null> {
     const cached = reports.cached(seq)
     if (cached) return cached
+    const mine = generation
     try {
       const r = await reportAt(seq)
-      reports.remember(r)
+      if (mine === generation) {
+        reports.remember(r)
+        reportError.value = null
+      }
       return r
     } catch (e) {
       reportError.value = isAppError(e) ? e : null

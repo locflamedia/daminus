@@ -148,7 +148,9 @@ describe('doFirst', () => {
 describe('commands', () => {
   it('quotes a path so it stays one word', () => {
     expect(shellQuote("a b'c")).toBe(`'a b'\\''c'`)
-    expect(scpCommand('vps-1', '/var/www/a b.php')).toBe(`scp 'vps-1:/var/www/a b.php' .`)
+    expect(scpCommand('vps-1', '/var/www/up-loads/a.php')).toBe(
+      `scp -s 'vps-1:/var/www/up-loads/a.php' .`,
+    )
   })
 
   it('refuses a host that is not a plain alias and a path with hidden characters', () => {
@@ -156,6 +158,21 @@ describe('commands', () => {
     expect(scpCommand('x; reboot', '/a.php')).toBeNull()
     expect(scpCommand('vps-1', '/a‮.php')).toBeNull()
     expect(scpCommand('vps-1', 'relative.php')).toBeNull()
+  })
+
+  it('refuses a path a shell could expand', () => {
+    for (const path of [
+      '/a/$(reboot).php',
+      '/a/`reboot`.php',
+      '/a/x;reboot.php',
+      '/var/www/a b.php',
+      '/a/x\nreboot.php',
+      "/a/it's.php",
+      '/a/*.php',
+      '/',
+    ]) {
+      expect(scpCommand('vps-1', path), path).toBeNull()
+    }
   })
 
   it('keeps well-known open in the dotfile rule', () => {

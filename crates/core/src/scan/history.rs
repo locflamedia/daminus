@@ -25,6 +25,9 @@ pub const MAX_FACT_SCANS: usize = 100;
 /// The most checks one `history_facts` call answers for.
 pub const MAX_FACT_CHECKS: usize = 32;
 
+/// The longest check id `history_facts` accepts.
+const MAX_CHECK_ID_LEN: usize = 64;
+
 /// The most scans the history screens read when Settings keeps every scan. Settings keeps 20 by
 /// default; with "keep all" the newest scans are what the screens show, so a long history costs a
 /// bounded read (each summary evaluates over every older scan it can see).
@@ -99,24 +102,34 @@ struct Loaded {
     history: Vec<Snapshot>,
 }
 
-fn load(store: &FsStore) -> Result<Loaded, AppError> {
+/// Projects, settings and manifest with an empty history, for reads that pick their own scans.
+fn load_config(store: &FsStore) -> Result<Loaded, AppError> {
     let projects = store.load_projects()?.value;
     let settings = store.load_settings()?.value;
     let manifest = manifest().map_err(|e| {
         AppError::from(ErrorCode::SchemaInvalid).with_param("detail", format!("manifest: {e}"))
     })?;
-    let keep = settings.data.keep_scans.map_or(MAX_HISTORY_SCANS, |k| {
-        usize::try_from(k)
-            .unwrap_or(usize::MAX)
-            .min(MAX_HISTORY_SCANS)
-    });
-    let history = store.load_history(Some(keep))?;
     Ok(Loaded {
         projects,
         settings,
         manifest,
-        history,
+        history: Vec::new(),
     })
+}
+
+/// How many scans the history screens read under the Settings retention limit.
+fn keep_limit(settings: &Settings) -> usize {
+    settings.data.keep_scans.map_or(MAX_HISTORY_SCANS, |k| {
+        usize::try_from(k)
+            .unwrap_or(usize::MAX)
+            .min(MAX_HISTORY_SCANS)
+    })
+}
+
+fn load(store: &FsStore) -> Result<Loaded, AppError> {
+    let mut loaded = load_config(store)?;
+    loaded.history = store.load_history(Some(keep_limit(&loaded.settings)))?;
+    Ok(loaded)
 }
 
 impl Loaded {
@@ -138,7 +151,10 @@ impl Loaded {
 
 /// One summary per kept scan, oldest first.
 pub fn history_view(store: &FsStore) -> Result<HistoryView, AppError> {
-    let loaded = load(store)?;
+    view_of(store, &load(store)?)
+}
+
+fn view_of(store: &FsStore, loaded: &Loaded) -> Result<HistoryView, AppError> {
     let summarised = loaded.history.len().min(MAX_SUMMARISED_SCANS);
     let mut scans: Vec<ScanSummary> = (0..summarised)
         .map(|i| summarize(&loaded.history[i], &loaded.report_from(i)))
@@ -228,13 +244,22 @@ fn add_to_project(p: &mut ProjectSummary, item: &Item, level: Option<Level>, ope
 
 /// The report as scan `seq` saw it: `evaluate` over the scans up to it.
 pub fn report_at(store: &FsStore, seq: u32) -> Result<Report, AppError> {
-    let mut loaded = load(store)?;
+    let mut loaded = load_config(store)?;
     // Only the scans up to `seq` matter, so a read of an old scan does not load the newer ones.
-    loaded.history = store.load_history_up_to(seq, Some(MAX_HISTORY_SCANS))?;
+    loaded.history = store.load_history_up_to(seq, Some(keep_limit(&loaded.settings)))?;
     if loaded.history.first().map(|s| s.seq) != Some(seq) {
         return Err(AppError::from(ErrorCode::ScanNotFound).with_param("seq", seq.to_string()));
     }
     Ok(loaded.report_from(0))
+}
+
+/// A check id as the manifest spells it: lowercase letters, digits, dots and underscores.
+fn is_check_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= MAX_CHECK_ID_LEN
+        && id
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'.' || b == b'_')
 }
 
 /// The facts of `checks` in the newest `last` scans (at most [`MAX_FACT_SCANS`]), oldest scan first.
@@ -246,6 +271,10 @@ pub fn history_facts(
     if checks.len() > MAX_FACT_CHECKS {
         return Err(AppError::from(ErrorCode::SchemaInvalid)
             .with_param("detail", format!("at most {MAX_FACT_CHECKS} checks")));
+    }
+    if let Some(bad) = checks.iter().find(|c| !is_check_id(c)) {
+        return Err(AppError::from(ErrorCode::SchemaInvalid)
+            .with_param("detail", format!("invalid check id: {bad}")));
     }
     let last = last.clamp(1, MAX_FACT_SCANS);
     let history = store.load_history(Some(last))?;
@@ -284,10 +313,11 @@ pub const CHARTED_CHECKS: [&str; 12] = [
 /// Everything the history screens read, in one JSON document: what the dev mock serves in a
 /// browser, made from a config folder (the shared timeline, or scans of a fake server).
 pub fn history_bundle(store: &FsStore) -> Result<serde_json::Value, AppError> {
-    let history = history_view(store)?;
+    let loaded = load(store)?;
+    let history = view_of(store, &loaded)?;
     let mut reports = BTreeMap::new();
-    for scan in &history.scans {
-        reports.insert(scan.seq.to_string(), report_at(store, scan.seq)?);
+    for (i, snap) in loaded.history.iter().enumerate().take(MAX_SUMMARISED_SCANS) {
+        reports.insert(snap.seq.to_string(), loaded.report_from(i));
     }
     let checks: Vec<String> = CHARTED_CHECKS.iter().map(|c| (*c).to_owned()).collect();
     let facts = history_facts(store, &checks, MAX_FACT_SCANS)?;

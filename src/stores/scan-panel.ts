@@ -2,7 +2,7 @@
 // run itself lives in the scan store; this keeps a copy of the last run so the panel can still
 // list how each host fared (and offer a retry of the ones that failed) after the scan is over.
 import { defineStore } from 'pinia'
-import { computed, ref, shallowRef, watch } from 'vue'
+import { computed, ref, shallowRef, toRaw, watch } from 'vue'
 import type { ScanRun, ScanScope } from '@/api'
 import { scanHosts } from '@/lib/overview-scan'
 import { useScanStore, type ScanEnd } from './scan'
@@ -57,7 +57,7 @@ export const useScanPanelStore = defineStore('scan-panel', () => {
         return
       }
       if (!before) return
-      finished.value = JSON.parse(JSON.stringify(before)) as ScanRun
+      finished.value = structuredClone(toRaw(before))
       endedAt.value = Date.now()
       end.value = scan.lastEnd
       // A scan that read everything has nothing left to say: the results speak.

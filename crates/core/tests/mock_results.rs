@@ -126,3 +126,13 @@ fn too_many_checks_are_refused() {
     let checks: Vec<String> = (0..40).map(|i| format!("sys.fake{i}")).collect();
     assert!(history_facts(&store, &checks, 3).is_err());
 }
+
+#[test]
+fn malformed_check_ids_are_refused() {
+    let (_tmp, store) = store();
+    for bad in ["", "Disk.fs", "disk fs", "disk.fs;rm", &"a".repeat(65)] {
+        let err = history_facts(&store, &[bad.to_owned()], 3).expect_err("a bad check id");
+        assert_eq!(err.code, ErrorCode::SchemaInvalid, "{bad}");
+    }
+    assert!(history_facts(&store, &["a".repeat(64)], 3).is_ok());
+}

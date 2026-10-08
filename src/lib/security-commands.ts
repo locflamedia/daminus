@@ -17,13 +17,17 @@ export function shellQuote(text: string): string {
 /** A host alias from the ssh config: letters, digits, dot, dash, underscore. */
 const SAFE_ALIAS = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
 
+/** An absolute path of plain characters: nothing a shell, or a remote shell, could expand. */
+const SAFE_PATH = /^\/[A-Za-z0-9._/@+-]+$/
+
 /**
  * `scp` of one file from a host to the current folder, or `null` when the host is not a plain
- * alias (an `@local` result has no host to copy from) or the path is not absolute.
+ * alias (an `@local` result has no host to copy from) or the path is not a plain absolute one.
+ * `-s` makes scp use SFTP, so the remote shell never parses the path.
  */
 export function scpCommand(host: string, path: string): string | null {
-  if (!SAFE_ALIAS.test(host) || !path.startsWith('/')) return null
+  if (!SAFE_ALIAS.test(host) || !SAFE_PATH.test(path)) return null
   const clean = cleanCommand(path)
   if (clean.removed > 0 || clean.text !== path) return null
-  return `scp ${shellQuote(`${host}:${path}`)} .`
+  return `scp -s ${shellQuote(`${host}:${path}`)} .`
 }

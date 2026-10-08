@@ -128,4 +128,35 @@ describe('useHistoryStore', () => {
     await fresh
     expect(store.factsNow.get('disk.fs')).toEqual([{ seq: 12 }])
   })
+
+  it('does not cache an older report that was asked before a newer scan landed', async () => {
+    const waiting: Array<(r: unknown) => void> = []
+    mockCommands((cmd) => {
+      if (cmd === 'history_list') return view
+      if (cmd === 'rules_list') return []
+      if (cmd === 'report_at') return new Promise((resolve) => waiting.push(resolve))
+      throw new Error(`unexpected command ${cmd}`)
+    })
+    const store = useHistoryStore()
+    const reports = useReportStore()
+    reports.latest = report({ seq: 12 })
+    await settle()
+    const stale = store.report(9)
+    reports.latest = report({ seq: 13 })
+    await nextTick()
+    await settle()
+    waiting[0]?.(report({ seq: 9 }))
+    expect((await stale)?.seq).toBe(9)
+    expect(reports.cached(9)).toBeUndefined()
+  })
+
+  it('clears the report error once an older report reads', async () => {
+    const store = useHistoryStore()
+    failReport = true
+    await store.report(9)
+    expect(store.reportError).not.toBeNull()
+    failReport = false
+    await store.report(8)
+    expect(store.reportError).toBeNull()
+  })
 })
