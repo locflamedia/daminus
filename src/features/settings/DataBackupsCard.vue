@@ -10,7 +10,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsData.backups.title')" tight>
+  <SettingsCard :title="t('settingsData.backups.title')" tight class="compact">
     <div class="row">
       <UiIcon name="check" :size="14" :stroke="2" class="ok" />
       {{ t('settingsData.backups.timeMachine') }}
@@ -24,6 +24,11 @@ const { t } = useI18n()
 </template>
 
 <style scoped>
+.compact {
+  padding: var(--space-4);
+  line-height: 1.3;
+}
+
 .row {
   display: flex;
   align-items: center;

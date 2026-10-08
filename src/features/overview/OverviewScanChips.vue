@@ -43,7 +43,7 @@ function word(chip: ChipState, agentWait: boolean): string {
       :class="tone(h.chip, h.outcome?.state)"
       :title="t(`scanHost.${h.detail}`)"
     >
-      <UiIcon name="server" :size="12" />
+      <span class="mark"><UiIcon name="server" :size="12" /></span>
       <span class="mono">{{ h.host }}</span>
       <span class="state">{{ word(h.chip, h.agentWait) }}</span>
     </span>
@@ -65,10 +65,20 @@ function word(chip: ChipState, agentWait: boolean): string {
   align-items: center;
   gap: 6px;
   height: var(--h-control-sm);
-  padding: 0 10px;
+  padding: 0 10px 0 5px;
   border-radius: var(--radius-full);
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
+}
+
+.host-chip .mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  background: var(--surface-0);
 }
 
 .host-chip .state {
@@ -96,7 +106,7 @@ function word(chip: ChipState, agentWait: boolean): string {
 }
 
 .host-chip.idle {
-  background: transparent;
+  background: var(--surface-1);
   color: var(--ink-3);
 }
 

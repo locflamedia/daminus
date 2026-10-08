@@ -56,7 +56,10 @@ function pickFloor(value: string) {
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsScan.skip.title')" :remark="t('settingsScan.skip.remark')">
+  <SettingsCard :title="t('settingsScan.skip.title')" class="skip">
+    <template #after>
+      <span class="m">{{ t('settingsScan.skip.remark') }}</span>
+    </template>
     <ul class="tags" :aria-label="t('settingsScan.skip.title')">
       <li v-for="path in store.scan.skip_paths" :key="path" class="tag mono">
         {{ path }}
@@ -107,6 +110,30 @@ function pickFloor(value: string) {
 </template>
 
 <style scoped>
+.skip.card {
+  padding: var(--space-4);
+}
+
+.skip :deep(.title) {
+  display: flex;
+  align-items: center;
+}
+
+.skip :deep(.after) {
+  margin-left: auto;
+}
+
+.skip :deep(.row) {
+  min-height: 40px;
+  padding: 0;
+}
+
+.m {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  font-weight: var(--weight-regular);
+}
+
 .tags {
   display: flex;
   flex-wrap: wrap;

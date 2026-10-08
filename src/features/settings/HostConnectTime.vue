@@ -5,14 +5,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { connectMedian, connectSeries, slowestPoint } from '@/lib/hosts-settings'
-import { formatDuration } from '@/lib/format'
+import { connectMedian, connectSeries, formatSeconds, slowestPoint } from '@/lib/hosts-settings'
 import { useHistoryStore } from '@/stores/history'
+import { useSettingsStore } from '@/stores/settings'
 
 const props = defineProps<{ host: string }>()
 
 const { t } = useI18n()
 const history = useHistoryStore()
+const settings = useSettingsStore()
 
 const points = computed(() => connectSeries(history.view, props.host))
 const median = computed(() => connectMedian(points.value))
@@ -28,7 +29,7 @@ const slow = computed(() => slowestPoint(points.value))
         {{
           t('settingsHosts.detail.connectMeta', {
             n: points.length,
-            median: formatDuration(median ?? 0),
+            median: formatSeconds(median ?? 0, settings.language),
           })
         }}
       </span>
@@ -40,11 +41,16 @@ const slow = computed(() => slowestPoint(points.value))
         class="bar"
         :class="{ slow: p.slow }"
         :style="{ height: `${Math.max(8, (p.ms / top) * 100)}%` }"
-        :title="`#${p.seq} · ${formatDuration(p.ms)}`"
+        :title="`#${p.seq} · ${formatSeconds(p.ms, settings.language)}`"
       />
     </ul>
     <span v-if="slow" class="lbl">
-      {{ t('settingsHosts.detail.slowest', { seq: slow.seq, time: formatDuration(slow.ms) }) }}
+      {{
+        t('settingsHosts.detail.slowest', {
+          seq: slow.seq,
+          time: formatSeconds(slow.ms, settings.language),
+        })
+      }}
     </span>
   </div>
 </template>
@@ -81,9 +87,10 @@ const slow = computed(() => slowestPoint(points.value))
 }
 
 .bar {
-  flex: 1;
+  flex: none;
+  width: calc((100% - 44px) / 12);
   border-radius: 3px;
-  background: var(--chart-lilac-soft);
+  background: var(--chart-bar-old);
 }
 
 .bar.slow {

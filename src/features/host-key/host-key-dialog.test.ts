@@ -85,7 +85,7 @@ describe('host key screen', () => {
   })
 
   it('explains why there is no Trust button, on request', async () => {
-    show({ state: 'unknown', offered: OFFERED, known: [] })
+    show({ state: 'changed', offered: OFFERED, known: [RECORDED] })
     await flushPromises()
     expect(text()).not.toContain('never writes it')
     const why = [...document.body.querySelectorAll('button')].find((b) =>
@@ -94,6 +94,22 @@ describe('host key screen', () => {
     why?.click()
     await flushPromises()
     expect(text()).toContain('never writes it')
+  })
+
+  it('first connection: Retry first, Skip host as a ghost, and no link to the Trust button', async () => {
+    show({ state: 'unknown', offered: OFFERED, known: [] })
+    await flushPromises()
+    const foot = [...document.body.querySelectorAll('.foot button')]
+    expect(foot.map((b) => b.textContent?.trim())).toEqual(['Retry db-main', 'Skip host'])
+    expect(foot[1]?.classList.contains('btn-ghost')).toBe(true)
+  })
+
+  it('changed key: the host is set in mono and focus starts on Keep it blocked', async () => {
+    show({ state: 'changed', offered: OFFERED, known: [RECORDED] })
+    await flushPromises()
+    expect(document.body.querySelector('h2 .mono')?.textContent).toBe('db-main')
+    expect(document.activeElement?.textContent).toContain('Keep it blocked')
+    expect(document.body.querySelector('.layer.wide.shakes')).not.toBeNull()
   })
 
   it('Retry looks again and says what it found under the buttons', async () => {

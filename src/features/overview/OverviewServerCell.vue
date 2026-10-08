@@ -55,7 +55,7 @@ const detail = computed(() => {
       : t('overviewScreen.servers.unreachableFor', { n: props.cell.silentDays })
   }
   if (props.cell.state === 'not-scanned') return t('overviewScreen.servers.notScanned')
-  return [load.value, mem.value].filter(Boolean).join(' · ')
+  return [load.value, props.scan === 'done' ? null : mem.value].filter(Boolean).join(' · ')
 })
 </script>
 
@@ -226,7 +226,7 @@ const detail = computed(() => {
 .sub {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
 }
 
 .host {
@@ -292,7 +292,7 @@ const detail = computed(() => {
   display: inline-flex;
   align-items: center;
   height: 20px;
-  padding: 0 6px;
+  padding: 0 5px;
   border-radius: var(--radius-full);
   background: var(--surface-1);
   color: var(--ink-3);

@@ -82,6 +82,7 @@ const SAMPLE: Part[][] = [
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
 }
@@ -91,6 +92,7 @@ const SAMPLE: Part[][] = [
   align-items: center;
   gap: var(--space-1);
   margin-left: auto;
+  white-space: nowrap;
   color: var(--ok-ink);
   font-size: var(--text-11);
   animation: arrive var(--dur-enter, 300ms) var(--ease-out) both;

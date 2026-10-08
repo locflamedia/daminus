@@ -83,7 +83,7 @@ const count = (key: string, n: number) => t(`settingsGeneral.preview.${key}`, { 
 
     <Transition name="toast">
       <div v-if="toast" class="toast" role="status">
-        <UiIcon name="check" :size="14" />{{ toast }}
+        <UiIcon class="tick" name="check" :size="14" />{{ toast }}
       </div>
     </Transition>
   </aside>
@@ -96,7 +96,7 @@ const count = (key: string, n: number) => t(`settingsGeneral.preview.${key}`, { 
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-4);
+  padding: var(--space-4) var(--space-4) 64px;
   border-radius: var(--radius-lg);
   background: linear-gradient(160deg, var(--side-1), var(--side-2));
 }
@@ -287,6 +287,10 @@ const count = (key: string, n: number) => t(`settingsGeneral.preview.${key}`, { 
   background: var(--btn);
   color: var(--btn-ink);
   font-size: var(--text-12);
+}
+
+.tick {
+  color: var(--code-ok);
 }
 
 .toast-enter-active {

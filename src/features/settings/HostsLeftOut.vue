@@ -73,7 +73,7 @@ const extra = computed(() => includedFiles(setup.entries, setup.skipped))
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);

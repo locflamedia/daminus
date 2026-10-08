@@ -116,7 +116,7 @@ onMounted(() => {
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);
@@ -150,7 +150,6 @@ onMounted(() => {
   background: var(--code);
   color: var(--code-ink);
   font: 400 10.5px / 1.65 var(--font-mono);
-  overflow-x: auto;
 }
 
 .code:focus-visible {
@@ -159,7 +158,8 @@ onMounted(() => {
 }
 
 .line {
-  white-space: pre;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .d {

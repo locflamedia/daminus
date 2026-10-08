@@ -58,7 +58,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   display: grid;
   grid-template-columns: minmax(0, 1fr) 380px;
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 }
 
 .column {

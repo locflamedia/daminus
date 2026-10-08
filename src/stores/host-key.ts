@@ -11,6 +11,8 @@ export const useHostKeyStore = defineStore('host-key', () => {
   const info = shallowRef<HostKeyInfo | null>(null)
   /** The face on screen; it stays when the key turns known, so the screen can say why it closes. */
   const face = ref<HostKeyFace>('unavailable')
+  /** When the offered key was last read, for "Presented now · 13:58". */
+  const readAt = ref<Date | null>(null)
   const reading = ref(false)
   const retrying = ref(false)
   const result = ref<RetryResult | null>(null)
@@ -28,6 +30,7 @@ export const useHostKeyStore = defineStore('host-key', () => {
 
   function take(next: HostKeyInfo | null) {
     info.value = next
+    if (next?.offered) readAt.value = new Date()
     const nextFace = faceOf(next)
     if (nextFace) face.value = nextFace
   }
@@ -69,10 +72,11 @@ export const useHostKeyStore = defineStore('host-key', () => {
     turn++
     alias.value = null
     info.value = null
+    readAt.value = null
     result.value = null
     reading.value = false
     retrying.value = false
   }
 
-  return { alias, info, face, reading, retrying, result, isOpen, open, retry, close }
+  return { alias, info, face, readAt, reading, retrying, result, isOpen, open, retry, close }
 })

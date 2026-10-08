@@ -46,7 +46,7 @@ const setup = useSetupStore()
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-radius: 16px;
   background: linear-gradient(180deg, var(--accent-soft), var(--surface-0) 90px);
   box-shadow: var(--shadow-seg);

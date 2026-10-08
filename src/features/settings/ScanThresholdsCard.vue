@@ -76,10 +76,15 @@ const restarts = computed<SegOption[]>(() =>
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);
+}
+
+.card :deep(.row) {
+  min-height: 40px;
+  padding: 0;
 }
 
 .title {

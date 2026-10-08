@@ -40,7 +40,8 @@ const NEVER = ['secrets', 'keys', 'contents', 'bodies'] as const
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--space-1) var(--space-4);
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
+  line-height: 1.3;
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);

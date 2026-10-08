@@ -68,7 +68,7 @@ function reached(at: string | null, failed: boolean): string {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);
@@ -108,7 +108,7 @@ function reached(at: string | null, failed: boolean): string {
 
 .row {
   display: grid;
-  grid-template-columns: 8px minmax(0, 1fr) 110px 56px;
+  grid-template-columns: 8px minmax(0, 1fr) 110px 88px;
   gap: var(--space-3);
   align-items: center;
   width: 100%;
@@ -175,6 +175,7 @@ function reached(at: string | null, failed: boolean): string {
   color: var(--ink-3);
   font-size: var(--text-11);
   text-align: right;
+  white-space: nowrap;
 }
 
 .bad {

@@ -36,7 +36,7 @@ const keepHint = computed(() =>
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsData.history.title')" tight>
+  <SettingsCard :title="t('settingsData.history.title')" tight class="compact">
     <SettingsRow :title="t('settingsData.history.keep')" :hint="keepHint">
       <UiSeg
         :model-value="choiceValue(data.retention.keep_scans)"
@@ -62,3 +62,10 @@ const keepHint = computed(() =>
     </SettingsRow>
   </SettingsCard>
 </template>
+
+<style scoped>
+.compact {
+  padding: var(--space-4);
+  line-height: 1.3;
+}
+</style>

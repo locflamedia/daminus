@@ -132,14 +132,16 @@ function onKeydown(e: KeyboardEvent) {
       </div>
     </div>
 
-    <UiCheckbox
-      :model-value="form.covers === 'as_it_is'"
-      :disabled="locked"
-      :meta="locked ? t('expected.pop.alertLocked') : undefined"
-      @update:model-value="change({ covers: $event ? 'as_it_is' : 'any_evidence' })"
-    >
-      {{ t('expected.pop.alert') }}
-    </UiCheckbox>
+    <div class="alerts">
+      <UiCheckbox
+        :model-value="form.covers === 'as_it_is'"
+        :disabled="locked"
+        :meta="locked ? t('expected.pop.alertLocked') : undefined"
+        @update:model-value="change({ covers: $event ? 'as_it_is' : 'any_evidence' })"
+      >
+        {{ t('expected.pop.alert') }}
+      </UiCheckbox>
+    </div>
 
     <UiField
       :model-value="form.note"
@@ -172,7 +174,7 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .title {
-  font-size: var(--text-13);
+  font-size: var(--text-15);
   font-weight: var(--weight-medium);
 }
 
@@ -185,7 +187,7 @@ function onKeydown(e: KeyboardEvent) {
 .group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   border: 0;
@@ -202,14 +204,13 @@ function onKeydown(e: KeyboardEvent) {
   position: relative;
   display: flex;
   gap: 10px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
-  background: var(--surface-1);
   cursor: pointer;
 }
 
 .option.on {
-  background: var(--accent-soft);
+  background: var(--surface-1);
 }
 
 .native {
@@ -233,7 +234,7 @@ function onKeydown(e: KeyboardEvent) {
 }
 
 .on .radio {
-  background: radial-gradient(var(--surface-0) 0 28%, var(--accent) 32%);
+  background: radial-gradient(var(--surface-0) 0 28%, var(--ink) 32%);
   box-shadow: none;
 }
 
@@ -255,7 +256,7 @@ function onKeydown(e: KeyboardEvent) {
 
 .pair {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1fr auto;
   gap: var(--space-3);
 }
 
@@ -263,6 +264,15 @@ function onKeydown(e: KeyboardEvent) {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--surface-1);
 }
 
 .foot {
@@ -273,7 +283,11 @@ function onKeydown(e: KeyboardEvent) {
 
 .saved {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-11);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

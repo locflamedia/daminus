@@ -1,10 +1,10 @@
 {
   "hostKey": {
     "reading": "Đang đọc khoá…",
-    "offered": "Đang được đưa ra",
+    "offered": "Đang được đưa ra · {time}",
     "offeredAlg": "Đang được đưa ra · {alg}",
-    "recorded": "Đã ghi nhận",
-    "recordedIn": "known_hosts",
+    "recorded": "Đã biết",
+    "recordedIn": "~/.ssh/known_hosts",
     "result": {
       "accepted": {
         "title": "Đã chấp nhận khoá · {host} đã được tin",
@@ -41,7 +41,7 @@
         "warn": "Có thể ai đó đang giả làm {host}. Chỉ tiếp tục nếu bạn đã cài lại hoặc chuyển máy.",
         "check": "Kiểm tra trước khi tin",
         "step1": "Bạn hoặc nhà cung cấp có vừa cài lại, khôi phục hay chuyển {host} không? Nếu không, hãy dừng ở đây và hỏi họ.",
-        "step2": "Mở bảng điều khiển web của nhà cung cấp và chạy ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub. Kết quả phải khớp với dấu vân tay đang được đưa ra.",
+        "step2": "Mở bảng điều khiển web của nhà cung cấp (hướng dẫn cho DigitalOcean, Vultr, Hetzner, Linode) và chạy ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub. Kết quả phải khớp với dấu vân tay màu đỏ.",
         "step3": "Chỉ khi đó mới xoá khoá cũ và kết nối lại:",
         "after": "Sau đó, khi đã chạy ssh-keygen -R {host}",
         "run": "Tự chạy lệnh, rồi kết nối một lần trong Terminal để chấp nhận khoá mới. Daminus không bao giờ sửa known_hosts."

@@ -39,7 +39,7 @@ function on(group: ScanGroup): boolean {
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsScan.checks.title')" tight>
+  <SettingsCard :title="t('settingsScan.checks.title')" class="checks" tight>
     <template #after>
       <Transition name="saved">
         <span v-if="store.saved" class="saved" role="status">
@@ -63,6 +63,11 @@ function on(group: ScanGroup): boolean {
 </template>
 
 <style scoped>
+.checks.card {
+  gap: 0;
+  padding: var(--space-4);
+}
+
 .row {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) auto;

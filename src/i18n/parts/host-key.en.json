@@ -1,10 +1,10 @@
 {
   "hostKey": {
     "reading": "Reading the key…",
-    "offered": "Offered now",
+    "offered": "Presented now · {time}",
     "offeredAlg": "Offered now · {alg}",
-    "recorded": "Recorded",
-    "recordedIn": "known_hosts",
+    "recorded": "Known",
+    "recordedIn": "~/.ssh/known_hosts",
     "result": {
       "accepted": {
         "title": "Key accepted · {host} is trusted now",
@@ -41,7 +41,7 @@
         "warn": "This may be someone pretending to be {host}. Only continue if you reinstalled or moved it.",
         "check": "Check before you trust it",
         "step1": "Did you or your host reinstall, restore or migrate {host} lately? If not, stop here and ask them.",
-        "step2": "Open the provider’s web console and run ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub. It must match the offered fingerprint.",
+        "step2": "Open the provider’s web console (guides for DigitalOcean, Vultr, Hetzner, Linode) and run ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub. It must match the red fingerprint.",
         "step3": "Only then remove the old key and reconnect:",
         "after": "Then, after ssh-keygen -R {host}",
         "run": "Run it yourself, then connect once in Terminal to accept the new key. Daminus never edits known_hosts."

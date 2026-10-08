@@ -57,7 +57,7 @@ async function submit(form: ExpectedForm) {
     v-model:open="open"
     :label="t('expected.pop.label')"
     placement="bottom-end"
-    width="400px"
+    width="452px"
   >
     <template #trigger>
       <UiMenu

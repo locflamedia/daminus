@@ -10,7 +10,7 @@ const settings = useSettingsStore()
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsAppearance.little.title')" tight>
+  <SettingsCard class="rhythm" :title="t('settingsAppearance.little.title')" tight>
     <SettingsRow
       :title="t('settingsAppearance.little.clearSky')"
       :hint="t('settingsAppearance.little.clearSkyHint')"
@@ -78,6 +78,36 @@ const settings = useSettingsStore()
 </template>
 
 <style scoped>
+.rhythm :deep(.row) {
+  min-height: 64px;
+}
+
+.rhythm :deep(.hint) {
+  margin-top: 2px;
+}
+
+.rhythm :deep(.title) {
+  padding-bottom: 9px;
+}
+
+/* Clear sky: the star blooms from its base, forever, unless motion is reduced. */
+@media (prefers-reduced-motion: no-preference) {
+  .star {
+    transform-origin: 50% 100%;
+    animation: bloom 3.2s cubic-bezier(0.34, 1.45, 0.64, 1) infinite alternate;
+  }
+}
+
+@keyframes bloom {
+  from {
+    opacity: 0.4;
+    transform: scale(0.4);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 .star {
   fill: var(--chart-amber);
 }

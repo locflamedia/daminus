@@ -9,7 +9,9 @@ import type {
   SkippedHost,
   SkipReason,
 } from '@/api'
+import { fingerprintParts } from '@/lib/host-key'
 import { SLOW_MS } from '@/lib/host-rows'
+import type { Locale } from '@/i18n'
 import { median } from '@/lib/project-series'
 
 export type HostState = 'reached' | 'failed' | 'unknown'
@@ -119,3 +121,20 @@ export const TERMIUS_TEMPLATE = [
   '  User deploy',
   '  IdentityFile ~/.ssh/id_ed25519',
 ].join('\n')
+
+/** A connect or test time in seconds with one decimal: `0.4 s`. */
+export function formatSeconds(ms: number, locale: Locale): string {
+  const n = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+  return `${n.format(ms / 1000)} s`
+}
+
+/** `ED25519 SHA256:q3Vf…9kXw`: the algorithm and the ends of the digest. */
+export function shortFingerprint(fp: string): string {
+  const { algorithm, groups } = fingerprintParts(fp)
+  const digest = groups.join('')
+  const colon = digest.indexOf(':')
+  const prefix = digest.slice(0, colon + 1)
+  const body = digest.slice(colon + 1)
+  const short = body.length > 10 ? `${body.slice(0, 4)}…${body.slice(-4)}` : body
+  return `${algorithm ? `${algorithm} ` : ''}${prefix}${short}`
+}

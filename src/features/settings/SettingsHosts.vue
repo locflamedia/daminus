@@ -54,7 +54,6 @@ onMounted(() => {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
   gap: var(--space-4);
-  align-items: start;
 }
 
 .column {

@@ -26,6 +26,7 @@ const store = useExpectedStore()
 <style scoped>
 .undo {
   padding: 0 4px;
+  white-space: nowrap;
   color: var(--accent-ink);
   font-size: var(--text-12);
   font-weight: var(--weight-medium);

@@ -33,7 +33,7 @@ function pickAtOnce(value: string) {
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsScan.limits.title')" tight>
+  <SettingsCard :title="t('settingsScan.limits.title')" class="limits" tight>
     <SettingsRow
       :title="t('settingsScan.limits.timeout')"
       :hint="t('settingsScan.limits.timeoutHint')"
@@ -60,3 +60,19 @@ function pickAtOnce(value: string) {
     </SettingsRow>
   </SettingsCard>
 </template>
+
+<style scoped>
+.limits.card {
+  gap: 0;
+  padding: var(--space-4);
+}
+
+.limits :deep(.row) {
+  min-height: 48px;
+  padding: 0;
+}
+
+.limits :deep(.hint) {
+  font-size: var(--text-11);
+}
+</style>

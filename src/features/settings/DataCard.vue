@@ -30,7 +30,8 @@ const titleId = useId()
   flex-direction: column;
   gap: 10px;
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
+  line-height: 1.3;
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);

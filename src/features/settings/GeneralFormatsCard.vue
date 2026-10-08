@@ -8,8 +8,11 @@ import SettingsCard from './SettingsCard.vue'
 const { t } = useI18n()
 const settings = useSettingsStore()
 
-/** The sample the board uses: 1,240.5 MB, 26 Sep 2026, 13:42, two hours earlier. */
+/** The sample the board uses: 1,240.5 MB, Sep 26 2026, 13:42, two hours earlier. */
 const SAMPLE = new Date(2026, 8, 26, 13, 42)
+
+const usDate = (date: Date) =>
+  new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date)
 
 const rows = computed(() => {
   const locale = settings.language
@@ -21,7 +24,7 @@ const rows = computed(() => {
     },
     {
       key: 'dates',
-      value: locale === 'en' ? `${day} 2026` : `${day}/2026`,
+      value: locale === 'en' ? usDate(SAMPLE) : `${day}/2026`,
     },
     { key: 'time', value: formatClock(SAMPLE, locale) },
     {

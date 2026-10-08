@@ -7,9 +7,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatClock } from '@/lib/format'
-import { formatLatency } from '@/lib/host-rows'
 import { shortDistro } from '@/lib/host-test'
-import { fingerprintText } from '@/lib/host-key'
+import { formatSeconds, shortFingerprint } from '@/lib/hosts-settings'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useSettingsStore } from '@/stores/settings'
 import { useSetupStore } from '@/stores/setup'
@@ -53,7 +52,7 @@ const headChip = computed<{ tone: ChipTone; text: string; busy: boolean } | null
   if (!r) return null
   if (tested.value) {
     const now = chip.value
-    const time = answer.value?.ms != null ? formatLatency(answer.value.ms, settings.language) : ''
+    const time = answer.value?.ms != null ? formatSeconds(answer.value.ms, settings.language) : ''
     const text =
       now === 'reached' && time
         ? t('settingsHosts.detail.reachedIn', { time })
@@ -94,7 +93,7 @@ const testLabel = computed(() => {
   if (running.value) return t('settingsHosts.detail.testing')
   const ms = answer.value?.ms
   return chip.value === 'reached' && ms != null
-    ? t('settingsHosts.detail.testedIn', { time: formatLatency(ms, settings.language) })
+    ? t('settingsHosts.detail.testedIn', { time: formatSeconds(ms, settings.language) })
     : t('settingsHosts.detail.test')
 })
 </script>
@@ -151,7 +150,7 @@ const testLabel = computed(() => {
 
     <div class="key">
       <span class="key-title">{{ t('settingsHosts.detail.hostKey') }}</span>
-      <span v-if="keyLine" class="mono fp">{{ fingerprintText(keyLine) }}</span>
+      <span v-if="keyLine" class="mono fp" :title="keyLine">{{ shortFingerprint(keyLine) }}</span>
       <span class="lbl" :class="{ bad: keyState === 'changed' }">
         {{ t(`settingsHosts.detail.keyNote.${keyState ?? 'none'}`) }}
       </span>
@@ -196,7 +195,7 @@ const testLabel = computed(() => {
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
-  padding: var(--space-5);
+  padding: var(--space-4);
   border-radius: 16px;
   background: var(--surface-0);
   box-shadow: var(--shadow-seg);
@@ -287,6 +286,10 @@ const testLabel = computed(() => {
 
 .lbl.bad {
   color: var(--crit-ink);
+}
+
+.include b {
+  font-weight: var(--weight-medium);
 }
 
 .include {

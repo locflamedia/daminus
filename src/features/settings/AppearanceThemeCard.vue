@@ -84,7 +84,7 @@ function onKeydown(event: KeyboardEvent, index: number) {
 .choice {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
   min-width: 0;
   padding: var(--space-3);
   border-radius: var(--radius-md);
@@ -101,7 +101,7 @@ function onKeydown(event: KeyboardEvent, index: number) {
 
 .shot {
   display: block;
-  height: 190px;
+  height: 187px;
 }
 
 .both {

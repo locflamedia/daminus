@@ -34,7 +34,7 @@ function pickIntro(value: string) {
 </script>
 
 <template>
-  <SettingsCard :title="t('settingsAppearance.motion.title')" tight>
+  <SettingsCard class="rhythm" :title="t('settingsAppearance.motion.title')" tight>
     <SettingsRow :title="t('settingsAppearance.motion.reduce')" :hint="reduceHint">
       <span class="system">{{ t('settingsAppearance.motion.reduceValue') }}</span>
     </SettingsRow>
@@ -74,6 +74,17 @@ function pickIntro(value: string) {
 </template>
 
 <style scoped>
+.rhythm :deep(.row) {
+  min-height: 64px;
+}
+
+.rhythm :deep(.hint) {
+  margin-top: 2px;
+}
+
+.rhythm :deep(.title) {
+  padding-bottom: 9px;
+}
 .system {
   color: var(--ink-3);
   font-size: var(--text-12);
