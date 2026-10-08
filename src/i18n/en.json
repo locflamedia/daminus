@@ -322,6 +322,9 @@
     "provider_rate_limit": "The AI provider is limiting requests. Try again in a minute.",
     "provider_unavailable": "The AI provider is not reachable right now.",
     "schema_invalid": "The AI answer was not in the expected format.",
+    "claude_cli_not_found": "Daminus can’t find the Claude Code command on this Mac.",
+    "claude_cli_not_logged_in": "Claude Code is not signed in. Sign in with the claude command in Terminal.",
+    "claude_cli_quota": "Your Claude plan has reached its usage limit. Try again later.",
     "internal": "Something went wrong inside Daminus. The log has the details."
   },
   "tooltip": {
