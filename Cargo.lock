@@ -940,6 +940,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "ts-rs",
+ "url",
  "wiremock",
 ]
 

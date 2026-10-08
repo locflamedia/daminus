@@ -44,6 +44,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", optional = true, default-features = false, features = ["fmt", "env-filter", "ansi"] }
 ts-rs = { version = "12", optional = true, features = ["serde-json-impl", "no-serde-warnings"] }
 psl = "2"
+url = "2"
 
 [dev-dependencies]
 rcgen = "0.14"

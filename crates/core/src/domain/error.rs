@@ -48,6 +48,12 @@ pub enum ErrorCode {
     ProviderAuth,
     ProviderRateLimit,
     ProviderUnavailable,
+    /// The `claude` command is not installed, or not on the login shell's PATH.
+    ClaudeCliNotFound,
+    /// `claude` is installed but has no signed-in account.
+    ClaudeCliNotLoggedIn,
+    /// The Claude subscription behind `claude` has no allowance left until it resets.
+    ClaudeCliQuota,
     /// A reply (AI, or a file) did not match its schema.
     SchemaInvalid,
     /// A bug: the work panicked. Logged; trying again will not help.
@@ -115,6 +121,13 @@ mod tests {
             json,
             serde_json::json!({"code": {"kind": "config_invalid", "path": "projects.json", "line": 7}, "retryable": false})
         );
+        for code in [
+            ErrorCode::ClaudeCliNotFound,
+            ErrorCode::ClaudeCliNotLoggedIn,
+            ErrorCode::ClaudeCliQuota,
+        ] {
+            assert!(!code.retryable(), "{code:?} needs the user to act");
+        }
         let busy = AppError::from(ErrorCode::StoreBusy).with_param("pid", "42");
         assert!(busy.retryable);
         assert_eq!(serde_json::to_value(&busy).unwrap()["params"]["pid"], "42");
