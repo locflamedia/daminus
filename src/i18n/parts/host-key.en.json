@@ -1,0 +1,56 @@
+{
+  "hostKey": {
+    "reading": "Reading the key…",
+    "offered": "Offered now",
+    "offeredAlg": "Offered now · {alg}",
+    "recorded": "Recorded",
+    "recordedIn": "known_hosts",
+    "result": {
+      "accepted": {
+        "title": "Key accepted · {host} is trusted now",
+        "text": "Scanning {host} again."
+      },
+      "still_unknown": {
+        "title": "Still unknown · known_hosts has no entry for {host} yet",
+        "text": "Did Terminal ask you to type yes? Run the line again, then Retry."
+      },
+      "changed": {
+        "title": "Key changed since you looked · opens the changed view",
+        "text": "The offered key is not the one shown a moment ago. Stop and check."
+      }
+    },
+    "action": {
+      "retry": "Retry {host}",
+      "skipScan": "Skip this scan",
+      "skipHost": "Skip host",
+      "keep": "Keep it blocked",
+      "why": "Why not a Trust button?"
+    },
+    "whyText": "Daminus reads known_hosts through ssh and never writes it. Trusting a key is something you do in Terminal, after comparing it. Same rule as everywhere: the app observes, you act.",
+    "review": "Review host key",
+    "reviewFor": "Review the host key of {host}",
+    "face": {
+      "unknown": {
+        "title": "{host} · first connection, key unknown",
+        "text": "Daminus has never seen this server and does not write known_hosts. Compare the fingerprint with your provider’s console, then accept it once in Terminal.",
+        "step": "Run, compare, answer yes"
+      },
+      "changed": {
+        "title": "{host} is not the server it was",
+        "text": "It answered with a different host key than the one in your known_hosts. That is normal after a reinstall or a move, and it is also what an interception looks like. Daminus stopped before sending anything.",
+        "warn": "This may be someone pretending to be {host}. Only continue if you reinstalled or moved it.",
+        "check": "Check before you trust it",
+        "step1": "Did you or your host reinstall, restore or migrate {host} lately? If not, stop here and ask them.",
+        "step2": "Open the provider’s web console and run ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub. It must match the offered fingerprint.",
+        "step3": "Only then remove the old key and reconnect:",
+        "after": "Then, after ssh-keygen -R {host}",
+        "run": "Run it yourself, then connect once in Terminal to accept the new key. Daminus never edits known_hosts."
+      },
+      "unavailable": {
+        "title": "{host} · fingerprint unavailable",
+        "text": "Daminus could not read the key: the host sits behind a jump host and the jump failed, or it did not answer. Terminal shows it with your full ssh setup.",
+        "step": "See it yourself"
+      }
+    }
+  }
+}

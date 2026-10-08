@@ -11,6 +11,7 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useFormat } from '@/composables/use-format'
+import { useHostKeyReview } from '@/features/host-key/use-host-key-review'
 import { useNow } from '@/composables/use-now'
 import { errorText } from '@/lib/issue-text'
 import { coresOf, itemOf } from '@/lib/server-facts'
@@ -35,6 +36,7 @@ import { kpiView } from './server-text'
 import { useServerData } from './use-server-data'
 
 const { t } = useI18n()
+const keys = useHostKeyReview()
 const fmt = useFormat()
 const route = useRoute()
 const reports = useReportStore()
@@ -157,7 +159,13 @@ const errorMessage = computed(() => (failure.value ? errorText(failure.value) : 
         icon="unreachable"
         :title="t('serverScreen.state.unreachable', { host })"
         :text="unreachableText"
-      />
+      >
+        <template v-if="keys.has(data.failed.value)" #trailing>
+          <UiButton size="small" icon="shield" @click="keys.review(host, data.failed.value)">
+            {{ t('hostKey.review') }}
+          </UiButton>
+        </template>
+      </UiBanner>
       <UiBanner
         v-else-if="seq === null"
         tone="warn"

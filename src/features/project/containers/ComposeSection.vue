@@ -49,6 +49,7 @@ const reason = computed(() => props.section.problem ?? 'other')
       :text="t('projectContainers.perm.text')"
       :steps="steps"
       :note="t('projectContainers.perm.again')"
+      :host="host"
     />
     <div v-else-if="section.problem" class="unknown">
       <b>{{ t('projectContainers.unknown.title', { name, host }) }}</b>

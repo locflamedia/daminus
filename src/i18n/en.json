@@ -352,6 +352,10 @@
         "destructive": {
           "lead": "Overwrites a disk or a whole folder",
           "rest": "can write to a device or change owners and permissions across a tree; check the target"
+        },
+        "dockerGroup": {
+          "lead": "Docker group is root access",
+          "rest": "anyone in the docker group can take over this server; add only an account you trust with that"
         }
       }
     },

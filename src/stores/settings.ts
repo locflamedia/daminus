@@ -1,13 +1,42 @@
-// Look-and-feel preferences: language, theme and the sidebar fold. They apply at once (no
-// reload) and are remembered in this webview's localStorage. The persistent settings file
-// the core owns (`Settings`) gets its own commands with the Settings screens.
+// Look-and-feel preferences: language, theme and the sidebar fold, and the General and
+// Appearance sections of `settings.json`. A choice applies at once (no reload); the core keeps
+// the sections (`settings_set_general`, `settings_set_appearance` check the whole file again)
+// and the webview's localStorage keeps a copy of language and theme so the first paint is
+// right before the core has answered.
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { type Locale, DEFAULT_LOCALE, isLocale, localeFromTag, setI18nLocale } from '@/i18n'
+import {
+  type AppError,
+  type AppearanceSettings,
+  type GeneralSettings,
+  type IntroMode,
+  type Settings,
+  settingsGet,
+  settingsSetAppearance,
+  settingsSetGeneral,
+} from '@/api'
+import {
+  type Locale,
+  DEFAULT_LOCALE,
+  currentLocale,
+  isLocale,
+  localeFromTag,
+  setI18nLocale,
+  t,
+} from '@/i18n'
 import { crossFade } from '@/lib/cross-fade'
+import { errorText } from '@/lib/issue-text'
+import {
+  type AppearanceFlag,
+  DEFAULT_APPEARANCE,
+  DEFAULT_GENERAL,
+  applyAppearance,
+  readFlags,
+} from '@/lib/preferences'
 import { readJson, writeJson } from '@/lib/storage'
 import { type Theme, applyTheme, isTheme } from '@/lib/theme'
 import { SIDEBAR_RANGES, type SidebarRange } from '@/lib/viewport'
+import { useToastStore } from './toasts'
 
 const KEY = 'daminus.ui.v1'
 
@@ -15,6 +44,7 @@ interface Stored {
   language?: unknown
   theme?: unknown
   folded?: Record<string, unknown>
+  flags?: unknown
 }
 
 export const useSettingsStore = defineStore('settings', () => {
@@ -26,9 +56,21 @@ export const useSettingsStore = defineStore('settings', () => {
   // inside an async callback, after the choice is made, and saving them would store the
   // previous value.
   const chosen: { language: Locale; theme: Theme } = { language: DEFAULT_LOCALE, theme: 'system' }
+  /** The General and Appearance sections as the core last saved them, plus what was chosen since. */
+  const general = ref<GeneralSettings>({ ...DEFAULT_GENERAL })
+  const appearance = ref<AppearanceSettings>({ ...DEFAULT_APPEARANCE })
+  /** True once the core has answered: until then (a plain browser, a test) nothing is sent. */
+  const synced = ref(false)
+  // Saves go one after the other, so the file ends as the last choice left it.
+  let queue: Promise<unknown> = Promise.resolve()
 
   function persist() {
-    writeJson(KEY, { language: chosen.language, theme: chosen.theme, folded: folded.value })
+    writeJson(KEY, {
+      language: chosen.language,
+      theme: chosen.theme,
+      folded: folded.value,
+      flags: appearance.value,
+    })
   }
 
   function applyLanguage(next: Locale) {
@@ -47,6 +89,9 @@ export const useSettingsStore = defineStore('settings', () => {
     applyLanguage(chosen.language)
     theme.value = chosen.theme
     applyTheme(theme.value)
+    general.value = { ...general.value, language: chosen.language }
+    appearance.value = { ...DEFAULT_APPEARANCE, ...readFlags(stored.flags), theme: chosen.theme }
+    applyAppearance(appearance.value)
     folded.value = {}
     for (const range of SIDEBAR_RANGES) {
       const value = stored.folded?.[range]
@@ -54,21 +99,91 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  /** Sends one section to the core, after the saves before it; a refusal reloads what is saved. */
+  function save(send: () => Promise<Settings>) {
+    if (!synced.value) return
+    queue = queue.then(send).then(
+      () => undefined,
+      async (error: unknown) => {
+        useToastStore().push({ tone: 'crit', title: failureText(error) })
+        await load()
+      },
+    )
+  }
+
+  function saveGeneral() {
+    save(() => settingsSetGeneral({ ...general.value }))
+  }
+
+  function saveAppearance() {
+    save(() => settingsSetAppearance({ ...appearance.value }))
+  }
+
+  /** Takes what the core saved as the truth: the sections, the language, the theme, the flags. */
+  function adopt(saved: Settings) {
+    general.value = { ...saved.general }
+    appearance.value = { ...saved.appearance }
+    chosen.language = localeFromTag(saved.general.language)
+    chosen.theme = isTheme(saved.appearance.theme) ? saved.appearance.theme : 'system'
+    applyLanguage(chosen.language)
+    theme.value = chosen.theme
+    applyTheme(chosen.theme)
+    applyAppearance(appearance.value)
+    persist()
+  }
+
+  /** Reads `settings.json` from the core. A failed read leaves the local copy in place. */
+  async function load() {
+    try {
+      adopt(await settingsGet())
+      synced.value = true
+    } catch {
+      // The local copy of language and theme stays; nothing is sent until a read succeeds.
+    }
+  }
+
   function setLanguage(next: Locale) {
     if (next === chosen.language) return
     chosen.language = next
+    general.value = { ...general.value, language: next }
     crossFade(() => applyLanguage(next))
     persist()
+    saveGeneral()
   }
 
   function setTheme(next: Theme) {
     if (next === chosen.theme) return
     chosen.theme = next
+    appearance.value = { ...appearance.value, theme: next }
     crossFade(() => {
       theme.value = next
       applyTheme(next)
     })
     persist()
+    saveAppearance()
+  }
+
+  /** The language of AI answers; `null` follows the app. */
+  function setAiLanguage(next: Locale | null) {
+    general.value = { ...general.value, ai_language: next }
+    saveGeneral()
+  }
+
+  function setScanOnOpen(next: boolean) {
+    general.value = { ...general.value, scan_on_open: next }
+    saveGeneral()
+  }
+
+  /** Whether the intro plays on the first launch, every launch or never (General and Appearance). */
+  function setIntro(next: IntroMode) {
+    general.value = { ...general.value, intro: next }
+    saveGeneral()
+  }
+
+  function setAppearanceFlag(flag: AppearanceFlag, next: boolean) {
+    appearance.value = { ...appearance.value, [flag]: next }
+    applyAppearance(appearance.value)
+    saveAppearance()
   }
 
   /** Whether the sidebar is a rail in `range`: the user's choice, else only when narrow. */
@@ -81,5 +196,28 @@ export const useSettingsStore = defineStore('settings', () => {
     persist()
   }
 
-  return { language, theme, folded, init, setLanguage, setTheme, isFolded, toggleFolded }
+  return {
+    language,
+    theme,
+    folded,
+    general,
+    appearance,
+    synced,
+    init,
+    load,
+    setLanguage,
+    setTheme,
+    setAiLanguage,
+    setScanOnOpen,
+    setIntro,
+    setAppearanceFlag,
+    isFolded,
+    toggleFolded,
+  }
 })
+
+/** The words for a refused or failed save: the core's own error in the app language. */
+function failureText(error: unknown): string {
+  const known = typeof error === 'object' && error !== null && 'code' in error
+  return known ? errorText(error as AppError, currentLocale()) : t('settingsGeneral.saveFailed')
+}

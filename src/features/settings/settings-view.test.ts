@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { flushPromises, mount } from '@vue/test-utils'
+import { createPinia } from 'pinia'
 import { afterEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { i18n } from '@/i18n'
@@ -11,7 +12,7 @@ async function mountAt(path: string) {
     routes: [{ path: '/settings/:section?', name: 'settings', component: SettingsView }],
   })
   await router.push(path)
-  const wrapper = mount(SettingsView, { global: { plugins: [i18n, router] } })
+  const wrapper = mount(SettingsView, { global: { plugins: [createPinia(), i18n, router] } })
   await flushPromises()
   return wrapper
 }

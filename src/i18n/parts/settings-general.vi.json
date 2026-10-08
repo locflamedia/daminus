@@ -1,0 +1,56 @@
+{
+  "settingsGeneral": {
+    "saveFailed": "Không lưu được thiết lập. Chưa có gì thay đổi.",
+    "language": {
+      "title": "Ngôn ngữ",
+      "app": "Ngôn ngữ ứng dụng",
+      "appHint": "Menu, nhãn, ngày và số.",
+      "search": "Tìm ngôn ngữ",
+      "notTranslated": "Chưa có bản dịch",
+      "notTranslatedHint": "Chưa có bản dịch. Giúp dịch →",
+      "none": "Không tìm thấy ngôn ngữ",
+      "help": "Giúp dịch Daminus",
+      "ai": "AI trả lời bằng",
+      "aiHint": "AI có thể trả lời bằng ngôn ngữ khác với ứng dụng.",
+      "aiGroup": "Ngôn ngữ AI trả lời",
+      "aiSame": "Như ứng dụng"
+    },
+    "formats": {
+      "title": "Định dạng",
+      "follow": "theo ngôn ngữ",
+      "numbers": "Số",
+      "dates": "Ngày",
+      "time": "Giờ",
+      "relative": "Tương đối",
+      "hoursAgo": "{n} giờ trước"
+    },
+    "open": {
+      "title": "Khi mở Daminus",
+      "scan": "Quét khi mở",
+      "scanHint": "Tắt: bạn quyết định khi nào chạy SSH.",
+      "intro": "Intro",
+      "introHint": "Bức tranh chạy đầy đủ một lần; các lần sau chỉ một giây.",
+      "introGroup": "Intro khi mở",
+      "first": "Lần đầu",
+      "always": "Mỗi lần",
+      "never": "Không"
+    },
+    "preview": {
+      "live": "Xem trước trực tiếp",
+      "overview": "Tổng quan",
+      "issues": "{n} vấn đề",
+      "history": "Lịch sử quét",
+      "servers": "{n} máy chủ",
+      "critical": "{n} nghiêm trọng",
+      "finding": "File PHP trong uploads",
+      "security": "Bảo mật ›",
+      "uptime": "Hoạt động",
+      "disk": "Ổ đĩa",
+      "database": "CSDL",
+      "scan": "Lần quét #12 · hôm nay {clock} · {ago}",
+      "neverTitle": "Không bao giờ dịch",
+      "never": "disk.fs · vps-sg-2 · /var/www · ssh-add · Laravel",
+      "switched": "Đã chuyển sang {language} · không cần khởi động lại"
+    }
+  }
+}

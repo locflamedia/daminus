@@ -73,7 +73,7 @@
       "text": "Người dùng SSH không được phép chạy docker nên không có gì để đọc. Máy chủ không hỏng gì cả.",
       "tryTitle": "Tự kiểm tra",
       "fixTitle": "Cho người dùng SSH chạy docker",
-      "fixText": "Thêm người dùng SSH vào nhóm docker rồi kết nối lại. Thành viên nhóm này có quyền tương đương root trên máy chủ; nếu thấy quá rộng, hãy bỏ qua container cho dự án này.",
+      "fixText": "Thêm người dùng SSH vào nhóm docker rồi kết nối lại. Nếu thấy quá rộng, hãy bỏ qua container cho dự án này.",
       "again": "Đổi nhóm chỉ áp dụng cho phiên SSH mới; lần quét sau sẽ mở phiên mới."
     },
     "unknown": {

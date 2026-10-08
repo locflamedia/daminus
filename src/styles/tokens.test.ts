@@ -449,6 +449,8 @@ describe('token usage', () => {
     // The side padding of the window's main column, which a setup footer reaches out to.
     '--main-pad',
   ])
+  // The palette a theme card hands to its miniature (features/settings/theme-preview.ts).
+  const RUNTIME_PREFIXES = ['--pv-']
 
   it('only references tokens that are defined', () => {
     const defined = new Set([...light.keys(), ...darkAttr.keys()])
@@ -460,7 +462,8 @@ describe('token usage', () => {
       const local = new Set([...text.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1] ?? ''))
       for (const m of text.matchAll(/var\((--[\w-]+)/g)) {
         const name = m[1] ?? ''
-        if (!defined.has(name) && !local.has(name) && !RUNTIME.has(name)) used.set(name, file)
+        const runtime = RUNTIME.has(name) || RUNTIME_PREFIXES.some((p) => name.startsWith(p))
+        if (!defined.has(name) && !local.has(name) && !runtime) used.set(name, file)
       }
     }
     expect([...used]).toEqual([])

@@ -55,6 +55,7 @@ const steps = computed<PermissionStep[]>(() => [
     :text="t('projectDatabase.perm.text')"
     :steps="steps"
     :note="t('projectDatabase.perm.again')"
+    :host="host"
   />
   <section v-else class="state">
     <header class="head">

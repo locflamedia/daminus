@@ -1,0 +1,41 @@
+{
+  "settingsAppearance": {
+    "theme": {
+      "title": "Giao diện",
+      "group": "Giao diện",
+      "overview": "Tổng quan",
+      "light": { "name": "Sáng", "hint": "Bề mặt dịu như ánh sáng ban ngày" },
+      "dark": { "name": "Tối", "hint": "Chỉnh lại màu cho làm việc ban đêm" },
+      "system": { "name": "Theo hệ thống", "hint": "Theo macOS, đổi khi hoàng hôn" }
+    },
+    "motion": {
+      "title": "Chuyển động",
+      "reduce": "Giảm chuyển động",
+      "reduceOff": "Theo macOS. Hiện đang tắt.",
+      "reduceOn": "Theo macOS. Hiện đang bật.",
+      "reduceValue": "Hệ thống",
+      "intro": "Intro",
+      "introHint": "Bức tranh đầy đủ một lần, các lần sau ngắn.",
+      "introGroup": "Intro khi mở",
+      "first": "Lần đầu",
+      "always": "Luôn luôn",
+      "never": "Không",
+      "transparency": "Giảm độ trong suốt",
+      "transparencyHint": "Thanh bên và bảng đặc.",
+      "charts": "Biểu đồ chuyển động",
+      "chartsHint": "Đường vẽ ra khi có kết quả mới."
+    },
+    "little": {
+      "title": "Những điều nhỏ",
+      "clearSky": "Khoảnh khắc trời quang",
+      "clearSkyHint": "Các ngôi sao sáng lên phía trên phần tóm tắt khi mọi dự án đều ổn.",
+      "streak": "Huy hiệu chuỗi tuần",
+      "streakHint": "Đếm số tuần sạch trên thanh bên. Đặt lại lặng lẽ.",
+      "streakSample": "5t",
+      "chime": "Chuông hoàn tất",
+      "chimeHint": "Âm thanh nhẹ khi quét xong. Theo âm lượng cảnh báo.",
+      "eggs": "Trứng phục sinh",
+      "eggsHint": "Gõ “starry” trong ⌘K. Có thể còn nhiều cái khác."
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "expected": {
+    "menu": {
+      "label": "Actions for {check}",
+      "open": "More actions",
+      "copyPath": "Copy path",
+      "mark": "Mark as expected…"
+    },
+    "pop": {
+      "label": "Mark as expected",
+      "title": "Mark as expected",
+      "why": "Why is it fine?",
+      "reason": {
+        "intended": {
+          "title": "It is meant to be there",
+          "text": "A file or setting you or your framework put there on purpose."
+        },
+        "accepted_risk": {
+          "title": "I accept the risk for now",
+          "text": "Known problem, fixed later. Needs a date."
+        },
+        "false_positive": {
+          "title": "The check is wrong here",
+          "text": "A false positive. Tell us so the check improves."
+        }
+      },
+      "covers": "Covers",
+      "coversAsItIs": "This file, as it is now",
+      "coversAny": "Any file at this path",
+      "review": "Check again",
+      "review30": "30 d",
+      "review90": "90 d",
+      "reviewNever": "Never",
+      "alert": "Alert again if the file changes",
+      "alertLocked": "always on for critical",
+      "note": "Note for future you",
+      "saved": "Saved in projects.json · shown in History",
+      "cancel": "Cancel",
+      "submit": "Mark expected",
+      "saving": "Saving…",
+      "error": {
+        "rule_no_result": "This result is no longer in the latest scan, so it cannot be marked.",
+        "rule_not_an_issue": "This result is not a warning or a critical one any more.",
+        "rule_needs_date": "Pick a day to check again.",
+        "rule_critical_any": "A critical result is always tied to its evidence.",
+        "rule_review_days": "Pick 30 or 90 days.",
+        "rule_note": "The note is too long or has characters that cannot be saved.",
+        "other": "Daminus could not save the rule. Nothing was changed."
+      }
+    },
+    "toast": {
+      "until": "Marked expected until {date}",
+      "always": "Marked expected",
+      "undo": "Undo",
+      "gone": "Rule removed"
+    },
+    "undo": {
+      "label": "Undo",
+      "title": "Remove the rule on {check}"
+    },
+    "broken": {
+      "title": "Was expected, now different",
+      "text": "The evidence changed since you marked it, so the rule no longer holds.",
+      "note": "Your note: “{note}”"
+    }
+  }
+}

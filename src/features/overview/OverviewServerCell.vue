@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import type { ServerScan } from '@/lib/overview-scan'
 import type { ServerCell } from '@/lib/overview-servers'
+import { useHostKeyReview } from '@/features/host-key/use-host-key-review'
 import UiIcon from '@/ui/UiIcon.vue'
 
 const props = defineProps<{
@@ -22,6 +23,7 @@ const props = defineProps<{
 const emit = defineEmits<{ retry: [] }>()
 
 const { t } = useI18n()
+const keys = useHostKeyReview()
 const fmt = useFormat()
 
 const CIRCUMFERENCE = 106.8
@@ -44,6 +46,9 @@ const mem = computed(() =>
 const detail = computed(() => {
   if (props.scan === 'reading') return t('overviewScreen.servers.readingDisk')
   if (props.scan === 'queued') return t('overviewScreen.servers.waitSlot')
+  if (props.cell.state === 'unreachable' && keys.has(props.cell.outcome)) {
+    return t(`scanHost.${props.cell.outcome?.state}`)
+  }
   if (props.cell.state === 'unreachable') {
     return props.cell.silentDays === null
       ? t('overviewScreen.servers.unreachable')
@@ -115,6 +120,15 @@ const detail = computed(() => {
           }}</span>
           <span v-else-if="scan === 'queued'" class="tag">{{ t('scanChip.queued') }}</span>
           <span v-else-if="scan === 'done'" class="done">✓ {{ t('scanChip.done') }}</span>
+          <button
+            v-else-if="down && keys.has(cell.outcome)"
+            type="button"
+            class="tag action"
+            :aria-label="t('hostKey.reviewFor', { host: cell.host })"
+            @click="keys.review(cell.host, cell.outcome)"
+          >
+            {{ t('hostKey.review') }}
+          </button>
           <button v-else-if="down" type="button" class="tag action" @click="emit('retry')">
             {{ t('overviewScreen.servers.retry') }}
           </button>

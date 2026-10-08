@@ -1,0 +1,41 @@
+{
+  "settingsAppearance": {
+    "theme": {
+      "title": "Theme",
+      "group": "Theme",
+      "overview": "Overview",
+      "light": { "name": "Light", "hint": "Soft daylight surfaces" },
+      "dark": { "name": "Dark", "hint": "Re-lit for night work" },
+      "system": { "name": "Match system", "hint": "Follows macOS, switches at sunset" }
+    },
+    "motion": {
+      "title": "Motion",
+      "reduce": "Reduce motion",
+      "reduceOff": "Follows macOS. Currently off.",
+      "reduceOn": "Follows macOS. Currently on.",
+      "reduceValue": "System",
+      "intro": "Intro",
+      "introHint": "Full painting once, short after.",
+      "introGroup": "Intro on launch",
+      "first": "First",
+      "always": "Always",
+      "never": "Never",
+      "transparency": "Reduce transparency",
+      "transparencyHint": "Solid sidebar and panels.",
+      "charts": "Animate charts",
+      "chartsHint": "Lines draw in when new results land."
+    },
+    "little": {
+      "title": "Little things",
+      "clearSky": "Clear-sky moment",
+      "clearSkyHint": "The stars brighten above the summary when every project is clear.",
+      "streak": "Streak badge",
+      "streakHint": "Counts clean weeks in the sidebar. Resets quietly.",
+      "streakSample": "5w",
+      "chime": "Completion chime",
+      "chimeHint": "Soft sound when a scan ends. Follows alert volume.",
+      "eggs": "Easter eggs",
+      "eggsHint": "Type “starry” in ⌘K. There may be others."
+    }
+  }
+}

@@ -352,6 +352,10 @@
         "destructive": {
           "lead": "Ghi đè một ổ đĩa hoặc cả một thư mục",
           "rest": "có thể ghi vào thiết bị hoặc đổi chủ sở hữu và quyền trên cả cây thư mục; kiểm tra đối tượng"
+        },
+        "dockerGroup": {
+          "lead": "Nhóm docker là quyền root",
+          "rest": "ai thuộc nhóm docker đều có thể chiếm quyền máy chủ này; chỉ thêm tài khoản bạn tin tưởng"
         }
       }
     },
