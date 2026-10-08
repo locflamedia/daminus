@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
 import { useNow } from '@/composables/use-now'
 import SidebarAiCard from '@/features/empty/components/SidebarAiCard.vue'
@@ -17,12 +17,17 @@ import UiIcon from '@/ui/UiIcon.vue'
 import UiKbd from '@/ui/UiKbd.vue'
 import DiskRing from './DiskRing.vue'
 import ProjectDot from './ProjectDot.vue'
+import SidebarSnapshots from './SidebarSnapshots.vue'
 
 const { t } = useI18n()
 const report = useReportStore()
 const projects = useProjectsStore()
 const scan = useScanStore()
 const empty = useEmptyStore()
+const route = useRoute()
+
+/** The Snapshots card shows on a project's History tab only. */
+const onProjectHistory = computed(() => route.name === 'project' && route.params.tab === 'history')
 
 /** No project yet: the sidebar draws its empty form, by the screen Overview shows. */
 const firstLaunch = computed(() => empty.active)
@@ -160,6 +165,8 @@ const serverRows = computed(() =>
         </span>
       </RouterLink>
     </section>
+
+    <SidebarSnapshots v-if="onProjectHistory" />
 
     <div class="foot">
       <SidebarAiCard v-if="firstLaunch && !helpScreen" />

@@ -102,6 +102,12 @@
         "warn": "warning",
         "crit": "critical"
       }
+    },
+    "snapshots": {
+      "title": "Snapshots",
+      "kept": "{n} of {keep} kept · {size} on disk. Oldest drops off automatically.",
+      "keptAll": "{n} kept · {size} on disk. Every scan is kept.",
+      "bar": "{n} of {keep} snapshots kept"
     }
   }
 }

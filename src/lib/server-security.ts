@@ -116,8 +116,8 @@ function rowFor(check: SecurityCheck, items: readonly Item[], report: Report | n
   const top = worst(own)
   const level = top.severity.level
   const partial = check === 'sec.miner' ? coverage(top) : null
-  if (level === 'unknown') {
-    const reason = top.severity.level === 'unknown' ? top.severity.reason : 'missing'
+  if (level === 'unknown' || (level === 'ok' && partial)) {
+    const reason = top.severity.level === 'unknown' ? top.severity.reason : 'needs_perm'
     return {
       check,
       state: 'unknown',

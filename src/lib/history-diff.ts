@@ -6,6 +6,7 @@ import type { Item, Level, Report, ScanSummary } from '@/api'
 import { currentLocale, type Locale } from '@/i18n'
 import { formatDelta, formatMeasure } from './format'
 import { stripCell, STRIP_GROUPS } from './history-strip'
+import { MIN_ROW_GROWTH_BYTES } from './presentation-hints'
 import { factData, num, str } from './security-data'
 import type { SeriesPoint } from './history-series'
 
@@ -26,8 +27,6 @@ export interface ChangeRow {
   value: string
 }
 
-/** The smallest growth of a folder or table that is worth a line. */
-export const MIN_GROWTH_BYTES = 10 * 1024 * 1024
 /** Rows shown at most. */
 export const MAX_ROWS = 8
 
@@ -65,7 +64,7 @@ function grownEntries(a: Item, b: Item): { name: string; growth: number }[] {
   const before = new Map(pairs(factData(a.fact).top))
   return pairs(factData(b.fact).top)
     .map(([name, bytes]) => ({ name, growth: bytes - (before.get(name) ?? bytes) }))
-    .filter((e) => e.growth >= MIN_GROWTH_BYTES)
+    .filter((e) => e.growth >= MIN_ROW_GROWTH_BYTES)
     .sort((x, y) => y.growth - x.growth)
 }
 

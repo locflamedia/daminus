@@ -7,6 +7,7 @@ import { checkManifest } from './check-manifest'
 import { dataOf, num } from './project-facts'
 import { hostSeries } from './server-facts'
 import { daysUntil, type TimedValue } from './forecast'
+import { FORECAST_HORIZON_DAYS } from './presentation-hints'
 import { formatDate } from './format'
 import type { Locale } from '@/i18n'
 
@@ -64,9 +65,6 @@ export interface DiskChart {
 /** How many scans the chart draws. */
 export const DISK_SCANS = 10
 
-/** A forecast further out than this is not worth a sentence. */
-export const FORECAST_MAX_DAYS = 365
-
 export function asTimed(points: readonly DiskPoint[]): TimedValue[] {
   return points.map((p) => ({ at: p.at, value: p.value }))
 }
@@ -104,7 +102,7 @@ export function buildDiskChart(
     points,
     thresholds,
     ...diskDomain(points, thresholds.warn),
-    forecastDays: days !== null && days <= FORECAST_MAX_DAYS ? days : null,
+    forecastDays: days !== null && days <= FORECAST_HORIZON_DAYS ? days : null,
     sizes: { size: num(data.size), used: num(data.used), avail: num(data.avail) },
   }
 }

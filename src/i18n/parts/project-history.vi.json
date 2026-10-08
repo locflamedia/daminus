@@ -102,6 +102,12 @@
         "warn": "cảnh báo",
         "crit": "nghiêm trọng"
       }
+    },
+    "snapshots": {
+      "title": "Bản chụp",
+      "kept": "Đã giữ {n} trên {keep} · {size} trên đĩa. Bản cũ nhất tự bị bỏ đi.",
+      "keptAll": "Đã giữ {n} · {size} trên đĩa. Giữ mọi lần quét.",
+      "bar": "Đã giữ {n} trên {keep} bản chụp"
     }
   }
 }

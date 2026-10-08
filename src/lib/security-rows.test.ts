@@ -67,6 +67,19 @@ describe('securityRows', () => {
     })
   })
 
+  it('never writes none for an ok miner result that did not see every process', () => {
+    const miner = secItem({
+      check: 'sec.miner',
+      level: { level: 'ok' },
+      value: 0,
+      data: { seen: 41, total: 212 },
+    })
+    const row = securityRow('sec.miner', [miner], [], 12, 'en')
+    expect(row.state).toBe('needs_perm')
+    expect(row.strong).toEqual({ key: 'seenOf', params: { seen: 41, total: 212 } })
+    expect(row.value).toEqual({ key: 'needsPermission' })
+  })
+
   it('writes none with the coverage only when the check saw every process', () => {
     const miner = secItem({ check: 'sec.miner', data: { seen: 212, total: 212 } })
     expect(securityRow('sec.miner', [miner], [], 12, 'en').value).toEqual({

@@ -7,6 +7,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { formatMeasure } from '@/lib/format'
+import { useSettingsStore } from '@/stores/settings'
 import type { Containers, ContainerRow } from '@/lib/server-containers'
 import UiIcon from '@/ui/UiIcon.vue'
 import { vEnter } from '@/lib/motion'
@@ -21,6 +23,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const fmt = useFormat()
+const settings = useSettingsStore()
 
 const meta = computed(() =>
   t('serverScreen.containers.meta', {
@@ -36,7 +39,7 @@ const meta = computed(() =>
 function cpu(row: ContainerRow): string {
   return row.cpu === null
     ? '—'
-    : `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(row.cpu)}%`
+    : formatMeasure(row.cpu, '%', settings.language, { maximumFractionDigits: 1 }).text
 }
 
 function memory(row: ContainerRow): string {

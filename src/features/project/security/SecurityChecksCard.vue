@@ -353,6 +353,13 @@ const label = (id: string) => checkName(id)
   padding: 2px var(--space-2) 6px 34px;
 }
 
+/* The card is narrow: the chip sits over its lines instead of beside them. */
+.detail :deep(.tls) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

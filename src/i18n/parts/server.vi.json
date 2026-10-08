@@ -29,7 +29,7 @@
       "trend": "{name} qua các lần quét gần đây",
       "noValue": "Không có giá trị",
       "tag": {
-        "ok": "ổn",
+        "ok": "ổn cả",
         "info": "thông tin",
         "warn": "cảnh báo",
         "crit": "nghiêm trọng",
@@ -80,7 +80,7 @@
       "warn": "{n} cảnh báo",
       "info": "{n} thông tin",
       "unknown": "{n} chưa có kết quả",
-      "ok": "{n} ổn",
+      "ok": "{n} ổn cả",
       "expected": "{n} đã chấp nhận",
       "empty": "Máy chủ này không có gì cần xem.",
       "list": "Phát hiện của {host}"

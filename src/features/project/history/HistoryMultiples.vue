@@ -24,6 +24,7 @@ import {
 } from '@/lib/history-series'
 import { sameScanTrouble } from '@/lib/history-strip'
 import { shouldPlay } from '@/lib/motion'
+import { GROWTH_SHARE } from '@/lib/presentation-hints'
 import { useSettingsStore } from '@/stores/settings'
 import UiCard from '@/ui/UiCard.vue'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -101,7 +102,10 @@ const rows = computed(() =>
     const last = points[points.length - 1]
     const delta = props.pair ? seriesDelta(points, props.pair.from, props.pair.to) : null
     const growing =
-      s.unit === 'bytes' && delta !== null && delta.from > 0 && delta.change / delta.from >= 0.1
+      s.unit === 'bytes' &&
+      delta !== null &&
+      delta.from > 0 &&
+      delta.change / delta.from >= GROWTH_SHARE
     return {
       ...s,
       points,

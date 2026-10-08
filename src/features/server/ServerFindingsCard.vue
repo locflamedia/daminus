@@ -97,7 +97,7 @@ const SEC_ICON: Record<SecurityRow['state'], IconName> = {
         class="find"
         :class="`level-${r.f.level}`"
       >
-        <span class="icon" :class="{ 'm-halo': r.f.level === 'crit' }">
+        <span class="badge" :class="{ 'm-halo': r.f.level === 'crit' }">
           <UiIcon :name="FINDING_ICON[r.f.level]" :size="12" :stroke="1.8" />
         </span>
         <div class="text">
@@ -189,7 +189,7 @@ const SEC_ICON: Record<SecurityRow['state'], IconName> = {
   background: color-mix(in srgb, var(--crit-soft) 45%, var(--surface-0));
 }
 
-.icon {
+.badge {
   display: grid;
   place-items: center;
   width: 20px;
@@ -199,22 +199,22 @@ const SEC_ICON: Record<SecurityRow['state'], IconName> = {
   color: var(--info-ink);
 }
 
-.level-warn .icon {
+.level-warn .badge {
   background: var(--warn-soft);
   color: var(--warn-ink);
 }
 
-.level-crit .icon {
+.level-crit .badge {
   background: var(--crit-soft);
   color: var(--crit-ink);
 }
 
-.level-unknown .icon {
+.level-unknown .badge {
   background: var(--surface-2);
   color: var(--ink-3);
 }
 
-.icon :deep(svg),
+.badge :deep(svg),
 .glyph :deep(svg) {
   color: inherit;
 }

@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { factSeries, item, T0 } from '@/testing/item-fixture'
-import {
-  axisTicks,
-  buildDiskChart,
-  diskDomain,
-  diskThresholds,
-  FORECAST_MAX_DAYS,
-} from './server-disk'
+import { FORECAST_HORIZON_DAYS } from './presentation-hints'
+import { axisTicks, buildDiskChart, diskDomain, diskThresholds } from './server-disk'
 
 const DAY = 86_400_000
 const host = 'vps-a'
@@ -50,7 +45,7 @@ describe('buildDiskChart', () => {
       field: 'pct',
       gap: DAY,
     })
-    expect(FORECAST_MAX_DAYS).toBeLessThan(900)
+    expect(FORECAST_HORIZON_DAYS).toBeLessThan(900)
     expect(buildDiskChart(fs, slow, host)?.forecastDays).toBeNull()
   })
 

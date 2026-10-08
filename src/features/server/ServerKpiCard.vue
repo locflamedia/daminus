@@ -192,12 +192,12 @@ const glow = computed(() => props.view.tag.tone === 'warn' || props.view.tag.ton
 }
 
 .delta {
+  position: relative;
+  z-index: 1;
   min-height: 14px;
-  overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

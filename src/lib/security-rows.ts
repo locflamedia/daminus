@@ -94,6 +94,15 @@ function worstFirst(items: readonly Item[]): Item[] {
   return [...items].sort((a, b) => RANK[stateOf(b)] - RANK[stateOf(a)])
 }
 
+/** The miner check answered "none" but did not look at every process: that is not "none". */
+function partialClear(id: SecurityCheck, item: Item, state: RowState): boolean {
+  if (id !== 'sec.miner' || state !== 'ok') return false
+  const data = dataOf(item)
+  const seen = num(data.seen)
+  const total = num(data.total)
+  return seen !== undefined && total !== undefined && seen < total
+}
+
 function minerValue(item: Item, state: RowState): Pick<SecurityRow, 'strong' | 'value'> {
   const data = dataOf(item)
   const seen = num(data.seen)
@@ -286,9 +295,9 @@ export function securityRow(
   }
   const ordered = worstFirst(active)
   const worst = ordered[0] as Item
-  const state = stateOf(worst)
+  const state = partialClear(id, worst, stateOf(worst)) ? 'needs_perm' : stateOf(worst)
   const deciding = ordered.filter(
-    (i) => stateOf(i) === state || id === 'sec.upload_php' || id === 'sec.tmp_exec',
+    (i) => stateOf(i) === stateOf(worst) || id === 'sec.upload_php' || id === 'sec.tmp_exec',
   )
   const stale = worst.disposition.kind === 'stale' ? worst.disposition.since_seq : null
   return {

@@ -80,6 +80,23 @@ describe('buildSecurityLite', () => {
     })
   })
 
+  it('never reads an ok miner result that did not see every process as clear', () => {
+    const partialOk = clean.map((i) =>
+      i.key.check === 'sec.miner'
+        ? item({
+            check: 'sec.miner',
+            level: { level: 'ok' },
+            value: 0,
+            data: { seen: 41, total: 212 },
+          })
+        : i,
+    )
+    expect(buildSecurityLite(partialOk, report()).rows[0]).toMatchObject({
+      state: 'unknown',
+      detail: { kind: 'seen', seen: 41, total: 212 },
+    })
+  })
+
   it('keeps a miner found with partial coverage as a finding that says what was seen', () => {
     const found = clean.map((i) =>
       i.key.check === 'sec.miner'

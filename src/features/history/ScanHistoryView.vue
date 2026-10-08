@@ -164,6 +164,11 @@ const scope = computed(() => String(reports.latest?.seq ?? 'none'))
   pointer-events: auto;
 }
 
+/* The segment sits in the middle of the 72 px header, as the board's header centres it. */
+.top :deep(.seg) {
+  align-self: center;
+}
+
 .title {
   font-size: var(--text-20);
   font-weight: var(--weight-medium);
