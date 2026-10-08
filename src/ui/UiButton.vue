@@ -25,8 +25,8 @@ const props = withDefaults(
   defineProps<{
     variant?: ButtonVariant
     /** Default is 32 px (toolbars, sheet footers); small is 28 px (inside rows); large is 40 px
-     * (the one action of a setup screen). Links are 24 px. */
-    size?: 'default' | 'small' | 'large'
+     * (the one action of a setup screen); medium is 36 px, radius 10 (the payload sheet). Links are 24 px. */
+    size?: 'default' | 'small' | 'medium' | 'large'
     /** A 14 px glyph before the label; the only glyph of an icon-only button. */
     icon?: IconName
     /** A 14 px glyph after the label (the chevron of an inline link). */
@@ -101,6 +101,7 @@ function onClick(event: MouseEvent) {
     :class="[
       `btn-${variant}`,
       size === 'small' && variant !== 'link' ? 'btn-small' : '',
+      size === 'medium' && variant !== 'link' ? 'btn-medium' : '',
       size === 'large' && variant !== 'link' ? 'btn-large' : '',
       {
         'btn-icon': isIconOnly(),
@@ -163,6 +164,11 @@ function onClick(event: MouseEvent) {
   height: var(--h-control-sm);
   border-radius: 8px;
   font-size: var(--text-12);
+}
+
+.btn-medium {
+  height: 36px;
+  padding: 0 14px;
 }
 
 .btn-large {

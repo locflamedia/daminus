@@ -137,6 +137,11 @@ function onInput(event: Event) {
   font: var(--text-12) var(--font-mono);
 }
 
+/* The control already rings on focus; the global keyboard ring would draw a second one. */
+.input:focus-visible {
+  box-shadow: none;
+}
+
 .input::placeholder {
   color: var(--ink-placeholder);
 }

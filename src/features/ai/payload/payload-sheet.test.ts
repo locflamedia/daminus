@@ -9,7 +9,7 @@ import { i18n } from '@/i18n'
 import { useAiPayloadStore } from '@/stores/ai-payload'
 import { resetAiSend, useAiSend } from '../use-ai-send'
 import PayloadSheet from './PayloadSheet.vue'
-import { maskedCount, pieces } from './payload-lib'
+import { kilobytes, maskedCount, pieces } from './payload-lib'
 
 const calls: Array<{ cmd: string; args: Record<string, unknown> }> = []
 let mock: AiMock
@@ -168,7 +168,46 @@ describe('payload sheet', () => {
   })
 })
 
+describe('payload sheet, as drawn on the board', () => {
+  it('is a plain card, focuses the panel (not the esc key) and sets the model in mono', async () => {
+    const store = await open()
+    store.model = 'claude-sonnet-5'
+    await flushPromises()
+    expect(document.querySelector('.tray.plain')).not.toBeNull()
+    await flushPromises()
+    expect(document.activeElement).toBe(document.querySelector('.tray'))
+    expect(document.querySelector('.context .mono')).not.toBeNull()
+  })
+
+  it('writes sizes in KB with one decimal', async () => {
+    await open()
+    const sizes = [...document.querySelectorAll('.sec .kb')].map((e) => e.textContent ?? '')
+    expect(sizes.length).toBeGreaterThan(0)
+    for (const t of sizes) expect(t).toMatch(/^\d+\.\d KB$/)
+  })
+
+  it('shows the final masked count when it is read', async () => {
+    await open()
+    expect(document.querySelector('.stats .sr')?.textContent).toBe(
+      String(
+        maskedCount(`${useAiPayloadStore().preview!.system}\n${useAiPayloadStore().preview!.user}`),
+      ),
+    )
+  })
+})
+
 describe('payload lib', () => {
+  it('colours the parts of a JSON line and keeps masked values apart', () => {
+    const ps = pieces('  "ip": "[ip-1]", "n": 12 }')
+    expect(ps.map((p) => p.text).join('')).toBe('  "ip": "[ip-1]", "n": 12 }')
+    expect(ps.find((p) => p.text === '"ip"')?.kind).toBe('key')
+    expect(ps.find((p) => p.masked)?.text).toBe('[ip-1]')
+    expect(ps.find((p) => p.text === '12')?.kind).toBe('num')
+    expect(pieces('plain text')[0]?.kind).toBe('plain')
+    expect(kilobytes(100)).toBe(0.1)
+    expect(kilobytes(10035)).toBe(9.8)
+  })
+
   it('finds masked values', () => {
     expect(maskedCount('a [host-1] b [ip-2] c [redacted:key] d')).toBe(3)
     expect(pieces('x [ip-1]').map((p) => p.masked)).toEqual([false, true])

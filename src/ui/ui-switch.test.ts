@@ -57,4 +57,9 @@ describe('UiSwitch', () => {
     await wrapper.trigger('pointerdown')
     expect(wrapper.classes()).not.toContain('jump')
   })
+
+  it('has a compact size for a page header', () => {
+    const wrapper = mount(UiSwitch, { props: { modelValue: true, size: 'compact', label: 'x' } })
+    expect(wrapper.classes()).toContain('compact')
+  })
 })

@@ -4,9 +4,13 @@
 /** A masked value: a placeholder for a name or address, or a `[redacted…]` secret. */
 const MASKED = /\[(?:host|ip)-\d+\]|\[[^\]\n]*redacted[^\]\n]*\]/g
 
+/** What a stretch of a JSON-looking line is, for the colours of the code panel. */
+export type Kind = 'key' | 'str' | 'num' | 'pu' | 'plain'
+
 export interface Piece {
   text: string
   masked: boolean
+  kind: Kind
 }
 
 export interface CodeLine {
@@ -14,18 +18,50 @@ export interface CodeLine {
   pieces: Piece[]
 }
 
-/** The line cut into plain and masked pieces. */
-export function pieces(line: string): Piece[] {
-  const out: Piece[] = []
-  let last = 0
-  for (const m of line.matchAll(MASKED)) {
+const TOKEN = /"(?:[^"\\\n]|\\.)*"?|-?\d+(?:\.\d+)?(?![\w.])|\s+|[^\s"{}[\],:]+|[\s\S]/g
+const JSON_LINE = /^\s*[{}[\]"]/
+
+/** Cuts a JSON-looking line into [start, end, kind]; any other line is one plain stretch. */
+function kinds(line: string): Array<[number, number, Kind]> {
+  if (!JSON_LINE.test(line)) return [[0, line.length, 'plain']]
+  const out: Array<[number, number, Kind]> = []
+  for (const m of line.matchAll(TOKEN)) {
     const at = m.index ?? 0
-    if (at > last) out.push({ text: line.slice(last, at), masked: false })
-    out.push({ text: m[0], masked: true })
-    last = at + m[0].length
+    const end = at + m[0].length
+    let kind: Kind = 'pu'
+    if (m[0].startsWith('"')) kind = /^\s*:/.test(line.slice(end)) ? 'key' : 'str'
+    else if (/^-?\d/.test(m[0])) kind = 'num'
+    out.push([at, end, kind])
   }
-  if (last < line.length) out.push({ text: line.slice(last), masked: false })
   return out
+}
+
+/** The line cut into pieces: masked or not, and the kind of each (keys, strings, numbers). */
+export function pieces(line: string): Piece[] {
+  const masks = [...line.matchAll(MASKED)].map((m): [number, number] => [
+    m.index ?? 0,
+    (m.index ?? 0) + m[0].length,
+  ])
+  const out: Piece[] = []
+  const push = (from: number, to: number, kind: Kind, masked: boolean) => {
+    if (to > from) out.push({ text: line.slice(from, to), masked, kind })
+  }
+  for (const [a, b, kind] of kinds(line)) {
+    let at = a
+    for (const [ma, mb] of masks) {
+      if (mb <= at || ma >= b) continue
+      push(at, Math.max(at, ma), kind, false)
+      push(Math.max(at, ma), Math.min(b, mb), kind, true)
+      at = Math.min(b, mb)
+    }
+    push(at, b, kind, false)
+  }
+  return out
+}
+
+/** Size in KB with one decimal as the board writes it ("0.1", "9.8"); the unit is the caller's. */
+export function kilobytes(bytes: number): number {
+  return Math.round((bytes / 1024) * 10) / 10
 }
 
 /** How many masked values `text` holds. */

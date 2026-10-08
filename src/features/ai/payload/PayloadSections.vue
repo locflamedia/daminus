@@ -7,13 +7,12 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { SectionInfo } from '@/api'
-import { useFormat } from '@/composables/use-format'
+import { kilobytes } from './payload-lib'
 
 defineProps<{ sections: readonly SectionInfo[]; question: string; busy?: boolean }>()
 const emit = defineEmits<{ toggle: [id: SectionInfo['id']] }>()
 
-const { t } = useI18n()
-const fmt = useFormat()
+const { t, n } = useI18n()
 
 const RULES = ['sk-', 'ghp_', 'AKIA', 'xox', 'PEM', 'entropy ≥ 20', 'IP + host'] as const
 
@@ -25,6 +24,12 @@ const NAMES = {
   server_facts: 'ai.payload.sections.server_facts',
   top_disk_paths: 'ai.payload.sections.top_disk_paths',
 } as const
+
+const ONE_DECIMAL = { minimumFractionDigits: 1, maximumFractionDigits: 1 }
+/** "9.8 KB", one decimal as on the board. */
+function kb(bytes: number): string {
+  return `${n(kilobytes(bytes), ONE_DECIMAL)} KB`
+}
 
 function describe(s: SectionInfo, question: string): string {
   switch (s.id) {
@@ -72,7 +77,7 @@ function describe(s: SectionInfo, question: string): string {
         <span class="name">{{ t(NAMES[s.id]) }}</span>
         <span class="desc">{{ describe(s, question) }}</span>
       </span>
-      <span class="kb">{{ fmt.measure(s.bytes, 'bytes').text }}</span>
+      <span class="kb">{{ kb(s.bytes) }}</span>
     </label>
     <div class="rules">
       <span class="head">{{ t('ai.payload.rules') }}</span>
@@ -109,7 +114,7 @@ function describe(s: SectionInfo, question: string): string {
   height: 44px;
   padding: 0 10px;
   border-radius: 10px;
-  background: var(--surface-1);
+  background: var(--surface-well);
   cursor: pointer;
   transition:
     opacity var(--dur-color) var(--ease-state),
@@ -139,8 +144,8 @@ function describe(s: SectionInfo, question: string): string {
   width: 16px;
   height: 16px;
   border-radius: 5px;
-  background: var(--ink);
-  color: var(--surface-0);
+  background: var(--btn);
+  color: var(--btn-ink);
 }
 
 .lock .box {
@@ -192,7 +197,7 @@ function describe(s: SectionInfo, question: string): string {
   margin-top: auto;
   padding: 12px;
   border-radius: 12px;
-  background: var(--surface-1);
+  background: var(--surface-well);
 }
 
 .rules .head {

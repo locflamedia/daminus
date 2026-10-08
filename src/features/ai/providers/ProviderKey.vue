@@ -43,7 +43,7 @@ function cancel() {
       <UiIcon name="lock" :size="16" class="lock" />
       <span class="dots" aria-hidden="true">••••••••••••••••</span>
       <span class="where">{{ t('aiProviders.key.inKeychain') }}</span>
-      <UiButton variant="link" @click="replacing = true">{{
+      <UiButton variant="link" class="replace" @click="replacing = true">{{
         t('aiProviders.key.replace')
       }}</UiButton>
     </span>
@@ -57,7 +57,7 @@ function cancel() {
       :placeholder="
         entry.profile.key_hint
           ? t('aiProviders.key.placeholder', { hint: entry.profile.key_hint })
-          : undefined
+          : t('aiProviders.key.placeholderGeneric')
       "
       :hint="t('aiProviders.key.hint')"
       :error="store.keyErrors[id]"
@@ -110,6 +110,14 @@ function cancel() {
   font-family: var(--font-mono);
   font-size: var(--text-12);
   letter-spacing: 0.06em;
+}
+
+.locked .replace {
+  height: auto;
+  padding: 0;
+  background: transparent;
+  color: var(--accent-ink);
+  font-weight: var(--weight-medium);
 }
 
 .where {

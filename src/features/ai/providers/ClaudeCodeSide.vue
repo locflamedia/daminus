@@ -112,6 +112,10 @@ const FAILS = [
   line-height: 1.5;
 }
 
+.warning :deep(.text) {
+  font-weight: var(--weight-medium);
+}
+
 .link {
   color: var(--accent-ink);
   font-size: var(--text-12);

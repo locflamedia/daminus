@@ -12,7 +12,7 @@ import UiButton from '@/ui/UiButton.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiSeg from '@/ui/UiSeg.vue'
-import UiSpinner from '@/ui/UiSpinner.vue'
+import { formatNumber } from '@/lib/format'
 import { isActive } from './provider-state'
 
 const props = defineProps<{ entry: AiProviderEntry }>()
@@ -49,7 +49,9 @@ function pick(value: string) {
         >
         <span class="sub">{{ t('aiClaudeCode.sub') }}</span>
       </div>
-      <UiChip v-if="active" tone="info" class="status">{{ t('aiProviders.active') }}</UiChip>
+      <UiChip v-if="active" tone="info" size="large" class="status">{{
+        t('aiProviders.active')
+      }}</UiChip>
     </header>
 
     <dl v-if="claude" class="facts">
@@ -116,26 +118,23 @@ function pick(value: string) {
 
       <div class="test">
         <UiButton
-          icon="start"
+          :icon="state?.phase === 'ok' ? undefined : 'start'"
           :busy="state?.phase === 'busy'"
           :disabled-reason="ack ? undefined : t('aiClaudeCode.test.needsAck')"
           @click="store.test('claude-code')"
         >
-          {{ t('aiClaudeCode.test.button') }}
+          <template v-if="state?.phase === 'busy'">{{ t('aiClaudeCode.test.busy') }}</template>
+          <span v-else-if="state?.phase === 'ok'" class="done">
+            <UiIcon name="check" :size="16" :stroke="2" class="okmark" />{{
+              t('aiClaudeCode.test.works', { s: formatNumber(Math.round(state.ms / 100) / 10) })
+            }}
+          </span>
+          <template v-else>{{ t('aiClaudeCode.test.button') }}</template>
         </UiButton>
         <span class="line" role="status" aria-live="polite">
-          <template v-if="state?.phase === 'busy'">
-            <UiSpinner :size="14" />{{ t('aiClaudeCode.test.busy') }}
-          </template>
-          <template v-else-if="state?.phase === 'ok'">
-            <UiIcon name="check" :size="16" :stroke="2" class="okmark" />
-            <b class="works">{{
-              t('aiClaudeCode.test.works', { s: (state.ms / 1000).toFixed(1) })
-            }}</b>
-            <span class="quiet">{{ t('aiClaudeCode.test.counted') }}</span>
-          </template>
-          <span v-else-if="state?.phase === 'fail'" class="bad">{{ state.message }}</span>
-          <span v-else class="quiet">{{ t('aiClaudeCode.test.idle') }}</span>
+          <span v-if="state?.phase === 'fail'" class="bad">{{ state.message }}</span>
+          <span v-else-if="state?.phase === 'ok'">{{ t('aiClaudeCode.test.counted') }}</span>
+          <span v-else>{{ t('aiClaudeCode.test.idle') }}</span>
         </span>
       </div>
     </div>
@@ -145,6 +144,7 @@ function pick(value: string) {
 <style scoped>
 .card {
   display: flex;
+  align-self: stretch;
   flex-direction: column;
   gap: var(--space-3);
   min-width: 0;
@@ -318,8 +318,10 @@ function pick(value: string) {
   color: var(--ink-2);
 }
 
-.okmark,
-.works {
+.done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--ok-ink);
 }
 </style>

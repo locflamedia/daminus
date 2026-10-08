@@ -21,6 +21,7 @@
     "key": {
       "label": "Khoá API",
       "placeholder": "{hint}…",
+      "placeholderGeneric": "Dán khóa vào đây…",
       "hint": "Chỉ gửi một lần vào Keychain. Daminus không bao giờ hiện lại khoá.",
       "inKeychain": "trong Keychain",
       "replace": "Thay",
@@ -44,6 +45,7 @@
       "refresh": "Đọc lại danh sách",
       "manual": "Không đọc được danh sách. Hãy gõ tên mô hình.",
       "placeholder": "Tên mô hình",
+      "example": "vd: llama-3.1-70b",
       "use": "Dùng",
       "suggested": "Gợi ý"
     },

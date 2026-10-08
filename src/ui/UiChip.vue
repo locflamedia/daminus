@@ -13,15 +13,29 @@ import type { IconName } from './icon-paths'
 
 export type ChipTone = 'ok' | 'warn' | 'crit' | 'info' | 'neutral' | 'plain' | 'plain-ok'
 
-withDefaults(defineProps<{ tone?: ChipTone; icon?: IconName; busy?: boolean }>(), {
-  tone: 'neutral',
-  icon: undefined,
-  busy: false,
-})
+withDefaults(
+  defineProps<{
+    tone?: ChipTone
+    icon?: IconName
+    busy?: boolean
+    /** `large` is the 24 px chip of the AI providers boards; `tag` the 20 px, radius 6 tag of a
+     *  card header; default is 22 px. */
+    size?: 'default' | 'large' | 'tag'
+  }>(),
+  {
+    tone: 'neutral',
+    size: 'default',
+    icon: undefined,
+    busy: false,
+  },
+)
 </script>
 
 <template>
-  <span class="chip" :class="`chip-${tone}`">
+  <span
+    class="chip"
+    :class="[`chip-${tone}`, { 'chip-large': size === 'large', 'chip-tag': size === 'tag' }]"
+  >
     <UiSpinner v-if="busy" :size="12" />
     <UiIcon v-else-if="icon" :name="icon" :size="12" :stroke="1.8" />
     <slot />
@@ -45,6 +59,17 @@ withDefaults(defineProps<{ tone?: ChipTone; icon?: IconName; busy?: boolean }>()
   transition:
     background-color var(--dur-state) var(--ease-out),
     color var(--dur-state) var(--ease-out);
+}
+
+.chip.chip-large {
+  height: 24px;
+  padding: 0 10px;
+}
+
+.chip.chip-tag {
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
 }
 
 .chip-ok {

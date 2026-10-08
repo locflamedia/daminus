@@ -5,18 +5,42 @@
   the board's cost and token limit have no data behind them yet (see ui-change-requests).
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useFormat } from '@/composables/use-format'
-import { estimateTokens, maskedCount, sizeShare } from './payload-lib'
+import { prefersReducedMotion } from '@/lib/motion'
+import { estimateTokens, kilobytes, maskedCount, sizeShare } from './payload-lib'
 
 const props = defineProps<{ bytes: number; system: string; user: string }>()
 const { t, n } = useI18n()
-const fmt = useFormat()
 
-const size = computed(() => fmt.measure(props.bytes, 'bytes').text)
+const size = computed(
+  () => `${n(kilobytes(props.bytes), { minimumFractionDigits: 1, maximumFractionDigits: 1 })} KB`,
+)
 const tokens = computed(() => n(estimateTokens(props.bytes)))
 const masked = computed(() => maskedCount(`${props.system}\n${props.user}`))
+
+// The masked count climbs from 0 to its value when the numbers first appear (the board's "counts
+// up as the scanner passes"); later changes and Reduce Motion show the value at once.
+const COUNT_MS = 900
+const shown = ref(prefersReducedMotion() ? masked.value : 0)
+let frame = 0
+function climb(to: number) {
+  const t0 = performance.now()
+  const step = (now: number) => {
+    const k = Math.min(1, (now - t0) / COUNT_MS)
+    shown.value = Math.round(to * (1 - (1 - k) ** 3))
+    frame = k < 1 ? requestAnimationFrame(step) : 0
+  }
+  frame = requestAnimationFrame(step)
+}
+onMounted(() => {
+  if (shown.value !== masked.value) climb(masked.value)
+})
+watch(masked, (v) => {
+  cancelAnimationFrame(frame)
+  shown.value = v
+})
+onBeforeUnmount(() => cancelAnimationFrame(frame))
 </script>
 
 <template>
@@ -34,7 +58,8 @@ const masked = computed(() => maskedCount(`${props.system}\n${props.user}`))
     </div>
     <div class="st warn">
       <span class="lab">{{ t('ai.payload.masked') }}</span>
-      <b>{{ masked }}</b>
+      <b aria-hidden="true">{{ shown }}</b>
+      <span class="sr">{{ masked }}</span>
       <span class="lab">{{ t('ai.payload.maskedNote') }}</span>
     </div>
   </div>
@@ -55,7 +80,7 @@ const masked = computed(() => maskedCount(`${props.system}\n${props.user}`))
   min-width: 0;
   padding: 12px 14px;
   border-radius: 12px;
-  background: var(--surface-1);
+  background: var(--surface-well);
 }
 
 .lab {
@@ -85,7 +110,16 @@ b {
   transition: transform 300ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
 
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
 .warn {
+  position: relative;
   background: var(--warn-soft);
 }
 

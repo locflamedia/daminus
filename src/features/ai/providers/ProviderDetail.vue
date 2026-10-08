@@ -19,11 +19,10 @@ const { t } = useI18n()
 const store = useAiProvidersStore()
 
 const active = computed(() => (store.view ? isActive(props.entry, store.view) : false))
-const adapter = computed(() =>
-  t(props.entry.profile.needs_key ? 'aiProviders.adapter' : 'aiProviders.adapterNoKey', {
-    adapter: props.entry.profile.adapter ?? props.entry.profile.id,
-  }),
+const adapterKey = computed(() =>
+  props.entry.profile.needs_key ? 'aiProviders.adapter' : 'aiProviders.adapterNoKey',
 )
+const adapterName = computed(() => props.entry.profile.adapter ?? props.entry.profile.id)
 </script>
 
 <template>
@@ -32,9 +31,15 @@ const adapter = computed(() =>
       <span class="mark" aria-hidden="true">{{ markOf(entry) }}</span>
       <div class="who">
         <b class="name">{{ entry.profile.name }}</b>
-        <span class="adapter">{{ adapter }}</span>
+        <i18n-t :keypath="adapterKey" tag="span" class="adapter" scope="global">
+          <template #adapter
+            ><span class="mono">{{ adapterName }}</span></template
+          >
+        </i18n-t>
       </div>
-      <UiChip v-if="active" tone="info" class="status">{{ t('aiProviders.active') }}</UiChip>
+      <UiChip v-if="active" tone="info" size="tag" class="status">{{
+        t('aiProviders.active')
+      }}</UiChip>
     </header>
     <ProviderBaseUrl v-if="needsBaseUrl(entry)" :entry="entry" />
     <ProviderKey v-if="entry.profile.needs_key" :entry="entry" />
@@ -49,6 +54,7 @@ const adapter = computed(() =>
   flex-direction: column;
   gap: 14px;
   min-width: 0;
+  min-height: 0;
   padding: var(--space-5);
   border-radius: 14px;
   background: var(--surface-0);
@@ -78,6 +84,7 @@ const adapter = computed(() =>
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  line-height: normal;
 }
 
 .name {
@@ -88,6 +95,10 @@ const adapter = computed(() =>
 .adapter {
   color: var(--ink-3);
   font-size: var(--text-12);
+}
+
+.mono {
+  font-family: var(--font-mono);
 }
 
 .status {

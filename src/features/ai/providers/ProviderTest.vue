@@ -29,14 +29,14 @@ const missingKey = computed(() => props.entry.profile.needs_key && !props.entry.
 <template>
   <div class="test">
     <UiButton
-      icon="start"
+      icon="play"
       :busy="state?.phase === 'busy'"
       :disabled-reason="missingKey ? t('aiProviders.test.needsKey') : undefined"
       @click="store.test(entry.profile.id)"
     >
       {{ t('aiProviders.test.button') }}
     </UiButton>
-    <span class="line" role="status" aria-live="polite">
+    <span class="line" :class="{ done: state?.phase === 'ok' }" role="status" aria-live="polite">
       <template v-if="state?.phase === 'busy'">
         <UiSpinner :size="14" />
         <span class="busy">{{ t('aiProviders.test.busy', { host }) }}</span>
@@ -63,12 +63,20 @@ const missingKey = computed(() => props.entry.profile.needs_key && !props.entry.
   background: var(--surface-well);
 }
 
+.test :deep(.btn) {
+  --shadow: var(--shadow-ring);
+}
+
 .line {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
   font-size: var(--text-12);
+}
+
+.line.done {
+  gap: 12px;
 }
 
 .idle {

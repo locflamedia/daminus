@@ -30,6 +30,7 @@ onMounted(() => void store.load())
       <UiSwitch
         :model-value="store.on"
         :aria-label="t('aiProviders.ai')"
+        size="compact"
         :disabled="!store.view"
         @update:model-value="store.setOn($event)"
       />
@@ -68,6 +69,7 @@ onMounted(() => void store.load())
   flex-direction: column;
   gap: var(--space-4);
   min-width: 0;
+  flex: 1 1 auto;
   container-type: inline-size;
 }
 
@@ -79,7 +81,7 @@ onMounted(() => void store.load())
   padding: 0 12px;
   border-radius: 10px;
   background: var(--surface-0);
-  box-shadow: var(--shadow-hairline);
+  box-shadow: 0 1px 2px rgba(40, 48, 90, 0.08);
   font-size: var(--text-12);
 }
 
@@ -89,9 +91,10 @@ onMounted(() => void store.load())
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
+  flex: 1 1 auto;
 }
 
 @container (max-width: 760px) {

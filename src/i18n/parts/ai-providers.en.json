@@ -21,6 +21,7 @@
     "key": {
       "label": "API key",
       "placeholder": "{hint}…",
+      "placeholderGeneric": "Paste the key…",
       "hint": "Sent once to Keychain. Daminus never shows it again.",
       "inKeychain": "in Keychain",
       "replace": "Replace",
@@ -44,6 +45,7 @@
       "refresh": "Read the list again",
       "manual": "The list could not be read. Type the model name.",
       "placeholder": "Model name",
+      "example": "e.g. llama-3.1-70b",
       "use": "Use",
       "suggested": "Suggested"
     },

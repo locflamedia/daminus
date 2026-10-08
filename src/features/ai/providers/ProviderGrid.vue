@@ -71,7 +71,9 @@ const store = useAiProvidersStore()
 }
 
 .tile.open {
-  box-shadow: 0 0 0 2px var(--accent);
+  box-shadow:
+    0 0 0 2px var(--accent),
+    0 16px 32px -18px rgba(79, 107, 237, 0.55);
 }
 
 .top {
@@ -117,6 +119,7 @@ const store = useAiProvidersStore()
   overflow: hidden;
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
+  line-height: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -124,6 +127,7 @@ const store = useAiProvidersStore()
 .state {
   color: var(--ink-3);
   font-size: var(--text-11);
+  line-height: normal;
   white-space: nowrap;
 }
 

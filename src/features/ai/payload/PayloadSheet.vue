@@ -41,11 +41,14 @@ const sendError = computed(() => {
   const e = sender.error.value
   return sender.status.value === 'error' && e && isAppError(e) ? errorText(e) : null
 })
-const contextLine = computed(() =>
-  [payload.context, payload.model, payload.question ? `“${payload.question}”` : '']
-    .filter(Boolean)
-    .join(' · '),
+const contextParts = computed(() =>
+  [
+    { text: payload.context, mono: false },
+    { text: payload.model, mono: true },
+    { text: payload.question ? `“${payload.question}”` : '', mono: false },
+  ].filter((p) => p.text),
 )
+const contextLine = computed(() => contextParts.value.map((p) => p.text).join(' · '))
 /** "review n of 3": the send being reviewed now, known once a send has finished in this window. */
 const reviewNumber = computed(() => Math.min(payload.reviewedSends + 1, REVIEWS_BEFORE_OFFER))
 const showReview = computed(() => payload.reviewedSends > 0 && !payload.offerStopAsking)
@@ -64,6 +67,8 @@ function onEnter(event: KeyboardEvent) {
     :title="t('ai.payload.title', { provider })"
     :context="contextLine"
     width="1000px"
+    plain
+    focus-panel
     @close="payload.close()"
   >
     <template #header="{ titleId, close }">
@@ -71,7 +76,12 @@ function onEnter(event: KeyboardEvent) {
         <span class="tile"><UiIcon name="spark" :size="20" /></span>
         <div class="titles">
           <h2 :id="titleId" class="title">{{ t('ai.payload.title', { provider }) }}</h2>
-          <span class="context">{{ contextLine }}</span>
+          <span class="context"
+            ><template v-for="(p, i) in contextParts" :key="i"
+              ><template v-if="i > 0"> · </template
+              ><span :class="{ mono: p.mono }">{{ p.text }}</span></template
+            ></span
+          >
         </div>
         <button type="button" class="esc" :aria-label="t('ui.cancel')" @click="close">
           <UiKbd>esc</UiKbd>
@@ -137,9 +147,13 @@ function onEnter(event: KeyboardEvent) {
           <UiIcon name="check" :size="12" />{{ t('ai.payload.ready', { n: masked }, masked) }}
         </span>
       </span>
-      <UiButton variant="ghost" @click="payload.close()">{{ t('ui.cancel') }}</UiButton>
+      <UiButton variant="ghost" size="medium" class="cancel" @click="payload.close()">{{
+        t('ui.cancel')
+      }}</UiButton>
       <UiButton
         variant="primary"
+        size="medium"
+        lifted
         shortcut="⏎"
         :disabled="!payload.sendable || sender.busy.value"
         :busy="sender.busy.value"
@@ -167,7 +181,7 @@ function onEnter(event: KeyboardEvent) {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: var(--surface-1);
+  background: var(--surface-well);
   color: var(--ink);
 }
 
@@ -202,10 +216,20 @@ function onEnter(event: KeyboardEvent) {
   box-shadow: var(--focus-ring);
 }
 
+.mono {
+  font-family: var(--font-mono);
+}
+
+.cancel.cancel {
+  --fg: var(--ink-2);
+}
+
 .content {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  flex: 1 1 auto;
+  min-height: 0;
   margin: 0 calc(-1 * var(--space-5));
   padding-bottom: var(--space-4);
 }
@@ -218,7 +242,8 @@ function onEnter(event: KeyboardEvent) {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   gap: var(--space-4);
-  height: clamp(300px, 52vh, 520px);
+  flex: 1 1 auto;
+  min-height: 300px;
   padding: 0 var(--space-6);
 }
 
@@ -234,6 +259,7 @@ function onEnter(event: KeyboardEvent) {
   gap: 8px;
   color: var(--ink-2);
   font-size: var(--text-12);
+  accent-color: var(--btn);
 }
 
 .count {

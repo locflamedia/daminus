@@ -46,7 +46,7 @@ const copyLabel = computed(() =>
         ><span class="tx"
           ><template v-for="(p, i) in line.pieces" :key="i"
             ><mark v-if="p.masked" class="mask">{{ p.text }}</mark
-            ><template v-else>{{ p.text }}</template></template
+            ><span v-else :class="`k-${p.kind}`">{{ p.text }}</span></template
           ></span
         >
       </div>
@@ -103,7 +103,7 @@ const copyLabel = computed(() =>
   gap: 6px;
   margin-left: auto;
   border-radius: 6px;
-  color: var(--code-dim);
+  color: #a3a7b9;
   font-size: var(--text-11);
 }
 
@@ -128,6 +128,7 @@ const copyLabel = computed(() =>
 
 .ln {
   display: grid;
+  min-width: max-content;
   grid-template-columns: 24px 1fr;
   gap: 12px;
   padding: 0 14px;
@@ -140,8 +141,24 @@ const copyLabel = computed(() =>
 }
 
 .tx {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
+}
+
+/* The board's syntax colours, on the dark panel in both themes. */
+.k-key {
+  color: #b9c5fa;
+}
+
+.k-str {
+  color: #f4c9dc;
+}
+
+.k-num {
+  color: #a6e3b8;
+}
+
+.k-pu {
+  color: #80859a;
 }
 
 .mask {

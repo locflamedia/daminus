@@ -24,7 +24,7 @@ const NEVER = ['neverEnv', 'neverSsh', 'neverFiles', 'neverUrl'] as const
       <UiSwitch
         :model-value="true"
         disabled
-        :label="t('aiProviders.privacy.maskKeys')"
+        :aria-label="t('aiProviders.privacy.maskKeys')"
         class="locked"
       />
     </div>
@@ -44,6 +44,7 @@ const NEVER = ['neverEnv', 'neverSsh', 'neverFiles', 'neverUrl'] as const
   flex-direction: column;
   gap: 4px;
   min-width: 0;
+  min-height: 0;
   padding: var(--space-5);
   border-radius: 14px;
   background: var(--surface-0);

@@ -14,8 +14,10 @@ withDefaults(
     modelValue: boolean
     label?: string
     disabled?: boolean
+    /** `compact` is the 32 x 20 switch of a page header (the knob travels 12 px). */
+    size?: 'default' | 'compact'
   }>(),
-  { label: undefined, disabled: false },
+  { label: undefined, disabled: false, size: 'default' },
 )
 
 const emit = defineEmits<{ 'update:modelValue': [value: boolean] }>()
@@ -32,7 +34,7 @@ function onChange(event: Event) {
 <template>
   <label
     class="switch"
-    :class="{ off: disabled, jump: byKeyboard }"
+    :class="{ off: disabled, jump: byKeyboard, compact: size === 'compact' }"
     :for="id"
     @pointerdown="byKeyboard = false"
   >
@@ -107,6 +109,14 @@ function onChange(event: Event) {
   background: var(--btn-ink);
   box-shadow: var(--shadow-knob-on);
   transform: translateX(16px);
+}
+
+.compact .track {
+  width: 32px;
+}
+
+.compact .native:checked + .track .knob {
+  transform: translateX(12px);
 }
 
 .jump .knob {

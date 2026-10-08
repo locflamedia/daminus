@@ -10,6 +10,7 @@ import type { AiProviderEntry } from '@/api/bindings/AiProviderEntry'
 import { useAiProvidersStore } from '@/stores/ai-providers'
 import UiButton from '@/ui/UiButton.vue'
 import UiField from '@/ui/UiField.vue'
+import { markOf } from './provider-state'
 import UiSelect, { type SelectOption } from '@/ui/UiSelect.vue'
 
 const props = defineProps<{ entry: AiProviderEntry }>()
@@ -58,8 +59,13 @@ function useTyped() {
         :model-value="chosen ?? first"
         :options="options"
         :label="t('aiProviders.model.label')"
+        variant="model"
         @update:model-value="pick"
-      />
+      >
+        <template #lead
+          ><span class="lead" aria-hidden="true">{{ markOf(entry) }}</span></template
+        >
+      </UiSelect>
       <span class="count">
         {{ t('aiProviders.model.listed', { n: list.models.length }) }}
         <UiButton
@@ -76,7 +82,7 @@ function useTyped() {
         v-model="typed"
         mono
         :label="t('aiProviders.model.label')"
-        :placeholder="chosen ?? first ?? t('aiProviders.model.placeholder')"
+        :placeholder="chosen ?? (first || t('aiProviders.model.example'))"
         :hint="t('aiProviders.model.manual')"
       />
       <UiButton type="submit" size="small" :disabled="typed.trim() === ''">{{
@@ -117,6 +123,19 @@ function useTyped() {
   align-items: end;
 }
 
+.lead {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: var(--surface-well);
+  font-size: 9px;
+  font-weight: var(--weight-medium);
+  line-height: 1;
+}
+
 .count {
   display: inline-flex;
   align-items: center;
@@ -130,7 +149,7 @@ function useTyped() {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-2);
-  align-items: start;
+  align-items: end;
 }
 
 .manual :deep(.field) {

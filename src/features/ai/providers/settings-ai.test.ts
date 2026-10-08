@@ -70,6 +70,13 @@ describe('Settings › AI providers: the grid', () => {
     expect(tile(wrapper, 'anthropic').text()).toContain('Connected')
     expect(tile(wrapper, 'anthropic').get('[data-dot]').attributes('data-dot')).toBe('ok')
     expect(wrapper.text()).toContain('Active')
+    expect(wrapper.get('.status').classes()).toContain('chip-tag')
+    expect(wrapper.get('.adapter .mono').text()).toBe('anthropic')
+  })
+
+  it('draws the compatible tile with the code glyph', async () => {
+    const wrapper = await mountAi()
+    expect(tile(wrapper, 'custom').get('.mark').text()).toBe('</>')
   })
 
   it('speaks Vietnamese', async () => {
@@ -238,6 +245,31 @@ describe('Settings › AI providers: Claude Code', () => {
       ?.trigger('click')
     await flushPromises()
     expect(wrapper.text()).toContain('Claude Code is not signed in')
+  })
+})
+
+describe('Settings › AI providers: Claude Code test strip', () => {
+  async function runTest(locale: 'en' | 'vi') {
+    setI18nLocale(locale)
+    const wrapper = await mountAi()
+    await open(wrapper, 'claude-code')
+    await useAiProvidersStore().setAcknowledged(true)
+    await flushPromises()
+    await wrapper.get('.test button').trigger('click')
+    await flushPromises()
+    return wrapper
+  }
+
+  it('turns the button into the result, with the usage note beside it', async () => {
+    const wrapper = await runTest('en')
+    expect(wrapper.get('.test button').text()).toBe('Works · 0.6 s')
+    expect(wrapper.get('.test .line').text()).toContain('not billed per token')
+    expect(wrapper.find('.chip-large').exists()).toBe(true)
+  })
+
+  it('writes the seconds with the locale decimal in Vietnamese', async () => {
+    const wrapper = await runTest('vi')
+    expect(wrapper.get('.test button').text()).toBe('Dùng được · 0,6 giây')
   })
 })
 

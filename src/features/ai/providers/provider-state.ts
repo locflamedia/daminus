@@ -73,5 +73,5 @@ export function endpointHost(entry: AiProviderEntry, baseUrl: string | null): st
 
 /** The letter of the tile: no vendor logo ships, so the row's own monogram stands in. */
 export function markOf(entry: AiProviderEntry): string {
-  return entry.profile.id === 'custom' ? '+' : entry.profile.name.slice(0, 1).toUpperCase()
+  return entry.profile.id === 'custom' ? '</>' : entry.profile.name.slice(0, 1).toUpperCase()
 }
