@@ -293,7 +293,7 @@ async fn a_send_needs_a_selected_provider_and_its_key() {
         .await
         .unwrap();
     let e = r.core.ai_analyze("a", &preview.hash).await.unwrap_err();
-    assert_eq!(e.code, ErrorCode::SchemaInvalid, "AI is off");
+    assert_eq!(e.code, ErrorCode::ProviderAuth, "no provider selected");
     select(&r.core, "anthropic").await;
     let e = r.core.ai_analyze("a", &preview.hash).await.unwrap_err();
     assert_eq!(e.code, ErrorCode::ProviderAuth, "no key stored");
