@@ -7,6 +7,8 @@
   copying: no part of this screen runs anything.
 -->
 <script setup lang="ts">
+import { useAiModelMark } from '@/layout/use-ai-provider-name'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -87,6 +89,7 @@ const model = computed(() => {
   const entry = view?.providers.find((p) => p.profile.id === view.provider)
   return view?.model ?? entry?.profile.models[0] ?? entry?.profile.name ?? ''
 })
+const modelMark = useAiModelMark()
 const provenance = computed(() => {
   const a = turn.value
   if (!a) return ''
@@ -114,7 +117,7 @@ if (providers.view === null) void providers.load()
       <div class="titles">
         <b class="title">{{ title }}</b>
         <span v-if="provenance" class="sub"
-          >{{ provenance }} ·
+          ><UiBrandMark :name="modelMark" :size="12" />{{ provenance }} ·
           <button type="button" class="link" @click="again">
             {{ t('aiFindings.seePayload') }}
           </button></span
@@ -127,9 +130,9 @@ if (providers.view === null) void providers.load()
         :options="options"
         :label="t('aiFindings.filter')"
       />
-      <UiButton class="again" variant="secondary" @click="again"
-        ><UiIcon name="refresh" :size="16" />{{ t('aiFindings.runAgain') }}</UiButton
-      >
+      <UiButton class="again" variant="secondary" icon="refresh" @click="again">{{
+        t('aiFindings.runAgain')
+      }}</UiButton>
     </header>
 
     <UiBanner
@@ -216,6 +219,8 @@ if (providers.view === null) void providers.load()
 }
 
 .top {
+  /* Positioned so its controls sit above the window's drag strip (AppWindow). */
+  position: relative;
   display: flex;
   align-items: center;
   flex: none;
@@ -266,6 +271,9 @@ if (providers.view === null) void providers.load()
 }
 
 .sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--ink-3);
   font-size: var(--text-12);
 }
@@ -306,6 +314,7 @@ if (providers.view === null) void providers.load()
 
 .short {
   --card-gap: 8px;
+  flex: none;
 }
 
 .summary {

@@ -56,6 +56,8 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
   const loading = ref(false)
   const error = shallowRef<AppError | null>(null)
   const providerName = ref('')
+  /** The chosen provider's id, for its logo in the sheet header. */
+  const providerId = ref<string | null>(null)
   const model = ref('')
   /** Reviewed sends so far in this window (from `done`); 0 until the first reply. */
   const reviewedSends = ref(0)
@@ -106,6 +108,7 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
       const view = await aiProviders()
       const chosen = view.providers.find((p) => p.profile.id === view.provider)
       providerName.value = chosen?.profile.name ?? ''
+      providerId.value = chosen?.profile.id ?? null
       model.value = view.model ?? chosen?.profile.models[0] ?? ''
     } catch (e) {
       console.error(e)
@@ -176,6 +179,7 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
     loading,
     error,
     providerName,
+    providerId,
     model,
     reviewedSends,
     offerStopAsking,

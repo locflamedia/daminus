@@ -1,15 +1,32 @@
 <!--
-  The provider chip at the bottom of the sidebar, from the board "AI · Findings": a translucent
-  radius-14 pill with the model's name and a live dot, above Settings. It opens Settings › AI.
+  The provider card at the bottom of the sidebar (boards Overview, AI · Ask): a translucent
+  radius-14 card with the provider's logo, the model's name and a live dot that pings once, and
+  under it the provider and where its key is kept. It opens Settings › AI.
   Nothing is drawn while AI is off or no provider is chosen (the board draws no such state).
 -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { useAiProviderName } from './use-ai-provider-name'
+import { useAiProvidersStore } from '@/stores/ai-providers'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
+import { useAiModelMark, useAiProviderName } from './use-ai-provider-name'
 
 const { t } = useI18n()
 const name = useAiProviderName()
+const providers = useAiProvidersStore()
+
+/** The chosen provider's profile: its logo and the second line under the model. */
+const entry = computed(() => {
+  const view = providers.view
+  return view?.providers.find((p) => p.profile.id === view.provider) ?? null
+})
+const mark = useAiModelMark()
+const sub = computed(() => {
+  const e = entry.value
+  if (!e) return ''
+  return e.key_set ? `${e.profile.name} · ${t('nav.aiKeychain')}` : e.profile.name
+})
 </script>
 
 <template>
@@ -19,24 +36,43 @@ const name = useAiProviderName()
     class="chip"
     :aria-label="t('nav.aiProvider', { name })"
   >
-    <b>{{ name }}</b>
-    <span class="live" aria-hidden="true" />
+    <span class="row">
+      <UiBrandMark :name="mark" :size="16" />
+      <b>{{ name }}</b>
+      <span class="live" aria-hidden="true" />
+    </span>
+    <span v-if="sub" class="sub">{{ sub }}</span>
   </RouterLink>
 </template>
 
 <style scoped>
 .chip {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 12px;
   border-radius: 14px;
   background: color-mix(in srgb, var(--surface-0) 72%, transparent);
   color: var(--ink);
   font-size: var(--text-12);
 }
 
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sub {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .chip b {
+  font-size: var(--text-13);
   min-width: 0;
   overflow: hidden;
   font-weight: var(--weight-medium);
@@ -63,7 +99,7 @@ const name = useAiProviderName()
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  animation: ping 2.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  animation: ping 600ms cubic-bezier(0.23, 1, 0.32, 1) 1;
 }
 
 @keyframes ping {

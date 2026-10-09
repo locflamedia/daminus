@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import { flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { clearMocks, mockCommands } from '@/api/testing'
@@ -36,10 +35,7 @@ afterEach(() => clearMocks())
 describe('hosts settings store', () => {
   it('sends the changes one after the other and ends on the last answer', async () => {
     const store = useHostsSettingsStore()
-    void store.setInclude('a', false)
-    void store.setInclude('b', false)
-    await flushPromises()
-    await new Promise((r) => setTimeout(r, 20))
+    await Promise.all([store.setInclude('a', false), store.setInclude('b', false)])
     expect(order).toEqual(['a:false', 'b:false'])
     expect(store.excluded).toEqual(['a', 'b'])
   })
@@ -47,9 +43,7 @@ describe('hosts settings store', () => {
   it('keeps the other change when one is refused', async () => {
     refuseAlias = 'a'
     const store = useHostsSettingsStore()
-    void store.setInclude('a', false)
-    void store.setInclude('b', false)
-    await new Promise((r) => setTimeout(r, 20))
+    await Promise.all([store.setInclude('a', false), store.setInclude('b', false)])
     expect(store.excluded).toEqual(['b'])
     expect(useToastStore().toasts).toHaveLength(1)
   })

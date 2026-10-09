@@ -76,7 +76,25 @@ describe('Settings › AI providers: the grid', () => {
 
   it('draws the compatible tile with the code glyph', async () => {
     const wrapper = await mountAi()
-    expect(tile(wrapper, 'custom').get('.mark').text()).toBe('</>')
+    expect(tile(wrapper, 'custom').find('.mark svg').exists()).toBe(true)
+    expect(tile(wrapper, 'custom').find('.mark img').exists()).toBe(false)
+  })
+
+  it('draws the vendor logo, not a letter, on every other tile', async () => {
+    const wrapper = await mountAi()
+    for (const id of [
+      'anthropic',
+      'openai',
+      'gemini',
+      'openrouter',
+      'deepseek',
+      'ollama',
+      'claude-code',
+    ]) {
+      const mark = tile(wrapper, id).get('.mark')
+      expect(mark.find('img').exists(), id).toBe(true)
+      expect(mark.text(), id).toBe('')
+    }
   })
 
   it('speaks Vietnamese', async () => {

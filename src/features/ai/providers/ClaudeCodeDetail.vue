@@ -4,6 +4,7 @@
   test. Everything below the warning stays dimmed and out of reach until "I understand".
 -->
 <script setup lang="ts">
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { AiProviderEntry } from '@/api/bindings/AiProviderEntry'
@@ -42,7 +43,7 @@ function pick(value: string) {
 <template>
   <section class="card" :aria-label="t('aiClaudeCode.name')">
     <header class="head">
-      <span class="mark" aria-hidden="true">C</span>
+      <span class="mark" aria-hidden="true"><UiBrandMark name="claude" :size="22" /></span>
       <div class="who">
         <b class="name"
           >{{ t('aiClaudeCode.name') }} <span class="beta">{{ t('aiClaudeCode.beta') }}</span></b
@@ -118,7 +119,7 @@ function pick(value: string) {
 
       <div class="test">
         <UiButton
-          :icon="state?.phase === 'ok' ? undefined : 'start'"
+          :icon="state?.phase === 'ok' ? undefined : 'play'"
           :busy="state?.phase === 'busy'"
           :disabled-reason="ack ? undefined : t('aiClaudeCode.test.needsAck')"
           @click="store.test('claude-code')"

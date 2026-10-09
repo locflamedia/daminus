@@ -10,7 +10,7 @@ import type { AiProviderEntry } from '@/api/bindings/AiProviderEntry'
 import { useAiProvidersStore } from '@/stores/ai-providers'
 import UiButton from '@/ui/UiButton.vue'
 import UiField from '@/ui/UiField.vue'
-import { markOf } from './provider-state'
+import ProviderMark from './ProviderMark.vue'
 import UiSelect, { type SelectOption } from '@/ui/UiSelect.vue'
 
 const props = defineProps<{ entry: AiProviderEntry }>()
@@ -63,8 +63,9 @@ function useTyped() {
         @update:model-value="pick"
       >
         <template #lead
-          ><span class="lead" aria-hidden="true">{{ markOf(entry) }}</span></template
-        >
+          ><span class="lead" aria-hidden="true"
+            ><ProviderMark :entry="entry" :size="16" model /></span
+        ></template>
       </UiSelect>
       <span class="count">
         {{ t('aiProviders.model.listed', { n: list.models.length }) }}
@@ -129,11 +130,6 @@ function useTyped() {
   flex: none;
   width: 16px;
   height: 16px;
-  border-radius: 5px;
-  background: var(--surface-well);
-  font-size: 9px;
-  font-weight: var(--weight-medium);
-  line-height: 1;
 }
 
 .count {

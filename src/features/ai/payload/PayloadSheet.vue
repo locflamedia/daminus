@@ -9,6 +9,8 @@
   `useAiPayloadStore().review(...)`. Text from the data or the model is always text.
 -->
 <script setup lang="ts">
+import UiBrandMark from '@/ui/UiBrandMark.vue'
+import { brandOfProvider } from '@/ui/brand-marks'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isAppError } from '@/api'
@@ -77,7 +79,10 @@ function onEnter(event: KeyboardEvent) {
   >
     <template #header="{ titleId, close }">
       <header class="head">
-        <span class="tile"><UiIcon name="spark" :size="20" /></span>
+        <span class="tile"
+          ><UiBrandMark :name="brandOfProvider(payload.providerId)" :size="20"
+            ><UiIcon name="spark" :size="20" /></UiBrandMark
+        ></span>
         <div class="titles">
           <h2 :id="titleId" class="title">{{ t('ai.payload.title', { provider }) }}</h2>
           <span class="context"

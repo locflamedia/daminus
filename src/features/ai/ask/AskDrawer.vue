@@ -8,6 +8,8 @@
   toggles the panel for the page the person is on.
 -->
 <script setup lang="ts">
+import { useAiModelMark } from '@/layout/use-ai-provider-name'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -54,6 +56,7 @@ const model = computed(() => {
   const entry = view?.providers.find((p) => p.profile.id === view.provider)
   return view?.model ?? entry?.profile.models[0] ?? entry?.profile.name ?? ''
 })
+const modelMark = useAiModelMark()
 const sent = computed(() => {
   const preview = payload.preview
   if (!preview || turns.value.length === 0) return ''
@@ -118,7 +121,9 @@ function send(question: string) {
       <span class="orb" aria-hidden="true"><UiIcon name="spark" :size="16" /></span>
       <div class="titles">
         <b class="title">{{ t('aiAsk.title', { name }) }}</b>
-        <span v-if="model" class="model">{{ model }}</span>
+        <span v-if="model" class="model"
+          ><UiBrandMark :name="modelMark" :size="12" />{{ model }}</span
+        >
       </div>
       <UiKbd class="hint" :aria-label="t('aiAsk.toggleHint')">⌘J</UiKbd>
       <button
@@ -233,6 +238,9 @@ function send(question: string) {
 }
 
 .model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--ink-3);
   font-size: var(--text-12);
 }

@@ -121,6 +121,7 @@
   "nav": {
     "search": "Tìm kiếm",
     "aiProvider": "Nhà cung cấp AI: {name}",
+    "aiKeychain": "khoá trong Keychain",
     "overview": "Tổng quan",
     "history": "Lịch sử quét",
     "projects": "Dự án",
@@ -141,6 +142,8 @@
     "appearance": "Giao diện",
     "scan": "Quét",
     "scanValue": "{n} trên {total}",
+    "keysTitle": "Khoá được lưu ở đâu",
+    "keysBody": "Keychain của macOS, service {service}, mỗi nhà cung cấp một mục. Không bao giờ nằm trong settings.json, không bao giờ hiện lên trang.",
     "hosts": "Máy chủ",
     "ai": "Nhà cung cấp AI",
     "data": "Dữ liệu",

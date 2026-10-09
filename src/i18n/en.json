@@ -121,6 +121,7 @@
   "nav": {
     "search": "Search",
     "aiProvider": "AI provider: {name}",
+    "aiKeychain": "key in Keychain",
     "overview": "Overview",
     "history": "Scan history",
     "projects": "Projects",
@@ -141,6 +142,8 @@
     "appearance": "Appearance",
     "scan": "Scan",
     "scanValue": "{n} of {total}",
+    "keysTitle": "Where keys live",
+    "keysBody": "macOS Keychain, service {service}, one entry per provider. Never in settings.json, never shown to the page.",
     "hosts": "Hosts",
     "ai": "AI providers",
     "data": "Data",
