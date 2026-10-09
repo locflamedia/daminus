@@ -3,6 +3,8 @@
 export type GlobalAction = 'sheet' | 'settings' | 'overview' | 'history' | 'scan'
 
 export interface KeyContext {
+  /** The ⌘K palette or the shortcuts sheet is open and owns the keys. */
+  overlayOpen?: boolean
   /** The route the person is on. */
   route: string
   /** A screen that owns its own keys (setup) or has nothing to act on. */
@@ -26,9 +28,10 @@ export function inTextField(target: EventTarget | null): boolean {
 }
 
 export function globalAction(e: KeyboardEvent, ctx: KeyContext): GlobalAction | null {
-  if (e.defaultPrevented || e.isComposing || e.altKey || e.ctrlKey) return null
+  if (e.defaultPrevented || e.repeat || e.isComposing || e.altKey || e.ctrlKey) return null
   if (ctx.suspended) return null
   if (e.metaKey) {
+    if (ctx.overlayOpen) return null
     if (e.shiftKey) return null
     if (e.key === ',') return ctx.route === 'settings' ? null : 'settings'
     // On a project page ⌘1 to ⌘6 are that page's tabs.

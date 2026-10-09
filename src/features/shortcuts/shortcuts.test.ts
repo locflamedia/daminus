@@ -133,3 +133,14 @@ describe('messages', () => {
     }
   })
 })
+
+describe('global keys while something else owns them', () => {
+  it('ignores a held key and every shortcut under an open palette or sheet', () => {
+    expect(globalAction(key({ key: ',', metaKey: true, repeat: true }), ctx)).toBeNull()
+    expect(globalAction(key({ key: ',', metaKey: true }), ctx)).toBe('settings')
+    const open = { ...ctx, overlayOpen: true }
+    for (const k of [',', '1', '2', 'r']) {
+      expect(globalAction(key({ key: k, metaKey: true }), open)).toBeNull()
+    }
+  })
+})

@@ -111,6 +111,7 @@
     "scanning": "Đang quét…",
     "needs": "{project} cần xem",
     "scanNow": "Quét ngay",
+    "openProject": "Mở {project}",
     "open": "Mở Daminus",
     "quit": "Thoát"
   },

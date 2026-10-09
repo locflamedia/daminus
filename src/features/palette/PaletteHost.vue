@@ -103,7 +103,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 <style>
 /* The window's ground is the page column's own opaque fill, so the painting is a layer inside
    it: above the fill, below everything the page draws, and never in the way of a press. */
-html[data-starry] .main::before {
+html[data-starry] [data-app-main]::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -125,7 +125,7 @@ html[data-starry] .main::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-starry] .main::before {
+  html[data-starry] [data-app-main]::before {
     animation: none;
   }
 }

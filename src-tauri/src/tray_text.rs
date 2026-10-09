@@ -48,7 +48,6 @@ pub struct Attention {
 pub struct Strings {
     lang: Value,
     en: Value,
-    vi: bool,
 }
 
 impl Strings {
@@ -59,18 +58,13 @@ impl Strings {
             "vi" => parse(VI),
             _ => en.clone(),
         };
-        Self {
-            lang,
-            en,
-            vi: language == "vi",
-        }
+        Self { lang, en }
     }
 
     fn raw(&self, key: &str) -> String {
         [&self.lang, &self.en]
             .iter()
             .find_map(|v| v["tray"][key].as_str())
-            .or_else(|| builtin(key, self.vi))
             .unwrap_or(key)
             .to_owned()
     }
@@ -102,15 +96,6 @@ impl Strings {
 /// switch is off, or the system asks for reduced motion.
 pub fn reduce_motion(app_animates: bool, os_reduces: bool) -> bool {
     os_reduces || !app_animates
-}
-
-/// Words the locale files may not carry yet.
-fn builtin(key: &str, vi: bool) -> Option<&'static str> {
-    match (key, vi) {
-        ("openProject", false) => Some("Open {project}"),
-        ("openProject", true) => Some("Mở {project}"),
-        _ => None,
-    }
 }
 
 /// Builds the view. `report` is the last one read (`None` before any read

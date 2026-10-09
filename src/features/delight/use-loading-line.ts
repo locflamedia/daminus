@@ -27,19 +27,19 @@ export function useLoadingLine() {
   const tick = ref(0)
   let timer: number | undefined
   const running = computed(() => scan.scanning || dev)
+  /** Whether a line replaces the plain "Scanning" meta. */
+  const active = computed(() => running.value && (dev || settings.appearance.easter_eggs))
   watch(
-    running,
-    (on) => {
+    [running, active, reduced],
+    ([on, shown, still]) => {
       window.clearInterval(timer)
+      timer = undefined
       tick.value = 0
-      if (on && !reduced.value) timer = window.setInterval(() => tick.value++, LINE_MS)
+      if (on && shown && !still) timer = window.setInterval(() => tick.value++, LINE_MS)
     },
     { immediate: true },
   )
   onScopeDispose(() => window.clearInterval(timer))
-
-  /** Whether a line replaces the plain "Scanning" meta. */
-  const active = computed(() => running.value && (dev || settings.appearance.easter_eggs))
 
   const line = computed(() => {
     if (!active.value) return ''

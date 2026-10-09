@@ -1,6 +1,7 @@
 // Registers the window-wide keys once and carries them out.
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { usePaletteStore } from '@/features/palette/palette-store'
 import { useProjectsStore } from '@/stores/projects'
 import { useScanPanelStore } from '@/stores/scan-panel'
 import { useScanStore } from '@/stores/scan'
@@ -11,6 +12,7 @@ export function useShortcuts() {
   const route = useRoute()
   const router = useRouter()
   const sheet = useShortcutsStore()
+  const palette = usePaletteStore()
   const scan = useScanStore()
   const panel = useScanPanelStore()
   const projects = useProjectsStore()
@@ -21,6 +23,7 @@ export function useShortcuts() {
     const action = globalAction(e, {
       route: routeName.value,
       suspended: route.meta.setup === true || route.meta.bare === true,
+      overlayOpen: palette.open || sheet.open,
       scanning: scan.scanning,
       canScan: projects.loaded && projects.details.length > 0,
     })
