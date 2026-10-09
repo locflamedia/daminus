@@ -131,13 +131,14 @@ const showFilters = computed(
     :meta="scan.scanning || loading.active.value || lastScan ? undefined : meta"
   >
     <template v-if="scan.scanning || loading.active.value" #meta>
-      {{ t('toolbar.scanning') }} · <span class="mono">{{ elapsed }}</span>
-      <template v-if="loading.active.value">
-        ·
-        <Transition name="line" mode="out-in">
-          <span :key="loading.line.value" class="line">{{ loading.line.value }}</span>
-        </Transition>
-      </template>
+      <span class="scan-meta"
+        >{{ t('toolbar.scanning')
+        }}<template v-if="elapsed">
+          · <span class="mono">{{ elapsed }}</span></template
+        ><template v-if="loading.active.value">
+          · <span :key="loading.line.value" class="line">{{ loading.line.value }}</span></template
+        ></span
+      >
     </template>
     <template v-else-if="lastScan" #meta>
       {{ t('toolbar.lastScan') }} <b class="age">{{ lastScan.age }}</b> · {{ lastScan.rest }}
@@ -223,25 +224,28 @@ const showFilters = computed(
   display: inline-flex;
 }
 
+/* The running line may wrap under the title rather than reach the buttons. */
+.scan-meta {
+  display: block;
+  white-space: normal;
+}
+
+/* Each new line rises in once; the one before it is simply replaced. */
 .line {
   display: inline-block;
+  animation: line-rise 360ms var(--ease-out) both;
 }
 
-.line-enter-active,
-.line-leave-active {
-  transition:
-    opacity 180ms var(--ease-out),
-    transform 180ms var(--ease-out);
-}
+@keyframes line-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 
-.line-enter-from {
-  opacity: 0;
-  transform: translateY(4px);
-}
-
-.line-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .stop {
@@ -335,9 +339,8 @@ const showFilters = computed(
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .line-enter-active,
-  .line-leave-active {
-    transition: none;
+  .line {
+    animation: none;
   }
 
   .sheen::after {

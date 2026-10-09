@@ -316,8 +316,15 @@ function onKeydown(event: KeyboardEvent) {
   white-space: nowrap;
 }
 
+.item.rich .name {
+  font-size: var(--text-12);
+}
+
 .pill {
-  padding: 2px 6px;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
   border-radius: 5px;
   background: var(--surface-pop);
   color: var(--accent-ink);

@@ -63,7 +63,7 @@ const BAND_TOP = 0.03
 <style scoped>
 .sky {
   position: absolute;
-  inset: -10px -14px;
+  inset: -10px -26px;
   z-index: -1;
   overflow: hidden;
   border-radius: 16px;

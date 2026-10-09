@@ -114,6 +114,7 @@ useFocusTrap(panel, toRef(props, 'open'), {
 
 .sheet {
   --enter: 240ms;
+  --shortcuts-bar: color-mix(in srgb, var(--surface-well) 60%, var(--surface-0));
 
   position: relative;
   display: flex;
@@ -138,7 +139,7 @@ useFocusTrap(panel, toRef(props, 'open'), {
   gap: 10px;
   height: var(--h-status-row);
   padding: 0 var(--space-5);
-  background: var(--surface-well);
+  background: var(--shortcuts-bar);
 }
 
 .glyph {
@@ -156,6 +157,10 @@ useFocusTrap(panel, toRef(props, 'open'), {
   color: var(--ink);
   font: inherit;
   font-size: 14px;
+}
+
+.input:focus-visible {
+  box-shadow: none;
 }
 
 .input::placeholder {
@@ -238,7 +243,7 @@ useFocusTrap(panel, toRef(props, 'open'), {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
-  background: var(--surface-well);
+  background: var(--shortcuts-bar);
   color: var(--ink-3);
   font-size: var(--text-12);
 }

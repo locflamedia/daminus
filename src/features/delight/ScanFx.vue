@@ -29,7 +29,7 @@ watch(
     if (!done?.dust) return
     dustId.value = done.id
     window.clearTimeout(timer)
-    timer = window.setTimeout(() => (dustId.value = null), 900)
+    timer = window.setTimeout(() => (dustId.value = null), 800)
   },
 )
 onMounted(() => {
@@ -86,7 +86,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   margin: -2px 0 0 -2px;
   border-radius: 50%;
   opacity: 0;
-  animation: dust 700ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
+  animation: dust 600ms cubic-bezier(0.3, 0.7, 0.3, 1) both;
   animation-delay: var(--d);
 }
 

@@ -111,7 +111,7 @@ html[data-starry] .main::before {
   background: url('@/assets/delight/starry-small.jpg') center / cover no-repeat;
   opacity: 0.22;
   pointer-events: none;
-  animation: starry-wash 1.2s cubic-bezier(0.65, 0, 0.35, 1) both;
+  animation: starry-wash 1.44s cubic-bezier(0.65, 0, 0.35, 1) both;
 }
 
 @keyframes starry-wash {
