@@ -81,4 +81,46 @@ describe('IntroHost', () => {
     const wrapper = await host()
     expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(false)
   })
+
+  it('covers the app while the launch is read and drops the cover when there is no intro', async () => {
+    let release: (v: unknown) => void = () => {}
+    mockCommands((cmd) =>
+      cmd === 'app_launch'
+        ? new Promise((resolve) => {
+            release = resolve
+          })
+        : null,
+    )
+    const { useSettingsStore } = await import('@/stores/settings')
+    useSettingsStore().general = { ...useSettingsStore().general, intro: 'first_launch' }
+    const wrapper = await host()
+    expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="stage"]').exists()).toBe(false)
+    release({ kind: 'daily', previous: null })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(false)
+  })
+
+  it('has no cover when the intro is never', async () => {
+    const { useSettingsStore } = await import('@/stores/settings')
+    useSettingsStore().general = { ...useSettingsStore().general, intro: 'never' }
+    const wrapper = await host()
+    expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(false)
+  })
+
+  it('gives focus back to the element that had it when the intro ends', async () => {
+    const { useSettingsStore } = await import('@/stores/settings')
+    useSettingsStore().general = { ...useSettingsStore().general, intro: 'always' }
+    const button = document.createElement('button')
+    document.body.append(button)
+    button.focus()
+    const wrapper = await host()
+    expect(document.activeElement).not.toBe(button)
+    vi.useFakeTimers()
+    await wrapper.find('[data-testid="intro-host"]').trigger('click')
+    vi.advanceTimersByTime(FADE_MS)
+    await flushPromises()
+    expect(document.activeElement).toBe(button)
+    button.remove()
+  })
 })

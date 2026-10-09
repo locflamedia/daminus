@@ -6,6 +6,9 @@
     "warn": "{n} warning | {n} warnings",
     "disk": "{n} disk",
     "offline": "offline",
+    "starDisk": "disk {n}%",
+    "starCrit": "{n} critical",
+    "starWarn": "{n} warning | {n} warnings",
     "pillBack": "Your {n} server, as a night sky · after Van Gogh, 1889 | Your {n} servers, as a night sky · after Van Gogh, 1889",
     "pillFirst": "{n} host found in ~/.ssh/config · nothing scanned yet · after Van Gogh, 1889 | {n} hosts found in ~/.ssh/config · nothing scanned yet · after Van Gogh, 1889"
   }

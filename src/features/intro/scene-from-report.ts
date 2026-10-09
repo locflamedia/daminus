@@ -9,13 +9,14 @@
 // - A dune's height is the host's fullest filesystem (`diskPercent`), `null` without a reading.
 // - A dune or star is `offline` when the host did not answer in the latest scan, otherwise its
 //   level is the host's worst severity: critical, warning, or ok (info counts as ok).
-// - A star's label is "disk 87%" when the host's main issue is a disk check with a reading,
-//   else "2 critical", else "1 warning" / "3 warnings", else empty (healthy or offline).
+// - A star's issue is a disk reading when the host's main issue is a disk check with a reading,
+//   else its critical count, else its warning count, else none (healthy or offline). The
+//   wording ("disk 87%", "2 critical", "1 warning") is the stage's, so it follows the language.
 // - On a first launch nothing has been scanned: the stars are the host aliases of the ssh
 //   config, as given.
 import type { Report, ServerRollup } from '@/api'
 import { diskPercent, isUnreachable } from '@/lib/rollups'
-import type { IntroScene, Level } from './scene'
+import type { IntroScene, Level, StarIssue } from './scene'
 
 function levelOf(server: ServerRollup): Level {
   if (isUnreachable(server.outcome)) return 'offline'
@@ -23,15 +24,15 @@ function levelOf(server: ServerRollup): Level {
   return 'ok'
 }
 
-function labelOf(server: ServerRollup, level: Level, pct: number | null): string {
-  if (level === 'offline') return ''
+function issueOf(server: ServerRollup, level: Level, pct: number | null): StarIssue | null {
+  if (level === 'offline') return null
   const { crit, warn } = server.counts
-  if (crit + warn === 0) return ''
+  if (crit + warn === 0) return null
   if (server.main_issue?.key.check.startsWith('disk.') && pct !== null) {
-    return `disk ${Math.round(pct)}%`
+    return { kind: 'disk', pct: Math.round(pct) }
   }
-  if (crit > 0) return `${crit} critical`
-  return warn === 1 ? '1 warning' : `${warn} warnings`
+  if (crit > 0) return { kind: 'crit', count: crit }
+  return { kind: 'warn', count: warn }
 }
 
 function diskIssues(report: Report): number {
@@ -63,7 +64,7 @@ export function sceneFromReport(report: Report | null, hosts: readonly string[])
     })),
     stars: rows.map(({ server, level, pct }) => ({
       name: server.host,
-      label: labelOf(server, level, pct),
+      issue: issueOf(server, level, pct),
       level,
     })),
   }

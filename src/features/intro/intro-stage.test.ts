@@ -2,8 +2,22 @@
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { i18n } from '@/i18n'
+import { recordingContext } from './fake-canvas'
 import IntroStage from './IntroStage.vue'
 import type { IntroScene } from './scene'
+
+vi.mock('./starry', () => ({ loadStarry: async () => ({}) }))
+vi.mock('./dom', () => ({
+  canvasMask: () => new Uint8Array(),
+  ensureFont: async () => undefined,
+  loadLogo: async () => null,
+}))
+vi.mock('./stations', () => ({ buildLayout: () => ({}) }))
+vi.mock('./backdrop', () => ({ createGrain: () => ({}) }))
+const renderAt = vi.fn()
+vi.mock('./engine', () => ({
+  createIntroEngine: () => ({ duration: 8, renderAt, overlaysAt: () => [] }),
+}))
 
 const SCENE: IntroScene = {
   hosts: ['a', 'b'],
@@ -22,15 +36,22 @@ function stage(extra: Record<string, unknown> = {}) {
 describe('IntroStage with reduced motion', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    renderAt.mockClear()
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+      () => recordingContext() as unknown as CanvasRenderingContext2D,
+    )
   })
   afterEach(() => {
     vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
-  it('emits done after one second and animates nothing', () => {
+  it('holds the still for one second after it is drawn and animates nothing', async () => {
     const raf = vi.spyOn(globalThis, 'requestAnimationFrame')
     const wrapper = stage()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(renderAt).toHaveBeenCalledTimes(1)
+    expect(renderAt).toHaveBeenCalledWith(8)
     vi.advanceTimersByTime(999)
     expect(wrapper.emitted('done')).toBeUndefined()
     vi.advanceTimersByTime(1)
@@ -39,16 +60,17 @@ describe('IntroStage with reduced motion', () => {
     wrapper.unmount()
   })
 
-  it('does not emit done once unmounted', () => {
+  it('does not emit done once unmounted', async () => {
     const wrapper = stage()
+    await vi.advanceTimersByTimeAsync(0)
     wrapper.unmount()
     vi.advanceTimersByTime(2000)
     expect(wrapper.emitted('done')).toBeUndefined()
   })
 
-  it('stays put when frozen', () => {
+  it('stays put when frozen', async () => {
     const wrapper = stage({ freezeAt: 2 })
-    vi.advanceTimersByTime(5000)
+    await vi.advanceTimersByTimeAsync(5000)
     expect(wrapper.emitted('done')).toBeUndefined()
     wrapper.unmount()
   })

@@ -8,7 +8,7 @@ import {
   SLOTS,
   duneLabelAt,
 } from './scene'
-import type { IntroScene } from './scene'
+import type { IntroScene, StarIssue } from './scene'
 
 export interface DuneLabel {
   x: number
@@ -43,13 +43,13 @@ export function duneLabels(scene: IntroScene): DuneLabel[] {
 }
 
 /** Returning: the star's name, then what is wrong with it. */
-export function backStarLabels(scene: IntroScene): StarLabel[] {
+export function backStarLabels(scene: IntroScene, say: (issue: StarIssue) => string): StarLabel[] {
   return scene.stars.slice(0, SLOTS).map((s, slot) => {
     const [x, y] = BACK_LABELS[slot] ?? [0, 0]
     return {
       x,
       y,
-      text: s.label === '' ? s.name : `${s.name} · ${s.label}`,
+      text: s.issue === null ? s.name : `${s.name} · ${say(s.issue)}`,
       dot: DUNE_COLOR[s.level],
     }
   })

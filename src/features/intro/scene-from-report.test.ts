@@ -20,7 +20,7 @@ describe('sceneFromReport', () => {
     const scene = sceneFromReport(report({ servers: hostsOf(n) }), [])
     expect(scene.dunes).toHaveLength(n)
     expect(scene.stars).toHaveLength(n)
-    expect(scene.stars.every((s) => s.label === '' && s.level === 'ok')).toBe(true)
+    expect(scene.stars.every((s) => s.issue === null && s.level === 'ok')).toBe(true)
   })
 
   it('counts the report issues and the disk ones among them', () => {
@@ -62,7 +62,7 @@ describe('sceneFromReport', () => {
       [],
     )
     expect(scene.dunes).toEqual([{ name: 'h1', pct: 87, level: 'warn' }])
-    expect(scene.stars).toEqual([{ name: 'h1', label: 'disk 87%', level: 'warn' }])
+    expect(scene.stars).toEqual([{ name: 'h1', issue: { kind: 'disk', pct: 87 }, level: 'warn' }])
   })
 
   it('labels other findings by count and worst level', () => {
@@ -76,10 +76,10 @@ describe('sceneFromReport', () => {
       }),
       [],
     )
-    expect(scene.stars.map((s) => [s.label, s.level])).toEqual([
-      ['2 critical', 'crit'],
-      ['1 warning', 'warn'],
-      ['3 warnings', 'warn'],
+    expect(scene.stars.map((s) => [s.issue, s.level])).toEqual([
+      [{ kind: 'crit', count: 2 }, 'crit'],
+      [{ kind: 'warn', count: 1 }, 'warn'],
+      [{ kind: 'warn', count: 3 }, 'warn'],
     ])
     expect(scene.dunes.map((d) => d.pct)).toEqual([null, null, null])
   })
@@ -99,7 +99,7 @@ describe('sceneFromReport', () => {
       [],
     )
     expect(scene.dunes).toEqual([{ name: 'down', pct: null, level: 'offline' }])
-    expect(scene.stars).toEqual([{ name: 'down', label: '', level: 'offline' }])
+    expect(scene.stars).toEqual([{ name: 'down', issue: null, level: 'offline' }])
   })
 
   it('does not change the report it reads', () => {

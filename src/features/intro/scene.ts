@@ -2,6 +2,10 @@
 
 export type Level = 'crit' | 'warn' | 'ok' | 'offline'
 
+/** What is wrong with a server, as the star's label says it. */
+export type StarIssue =
+  { kind: 'disk'; pct: number } | { kind: 'crit'; count: number } | { kind: 'warn'; count: number }
+
 export interface IntroScene {
   /** First launch: the host aliases read from the ssh config (the first 5 are drawn). */
   hosts: readonly string[]
@@ -9,7 +13,7 @@ export interface IntroScene {
   /** Returning: one dune per server (the first 5 are drawn). */
   dunes: readonly { name: string; pct: number | null; level: Level }[]
   /** Returning: one star per server (the first 5 are drawn). */
-  stars: readonly { name: string; label: string; level: Level }[]
+  stars: readonly { name: string; issue: StarIssue | null; level: Level }[]
 }
 
 export type IntroJourney = 'first' | 'back' | 'daily' | 'nohosts'
@@ -83,13 +87,18 @@ export function clampScene(scene: IntroScene): IntroScene {
     hosts: scene.hosts.slice(0, SLOTS),
     issues: { ...scene.issues },
     dunes: scene.dunes.slice(0, SLOTS).map((d) => ({ ...d })),
-    stars: scene.stars.slice(0, SLOTS).map((s) => ({ ...s })),
+    stars: scene.stars
+      .slice(0, SLOTS)
+      .map((s) => ({ ...s, issue: s.issue === null ? null : { ...s.issue } })),
   }
 }
 
-/** The height of a dune in stage pixels; a server without a reading has a flat one. */
+/** A server without a reading, or offline, gets a low dune of this height (percent). */
+const NO_READING_PCT = 6
+
+/** The height of a dune in stage pixels. */
 export function duneHeight(pct: number | null): number {
-  return pct === null ? 0 : (Math.min(100, Math.max(0, pct)) / 100) * DUNE_MAX_HEIGHT
+  return (Math.min(100, Math.max(0, pct ?? NO_READING_PCT)) / 100) * DUNE_MAX_HEIGHT
 }
 
 /** Where a dune's label sits (centre x, top y). */

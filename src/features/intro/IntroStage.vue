@@ -11,7 +11,7 @@ import type { IntroEngine } from './engine'
 import { backStarLabels, duneLabels, firstStarLabels } from './labels'
 import { coverPlacement } from './layout'
 import { STAGE_H, STAGE_W, clampScene } from './scene'
-import type { IntroJourney, IntroScene } from './scene'
+import type { IntroJourney, IntroScene, StarIssue } from './scene'
 import { loadStarry } from './starry'
 import { buildLayout } from './stations'
 import type { StationName } from './stations'
@@ -42,13 +42,19 @@ const shown = ref('')
 
 const scene = computed(() => clampScene(props.scene))
 const dunes = computed(() => duneLabels(scene.value))
-const backStars = computed(() => backStarLabels(scene.value))
+const backStars = computed(() => backStarLabels(scene.value, issueText))
 const firstStars = computed(() => firstStarLabels(scene.value))
 const stageStyle = computed(() => ({
   width: `${STAGE_W}px`,
   height: `${STAGE_H}px`,
   transform: `translate(${placement.value.x}px, ${placement.value.y}px) scale(${placement.value.scale})`,
 }))
+
+function issueText(issue: StarIssue): string {
+  if (issue.kind === 'disk') return t('intro.starDisk', { n: issue.pct })
+  const key = issue.kind === 'crit' ? 'intro.starCrit' : 'intro.starWarn'
+  return t(key, { n: issue.count }, issue.count)
+}
 
 const isOn = (key: StationName): boolean => shown.value.split(',').includes(key)
 
@@ -108,7 +114,10 @@ function onVisibility(): void {
 async function start(): Promise<void> {
   const bg = bgCanvas.value?.getContext('2d')
   const fg = fgCanvas.value?.getContext('2d')
-  if (!bg || !fg) return
+  if (!bg || !fg) {
+    finish()
+    return
+  }
   let ready: IntroEngine
   try {
     const [data, logo] = await Promise.all([loadStarry(), loadLogo(), ensureFont()] as const)
@@ -132,6 +141,7 @@ async function start(): Promise<void> {
     show(Math.min(Math.max(0, props.freezeAt), ready.duration))
   } else if (props.reducedMotion) {
     show(ready.duration)
+    stillTimer = setTimeout(finish, STILL_HOLD_MS)
   } else {
     frameHandle = requestAnimationFrame(tick)
   }
@@ -146,9 +156,6 @@ onMounted(() => {
     window.addEventListener('resize', measure)
   }
   document.addEventListener('visibilitychange', onVisibility)
-  if (props.reducedMotion && props.freezeAt === undefined) {
-    stillTimer = setTimeout(finish, STILL_HOLD_MS)
-  }
   void start()
 })
 

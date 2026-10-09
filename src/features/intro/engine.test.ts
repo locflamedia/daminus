@@ -5,7 +5,7 @@ import { coverPlacement } from './layout'
 import { recordingContext } from './fake-canvas'
 import type { MaskFn } from './sampling'
 import { STAGE_H, STAGE_W, SLOTS } from './scene'
-import type { IntroScene } from './scene'
+import type { IntroScene, StarIssue } from './scene'
 import { buildLayout } from './stations'
 import type { Layout } from './stations'
 import { loadStarry } from './starry'
@@ -22,11 +22,11 @@ const SCENE: IntroScene = {
     { name: 'legacy-shop', pct: null, level: 'offline' },
   ],
   stars: [
-    { name: 'vps-sg-2', label: 'disk 87%', level: 'warn' },
-    { name: 'vps-sg-1', label: '', level: 'ok' },
-    { name: 'vps-hn-3', label: '2 critical', level: 'crit' },
-    { name: 'db-main', label: '', level: 'ok' },
-    { name: 'legacy-shop', label: 'offline', level: 'offline' },
+    { name: 'vps-sg-2', issue: { kind: 'disk', pct: 87 }, level: 'warn' },
+    { name: 'vps-sg-1', issue: null, level: 'ok' },
+    { name: 'vps-hn-3', issue: { kind: 'crit', count: 2 }, level: 'crit' },
+    { name: 'db-main', issue: null, level: 'ok' },
+    { name: 'legacy-shop', issue: null, level: 'offline' },
   ],
 }
 
@@ -208,6 +208,9 @@ describe('journeys', () => {
   })
 })
 
+const say = (i: StarIssue): string =>
+  i.kind === 'disk' ? `disk ${i.pct}%` : `${i.count} ${i.kind === 'crit' ? 'critical' : 'warning'}`
+
 describe('labels', () => {
   it('draws one label per slot and no more than five', () => {
     const many = {
@@ -216,7 +219,7 @@ describe('labels', () => {
       stars: [...SCENE.stars, ...SCENE.stars],
     }
     expect(duneLabels(many)).toHaveLength(SLOTS)
-    expect(backStarLabels(many)).toHaveLength(SLOTS)
+    expect(backStarLabels(many, say)).toHaveLength(SLOTS)
     expect(duneLabels({ ...SCENE, dunes: SCENE.dunes.slice(0, 2) })).toHaveLength(2)
   })
 
@@ -228,12 +231,12 @@ describe('labels', () => {
   })
 
   it('names a star and what is wrong with it', () => {
-    expect(backStarLabels(SCENE).map((s) => s.text)).toEqual([
+    expect(backStarLabels(SCENE, say).map((s) => s.text)).toEqual([
       'vps-sg-2 · disk 87%',
       'vps-sg-1',
       'vps-hn-3 · 2 critical',
       'db-main',
-      'legacy-shop · offline',
+      'legacy-shop',
     ])
   })
 })
