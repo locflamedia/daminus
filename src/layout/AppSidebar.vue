@@ -4,10 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink, useRoute } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
 import { useNow } from '@/composables/use-now'
+import StreakBadge from '@/features/delight/StreakBadge.vue'
 import SidebarAiCard from '@/features/empty/components/SidebarAiCard.vue'
 import SidebarGhosts from '@/features/empty/components/SidebarGhosts.vue'
 import SidebarTermius from '@/features/empty/components/SidebarTermius.vue'
 import { useEmptyStore } from '@/features/empty/empty-store'
+import { usePaletteStore } from '@/features/palette/palette-store'
 import { diskTone, isUnreachable, issueCount } from '@/lib/rollups'
 import { staleDays } from '@/lib/staleness'
 import { useProjectsStore } from '@/stores/projects'
@@ -26,6 +28,7 @@ const projects = useProjectsStore()
 const scan = useScanStore()
 const empty = useEmptyStore()
 const route = useRoute()
+const palette = usePaletteStore()
 
 /** The Snapshots card shows on a project's History tab only. */
 const onProjectHistory = computed(() => route.name === 'project' && route.params.tab === 'history')
@@ -79,7 +82,7 @@ const serverRows = computed(() =>
       <b>{{ t('app.name') }}</b>
     </div>
 
-    <button v-if="!helpScreen" type="button" class="search">
+    <button v-if="!helpScreen" type="button" class="search" @click="palette.show()">
       <UiIcon name="search" />
       <span class="grow">{{ t('nav.search') }}</span>
       <UiKbd>⌘K</UiKbd>
@@ -171,6 +174,7 @@ const serverRows = computed(() =>
 
     <div class="foot">
       <SidebarAiCard v-if="firstLaunch && !helpScreen" />
+      <StreakBadge />
       <SidebarAiChip />
       <RouterLink to="/settings" class="item" active-class="on">
         <UiIcon name="settings" />

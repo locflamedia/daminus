@@ -32,6 +32,10 @@ export interface PaletteItem {
   icon?: IconName
   /** Extra words that also match (a project's domain, a server's address). */
   keywords?: readonly string[]
+  /** A second line under the label (a small row: a result with a picture, not a command). */
+  subtitle?: string
+  /** A 36 x 28 picture before the label, an image URL. */
+  thumb?: string
 }
 
 export interface PaletteGroup {
@@ -165,19 +169,38 @@ function onKeydown(event: KeyboardEvent) {
               :key="item.id"
               class="item"
               role="option"
+              :class="{ rich: item.subtitle || item.thumb }"
               :aria-selected="flat[active]?.item.id === item.id"
               @mousemove="active = flat.findIndex((e) => e.item.id === item.id)"
               @click="pick(flat.findIndex((e) => e.item.id === item.id))"
             >
-              <UiStatusDot v-if="item.dot" :state="item.dot" />
+              <span
+                v-if="item.thumb"
+                class="thumb"
+                :style="{ backgroundImage: `url(${item.thumb})` }"
+                aria-hidden="true"
+              />
+              <UiStatusDot v-else-if="item.dot" :state="item.dot" />
               <UiIcon v-else-if="item.icon" :name="item.icon" :size="14" class="glyph" />
-              <span class="name">
+              <span v-if="item.subtitle" class="stack">
+                <span class="name">
+                  <template v-for="(part, i) in matchParts(item.label, query)" :key="i">
+                    <b v-if="part.match" class="match">{{ part.text }}</b>
+                    <template v-else>{{ part.text }}</template>
+                  </template>
+                </span>
+                <span class="sub">{{ item.subtitle }}</span>
+              </span>
+              <span v-else class="name">
                 <template v-for="(part, i) in matchParts(item.label, query)" :key="i">
                   <b v-if="part.match" class="match">{{ part.text }}</b>
                   <template v-else>{{ part.text }}</template>
                 </template>
               </span>
-              <span v-if="flat[active]?.item.id === item.id" class="open">
+              <span v-if="flat[active]?.item.id === item.id && item.subtitle" class="open">
+                <kbd class="pill">↵</kbd>
+              </span>
+              <span v-else-if="flat[active]?.item.id === item.id" class="open">
                 <UiKbd tone="on-field">⏎</UiKbd>{{ t('ui.palette.open') }}
               </span>
             </div>
@@ -260,6 +283,45 @@ function onKeydown(event: KeyboardEvent) {
 
 .item[aria-selected='true'] {
   background: var(--menu-hover);
+}
+
+.item.rich {
+  height: 44px;
+}
+
+.item.rich[aria-selected='true'] {
+  background: var(--accent-soft);
+}
+
+.thumb {
+  flex: none;
+  width: 36px;
+  height: 28px;
+  border-radius: 6px;
+  background-position: 30% 20%;
+  background-size: 120px auto;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sub {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pill {
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--surface-pop);
+  color: var(--accent-ink);
+  font: inherit;
 }
 
 .glyph {

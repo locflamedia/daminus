@@ -8,6 +8,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Report } from '@/api'
 import type { ServerSummary } from '@/lib/overview-servers'
+import ClearSky from '@/features/delight/ClearSky.vue'
 import { useOverviewStore } from '@/stores/overview'
 import { useProjectsStore } from '@/stores/projects'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -47,6 +48,7 @@ const serverText = computed(() => {
 
 <template>
   <div class="summary">
+    <ClearSky />
     <span class="lead">
       <i18n-t v-if="projects.issues > 0" keypath="overview.summary" scope="global">
         <template #issues
@@ -97,6 +99,8 @@ const serverText = computed(() => {
 
 <style scoped>
 .summary {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   flex-wrap: wrap;

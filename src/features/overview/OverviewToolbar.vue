@@ -10,6 +10,9 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import AskAiButton from '@/features/ai/ask/AskAiButton.vue'
+import ScanFx from '@/features/delight/ScanFx.vue'
+import { useDelightStore } from '@/features/delight/delight-store'
+import { useLoadingLine } from '@/features/delight/use-loading-line'
 import { scanCounts, urlChecks } from '@/lib/overview-scan'
 import { useLayoutRange } from '@/lib/viewport'
 import PageHeader from '@/layout/PageHeader.vue'
@@ -39,6 +42,8 @@ const history = useHistoryStore()
 const selection = useOverviewStore()
 const panel = useScanPanelStore()
 const range = useLayoutRange()
+const delight = useDelightStore()
+const loading = useLoadingLine()
 
 const narrow = computed(() => range.value === 'narrow')
 const report = computed(() => reports.latest)
@@ -121,9 +126,18 @@ const showFilters = computed(
 </script>
 
 <template>
-  <PageHeader :title="t('nav.overview')" :meta="scan.scanning || lastScan ? undefined : meta">
-    <template v-if="scan.scanning" #meta>
+  <PageHeader
+    :title="t('nav.overview')"
+    :meta="scan.scanning || loading.active.value || lastScan ? undefined : meta"
+  >
+    <template v-if="scan.scanning || loading.active.value" #meta>
       {{ t('toolbar.scanning') }} · <span class="mono">{{ elapsed }}</span>
+      <template v-if="loading.active.value">
+        ·
+        <Transition name="line" mode="out-in">
+          <span :key="loading.line.value" class="line">{{ loading.line.value }}</span>
+        </Transition>
+      </template>
     </template>
     <template v-else-if="lastScan" #meta>
       {{ t('toolbar.lastScan') }} <b class="age">{{ lastScan.age }}</b> · {{ lastScan.rest }}
@@ -171,16 +185,24 @@ const showFilters = computed(
           </UiMenu>
         </template>
         <AskAiButton :scope="{ kind: 'whole' }" />
-        <UiButton
-          variant="primary"
-          lifted
-          :class="{ sheen: oldDays !== null }"
-          :icon="narrow ? 'refresh' : undefined"
-          :shortcut="narrow ? undefined : '⌘R'"
-          @click="panel.start()"
-        >
-          {{ narrow ? t('toolbar.scan') : `↳ ${t('toolbar.scanAll')}` }}
-        </UiButton>
+        <span class="scan-wrap">
+          <UiButton
+            variant="primary"
+            lifted
+            :class="{ sheen: oldDays !== null && !delight.settled }"
+            :icon="delight.settled ? 'check' : narrow ? 'refresh' : undefined"
+            :shortcut="narrow ? undefined : '⌘R'"
+            @click="panel.start()"
+          >
+            <template v-if="delight.settled && delight.completion">
+              {{ t('delight.doneIn', { took: fmt.duration(delight.completion.durationMs) }) }}
+            </template>
+            <template v-else>
+              {{ narrow ? t('toolbar.scan') : `↳ ${t('toolbar.scanAll')}` }}
+            </template>
+          </UiButton>
+          <ScanFx />
+        </span>
       </template>
     </template>
   </PageHeader>
@@ -194,6 +216,32 @@ const showFilters = computed(
 
 .filter {
   align-self: center;
+}
+
+.scan-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.line {
+  display: inline-block;
+}
+
+.line-enter-active,
+.line-leave-active {
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.line-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.line-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .stop {
@@ -287,6 +335,11 @@ const showFilters = computed(
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .line-enter-active,
+  .line-leave-active {
+    transition: none;
+  }
+
   .sheen::after {
     animation: none;
     opacity: 0;
