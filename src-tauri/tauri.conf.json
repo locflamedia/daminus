@@ -30,7 +30,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "dmg"],
+    "targets": ["app"],
     "category": "DeveloperTool",
     "copyright": "Copyright (c) 2026 Daminus contributors",
     "licenseFile": "../LICENSE",
@@ -42,7 +42,8 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "minimumSystemVersion": "13.0"
+      "minimumSystemVersion": "13.0",
+      "signingIdentity": "-"
     }
   }
 }
