@@ -21,7 +21,7 @@ pub use history::{
     history_view, report_at,
 };
 pub use hosts::{excluded_hosts, set_host_included};
-pub use report::latest_report;
+pub use report::{has_critical, latest_report, record_scan_streak};
 pub use rules::{
     Covers, ExpectedDraft, MAX_NOTE_CHARS, REVIEW_DAYS, add_rule, make_rule, remove_rule,
 };

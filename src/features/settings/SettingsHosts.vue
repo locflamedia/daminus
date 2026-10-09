@@ -63,7 +63,7 @@ onMounted(() => {
   min-width: 0;
 }
 
-@container (max-width: 640px) {
+@container (max-width: 800px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }

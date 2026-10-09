@@ -30,7 +30,18 @@ pub struct TrayView {
     pub detail: String,
     pub scan_now: String,
     pub open: String,
+    /// The project that needs a look, for the quick-open item. `None` when
+    /// there is nothing to look at (or a scan is running).
+    pub attention: Option<Attention>,
     pub quit: String,
+}
+
+/// The worst project and the label of its quick-open item.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Attention {
+    pub project_id: String,
+    /// "Open kho-hang".
+    pub label: String,
 }
 
 /// Tray strings in one language, falling back to English per key.
@@ -81,6 +92,12 @@ impl Strings {
     }
 }
 
+/// Whether the icon holds still while scanning: the app's own animation
+/// switch is off, or the system asks for reduced motion.
+pub fn reduce_motion(app_animates: bool, os_reduces: bool) -> bool {
+    os_reduces || !app_animates
+}
+
 /// Builds the view. `report` is the last one read (`None` before any read
 /// worked); `report_error` says the latest read failed, so "no report" is not
 /// shown as "never scanned".
@@ -119,14 +136,19 @@ pub fn view(
     };
 
     let mut detail = Vec::new();
+    let mut attention = None;
     if scanning {
         detail.push(s.t("scanning", &[]));
     } else if let Some((seq, at)) = scanned {
         let local = at.inner().to_offset(offset);
         let time = format!("{:02}:{:02}", local.hour(), local.minute());
         detail.push(s.t("scan", &[("seq", &seq.to_string()), ("time", &time)]));
-        if let Some(name) = report.and_then(|r| needs_you(r, projects)) {
+        if let Some((id, name)) = report.and_then(|r| needs_you(r, projects)) {
             detail.push(s.t("needs", &[("project", &name)]));
+            attention = Some(Attention {
+                project_id: id,
+                label: s.t("openProject", &[("project", &name)]),
+            });
         }
     }
 
@@ -136,12 +158,13 @@ pub fn view(
         detail: detail.join(" · "),
         scan_now: s.t("scanNow", &[]),
         open: s.t("open", &[]),
+        attention,
         quit: s.t("quit", &[]),
     }
 }
 
-/// The name of the project with the worst open issue (first on a tie).
-fn needs_you(report: &Report, projects: &ProjectsFile) -> Option<String> {
+/// The id and name of the project with the worst open issue (first on a tie).
+fn needs_you(report: &Report, projects: &ProjectsFile) -> Option<(String, String)> {
     let rank = |l: Level| match l {
         Level::Crit => 2,
         Level::Warn => 1,
@@ -158,7 +181,7 @@ fn needs_you(report: &Report, projects: &ProjectsFile) -> Option<String> {
         .projects
         .iter()
         .find(|p| p.id == worst.id)
-        .map(|p| p.name.clone())
+        .map(|p| (p.id.clone(), p.name.clone()))
 }
 
 #[cfg(test)]
@@ -226,6 +249,38 @@ mod tests {
         assert_eq!(
             (v.scan_now.as_str(), v.open.as_str(), v.quit.as_str()),
             ("Scan now", "Open Daminus", "Quit")
+        );
+    }
+
+    #[test]
+    fn reduce_motion_follows_either_switch() {
+        assert!(!reduce_motion(true, false));
+        assert!(reduce_motion(false, false));
+        assert!(reduce_motion(true, true));
+    }
+
+    #[test]
+    fn quick_open_names_the_worst_project() {
+        let at = |s: &Strings, r: &Report, scanning| {
+            view(Some(r), false, &projects(), scanning, s, UtcOffset::UTC).attention
+        };
+        let en = Strings::new("en");
+        let a = at(&en, &report(2, 4), false).unwrap();
+        assert_eq!(
+            (a.project_id.as_str(), a.label.as_str()),
+            ("b", "Open kho-hang")
+        );
+        let vi = at(&Strings::new("vi"), &report(2, 4), false).unwrap();
+        assert_eq!(vi.label, "Mở kho-hang");
+
+        // Nothing to look at, or a scan running: no item.
+        let mut clear = report(0, 0);
+        clear.projects = vec![rollup("a", Level::Ok)];
+        assert_eq!(at(&en, &clear, false), None);
+        assert_eq!(at(&en, &report(2, 4), true), None);
+        assert_eq!(
+            view(None, false, &projects(), false, &en, UtcOffset::UTC).attention,
+            None
         );
     }
 

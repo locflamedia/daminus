@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
       <AppRail v-else-if="folded" />
       <AppSidebar v-else />
     </aside>
-    <main class="main">
+    <main class="main" data-app-main>
       <span class="blob" aria-hidden="true" />
       <span class="drag" data-tauri-drag-region aria-hidden="true" />
       <slot />

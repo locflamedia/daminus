@@ -248,6 +248,27 @@ describe('UiCommandPalette', () => {
   })
   const input = () => document.querySelector('input') as HTMLInputElement
 
+  it('draws a subtitle, a picture and a return key on a rich row, and nothing extra on others', () => {
+    open({
+      groups: [
+        ...groups,
+        {
+          id: 'egg',
+          label: '',
+          items: [{ id: 'egg', label: 'Egg', subtitle: 'Sub line', thumb: 'x.jpg' }],
+        },
+      ],
+      query: 'egg',
+    })
+    const row = document.querySelector('.item.rich')!
+    expect(row.querySelector('.sub')?.textContent).toBe('Sub line')
+    expect(row.querySelector('.thumb')).not.toBeNull()
+    expect(row.querySelector('.pill')?.textContent).toBe('↵')
+    wrapper!.unmount()
+    open()
+    expect(document.querySelector('.item.rich, .thumb, .sub, .pill')).toBeNull()
+  })
+
   it('lists every group with its rows when the query is empty', () => {
     open()
     expect([...document.querySelectorAll('.group-label')].map((g) => g.textContent)).toEqual([

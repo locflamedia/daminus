@@ -51,7 +51,7 @@ describe('Overview while a scan runs', () => {
     useScanStore().run = shellScanRun()
     const wrapper = await mountOverview()
     const meta = wrapper.get('.meta')
-    expect(meta.text()).toMatch(/^Scanning · \d+\.\d s$/)
+    expect(meta.text()).toMatch(/^Scanning · \d+\.\d s( · .+)?$/)
     expect(meta.get('.mono').text()).toMatch(/^\d+\.\d s$/)
     expect(meta.text()).not.toContain('#')
   })

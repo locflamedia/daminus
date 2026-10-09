@@ -546,6 +546,24 @@ mod ipc {
         );
     }
 
+    #[test]
+    fn streak_get_reads_the_saved_weeks() {
+        let app = mock_app(FakeTransport::new());
+        assert_eq!(
+            app.invoke("streak_get", json!({})).unwrap(),
+            json!({ "weeks": 0 })
+        );
+        std::fs::write(
+            app._dir.path().join("state.json"),
+            r#"{ "streak_weeks": 6 }"#,
+        )
+        .unwrap();
+        assert_eq!(
+            app.invoke("streak_get", json!({})).unwrap(),
+            json!({ "weeks": 6 })
+        );
+    }
+
     #[cfg(unix)]
     #[test]
     fn app_launch_with_an_unreadable_state_is_daily_and_leaves_the_file() {

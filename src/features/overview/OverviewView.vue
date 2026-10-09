@@ -7,6 +7,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { usePaletteStore } from '@/features/palette/palette-store'
+import { useShortcutsStore } from '@/features/shortcuts/shortcuts-store'
 import { errorText } from '@/lib/issue-text'
 import EmptyScreen from '@/features/empty/EmptyScreen.vue'
 import { useHistoryStore } from '@/stores/history'
@@ -63,11 +65,15 @@ function reload() {
 
 // --- keyboard --------------------------------------------------------------------------
 
+const palette = usePaletteStore()
+const sheet = useShortcutsStore()
 function onKeydown(e: KeyboardEvent) {
   // With no project there is nothing to scan: the empty screen owns the keys.
   if (showEmpty.value) return
+  if (e.repeat) return
   if (e.metaKey && e.key.toLowerCase() === 'r') {
     e.preventDefault()
+    if (palette.open || sheet.open) return
     if (!scan.scanning) void panel.start()
   } else if (e.key === 'Escape' && !e.defaultPrevented && scan.scanning) {
     // An open panel takes esc first (it closes and marks the key handled); this one ends the scan.

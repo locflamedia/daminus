@@ -8,12 +8,14 @@ import { useProjectsStore } from '@/stores/projects'
 import { useScanStore } from '@/stores/scan'
 import UiIcon from '@/ui/UiIcon.vue'
 import { badgeText } from '@/lib/micro'
+import { useAiProviderName } from './use-ai-provider-name'
 import DiskRing from './DiskRing.vue'
 import ProjectTile from './ProjectTile.vue'
 
 const { t } = useI18n()
 const projects = useProjectsStore()
 const scan = useScanStore()
+const aiName = useAiProviderName()
 
 const reading = computed(
   () =>
@@ -170,6 +172,18 @@ const overviewTip = computed(() =>
 
       <span class="grow" />
       <RouterLink
+        v-if="aiName"
+        :to="{ name: 'settings', params: { section: 'ai' } }"
+        class="ri"
+        active-class=""
+        :aria-label="t('nav.aiProvider', { name: aiName })"
+        @pointerenter="enter(t('nav.aiProvider', { name: aiName }), $event)"
+        @pointerleave="leave"
+      >
+        <UiIcon name="spark" />
+        <span class="live" aria-hidden="true" />
+      </RouterLink>
+      <RouterLink
         to="/settings"
         class="ri"
         active-class="on"
@@ -297,6 +311,16 @@ const overviewTip = computed(() =>
 
 .grow {
   flex-grow: 1;
+}
+
+.live {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ok-ink);
 }
 
 .tip {

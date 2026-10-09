@@ -1,0 +1,47 @@
+{
+  "delight": {
+    "doneIn": "Done in {took}",
+    "streak": {
+      "label": "{n} clear week | {n} clear weeks",
+      "tip": "{n} week in a row with nothing critical on any project. Counted on this Mac only. | {n} weeks in a row with nothing critical on any project. Counted on this Mac only."
+    },
+    "lines": {
+      "plain": "Reading {host}…",
+      "plainAll": "Reading your hosts…",
+      "byGroup": {
+        "connect": {
+          "a": "Opening a connection to {host}…",
+          "b": "Waiting for {host} to say hello…"
+        },
+        "system": {
+          "a": "Asking {host} about its load and memory…",
+          "b": "Checking whether {host} ever ran out of memory…"
+        },
+        "disk": {
+          "a": "Counting inodes on {host}…",
+          "b": "Measuring how full the disks are on {host}…"
+        },
+        "containers": {
+          "a": "Counting the containers on {host}…",
+          "b": "Weighing what Docker keeps on {host}…"
+        },
+        "databases": {
+          "a": "Weighing the databases on {host}…",
+          "b": "Asking {host} how big its databases have grown…"
+        },
+        "security": {
+          "a": "Checking nobody left a miner running on {host}…",
+          "b": "Looking at which ports {host} has open…"
+        },
+        "uptime": {
+          "a": "Knocking on your sites' doors…",
+          "b": "Checking your sites answer…"
+        },
+        "code_changes": {
+          "a": "Reading recent code changes on {host}…",
+          "b": "Reading recent code changes on {host}…"
+        }
+      }
+    }
+  }
+}

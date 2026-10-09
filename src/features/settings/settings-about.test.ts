@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import { readFileSync } from 'node:fs'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -54,6 +55,14 @@ describe('Settings › About', () => {
     expect(text).toContain('Made in Việt Nam · MIT')
     expect(text).toContain('The Starry Night, Vincent van Gogh, 1889 · public domain')
     expect(text).toContain('Marks by thesvg · Type by Geist · Flags by flag-icons')
+    expect(text).not.toMatch(/up to date/i)
+  })
+
+  it('floats the icon gently and keeps still for reduced motion', () => {
+    const source = readFileSync('src/features/settings/AboutIdentityCard.vue', 'utf8')
+    expect(source).toContain('float 5s ease-in-out infinite')
+    expect(source).toContain('translateY(-5px)')
+    expect(source).toMatch(/prefers-reduced-motion: reduce\)[^]*animation: none/)
   })
 
   it('says how many keys the ssh agent holds, and when it has none or is not running', async () => {
@@ -98,6 +107,7 @@ describe('Settings › About', () => {
     setI18nLocale('vi')
     await flushPromises()
     expect(wrapper.text()).toContain('Làm tại Việt Nam · MIT')
+    expect(wrapper.text()).toContain('Đêm đầy sao, Vincent van Gogh, 1889')
     expect(wrapper.text()).toContain('Sao chép chẩn đoán')
   })
 })

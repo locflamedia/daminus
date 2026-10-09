@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { defineAsyncComponent, onBeforeUnmount, onMounted, watch } from 'vue'
-import { RouterView, useRoute } from 'vue-router'
+import { RouterView, useRoute, useRouter } from 'vue-router'
+import { onTrayOpenProject } from '@/api'
 import PayloadSheet from '@/features/ai/payload/PayloadSheet.vue'
 import AskDrawer from '@/features/ai/ask/AskDrawer.vue'
 import HostKeyHost from '@/features/host-key/HostKeyHost.vue'
 import IntroHost from '@/features/intro/IntroHost.vue'
+import PaletteHost from '@/features/palette/PaletteHost.vue'
 import ProjectSheet from '@/features/project-sheet/ProjectSheet.vue'
 import ScanPanel from '@/features/scan-panel/ScanPanel.vue'
+import ShortcutsHost from '@/features/shortcuts/ShortcutsHost.vue'
 import AppWindow from '@/layout/AppWindow.vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
@@ -17,6 +20,7 @@ const scan = useScanStore()
 const projects = useProjectsStore()
 const report = useReportStore()
 const route = useRoute()
+const router = useRouter()
 // Present only in development; the production bundle drops the import with the constant.
 const DevSwitch = import.meta.env.DEV
   ? defineAsyncComponent(() => import('@/features/dev/DevSwitch.vue'))
@@ -33,7 +37,21 @@ watch(
   () => void projects.loadDetails(),
   { immediate: true },
 )
-onBeforeUnmount(() => scan.dispose())
+// "Open <project>" in the menu bar menu.
+let stopTray: (() => void) | undefined
+let unmounted = false
+onMounted(async () => {
+  const stop = await onTrayOpenProject(({ project_id }) =>
+    router.push({ name: 'project', params: { id: project_id } }),
+  )
+  if (unmounted) stop()
+  else stopTray = stop
+})
+onBeforeUnmount(() => {
+  unmounted = true
+  stopTray?.()
+  scan.dispose()
+})
 </script>
 
 <template>
@@ -51,5 +69,7 @@ onBeforeUnmount(() => scan.dispose())
   <AskDrawer />
   <PayloadSheet />
   <HostKeyHost />
+  <PaletteHost />
+  <ShortcutsHost />
   <UiToastHost />
 </template>

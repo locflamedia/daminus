@@ -1,0 +1,47 @@
+{
+  "delight": {
+    "doneIn": "Xong trong {took}",
+    "streak": {
+      "label": "{n} tuần sạch",
+      "tip": "{n} tuần liền không có dự án nào ở mức nghiêm trọng. Chỉ đếm trên máy Mac này."
+    },
+    "lines": {
+      "plain": "Đang đọc {host}…",
+      "plainAll": "Đang đọc các máy chủ…",
+      "byGroup": {
+        "connect": {
+          "a": "Đang mở kết nối tới {host}…",
+          "b": "Đang chờ {host} chào lại…"
+        },
+        "system": {
+          "a": "Đang hỏi {host} về tải và bộ nhớ…",
+          "b": "Kiểm tra xem {host} có từng hết bộ nhớ…"
+        },
+        "disk": {
+          "a": "Đang đếm inode trên {host}…",
+          "b": "Đang đo xem đĩa trên {host} đầy đến đâu…"
+        },
+        "containers": {
+          "a": "Đang đếm container trên {host}…",
+          "b": "Đang cân dung lượng Docker giữ trên {host}…"
+        },
+        "databases": {
+          "a": "Đang cân các cơ sở dữ liệu trên {host}…",
+          "b": "Đang hỏi {host} cơ sở dữ liệu đã lớn đến đâu…"
+        },
+        "security": {
+          "a": "Kiểm tra xem có ai quên chạy miner trên {host}…",
+          "b": "Đang xem {host} mở những cổng nào…"
+        },
+        "uptime": {
+          "a": "Đang gõ cửa các site của bạn…",
+          "b": "Đang kiểm tra các site có trả lời…"
+        },
+        "code_changes": {
+          "a": "Đang đọc các thay đổi code gần đây trên {host}…",
+          "b": "Đang đọc các thay đổi code gần đây trên {host}…"
+        }
+      }
+    }
+  }
+}

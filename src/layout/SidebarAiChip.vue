@@ -4,22 +4,12 @@
   Nothing is drawn while AI is off or no provider is chosen (the board draws no such state).
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { useAiProvidersStore } from '@/stores/ai-providers'
+import { useAiProviderName } from './use-ai-provider-name'
 
 const { t } = useI18n()
-const providers = useAiProvidersStore()
-
-const name = computed(() => {
-  const view = providers.view
-  if (!view || view.provider === null) return ''
-  const entry = view.providers.find((p) => p.profile.id === view.provider)
-  return view.model ?? entry?.profile.models[0] ?? entry?.profile.name ?? ''
-})
-
-if (providers.view === null) void providers.load()
+const name = useAiProviderName()
 </script>
 
 <template>

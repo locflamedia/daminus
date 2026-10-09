@@ -16,6 +16,10 @@ streak_weeks: number,
  */
 streak_week_start: Day | null, 
 /**
+ * The week in `streak_week_start` had a critical finding, so it does not count.
+ */
+streak_week_critical: boolean, 
+/**
  * AI requests sent after the payload review screen was shown.
  */
 ai_reviewed_sends: number, };

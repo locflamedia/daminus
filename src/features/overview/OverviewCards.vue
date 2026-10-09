@@ -1,5 +1,5 @@
 <!--
-  The project cards (board "Overview · results"): three across, critical first. Cards rise 80 ms
+  The project cards (board "Overview · results"): three across (two in a narrower window), critical first. Cards rise 80 ms
   apart when the screen opens and are still afterwards; a card whose scan is running updates in
   place, and the order changes once, with a 350 ms spring, when the new results are saved.
 -->
@@ -85,8 +85,8 @@ function act(card: CardView) {
   gap: var(--space-4);
 }
 
-/* Narrow window: the cards go two across. */
-[data-range='narrow'] .cards {
+/* Medium and narrow windows: the cards go two across. */
+:is([data-range='medium'], [data-range='narrow']) .cards {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 

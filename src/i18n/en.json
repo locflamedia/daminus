@@ -111,6 +111,7 @@
     "scanning": "Scanning…",
     "needs": "{project} needs you",
     "scanNow": "Scan now",
+    "openProject": "Open {project}",
     "open": "Open Daminus",
     "quit": "Quit"
   },

@@ -39,7 +39,7 @@ const version = __APP_VERSION__
 }
 
 .icon {
-  animation: float 6s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
 }
 
 .name {
@@ -61,7 +61,7 @@ const version = __APP_VERSION__
 
 @keyframes float {
   50% {
-    transform: translateY(-3px);
+    transform: translateY(-5px);
   }
 }
 

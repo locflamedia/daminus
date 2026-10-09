@@ -65,8 +65,8 @@ onMounted(() => {
   min-width: 0;
 }
 
-/* Under 640 px of content the right column goes under the left one. */
-@container (max-width: 640px) {
+/* Under 860 px of content the right column goes under the left one. */
+@container (max-width: 860px) {
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }

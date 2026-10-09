@@ -13,7 +13,7 @@ use daminus_core::ai::view::{
 };
 use daminus_core::data::{DataUsage, ExportedFile};
 use daminus_core::diagnostics::Diagnostics;
-use daminus_core::domain::app_state::LaunchInfo;
+use daminus_core::domain::app_state::{LaunchInfo, StreakInfo};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
@@ -276,6 +276,13 @@ pub async fn app_launch(core: State<'_, AppCore>) -> Result<LaunchInfo, AppError
     let core = core.inner().clone();
     let now = Timestamp::new(time::OffsetDateTime::now_utc());
     run_blocking("app_launch", move || Ok(core.app_launch(now))).await
+}
+
+/// Clear weeks in a row, for the sidebar stars.
+#[tauri::command]
+pub async fn streak_get(core: State<'_, AppCore>) -> Result<StreakInfo, AppError> {
+    let core = core.inner().clone();
+    run_blocking("streak_get", move || Ok(core.streak_get())).await
 }
 
 /// `settings.json` as saved (no key or secret is ever in it).
