@@ -84,4 +84,65 @@ describe('IntroStage with reduced motion', () => {
     ])
     wrapper.unmount()
   })
+
+  it('counts every host and server in the pills while the painting draws five', () => {
+    const hosts = Array.from({ length: 12 }, (_, i) => `h${i}`)
+    const stars = hosts.map((name) => ({ name, issue: null, level: 'ok' as const }))
+    const wrapper = stage({ scene: { ...SCENE, hosts, stars } })
+    const pills = wrapper.findAll('.pill').map((p) => p.text())
+    expect(pills[0]).toContain('Your 12 servers')
+    expect(pills[1]).toContain('12 hosts found')
+    wrapper.unmount()
+  })
+
+  it('shrinks its canvases when it goes', async () => {
+    const wrapper = stage()
+    await vi.advanceTimersByTimeAsync(0)
+    const canvases = wrapper.findAll('canvas').map((c) => c.element)
+    wrapper.unmount()
+    expect(canvases.map((c) => [c.width, c.height])).toEqual([
+      [0, 0],
+      [0, 0],
+    ])
+  })
+})
+
+describe('IntroStage animating', () => {
+  let frames: FrameRequestCallback[] = []
+  beforeEach(() => {
+    frames = []
+    renderAt.mockReset()
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+      () => recordingContext() as unknown as CanvasRenderingContext2D,
+    )
+    vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation((cb) => frames.push(cb))
+    vi.spyOn(globalThis, 'cancelAnimationFrame').mockImplementation(() => undefined)
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('ends the journey and reports when a frame throws', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const wrapper = stage({ reducedMotion: false })
+    await vi.waitFor(() => expect(frames).toHaveLength(1))
+    renderAt.mockImplementation(() => {
+      throw new Error('draw failed')
+    })
+    frames[0]?.(0)
+    expect(error).toHaveBeenCalled()
+    expect(wrapper.emitted('done')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('cancels the pending frame before it schedules another when shown again', async () => {
+    const wrapper = stage({ reducedMotion: false })
+    await vi.waitFor(() => expect(frames).toHaveLength(1))
+    const cancel = vi.mocked(globalThis.cancelAnimationFrame)
+    cancel.mockClear()
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(cancel).toHaveBeenCalledTimes(1)
+    expect(frames).toHaveLength(2)
+    wrapper.unmount()
+  })
 })

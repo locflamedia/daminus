@@ -146,8 +146,27 @@ impl FsStore {
 
     /// Loads `state.json`. A damaged file is set aside and defaults are used.
     pub fn load_state(&self) -> Result<AppState, AppError> {
-        let path = self.root.join(STATE_FILE);
         let _lock = StoreLock::acquire(&self.root)?;
+        self.read_state()
+    }
+
+    pub fn save_state(&self, state: &AppState) -> Result<(), AppError> {
+        let _lock = StoreLock::acquire(&self.root)?;
+        self.write_state(state)
+    }
+
+    /// Loads `state.json`, lets `change` edit it and writes it back, all under one lock so a
+    /// second process cannot slip a change in between. Nothing is written when the load fails.
+    pub fn update_state(&self, change: impl FnOnce(&mut AppState)) -> Result<AppState, AppError> {
+        let _lock = StoreLock::acquire(&self.root)?;
+        let mut state = self.read_state()?;
+        change(&mut state);
+        self.write_state(&state)?;
+        Ok(state)
+    }
+
+    fn read_state(&self) -> Result<AppState, AppError> {
+        let path = self.root.join(STATE_FILE);
         let Some(bytes) = read_opt(&path)? else {
             return Ok(AppState::default());
         };
@@ -160,8 +179,7 @@ impl FsStore {
         }
     }
 
-    pub fn save_state(&self, state: &AppState) -> Result<(), AppError> {
-        let _lock = StoreLock::acquire(&self.root)?;
+    fn write_state(&self, state: &AppState) -> Result<(), AppError> {
         write_atomic(&self.root.join(STATE_FILE), &to_pretty(state)?)
     }
 

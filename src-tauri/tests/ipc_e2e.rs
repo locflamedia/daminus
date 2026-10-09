@@ -546,6 +546,25 @@ mod ipc {
         );
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn app_launch_with_an_unreadable_state_is_daily_and_leaves_the_file() {
+        use std::os::unix::fs::PermissionsExt;
+        let app = mock_app(FakeTransport::new());
+        let path = app._dir.path().join("state.json");
+        let body = r#"{ "last_opened_at": "2020-01-01T00:00:00Z" }"#;
+        std::fs::write(&path, body).unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o000)).unwrap();
+        if std::fs::read(&path).is_err() {
+            let got = app.invoke("app_launch", json!({})).unwrap();
+            assert_eq!(got, json!({ "kind": "daily", "previous": null }));
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), body);
+        } else {
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+    }
+
     #[test]
     fn settings_sections_are_saved_checked_and_kept_apart() {
         let app = mock_app(FakeTransport::new());

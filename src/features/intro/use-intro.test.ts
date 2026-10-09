@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { effectScope, type EffectScope } from 'vue'
 import type { LaunchKind } from '@/api'
 import { counts, report, server } from '@/testing/report-fixture'
-import { FADE_MS, useIntro, type IntroDeps } from './use-intro'
+import { DECISION_MS, FADE_MS, useIntro, type IntroDeps } from './use-intro'
 
 let scope: EffectScope | null = null
 
@@ -18,6 +18,8 @@ function setup(kind: LaunchKind | Error, extra: Partial<IntroDeps> = {}) {
     mode: () => 'always',
     report: () => Promise.resolve(report({ servers: [server('h1')], counts: counts({ crit: 1 }) })),
     reducedMotion: () => false,
+    preload: () => Promise.resolve(),
+    topmost: () => true,
     search: '',
     dev: false,
     ...extra,
@@ -171,6 +173,87 @@ describe('useIntro ending', () => {
     await intro.start()
     intro.finish()
     await Promise.resolve()
+    const e = new KeyboardEvent('keydown', { key: 'a', cancelable: true })
+    window.dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(false)
+  })
+})
+
+describe('useIntro decision phase', () => {
+  const never = () => new Promise<never>(() => undefined)
+
+  it('gives up with no intro after the deadline', async () => {
+    const { intro } = setup('daily', { hostAliases: never, report: never, preload: never })
+    const started = intro.start()
+    await vi.advanceTimersByTimeAsync(DECISION_MS - 1)
+    expect(intro.plan.value).toBeNull()
+    await vi.advanceTimersByTimeAsync(1)
+    await started
+    expect(intro.plan.value).toBeNull()
+  })
+
+  it('plays no intro when the painting data cannot load', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const { intro } = setup('daily', { preload: () => Promise.reject(new Error('x')) })
+    await intro.start()
+    expect(intro.plan.value).toBeNull()
+  })
+
+  it('starts loading the data while the launch is still being read', async () => {
+    const preload = vi.fn(() => Promise.resolve())
+    const { intro } = setup('daily', { launch: never, preload })
+    void intro.start()
+    expect(preload).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(DECISION_MS)
+  })
+
+  it('skips on a key during the decision: no intro, key swallowed', async () => {
+    const { intro } = setup('daily', { launch: never })
+    intro.arm()
+    const started = intro.start()
+    const e = new KeyboardEvent('keydown', { key: 'a', cancelable: true })
+    window.dispatchEvent(e)
+    await started
+    expect(e.defaultPrevented).toBe(true)
+    expect(intro.plan.value).toBeNull()
+  })
+
+  it('skips on a click during the decision', async () => {
+    const { intro, launch } = setup('daily')
+    intro.arm()
+    intro.skip()
+    await intro.start()
+    expect(intro.plan.value).toBeNull()
+    expect(launch).not.toHaveBeenCalled()
+  })
+
+  it('lets Cmd and Ctrl combinations through without skipping', async () => {
+    const { intro } = setup('daily')
+    await intro.start()
+    for (const init of [
+      { key: 'k', metaKey: true },
+      { key: 'Tab', ctrlKey: true },
+    ]) {
+      const e = new KeyboardEvent('keydown', { ...init, cancelable: true })
+      window.dispatchEvent(e)
+      expect(e.defaultPrevented).toBe(false)
+      expect(intro.leaving.value).toBe(false)
+    }
+  })
+
+  it('leaves keys alone while something else is on top', async () => {
+    const { intro } = setup('daily', { topmost: () => false })
+    await intro.start()
+    const e = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true })
+    window.dispatchEvent(e)
+    expect(e.defaultPrevented).toBe(false)
+    expect(intro.leaving.value).toBe(false)
+  })
+
+  it('stops listening once the decision is no intro', async () => {
+    const { intro } = setup('daily', { mode: () => 'never' })
+    intro.arm()
+    await intro.start()
     const e = new KeyboardEvent('keydown', { key: 'a', cancelable: true })
     window.dispatchEvent(e)
     expect(e.defaultPrevented).toBe(false)

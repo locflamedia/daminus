@@ -8,6 +8,8 @@ import { i18n } from '@/i18n'
 import IntroHost from './IntroHost.vue'
 import { FADE_MS } from './use-intro'
 
+vi.mock('./starry', () => ({ loadStarry: () => Promise.resolve({}) }))
+
 const calls: string[] = []
 
 async function host(force = true, bare = false) {
@@ -108,19 +110,29 @@ describe('IntroHost', () => {
     expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(false)
   })
 
-  it('gives focus back to the element that had it when the intro ends', async () => {
+  it('is decoration: hidden from assistive tech and it never takes focus', async () => {
     const { useSettingsStore } = await import('@/stores/settings')
     useSettingsStore().general = { ...useSettingsStore().general, intro: 'always' }
     const button = document.createElement('button')
     document.body.append(button)
     button.focus()
     const wrapper = await host()
-    expect(document.activeElement).not.toBe(button)
-    vi.useFakeTimers()
-    await wrapper.find('[data-testid="intro-host"]').trigger('click')
-    vi.advanceTimersByTime(FADE_MS)
-    await flushPromises()
+    const el = wrapper.find('[data-testid="intro-host"]')
+    expect(el.attributes('aria-hidden')).toBe('true')
+    expect(el.attributes('role')).toBe('presentation')
+    expect(el.attributes('tabindex')).toBeUndefined()
     expect(document.activeElement).toBe(button)
     button.remove()
+  })
+
+  it('skips on a click while the launch is still being read', async () => {
+    mockCommands((cmd) => (cmd === 'app_launch' ? new Promise(() => undefined) : null))
+    const { useSettingsStore } = await import('@/stores/settings')
+    useSettingsStore().general = { ...useSettingsStore().general, intro: 'always' }
+    const wrapper = await host()
+    expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="intro-host"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="intro-host"]').exists()).toBe(false)
   })
 })

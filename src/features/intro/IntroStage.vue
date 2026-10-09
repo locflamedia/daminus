@@ -59,6 +59,7 @@ function issueText(issue: StarIssue): string {
 const isOn = (key: StationName): boolean => shown.value.split(',').includes(key)
 
 let engine: IntroEngine | null = null
+let grainCanvas: HTMLCanvasElement | null = null
 let frameHandle = 0
 let stillTimer: ReturnType<typeof setTimeout> | undefined
 let observer: ResizeObserver | null = null
@@ -88,17 +89,22 @@ function finish(): void {
 
 function tick(now: number): void {
   if (engine === null) return
-  lastNow ??= now
-  elapsed += (now - lastNow) / 1000
-  lastNow = now
-  const seconds = Math.min(elapsed, engine.duration)
-  show(seconds)
-  emit('progress', seconds / engine.duration)
-  if (elapsed >= engine.duration) {
+  try {
+    lastNow ??= now
+    elapsed += (now - lastNow) / 1000
+    lastNow = now
+    const seconds = Math.min(elapsed, engine.duration)
+    show(seconds)
+    emit('progress', seconds / engine.duration)
+    if (elapsed >= engine.duration) {
+      finish()
+      return
+    }
+    frameHandle = requestAnimationFrame(tick)
+  } catch (e) {
+    console.error(e)
     finish()
-    return
   }
-  frameHandle = requestAnimationFrame(tick)
 }
 
 function onVisibility(): void {
@@ -107,6 +113,7 @@ function onVisibility(): void {
     cancelAnimationFrame(frameHandle)
     lastNow = null
   } else {
+    cancelAnimationFrame(frameHandle)
     frameHandle = requestAnimationFrame(tick)
   }
 }
@@ -128,11 +135,12 @@ async function start(): Promise<void> {
       scene: scene.value,
       bg,
       fg,
-      grain: createGrain(document.createElement('canvas')),
+      grain: createGrain((grainCanvas = document.createElement('canvas'))),
       logo,
     })
-  } catch {
+  } catch (e) {
     // Nothing to show is no reason to hold the app back.
+    console.error(e)
     finish()
     return
   }
@@ -166,6 +174,12 @@ onBeforeUnmount(() => {
   observer?.disconnect()
   window.removeEventListener('resize', measure)
   document.removeEventListener('visibilitychange', onVisibility)
+  // Dropping the canvas size frees its pixel buffers at once rather than at the next collection.
+  for (const canvas of [bgCanvas.value, fgCanvas.value, grainCanvas]) {
+    if (canvas !== null) canvas.width = canvas.height = 0
+  }
+  grainCanvas = null
+  engine = null
 })
 </script>
 
@@ -209,7 +223,7 @@ onBeforeUnmount(() => {
         </span>
         <div class="pill-row">
           <span class="pill">{{
-            t('intro.pillBack', { n: scene.stars.length }, scene.stars.length)
+            t('intro.pillBack', { n: props.scene.stars.length }, props.scene.stars.length)
           }}</span>
         </div>
       </div>
@@ -225,7 +239,7 @@ onBeforeUnmount(() => {
         <div class="pill-row">
           <span class="pill">
             <i class="found" />{{
-              t('intro.pillFirst', { n: scene.hosts.length }, scene.hosts.length)
+              t('intro.pillFirst', { n: props.scene.hosts.length }, props.scene.hosts.length)
             }}
           </span>
         </div>

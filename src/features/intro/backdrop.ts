@@ -29,6 +29,23 @@ export function createGrain(canvas: HTMLCanvasElement): HTMLCanvasElement {
   return canvas
 }
 
+const patterns = new WeakMap<
+  CanvasRenderingContext2D,
+  { grain: CanvasImageSource; pattern: CanvasPattern }
+>()
+
+/** The grain as a repeating fill, made once per context and kept for the next frames. */
+function grainPattern(
+  ctx: CanvasRenderingContext2D,
+  grain: CanvasImageSource,
+): CanvasPattern | null {
+  const kept = patterns.get(ctx)
+  if (kept !== undefined && kept.grain === grain) return kept.pattern
+  const pattern = ctx.createPattern(grain, 'repeat')
+  if (pattern !== null) patterns.set(ctx, { grain, pattern })
+  return pattern
+}
+
 /** Drifting soft blobs on a pale base, with film grain over them, drawn at scale `s`. */
 export function drawBackdrop(
   ctx: CanvasRenderingContext2D,
@@ -50,7 +67,7 @@ export function drawBackdrop(
     ctx.fillStyle = g
     ctx.fillRect(0, 0, STAGE_W, STAGE_H)
   })
-  const pattern = ctx.createPattern(grain, 'repeat')
+  const pattern = grainPattern(ctx, grain)
   if (pattern !== null) {
     ctx.fillStyle = pattern
     ctx.fillRect(0, 0, STAGE_W, STAGE_H)

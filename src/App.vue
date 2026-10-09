@@ -37,7 +37,8 @@ onBeforeUnmount(() => scan.dispose())
 </script>
 
 <template>
-  <IntroHost v-if="route.meta.bare !== true" />
+  <!-- Mounted once for the window; it skips a bare route itself, so the launch is read once. -->
+  <IntroHost />
   <!-- A bare route (the dev gallery) draws without the window frame. -->
   <RouterView v-if="route.meta.bare === true" />
   <AppWindow v-else>

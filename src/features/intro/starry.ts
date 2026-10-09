@@ -26,12 +26,17 @@ export function isStarryData(value: unknown): value is StarryData {
 
 let pending: Promise<StarryData> | null = null
 
-/** Loads the painting data once; later calls share the same promise. */
+/** Loads the painting data once; later calls share the same promise, until one fails. */
 export function loadStarry(): Promise<StarryData> {
-  pending ??= import('@/assets/intro/starry.json').then((m) => {
-    const data: unknown = m.default
-    if (!isStarryData(data)) throw new Error('the painting data is malformed')
-    return data
-  })
+  pending ??= import('@/assets/intro/starry.json')
+    .then((m) => {
+      const data: unknown = m.default
+      if (!isStarryData(data)) throw new Error('the painting data is malformed')
+      return data
+    })
+    .catch((e: unknown) => {
+      pending = null
+      throw e
+    })
   return pending
 }

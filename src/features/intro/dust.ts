@@ -42,19 +42,25 @@ export function frameState(timeline: Timeline, t: number, loopLength: number | n
   }
 }
 
-const A = new Float32Array(9)
-const B = new Float32Array(9)
+/** Frames a colour-and-size bucket may sit unused before it is dropped. */
+const BUCKET_IDLE_FRAMES = 30
 
-function readParticle(layout: Layout, st: StationName, i: number, t: number, out: Float32Array) {
-  const a = layout.stations[st].data
-  const o = i * PARTICLE_STRIDE
-  for (let j = 0; j < PARTICLE_STRIDE; j++) out[j] = a[o + j] ?? 0
-  if (st === 'storm') {
-    const r = a[o] ?? 0
-    const th = (a[o + 1] ?? 0) + t * (1.4 - r / 760) * 0.6
-    out[0] = STAGE_W / 2 + Math.cos(th) * r
-    out[1] = STAGE_H / 2 + Math.sin(th) * r * 0.55
-  }
+/** The storm station orbits: its x and y come from a radius and an angle that turns with `t`. */
+function stormX(a: Float32Array, o: number, t: number): number {
+  const r = a[o] ?? 0
+  const th = (a[o + 1] ?? 0) + t * (1.4 - r / 760) * 0.6
+  return Math.fround(STAGE_W / 2 + Math.cos(th) * r)
+}
+
+function stormY(a: Float32Array, o: number, t: number): number {
+  const r = a[o] ?? 0
+  const th = (a[o + 1] ?? 0) + t * (1.4 - r / 760) * 0.6
+  return Math.fround(STAGE_H / 2 + Math.sin(th) * r * 0.55)
+}
+
+function channel(a: Float32Array, b: Float32Array, k: number, p: number): number {
+  const from = a[k] ?? 0
+  return from + ((b[k] ?? 0) - from) * p
 }
 
 const isPainting = (st: StationName): boolean => st === 'paintFirst' || st === 'paintBack'
@@ -82,31 +88,43 @@ export function createDustRenderer(layout: Layout): DustRenderer {
         ctx.restore()
       }
       const active: Bucket[] = []
+      const fd = layout.stations[f.from].data
+      const td = layout.stations[f.station].data
+      const fromStorm = f.from === 'storm'
+      const toStorm = f.station === 'storm'
       for (let i = 0; i < layout.n; i++) {
         const delay = (layout.rank[i] ?? 0) * 0.35
         const p = first
           ? 1
           : ease(Math.min(1, Math.max(0, (t - seg.start - delay * seg.len) / (seg.len * 0.65))))
-        readParticle(layout, f.from, i, t, A)
-        readParticle(layout, f.station, i, t, B)
-        let x = (A[0] ?? 0) + ((B[0] ?? 0) - (A[0] ?? 0)) * p
-        let y = (A[1] ?? 0) + ((B[1] ?? 0) - (A[1] ?? 0)) * p
+        const o = i * PARTICLE_STRIDE
+        const ax = fromStorm ? stormX(fd, o, t) : (fd[o] ?? 0)
+        const ay = fromStorm ? stormY(fd, o, t) : (fd[o + 1] ?? 0)
+        const bx = toStorm ? stormX(td, o, t) : (td[o] ?? 0)
+        const by = toStorm ? stormY(td, o, t) : (td[o + 1] ?? 0)
+        let x = ax + (bx - ax) * p
+        let y = ay + (by - ay) * p
         const sw = Math.sin(Math.PI * p) * 26 * (layout.jit[i] ?? 0)
         x += sw * 0.7
         y -= Math.abs(sw) * 0.5
-        const size = (A[2] ?? 0) + ((B[2] ?? 0) - (A[2] ?? 0)) * p
-        const len = (A[3] ?? 0) + ((B[3] ?? 0) - (A[3] ?? 0)) * p
-        const ang = (B[3] ?? 0) > 0 ? (B[4] ?? 0) : (A[4] ?? 0)
-        const al = ((A[8] ?? 0) + ((B[8] ?? 0) - (A[8] ?? 0)) * p) * f.fadeIn * f.fadeOut
+        const as = fd[o + 2] ?? 0
+        const bs = td[o + 2] ?? 0
+        const size = as + (bs - as) * p
+        const al0 = fd[o + 3] ?? 0
+        const bl0 = td[o + 3] ?? 0
+        const len = al0 + (bl0 - al0) * p
+        const ang = bl0 > 0 ? (td[o + 4] ?? 0) : (fd[o + 4] ?? 0)
+        const aa = fd[o + 8] ?? 0
+        const al = (aa + ((td[o + 8] ?? 0) - aa) * p) * f.fadeIn * f.fadeOut
         if (painting && p >= 1) {
           const m = Math.sin(t * 1.7 + (layout.phase[i] ?? 0)) * 2
           x += Math.cos(ang) * m
           y += Math.sin(ang) * m
         }
         if (al < 0.02) continue
-        const r8 = Math.round(((A[5] ?? 0) + ((B[5] ?? 0) - (A[5] ?? 0)) * p) / 8)
-        const g8 = Math.round(((A[6] ?? 0) + ((B[6] ?? 0) - (A[6] ?? 0)) * p) / 8)
-        const b8 = Math.round(((A[7] ?? 0) + ((B[7] ?? 0) - (A[7] ?? 0)) * p) / 8)
+        const r8 = Math.round(channel(fd, td, o + 5, p) / 8)
+        const g8 = Math.round(channel(fd, td, o + 6, p) / 8)
+        const b8 = Math.round(channel(fd, td, o + 7, p) / 8)
         const a10 = Math.round(al * 10)
         const s2 = Math.round(size * 2)
         const key = (((r8 * 33 + g8) * 33 + b8) * 11 + a10) * 128 + s2
@@ -144,6 +162,9 @@ export function createDustRenderer(layout: Layout): DustRenderer {
         ctx.stroke()
       }
       ctx.restore()
+      for (const [key, bucket] of buckets) {
+        if (frameId - bucket.stamp > BUCKET_IDLE_FRAMES) buckets.delete(key)
+      }
     },
   }
 }
