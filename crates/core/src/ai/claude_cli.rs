@@ -886,13 +886,20 @@ END
     }
 
     /// The first run of a new file can be slow to start; take that cost before timing.
+    /// A file just written can be briefly busy while another test's forked child still
+    /// holds it open for writing, so that is retried.
     fn warm_up(bin: &Path) {
-        assert!(
-            std::process::Command::new(bin)
-                .arg("warm")
-                .status()
-                .is_ok_and(|s| s.success())
-        );
+        let mut tries = 0;
+        let status = loop {
+            match std::process::Command::new(bin).arg("warm").status() {
+                Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && tries < 50 => {
+                    tries += 1;
+                    std::thread::sleep(Duration::from_millis(20));
+                }
+                other => break other,
+            }
+        };
+        assert!(status.is_ok_and(|s| s.success()));
     }
 
     #[tokio::test]

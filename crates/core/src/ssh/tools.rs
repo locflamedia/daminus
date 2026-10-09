@@ -174,7 +174,7 @@ impl SshTools {
         stdin: &[u8],
         limit: Duration,
     ) -> Option<Captured> {
-        let mut child = cmd.spawn().ok()?;
+        let mut child = spawn_retrying(&mut cmd).ok()?;
         let pgid = child.id().and_then(|id| i32::try_from(id).ok());
         let mut input = child.stdin.take()?;
         let mut output = child.stdout.take()?;
@@ -216,6 +216,22 @@ impl SshTools {
             stdout: String::from_utf8_lossy(&buf).into_owned(),
             code: status.and_then(|s| s.code()),
         })
+    }
+}
+
+/// Spawns `cmd`. A program file that was just written can be briefly busy
+/// while another thread's freshly forked child still holds it open for
+/// writing; that is retried a few times.
+pub(crate) fn spawn_retrying(cmd: &mut Command) -> std::io::Result<tokio::process::Child> {
+    let mut tries = 0;
+    loop {
+        match cmd.spawn() {
+            Err(e) if e.kind() == std::io::ErrorKind::ExecutableFileBusy && tries < 5 => {
+                tries += 1;
+                std::thread::sleep(Duration::from_millis(20));
+            }
+            other => return other,
+        }
     }
 }
 
