@@ -64,6 +64,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Tauri crates and npm packages agree on major.minor
+        run: ./scripts/check-tauri-versions.sh
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check
