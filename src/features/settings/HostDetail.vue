@@ -12,6 +12,8 @@ import { formatSeconds, shortFingerprint } from '@/lib/hosts-settings'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useSettingsStore } from '@/stores/settings'
 import { useSetupStore } from '@/stores/setup'
+import { brandOfDistro } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiChip, { type ChipTone } from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -77,6 +79,9 @@ const system = computed(() => {
   return `${shortDistro(report.distro)} · ${report.arch}`
 })
 
+/** The distribution's mark, once a login test has said which one it is. */
+const osMark = computed(() => brandOfDistro(login.value?.login?.distro))
+
 const agentText = computed(() => {
   const agent = store.agent
   if (!agent) return ''
@@ -101,7 +106,9 @@ const testLabel = computed(() => {
 <template>
   <section v-if="row" class="card" :aria-label="row.alias">
     <div class="head">
-      <span class="tile" aria-hidden="true"><UiIcon name="server" :size="16" /></span>
+      <span class="tile" aria-hidden="true">
+        <UiBrandMark :name="osMark" :size="22"><UiIcon name="server" :size="16" /></UiBrandMark>
+      </span>
       <div class="id">
         <b class="mono alias">{{ row.alias }}</b>
         <span v-if="system" class="sys">{{ system }}</span>

@@ -1,10 +1,12 @@
 <!--
-  A column of finds: a card with its kind's glyph, its name and a count on the right, the rows
+  A column of finds: a card with the mark of the tool it was read from (or its kind's glyph), its name and a count on the right, the rows
   as they arrive, and, while hosts are still being read, a shimmer slot the height of the next
   row, so a find that lands does not move what is below it.
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import type { BrandName } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
 import type { IconName } from '@/ui/icon-paths'
@@ -12,6 +14,8 @@ import type { IconName } from '@/ui/icon-paths'
 defineProps<{
   title: string
   icon: IconName
+  /** The tool every row of the column comes from (nginx, pm2, Docker), drawn instead of the glyph. */
+  brand?: BrandName
   /** Right-aligned words ("nginx · 4"); a `meta` slot can hold a rolling number. */
   meta?: string
   /** A shimmer slot waits at the end. */
@@ -26,7 +30,7 @@ const { t } = useI18n()
 <template>
   <section class="card" :aria-label="title" :aria-busy="waiting || undefined">
     <header class="sec">
-      <UiIcon :name="icon" :size="16" />
+      <UiBrandMark :name="brand ?? null" :size="16"><UiIcon :name="icon" :size="16" /></UiBrandMark>
       <b>{{ title }}</b>
       <span class="ct"
         ><slot name="meta">{{ meta }}</slot></span

@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 import type { HostKeyInfo, HostOutcome } from '@/api'
 import { CONNECT_TIMEOUT_S, type CardKind, type HostRowModel, netReason } from '@/lib/host-rows'
 import { addKeyCommand, protectKeyCommand, shellQuote } from '@/lib/host-test'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import CopyLine from './CopyLine.vue'
 
@@ -80,6 +81,7 @@ const command = computed(() => {
       <span class="reason">{{ sentence }}</span>
       <CopyLine v-if="command" :command="command" />
       <span v-if="kind === 'key_rejected'" class="termius">
+        <UiBrandMark name="termius" :size="12" />
         <i18n-t
           scope="global"
           :keypath="keyCommand ? 'setupPick.fail.termius' : 'setupPick.fail.termiusNoLine'"

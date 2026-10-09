@@ -1,8 +1,9 @@
 <!--
-  One part of a project as a row: role tag, a neutral mark for its kind (the stack logos are not
-  bundled), source kind and name, host, and what discover saw of it. A database part that is
-  missing its `.env` shows the amber row with "Choose .env", which reveals a field for the
-  absolute path; Daminus cannot check that path, the server does at scan time.
+  One part of a project as a row: role tag, the mark of what it names (Docker, PM2, the database
+  engine; a neutral glyph for a folder), source kind and name, host, and what discover saw of
+  it. A database part that is missing its `.env` shows the amber row with "Choose .env", which
+  reveals a field for the absolute path; Daminus cannot check that path, the server does at
+  scan time.
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
@@ -10,6 +11,8 @@ import { useI18n } from 'vue-i18n'
 import type { SetupRecord } from '@/api'
 import { engineName, liveText, partSource } from '@/lib/group-view'
 import { type DraftPart, isAbsPath } from '@/lib/setup-model'
+import { brandOfEngine, brandOfKind } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import type { IconName } from '@/ui/icon-paths'
@@ -33,6 +36,10 @@ const MARKS: Record<DraftPart['kind'], IconName> = {
 }
 
 const source = computed(() => partSource(props.part))
+/** The mark of what the part names: Docker for a compose project, PM2, the database engine. */
+const brand = computed(() =>
+  props.part.kind === 'db' ? brandOfEngine(props.part.engine) : brandOfKind(props.part.kind),
+)
 const name = computed(() => engineName(props.part, props.records))
 const live = computed(() => liveText(props.part, props.records))
 const noEnv = computed(
@@ -72,7 +79,11 @@ function commit() {
 <template>
   <div class="row" :data-testid="`part-${part.key}`" :class="{ amber: noEnv }">
     <RoleTag :role="part.role" />
-    <span class="mark" aria-hidden="true"><UiIcon :name="MARKS[part.kind]" :size="14" /></span>
+    <span class="mark" :class="{ branded: brand }" aria-hidden="true">
+      <UiBrandMark :name="brand" :size="16"
+        ><UiIcon :name="MARKS[part.kind]" :size="14"
+      /></UiBrandMark>
+    </span>
     <span class="src">
       <span class="k">{{ t(`setupGroup.source.${source.kind}`) }}</span>
       <span class="mono">{{ name }}</span>
@@ -139,6 +150,10 @@ function commit() {
   border-radius: 5px;
   background: var(--surface-2);
   color: var(--ink-3);
+}
+
+.mark.branded {
+  background: transparent;
 }
 
 .src {

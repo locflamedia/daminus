@@ -1,12 +1,14 @@
-// The technology marks the cards, tags and topology draw (bundled files, see THIRD_PARTY_NOTICES.md).
+// The technology marks the cards, tags, topology and setup screens draw (bundled files, see THIRD_PARTY_NOTICES.md).
 // A mark is only drawn where the data names the technology (a compose project, a pm2 app, a
 // database engine, a container image); everything else keeps its fallback.
 import anthropic from '@/assets/logos/anthropic.svg'
 import anthropicDark from '@/assets/logos/anthropic-dark.svg'
 import claude from '@/assets/logos/claude.svg'
+import debian from '@/assets/logos/debian.svg'
 import deepseek from '@/assets/logos/deepseek.svg'
 import docker from '@/assets/logos/docker.svg'
 import gemini from '@/assets/logos/gemini.svg'
+import laravel from '@/assets/logos/laravel.svg'
 import mariadb from '@/assets/logos/mariadb.svg'
 import mongodb from '@/assets/logos/mongodb.svg'
 import mysql from '@/assets/logos/mysql.svg'
@@ -21,13 +23,17 @@ import openrouterDark from '@/assets/logos/openrouter-dark.svg'
 import pm2 from '@/assets/logos/pm2.svg'
 import postgresql from '@/assets/logos/postgresql.svg'
 import redis from '@/assets/logos/redis.svg'
+import termius from '@/assets/logos/termius.svg'
+import ubuntu from '@/assets/logos/ubuntu.svg'
 
 export const BRAND_FILES = {
   anthropic,
   claude,
+  debian,
   deepseek,
   docker,
   gemini,
+  laravel,
   mariadb,
   mongodb,
   mysql,
@@ -39,6 +45,8 @@ export const BRAND_FILES = {
   pm2,
   postgresql,
   redis,
+  termius,
+  ubuntu,
 } as const
 
 export type BrandName = keyof typeof BRAND_FILES
@@ -58,9 +66,11 @@ export const BRAND_DARK_FILES: Partial<Record<BrandName, string>> = {
 export const BRAND_TITLES: Record<BrandName, string> = {
   anthropic: 'Anthropic',
   claude: 'Claude',
+  debian: 'Debian',
   deepseek: 'DeepSeek',
   docker: 'Docker',
   gemini: 'Gemini',
+  laravel: 'Laravel',
   mariadb: 'MariaDB',
   mongodb: 'MongoDB',
   mysql: 'MySQL',
@@ -72,6 +82,8 @@ export const BRAND_TITLES: Record<BrandName, string> = {
   pm2: 'PM2',
   postgresql: 'PostgreSQL',
   redis: 'Redis',
+  termius: 'Termius',
+  ubuntu: 'Ubuntu',
 }
 
 /** The mark of an AI provider profile (`custom`, a compatible endpoint, has none). */
@@ -113,5 +125,16 @@ export function brandOfImage(image: string | null | undefined): BrandName | null
   }
   if (repo === 'redis' || repo === 'nginx') return repo
   if (repo === 'node') return 'nodejs'
+  return null
+}
+
+/**
+ * The mark of a Linux distribution as a login test reports it (`Ubuntu 22.04.5 LTS`,
+ * `Debian GNU/Linux 12 (bookworm)`): only the two distributions with a bundled mark.
+ */
+export function brandOfDistro(distro: string | null | undefined): BrandName | null {
+  const d = (distro ?? '').trim().toLowerCase()
+  if (d.startsWith('ubuntu')) return 'ubuntu'
+  if (d.startsWith('debian')) return 'debian'
   return null
 }

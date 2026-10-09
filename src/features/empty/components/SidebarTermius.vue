@@ -4,14 +4,14 @@
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import UiIcon from '@/ui/UiIcon.vue'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 
 const { t } = useI18n()
 </script>
 
 <template>
   <aside class="why">
-    <b><UiIcon name="terminal" :size="14" />{{ t('empty.sidebar.termiusTitle') }}</b>
+    <b><UiBrandMark name="termius" :size="14" />{{ t('empty.sidebar.termiusTitle') }}</b>
     <span>{{ t('empty.sidebar.termiusBody') }}</span>
   </aside>
 </template>

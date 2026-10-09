@@ -11,10 +11,12 @@ import { useFormat } from '@/composables/use-format'
 import { badPath, discoveredOn, partState, suggestionsFor } from '@/lib/sheet-parts'
 import { type DraftPart, partName } from '@/lib/setup-model'
 import { useSetupStore } from '@/stores/setup'
+import { brandOfEngine, brandOfKind } from '@/ui/brand-marks'
+import type { IconName } from '@/ui/icon-paths'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiMenu, { type MenuItem } from '@/ui/UiMenu.vue'
-import type { IconName } from '@/ui/icon-paths'
 import DbPartFields from './DbPartFields.vue'
 import PartNameField from './PartNameField.vue'
 import SheetMessages from './SheetMessages.vue'
@@ -54,6 +56,10 @@ const name = computed(() => partName(props.part) || t('projectSheet.parts.unname
 const open = computed(() => sheet.expanded.has(props.part.key))
 const records = computed(() => setup.recordsOf(props.part.host))
 const state = computed(() => partState(props.part, records.value))
+/** The mark of what the part names: Docker for a compose project, PM2, the database engine. */
+const brand = computed(() =>
+  props.part.kind === 'db' ? brandOfEngine(props.part.engine) : brandOfKind(props.part.kind),
+)
 const unknownHost = computed(() => props.issues.some((i) => i.code.kind === 'unknown_host'))
 const nameTone = computed(() =>
   badPath(props.part) && sheet.isShown(`part:${props.part.key}`) ? 'error' : 'none',
@@ -181,7 +187,9 @@ const engineItems = computed<MenuItem[]>(() =>
         :tone="part.role"
         @select="setRole"
       />
-      <UiIcon :name="KIND_ICON[part.kind]" :size="16" class="mark" />
+      <UiBrandMark :name="brand" :size="16" class="mark">
+        <UiIcon :name="KIND_ICON[part.kind]" :size="16" />
+      </UiBrandMark>
       <div class="name">
         <SheetPicker
           v-if="part.kind === 'db'"

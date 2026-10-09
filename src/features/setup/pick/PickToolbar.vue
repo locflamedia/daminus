@@ -28,7 +28,7 @@ defineExpose({ focusSearch: () => search.value?.focus() })
 </script>
 
 <template>
-  <div class="bar">
+  <div class="bar" :class="{ failing: counts.failed > 0 }">
     <div class="search">
       <UiSearchField
         ref="search"
@@ -61,6 +61,19 @@ defineExpose({ focusSearch: () => search.value?.focus() })
 
 .grow {
   flex-grow: 1;
+}
+
+/* The Failed count is a small crit pill while any host failed; the other counts stay grey. */
+.failing :deep(.segment:nth-child(3) .count) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--crit-soft);
+  color: var(--crit-ink);
+  font-size: 10px;
 }
 
 .btn.accent {

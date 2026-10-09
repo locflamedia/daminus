@@ -7,9 +7,9 @@ import { useI18n } from 'vue-i18n'
 import { copyText } from '@/api'
 import { TERMIUS_TEMPLATE } from '@/lib/hosts-settings'
 import { useSetupStore } from '@/stores/setup'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiCodeBlock from '@/ui/UiCodeBlock.vue'
-import UiIcon from '@/ui/UiIcon.vue'
 
 const { t } = useI18n()
 const setup = useSetupStore()
@@ -18,7 +18,7 @@ const setup = useSetupStore()
 <template>
   <section class="card" aria-labelledby="hosts-termius-title">
     <h3 id="hosts-termius-title" class="ct">
-      <UiIcon name="terminal" />{{ t('settingsHosts.termius.title') }}
+      <UiBrandMark name="termius" :size="16" />{{ t('settingsHosts.termius.title') }}
       <span class="m">{{ t('settingsHosts.termius.guide') }}</span>
     </h3>
     <i18n-t scope="global" keypath="settingsHosts.termius.body" tag="p" class="body">

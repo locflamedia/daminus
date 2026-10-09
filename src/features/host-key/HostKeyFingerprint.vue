@@ -3,7 +3,7 @@
   digest in groups of four, and for the changed key an identicon, so two keys can be told apart
   before anyone reads 43 characters. The presented key is drawn in the critical tint when it
   differs from the known one; its identicon cells pop in turn and its groups flash once.
-  Without a pattern (the first connection) it is a label over a bordered box with the digest.
+  Without a pattern (the first connection) it is a label over a soft grey box with the digest.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -172,8 +172,8 @@ const digest = computed(() => fingerprintText(props.fingerprint))
 
 .box {
   padding: 10px var(--space-3);
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 0 0 1px var(--surface-3);
+  border-radius: 8px;
+  background: var(--surface-1);
   color: var(--ink);
   font-size: var(--text-12);
   line-height: 1.5;

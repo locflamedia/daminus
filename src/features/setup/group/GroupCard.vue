@@ -263,10 +263,11 @@ function onDrop() {
   box-shadow: 0 0 0 2px var(--accent-mid);
 }
 
+/* One row, as drawn: the URL chips shrink and ellipsize so the menu stays at the right end. */
 .head {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--space-1) var(--space-3);
   min-height: var(--h-row);
   min-width: 0;

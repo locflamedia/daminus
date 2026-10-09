@@ -10,6 +10,8 @@ import { computed, ref, useId } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import { readingFraction } from '@/lib/discover-view'
+import { brandOfDistro } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -51,6 +53,11 @@ const sub = computed(() => {
     }
   }
 })
+
+/** The distribution's mark before the time and system of a host that was read. */
+const osMark = computed(() =>
+  ['done', 'incomplete'].includes(props.lane.state) ? brandOfDistro(props.lane.os) : null,
+)
 
 const chip = computed(() => {
   const l = props.lane
@@ -135,7 +142,9 @@ const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
         <span class="name">{{ lane.host }}</span>
         <span class="sub" :class="{ read: lane.state === 'running', bad: failed }">
           <Transition name="line" mode="out-in">
-            <span :key="sub">{{ sub }}</span>
+            <span :key="sub" class="sub-line">
+              <UiBrandMark v-if="osMark" :name="osMark" :size="12" />{{ sub }}
+            </span>
           </Transition>
         </span>
       </div>
@@ -267,6 +276,13 @@ const progress = computed(() => readingFraction(props.lane.reading) + 0.06)
   font-size: var(--text-11);
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sub-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
 }
 
 .sub.read {

@@ -1,9 +1,24 @@
 {
   "permissionHelp": {
+    "afterTitle": "After you change it",
     "checkAgain": "Check again",
     "checking": "Checking…",
     "checkNote": "Opens a fresh SSH session so a group change applies, then reads this tab again.",
+    "keysTitle": "Only these keys are read",
+    "keysNote": "Used on the server to run the size query, then dropped. Never sent to this Mac or to the AI.",
     "whyTitle": "Why we don’t ask for sudo",
-    "whyText": "A monitoring app with root is one more thing that can go wrong. Daminus reads as your normal user and tells you exactly which permission is missing, so you decide."
+    "whyText": "A monitoring app with root is one more thing that can go wrong. Daminus reads as your normal user and tells you exactly which permission is missing, so you decide.",
+    "miner": {
+      "label": "Miner check, partial coverage · sec.miner on {host}",
+      "title": "Checked {seen} of {total} processes",
+      "chip": "Needs permission",
+      "bar": "{seen} of {total} processes checked",
+      "text": "{user} can see its own {seen} processes. The other {rest} belong to other users, and where they run from can only be read as root. A miner running as www-data would not be seen, so this is never “none”.",
+      "someUser": "The SSH user",
+      "rootTitle": "A · Scan this host as root",
+      "rootText": "Add a second Host block that logs in as root and use it for this project. Daminus stays read-only.",
+      "hidepidTitle": "B · Relax hidepid or ptrace limits",
+      "hidepidText": "If /proc is mounted with hidepid, other processes are not even counted. Allowing them only raises the count; their paths still need root or ptrace rights."
+    }
   }
 }

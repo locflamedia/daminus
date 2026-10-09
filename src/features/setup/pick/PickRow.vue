@@ -10,6 +10,8 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { HostRowModel } from '@/lib/host-rows'
 import { isFailed, isRunning } from '@/lib/host-test'
+import { brandOfDistro } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiCheckbox from '@/ui/UiCheckbox.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiTooltip from '@/ui/UiTooltip.vue'
@@ -82,7 +84,9 @@ function onClick(event: MouseEvent) {
       </span>
       <span role="cell" class="system">
         <template v-if="row.system.state === 'known'">
-          <UiIcon name="server" :size="14" class="os" />
+          <UiBrandMark :name="brandOfDistro(row.system.name)" :size="16">
+            <UiIcon name="server" :size="14" class="os" />
+          </UiBrandMark>
           <span class="name">{{ row.system.name }}</span>
           <UiTooltip v-if="row.system.eol" :text="t('setupPick.system.eolTip')">
             <span class="tag eol">{{ t('setupPick.system.eol') }}</span>

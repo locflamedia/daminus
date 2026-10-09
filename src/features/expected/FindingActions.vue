@@ -62,7 +62,7 @@ async function submit(form: ExpectedForm) {
     v-model:open="open"
     :label="t('expected.pop.label')"
     placement="bottom-end"
-    width="452px"
+    width="488px"
     roomy
   >
     <template v-if="button" #trigger="{ attrs, toggle }">

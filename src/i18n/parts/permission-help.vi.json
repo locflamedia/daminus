@@ -1,9 +1,24 @@
 {
   "permissionHelp": {
+    "afterTitle": "Sau khi bạn đổi quyền",
     "checkAgain": "Kiểm tra lại",
     "checking": "Đang kiểm tra…",
     "checkNote": "Mở một phiên SSH mới để thay đổi nhóm có hiệu lực, rồi đọc lại tab này.",
+    "keysTitle": "Chỉ đọc những khoá này",
+    "keysNote": "Dùng trên server để chạy truy vấn dung lượng, rồi bỏ đi. Không bao giờ gửi về máy Mac này hay cho AI.",
     "whyTitle": "Vì sao chúng tôi không xin sudo",
-    "whyText": "Một ứng dụng giám sát có quyền root là thêm một thứ có thể hỏng. Daminus đọc bằng người dùng bình thường của bạn và nói rõ thiếu quyền nào, để bạn tự quyết định."
+    "whyText": "Một ứng dụng giám sát có quyền root là thêm một thứ có thể hỏng. Daminus đọc bằng người dùng bình thường của bạn và nói rõ thiếu quyền nào, để bạn tự quyết định.",
+    "miner": {
+      "label": "Kiểm tra miner, chưa đủ phạm vi · sec.miner trên {host}",
+      "title": "Đã kiểm tra {seen} trên {total} tiến trình",
+      "chip": "Cần cấp quyền",
+      "bar": "Đã kiểm tra {seen} trên {total} tiến trình",
+      "text": "{user} chỉ thấy {seen} tiến trình của chính nó. {rest} tiến trình còn lại thuộc người dùng khác, và nơi chúng chạy chỉ đọc được bằng root. Một miner chạy dưới www-data sẽ không bị thấy, nên kết quả này không bao giờ là “không có”.",
+      "someUser": "Người dùng SSH",
+      "rootTitle": "A · Quét host này bằng root",
+      "rootText": "Thêm một Host block thứ hai đăng nhập bằng root và dùng nó cho dự án này. Daminus vẫn chỉ đọc.",
+      "hidepidTitle": "B · Nới giới hạn hidepid hoặc ptrace",
+      "hidepidText": "Nếu /proc được mount với hidepid, các tiến trình khác thậm chí không được đếm. Cho phép chúng chỉ tăng số đếm; đường dẫn của chúng vẫn cần quyền root hoặc ptrace."
+    }
   }
 }

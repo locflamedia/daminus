@@ -11,12 +11,18 @@ import { BRAND_DARK_FILES, BRAND_FILES, BRAND_TITLES, type BrandName } from './b
 
 /** Marks too dark to read on a dark surface: lifted with a brightness filter, never recoloured. */
 const DARK_ON_DARK: readonly BrandName[] = ['mysql']
+/**
+ * Single-colour black marks whose owner ships no dark file: brightness cannot lift pure black, so
+ * on a dark surface the one colour turns white, the way the owner draws the mark on dark.
+ */
+const BLACK_ON_DARK: readonly BrandName[] = ['termius']
 
 const props = withDefaults(
   defineProps<{ name?: BrandName | null; size?: number; labelled?: boolean }>(),
   { name: null, size: 14, labelled: false },
 )
 const lifted = computed(() => props.name !== null && DARK_ON_DARK.includes(props.name))
+const inverted = computed(() => props.name !== null && BLACK_ON_DARK.includes(props.name))
 const darkFile = computed(() => (props.name ? BRAND_DARK_FILES[props.name] : undefined))
 /** The owner's name when the mark stands alone; nothing when it sits beside the word. */
 const title = computed(() => (props.labelled && props.name ? BRAND_TITLES[props.name] : ''))
@@ -52,7 +58,7 @@ const title = computed(() => (props.labelled && props.name ? BRAND_TITLES[props.
   <img
     v-else-if="name"
     class="brand"
-    :class="{ 'brand-lift': lifted }"
+    :class="{ 'brand-lift': lifted, 'brand-invert': inverted }"
     :src="BRAND_FILES[name]"
     :width="size"
     :height="size"
@@ -86,6 +92,10 @@ const title = computed(() => (props.labelled && props.name ? BRAND_TITLES[props.
     filter: brightness(2.4) saturate(0.6);
   }
 
+  :global(:root:not([data-theme='light']) .brand-invert) {
+    filter: invert(1);
+  }
+
   :global(:root:not([data-theme='light']) .brand-light) {
     display: none;
   }
@@ -97,6 +107,10 @@ const title = computed(() => (props.labelled && props.name ? BRAND_TITLES[props.
 
 :global(:root[data-theme='dark'] .brand-lift) {
   filter: brightness(2.4) saturate(0.6);
+}
+
+:global(:root[data-theme='dark'] .brand-invert) {
+  filter: invert(1);
 }
 
 :global(:root[data-theme='dark'] .brand-light) {

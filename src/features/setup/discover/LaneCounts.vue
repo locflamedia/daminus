@@ -1,5 +1,5 @@
 <!--
-  The counts of one host by kind, live: sites, compose projects, pm2 apps, databases, `.env`
+  The counts of one host by kind, live, one pill each: sites, compose projects, pm2 apps, databases, `.env`
   files and listening ports. A kind with nothing found is dim, not hidden, so a missing kind
   is visible. Each number rolls once when it changes.
 -->
@@ -27,7 +27,7 @@ const KINDS = ['sites', 'compose', 'pm2', 'databases', 'env', 'ports'] as const
 .counts {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px var(--space-3);
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   color: var(--ink-3);
@@ -37,7 +37,12 @@ const KINDS = ['sites', 'compose', 'pm2', 'databases', 'env', 'ports'] as const
 
 li {
   display: inline-flex;
+  align-items: center;
   gap: var(--space-1);
+  height: 24px;
+  padding: 0 var(--space-2);
+  border-radius: 8px;
+  background: var(--surface-1);
   white-space: nowrap;
 }
 
