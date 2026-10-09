@@ -40,6 +40,7 @@ tracing = { version = "0.1.44", features = ["log"] }
 # The Keychain: already in the tree through the TLS verifier, so no new crate to vet.
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "3.7"
+objc2-app-kit = "0.3"
 
 [lints]
 workspace = true
