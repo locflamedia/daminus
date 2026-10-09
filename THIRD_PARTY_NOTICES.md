@@ -29,6 +29,16 @@ Vincent van Gogh (1889). The work is in the public domain (the artist died in 18
 are derived from a high-resolution scan published on Wikimedia Commons (Google Art Project).
 Public-domain status needs no licence; the credit is given here as a courtesy.
 
+The intro samples the same scan into 28,448 coloured dots (`src/assets/intro/starry.json`);
+the file holds numbers only, not an image.
+
+## Intro backdrop
+
+The soft drifting-blob and film-grain backdrop of the intro follows the look of the Grainient
+background from Vue Bits (David Haz, MIT + Commons Clause). No Vue Bits code is copied or
+bundled: the Commons Clause forbids redistributing the components themselves, so the backdrop is
+drawn by code written for this project (`src/features/intro/`).
+
 ## Flags
 
 The language select draws its flags as small inline SVG shapes written for this project
