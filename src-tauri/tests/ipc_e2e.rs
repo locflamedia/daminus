@@ -524,6 +524,29 @@ mod ipc {
     }
 
     #[test]
+    fn app_launch_picks_the_journey_and_records_the_launch() {
+        let app = mock_app(FakeTransport::new());
+        let first = app.invoke("app_launch", json!({})).unwrap();
+        assert_eq!(first, json!({ "kind": "first", "previous": null }));
+        let second = app.invoke("app_launch", json!({})).unwrap();
+        assert_eq!(second["kind"], json!("daily"));
+        assert!(second["previous"].is_string());
+
+        std::fs::write(
+            app._dir.path().join("state.json"),
+            r#"{ "last_opened_at": "2020-01-01T00:00:00Z" }"#,
+        )
+        .unwrap();
+        let back = app.invoke("app_launch", json!({})).unwrap();
+        assert_eq!(back["kind"], json!("returning"));
+        assert_eq!(back["previous"], json!("2020-01-01T00:00:00Z"));
+        assert_eq!(
+            app.invoke("app_launch", json!({})).unwrap()["kind"],
+            json!("daily")
+        );
+    }
+
+    #[test]
     fn settings_sections_are_saved_checked_and_kept_apart() {
         let app = mock_app(FakeTransport::new());
         let first = app.invoke("settings_get", json!({})).unwrap();

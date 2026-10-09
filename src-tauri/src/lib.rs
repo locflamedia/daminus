@@ -64,6 +64,7 @@ pub fn handler<R: Runtime>() -> impl Fn(tauri::ipc::Invoke<R>) -> bool + Send + 
         commands::projects_save,
         commands::projects_remove,
         commands::url_check,
+        commands::app_launch,
         commands::settings_get,
         commands::settings_set_general,
         commands::settings_set_appearance,

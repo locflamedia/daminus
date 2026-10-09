@@ -12,6 +12,7 @@ import type { DataUsage } from './bindings/DataUsage'
 import type { Diagnostics } from './bindings/Diagnostics'
 import type { ExportedFile } from './bindings/ExportedFile'
 import type { AppearanceSettings } from './bindings/AppearanceSettings'
+import type { LaunchInfo } from './bindings/LaunchInfo'
 import type { ExpectedDraft } from './bindings/ExpectedDraft'
 import type { ExpectedRule } from './bindings/ExpectedRule'
 import type { GeneralSettings } from './bindings/GeneralSettings'
@@ -65,6 +66,7 @@ export const COMMANDS = [
   'projects_save',
   'projects_remove',
   'url_check',
+  'app_launch',
   'settings_get',
   'settings_set_general',
   'settings_set_appearance',
@@ -233,6 +235,11 @@ export function agentStatus(): Promise<AgentStatus> {
 /** The redacted diagnostics text to copy for a bug report; nothing is sent anywhere. */
 export function diagnosticsCollect(): Promise<Diagnostics> {
   return invoke<Diagnostics>('diagnostics_collect')
+}
+
+/** Which intro journey to play; records this launch, so each call counts as one opening. */
+export function appLaunch(): Promise<LaunchInfo> {
+  return invoke<LaunchInfo>('app_launch')
 }
 
 /** `settings.json` as saved; what the file leaves out has its default. */
