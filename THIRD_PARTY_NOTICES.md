@@ -12,3 +12,24 @@ are bundled with the app, never loaded from the network.
 The package does not state a licence for each individual logo. A mark whose owner's terms turn
 out not to allow this use is removed by deleting its file and its entry in `src/ui/brand-marks.ts`;
 the screens fall back to a coloured dot.
+
+## Fonts (`src/assets/fonts/`)
+
+Geist and Geist Mono (variable, Latin and Vietnamese subsets as woff2) come from the
+[Geist project](https://github.com/vercel/geist-font), Copyright 2024 The Geist Project Authors,
+via the `@fontsource-variable` packages. They are licensed under the SIL Open Font License,
+Version 1.1. The full licence text ships next to the font files in `src/assets/fonts/OFL.txt` and
+must stay with them wherever they are redistributed. The fonts are bundled with the app, never
+loaded from the network.
+
+## Painting (`assets/brand/`)
+
+The hero image, the DMG background and the app icon use details of *The Starry Night* by
+Vincent van Gogh (1889). The work is in the public domain (the artist died in 1890). The images
+are derived from a high-resolution scan published on Wikimedia Commons (Google Art Project).
+Public-domain status needs no licence; the credit is given here as a courtesy.
+
+## Flags
+
+The language select draws its flags as small inline SVG shapes written for this project
+(`src/ui/flags.ts`). No flag artwork is taken from a third-party package.

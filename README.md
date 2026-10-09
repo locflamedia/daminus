@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/brand/readme-hero@2x.png" alt="Daminus: check every VPS in one scan. Agentless, over SSH, from your Mac." width="720">
+</p>
+
 <h1 align="center">Daminus</h1>
 
 <p align="center">
@@ -18,8 +22,8 @@
 
 Daminus is a desktop app (macOS first) that checks the servers behind your web projects over plain SSH. It installs nothing on your servers, runs read-only checks, and groups the results by *project* (frontend, backend, database, worker) instead of by machine.
 
-> [!WARNING]
-> **Status: pre-alpha.** The design is being finalized and there is no usable build yet. Watch or star the repo to follow progress.
+> [!NOTE]
+> **Status: release candidates.** Daminus is approaching v0.1.0. Builds are published as pre-releases (`v0.1.0-rc.N`) on the [Releases](https://github.com/locflamedia/daminus/releases) page. Expect rough edges and report them.
 
 ## Why
 
@@ -46,22 +50,46 @@ Most monitoring tools want an agent on every server and a dashboard running 24/7
 - Database credentials are read from the `.env` file **on the server** and never leave it.
 - AI API keys are stored in the OS keychain and redaction runs before anything is sent.
 
-## Planned features (v0.1)
+## v0.1 features
 
-- [ ] Setup: pick hosts from `~/.ssh/config`, auto-discover compose projects, pm2 apps, nginx vhosts, and databases
-- [ ] Parallel scan with results streaming in per host
-- [ ] Project cards sorted by severity, with deltas since the last scan
-- [ ] URL checks: HTTP status, latency, TLS expiry, exposed `.env` / `.git`
-- [ ] AI analysis panel (structured output, never runs commands)
-- [ ] macOS `.dmg` release (Linux/Windows best effort)
+- [x] Setup: pick hosts from `~/.ssh/config`, auto-discover compose projects, pm2 apps, nginx vhosts, and databases
+- [x] Parallel scan with results streaming in per host
+- [x] Project cards sorted by severity, with deltas since the last scan
+- [x] URL checks: HTTP status, latency, TLS expiry, exposed `.env` / `.git`
+- [x] AI analysis panel (structured output, never runs commands)
+- [ ] macOS `.dmg` release (published with the first tag; Linux/Windows best effort)
 
 ## Install
 
-Not available yet. The first release will be published on the [Releases](https://github.com/locflamedia/daminus/releases) page.
+Requires macOS 13 or later. Download the `.dmg` for your Mac from [Releases](https://github.com/locflamedia/daminus/releases): the Apple Silicon build or the Intel (x64) build. Drag Daminus to Applications.
 
-> Builds are not notarized by Apple. On first launch, right-click the app and choose **Open**, or run `xattr -d com.apple.quarantine /Applications/Daminus.app`.
->
-> Builds are signed ad hoc, so every new version is a new identity to macOS: after an update, macOS asks again before Daminus can read the AI key it stored in your Keychain. Choose **Always Allow**; if you deny it, re-enter the key in Settings › AI.
+To verify the download, in the folder that holds the files:
+
+```sh
+shasum -a 256 -c SHA256SUMS --ignore-missing
+gh attestation verify Daminus_<version>_<arch>.dmg --repo locflamedia/daminus
+```
+
+The second command checks the build provenance attestation that CI publishes for each `.dmg`.
+
+### Opening an app that is not notarized
+
+Builds are signed ad hoc and are not notarized by Apple, so Gatekeeper blocks the first launch. On macOS 15 (Sequoia) and later:
+
+1. Try to open Daminus once. Dismiss the warning.
+2. Open **System Settings › Privacy & Security**, scroll to **Security**, and click **Open Anyway** next to Daminus. The button stays available for about an hour after the attempt.
+
+Or remove the quarantine flag in a terminal: `xattr -d com.apple.quarantine /Applications/Daminus.app`.
+
+On macOS 15, right-click › Open no longer bypasses Gatekeeper for unsigned or un-notarized apps (see Apple's [notes on runtime protection](https://developer.apple.com/news/?id=saqachfa)); older macOS versions still accepted it.
+
+Builds are signed ad hoc, so every new version is a new identity to macOS: after an update, macOS asks again before Daminus can read the AI key it stored in your Keychain. Choose **Always Allow**; if you deny it, re-enter the key in Settings › AI.
+
+## Limits
+
+- **A compromised server can lie.** Every check runs on the server, so a server an attacker controls can answer anything. "No problems found" is a hint, not proof.
+- **Alpine and busybox servers are not supported in v0.1.** Checks that need GNU or full POSIX tools report as unsupported there.
+- **Linux and Windows are best effort.** They are not released; only macOS builds are.
 
 ## Tech stack
 
