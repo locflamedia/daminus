@@ -323,6 +323,11 @@ const serverRows = computed(() =>
   box-shadow: var(--focus-ring);
 }
 
+/* The open item keeps its lift under the ring. */
+.item.on:focus-visible {
+  box-shadow: var(--focus-ring), var(--shadow-lift);
+}
+
 .name {
   min-width: 0;
   overflow: hidden;
