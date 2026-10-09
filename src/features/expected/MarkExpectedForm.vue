@@ -79,7 +79,7 @@ function onKeydown(e: KeyboardEvent) {
   <form class="form" @submit.prevent="submit" @keydown="onKeydown">
     <header class="head">
       <b class="title">{{ t('expected.pop.title') }}</b>
-      <code class="check">{{ item.key.check }}</code>
+      <code class="check-id">{{ item.key.check }}</code>
       <UiKbd>esc</UiKbd>
     </header>
 
@@ -181,7 +181,8 @@ function onKeydown(e: KeyboardEvent) {
   font-weight: var(--weight-medium);
 }
 
-.check {
+/* Not `.check`: that is the root class of UiCheckbox, which this scoped style would reach. */
+.check-id {
   flex: 1;
   color: var(--ink-3);
   font: var(--text-11) var(--font-mono);
@@ -259,7 +260,7 @@ function onKeydown(e: KeyboardEvent) {
 
 .pair {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--space-3);
 }
 
@@ -267,6 +268,7 @@ function onKeydown(e: KeyboardEvent) {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-width: 0;
 }
 
 .alerts {
@@ -287,10 +289,8 @@ function onKeydown(e: KeyboardEvent) {
 .saved {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-11);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.4;
 }
 </style>

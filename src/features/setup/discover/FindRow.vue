@@ -1,5 +1,5 @@
 <!--
-  One find in a column: a neutral mark for its kind, its name, the host in mono with what is
+  One find in a column: the mark of the tool it was read from (a neutral glyph when none), its name, the host in mono with what is
   known about it, and the project it was matched to. A find that arrived while the screen was
   open rises in once with a "New" tag and a soft accent wash that fades away.
 -->
@@ -7,6 +7,8 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { type Find, proxyTarget } from '@/lib/discover-view'
+import { type BrandName, brandOfEngine } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import type { IconName } from '@/ui/icon-paths'
 import ProjectChip from './ProjectChip.vue'
@@ -27,6 +29,19 @@ const ICONS: Record<Find['kind'], IconName> = {
   pm2: 'terminal',
   db: 'database',
 }
+
+/**
+ * The mark of what the record names: an nginx server block, a compose project, a pm2 app, the
+ * engine of a database. Nothing is guessed from a folder or a domain name.
+ */
+const brand = computed<BrandName | null>(() => {
+  const r = props.find.record
+  if (r.rec === 'vhost') return 'nginx'
+  if (r.rec === 'compose') return 'docker'
+  if (r.rec === 'pm2') return 'pm2'
+  if (r.rec === 'db') return brandOfEngine(r.engine)
+  return null
+})
 
 /** What is known about the find after its host, in the words of its kind. */
 const detail = computed(() => {
@@ -63,7 +78,11 @@ const detail = computed(() => {
 
 <template>
   <li class="find" :class="{ fresh }" :data-testid="`find-${find.kind}`">
-    <span class="mark" aria-hidden="true"><UiIcon :name="ICONS[find.kind]" :size="16" /></span>
+    <span class="mark" aria-hidden="true">
+      <UiBrandMark :name="brand" :size="18"
+        ><UiIcon :name="ICONS[find.kind]" :size="16"
+      /></UiBrandMark>
+    </span>
     <div class="text">
       <span class="nm">
         {{ find.title }}

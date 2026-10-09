@@ -12,6 +12,7 @@ import HostBlockForm from '@/features/setup/components/HostBlockForm.vue'
 import { EXAMPLES, buildHostBlock, emptyFields, type HostBlockFields } from '@/lib/host-block'
 import { vEnter } from '@/lib/motion'
 import { useSetupStore } from '@/stores/setup'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import HelpFound from './components/HelpFound.vue'
@@ -46,7 +47,15 @@ const importLabel = computed(() =>
   <div class="help">
     <div class="left">
       <header v-enter class="top">
-        <span class="mark"><UiIcon name="server" :size="26" :stroke="1.4" /></span>
+        <span class="mark">
+          <UiBrandMark
+            class="mark-face"
+            :name="view.headline === 'termius' ? 'termius' : null"
+            :size="26"
+          >
+            <UiIcon name="server" :size="26" :stroke="1.4" />
+          </UiBrandMark>
+        </span>
         <div class="words">
           <h2>{{ t(`empty.help.headline.${view.headline}`) }}</h2>
           <I18nT v-if="stepCount === 3" keypath="empty.help.subtitle" tag="p" scope="global">
@@ -132,6 +141,11 @@ const importLabel = computed(() =>
   box-shadow: 0 16px 32px -16px color-mix(in srgb, var(--accent) 55%, transparent);
   color: var(--on-solid);
   animation: float 6s var(--ease-in-out) 1;
+}
+
+/* The mark sits white on the gradient tile, as the owner draws it on colour. */
+.mark-face {
+  filter: brightness(0) invert(1);
 }
 
 .words {

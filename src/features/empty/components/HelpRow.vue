@@ -5,12 +5,16 @@
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
+import type { BrandName } from '@/ui/brand-marks'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import type { IconName } from '@/ui/icon-paths'
 
 const props = defineProps<{
   icon: IconName
+  /** The owner's mark, drawn in place of the icon when the row names an app (Termius). */
+  brand?: BrandName
   name: string
   sub: string
   chip: string
@@ -36,7 +40,9 @@ onBeforeUnmount(() => window.clearTimeout(timer))
 
 <template>
   <li class="row" :class="{ flash: flashing }">
-    <span class="tile"><UiIcon :name="icon" :size="14" /></span>
+    <span class="tile">
+      <UiBrandMark :name="brand ?? null" :size="14"><UiIcon :name="icon" :size="14" /></UiBrandMark>
+    </span>
     <div class="text">
       <span class="mono name">{{ name }}</span>
       <span class="sub">{{ sub }}</span>

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
-import { brandOfEngine, brandOfImage, brandOfKind } from './brand-marks'
+import { brandOfDistro, brandOfEngine, brandOfImage, brandOfKind } from './brand-marks'
 import UiBrandMark from './UiBrandMark.vue'
 
 describe('brand marks', () => {
@@ -16,6 +16,23 @@ describe('brand marks', () => {
     expect(brandOfImage('docker.io/library/redis:7.2')).toBe('redis')
     expect(brandOfImage('tiemtra-api:1.5.0')).toBeNull()
     expect(brandOfImage(null)).toBeNull()
+  })
+
+  it('names only the distributions that have a mark, from the login report text', () => {
+    expect(brandOfDistro('Ubuntu 22.04.5 LTS')).toBe('ubuntu')
+    expect(brandOfDistro('Debian GNU/Linux 12 (bookworm)')).toBe('debian')
+    expect(brandOfDistro('Rocky Linux 9.4')).toBeNull()
+    expect(brandOfDistro('')).toBeNull()
+    expect(brandOfDistro(null)).toBeNull()
+  })
+
+  it('turns a black single-colour mark white on dark, and lifts a dark coloured one', () => {
+    const termius = mount(UiBrandMark, { props: { name: 'termius' } })
+    expect(termius.classes()).toContain('brand-invert')
+    expect(termius.classes()).not.toContain('brand-lift')
+    const mysql = mount(UiBrandMark, { props: { name: 'mysql' } })
+    expect(mysql.classes()).toContain('brand-lift')
+    expect(mysql.classes()).not.toContain('brand-invert')
   })
 
   it('draws the image when named and the fallback otherwise', () => {

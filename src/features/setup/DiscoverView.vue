@@ -174,6 +174,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <FindCard
             v-enter="{ index: 3 }"
             icon="globe"
+            brand="nginx"
             :title="t('setupDiscover.columns.sites')"
             :meta="t('setupDiscover.columns.sitesMeta', { n: columns.sites.length })"
             :waiting="running"
@@ -192,6 +193,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
             v-enter="{ index: 4 }"
             class="grow"
             icon="terminal"
+            brand="pm2"
             :title="t('setupDiscover.columns.apps')"
             :meta="t('setupDiscover.columns.appsMeta', { n: columns.apps.length })"
             :waiting="running"
@@ -213,6 +215,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <FindCard
             v-enter="{ index: 3 }"
             icon="container"
+            brand="docker"
             :title="t('setupDiscover.columns.boxes')"
             :meta="t('setupDiscover.columns.boxesMeta', { n: columns.boxes.length })"
             :empty="columns.boxes.length === 0"

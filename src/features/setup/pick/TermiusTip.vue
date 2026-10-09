@@ -5,7 +5,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import UiButton from '@/ui/UiButton.vue'
-import UiIcon from '@/ui/UiIcon.vue'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiKbd from '@/ui/UiKbd.vue'
 
 defineProps<{ busy: boolean }>()
@@ -16,7 +16,7 @@ const { t } = useI18n()
 
 <template>
   <div class="tip">
-    <span class="tile" aria-hidden="true"><UiIcon name="terminal" :size="20" /></span>
+    <span class="tile" aria-hidden="true"><UiBrandMark name="termius" :size="20" /></span>
     <div class="text">
       <b>{{ t('setupPick.termius.title') }}</b>
       <i18n-t scope="global" keypath="setupPick.termius.body" tag="span">

@@ -84,6 +84,7 @@ const agent = computed(() => {
       <HelpRow
         v-if="view.rows.termius"
         icon="terminal"
+        brand="termius"
         name="Termius"
         :sub="t('empty.help.termius.body')"
         :chip="t('empty.help.termius.chip')"
