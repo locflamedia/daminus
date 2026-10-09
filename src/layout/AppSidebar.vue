@@ -88,89 +88,93 @@ const serverRows = computed(() =>
       <UiKbd>⌘K</UiKbd>
     </button>
 
-    <div class="list">
-      <RouterLink to="/" class="item" active-class="" exact-active-class="on">
-        <UiIcon name="grid" />
-        {{ t('nav.overview') }}
-        <span v-if="scan.scanning" class="count scanning">{{ t('nav.scanning') }}</span>
-        <span v-else-if="oldDays !== null" class="count old">
-          {{ t('nav.stale', { n: oldDays }) }}
-        </span>
-        <span v-else-if="report.latest && projects.issues > 0" class="count">
-          {{ t('nav.issues', { n: projects.issues }, projects.issues) }}
-        </span>
-      </RouterLink>
-      <RouterLink to="/history" class="item" active-class="on">
-        <UiIcon name="clock" />
-        {{ t('nav.history') }}
-        <span v-if="report.latest?.seq != null" class="count">{{ report.latest.seq }}</span>
-      </RouterLink>
-    </div>
+    <!-- The lists scroll on their own, so the AI card and the Settings row stay in view in a
+         short window. -->
+    <div class="scroll">
+      <div class="list">
+        <RouterLink to="/" class="item" active-class="" exact-active-class="on">
+          <UiIcon name="grid" />
+          {{ t('nav.overview') }}
+          <span v-if="scan.scanning" class="count scanning">{{ t('nav.scanning') }}</span>
+          <span v-else-if="oldDays !== null" class="count old">
+            {{ t('nav.stale', { n: oldDays }) }}
+          </span>
+          <span v-else-if="report.latest && projects.issues > 0" class="count">
+            {{ t('nav.issues', { n: projects.issues }, projects.issues) }}
+          </span>
+        </RouterLink>
+        <RouterLink to="/history" class="item" active-class="on">
+          <UiIcon name="clock" />
+          {{ t('nav.history') }}
+          <span v-if="report.latest?.seq != null" class="count">{{ report.latest.seq }}</span>
+        </RouterLink>
+      </div>
 
-    <template v-if="firstLaunch">
-      <section v-if="helpScreen" class="list">
-        <h3 class="group">{{ t('nav.projects') }} <span>0</span></h3>
-        <h3 class="group">{{ t('nav.servers') }} <span>0</span></h3>
-      </section>
-      <SidebarGhosts v-else />
-      <SidebarTermius v-if="helpScreen && empty.input.termiusInstalled" />
-    </template>
+      <template v-if="firstLaunch">
+        <section v-if="helpScreen" class="list">
+          <h3 class="group">{{ t('nav.projects') }} <span>0</span></h3>
+          <h3 class="group">{{ t('nav.servers') }} <span>0</span></h3>
+        </section>
+        <SidebarGhosts v-else />
+        <SidebarTermius v-if="helpScreen && empty.input.termiusInstalled" />
+      </template>
 
-    <section v-if="projects.projects.length" class="list">
-      <h3 class="group">
-        {{ t('nav.projects') }} <span>{{ projects.projects.length }}</span>
-      </h3>
-      <RouterLink
-        v-for="p in projects.projects"
-        :key="p.id"
-        :to="{ name: 'project', params: { id: p.id } }"
-        class="item"
-        active-class="on"
-      >
-        <ProjectDot
-          :level="p.level"
-          :unreachable="p.unreachable_hosts.length > 0"
-          :reading="projectReading(p.id)"
-          :color="projects.color(p.id)"
-        />
-        <span class="name">{{ p.id }}</span>
-        <span
-          v-if="oldDays === null && issueCount(p) > 0"
-          class="count strong"
-          :class="projectCountTone(p.level)"
+      <section v-if="projects.projects.length" class="list">
+        <h3 class="group">
+          {{ t('nav.projects') }} <span>{{ projects.projects.length }}</span>
+        </h3>
+        <RouterLink
+          v-for="p in projects.projects"
+          :key="p.id"
+          :to="{ name: 'project', params: { id: p.id } }"
+          class="item"
+          active-class="on"
         >
-          {{ issueCount(p) }}
-        </span>
-      </RouterLink>
-    </section>
+          <ProjectDot
+            :level="p.level"
+            :unreachable="p.unreachable_hosts.length > 0"
+            :reading="projectReading(p.id)"
+            :color="projects.color(p.id)"
+          />
+          <span class="name">{{ p.id }}</span>
+          <span
+            v-if="oldDays === null && issueCount(p) > 0"
+            class="count strong"
+            :class="projectCountTone(p.level)"
+          >
+            {{ issueCount(p) }}
+          </span>
+        </RouterLink>
+      </section>
 
-    <section v-if="serverRows.length" class="list">
-      <h3 class="group">
-        {{ t('nav.servers') }} <span>{{ serverRows.length }}</span>
-      </h3>
-      <RouterLink
-        v-for="s in serverRows"
-        :key="s.host"
-        :to="{ name: 'server', params: { host: s.host } }"
-        class="item server"
-        :class="{ off: s.unreachable }"
-        active-class="on"
-      >
-        <DiskRing
-          :pct="s.pct"
-          :reading="s.reading"
-          :dim="s.unreachable"
-          :neutral="oldDays !== null"
-        />
-        <span class="mono name">{{ s.host }}</span>
-        <span v-if="s.unreachable" class="count strong">{{ t('nav.unreachable') }}</span>
-        <span v-else-if="s.pct !== null" class="count strong" :class="s.tone">
-          {{ Math.round(s.pct) }}%
-        </span>
-      </RouterLink>
-    </section>
+      <section v-if="serverRows.length" class="list">
+        <h3 class="group">
+          {{ t('nav.servers') }} <span>{{ serverRows.length }}</span>
+        </h3>
+        <RouterLink
+          v-for="s in serverRows"
+          :key="s.host"
+          :to="{ name: 'server', params: { host: s.host } }"
+          class="item server"
+          :class="{ off: s.unreachable }"
+          active-class="on"
+        >
+          <DiskRing
+            :pct="s.pct"
+            :reading="s.reading"
+            :dim="s.unreachable"
+            :neutral="oldDays !== null"
+          />
+          <span class="mono name">{{ s.host }}</span>
+          <span v-if="s.unreachable" class="count strong">{{ t('nav.unreachable') }}</span>
+          <span v-else-if="s.pct !== null" class="count strong" :class="s.tone">
+            {{ Math.round(s.pct) }}%
+          </span>
+        </RouterLink>
+      </section>
 
-    <SidebarSnapshots v-if="onProjectHistory" />
+      <SidebarSnapshots v-if="onProjectHistory" />
+    </div>
 
     <div class="foot">
       <SidebarAiCard v-if="firstLaunch && !helpScreen" />
@@ -192,7 +196,7 @@ const serverRows = computed(() =>
   height: 100%;
   min-width: 0;
   padding: var(--space-4);
-  overflow-y: auto;
+  overflow: hidden;
   background: linear-gradient(165deg, var(--side-1), var(--side-2) 58%, var(--side-3));
   line-height: normal;
 }
@@ -249,6 +253,19 @@ const serverRows = computed(() =>
 
 .grow {
   flex-grow: 1;
+}
+
+/* The 4 px inset keeps an item's focus ring and lift shadow inside the scrolling box. */
+.scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+  margin: -4px;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .list {

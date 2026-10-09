@@ -124,6 +124,8 @@ onBeforeUnmount(() => {
 
   display: grid;
   grid-template-columns: var(--side-col) minmax(0, 1fr);
+  /* One row as tall as the window: a long sidebar scrolls inside it instead of growing it. */
+  grid-template-rows: minmax(0, 1fr);
   height: 100%;
   min-width: 0;
   background: var(--surface-0);
@@ -146,6 +148,7 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 3;
   min-width: 0;
+  min-height: 0;
 }
 
 .side.animating {

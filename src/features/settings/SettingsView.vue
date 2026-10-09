@@ -3,10 +3,11 @@
   under it that says what the section is for, then the section itself (`section-views.ts`).
 -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { SETTINGS_SECTIONS } from '@/layout/settings-sections'
+import { useSetupStore } from '@/stores/setup'
 import { SECTION_VIEWS } from './section-views'
 
 const { t, te } = useI18n()
@@ -15,6 +16,13 @@ const route = useRoute()
 const section = computed(() => {
   const id = route.params.section
   return SETTINGS_SECTIONS.find((s) => s.id === id)?.id ?? 'general'
+})
+
+// The nav shows how many hosts the ssh config lists on every section, not only after Hosts or
+// Scan has read it, so the list is read once when Settings opens.
+const setup = useSetupStore()
+onMounted(() => {
+  if (setup.listing === null && !setup.loading) void setup.load()
 })
 
 const body = computed(() => SECTION_VIEWS[section.value])
