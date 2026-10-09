@@ -17,6 +17,7 @@ import { useHistoryStore } from '@/stores/history'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useProjectFacts } from '../common/use-project-facts'
+import { hostBands } from './host-bands'
 
 const CHARTED = ['url.http', 'url.tls', 'disk.path', 'db.size']
 
@@ -33,7 +34,7 @@ export function useOverviewModel(id: Ref<string>) {
 
   const tiles = computed(() => overviewTiles(items.value, facts.value, urls.value))
   const rows = computed(() => partRows(saved.value, items.value))
-  const bands = computed(() => wiring(rows.value))
+  const bands = computed(() => hostBands(wiring(rows.value)))
   const look = computed(() => needsLook(reports.latest?.items ?? [], id.value, hosts.value))
   const strip = computed(() => responseStrip(history.view, id.value, facts.value, urls.value))
   const urlList = computed(() => urlRows(items.value, urls.value))

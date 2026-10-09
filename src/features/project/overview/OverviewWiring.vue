@@ -8,6 +8,7 @@ import { useLayoutRange } from '@/lib/viewport'
 import UiIcon from '@/ui/UiIcon.vue'
 import type { IconName } from '@/ui/icon-paths'
 import ProjectCard from '../common/ProjectCard.vue'
+import { wireLinks } from './host-bands'
 import { nodeLine, shortName } from './part-text'
 import UiBrandMark from '@/ui/UiBrandMark.vue'
 
@@ -22,7 +23,7 @@ const { t } = useI18n()
 const fmt = useFormat()
 const range = useLayoutRange()
 
-/** Geometry of the diagram, as the board draws it: bands side by side, nodes centred in them. */
+/** Geometry of the diagram, as the board draws it: one band per server, nodes stacked in it. */
 const BAND_MAX = 216
 const BAND_MIN = 176
 const BAND_GAP = 8
@@ -30,7 +31,6 @@ const NODE_PAD = 10
 const NODE_H = 56
 const MIN_HEIGHT = 196
 const PITCH = 80
-const TIERS: readonly WireBand['tier'][] = ['fe', 'app', 'db']
 
 const ICON: Record<WireNode['kind'], IconName> = {
   path: 'folder',
@@ -82,12 +82,6 @@ const placed = computed<Placed[][]>(() =>
   }),
 )
 
-/** Requests flow from a tier to the next tier that has parts, whatever the server. */
-function nextTier(from: number): number | null {
-  const later = props.bands.map((b) => TIERS.indexOf(b.tier)).filter((t) => t > from)
-  return later.length > 0 ? Math.min(...later) : null
-}
-
 function curve(a: Placed, b: Placed): string {
   const x1 = a.x + nodeW.value
   const y1 = a.y + NODE_H / 2
@@ -98,17 +92,12 @@ function curve(a: Placed, b: Placed): string {
 }
 
 const links = computed(() => {
-  const out: string[] = []
-  props.bands.forEach((band, i) => {
-    const next = nextTier(TIERS.indexOf(band.tier))
-    props.bands.forEach((other, j) => {
-      if (TIERS.indexOf(other.tier) !== next) return
-      for (const a of placed.value[i] ?? []) {
-        for (const b of placed.value[j] ?? []) out.push(curve(a, b))
-      }
-    })
+  const at = new Map(placed.value.flat().map((p) => [p.node, p]))
+  return wireLinks(props.bands).flatMap((l) => {
+    const a = at.get(l.from)
+    const b = at.get(l.to)
+    return a && b ? [curve(a, b)] : []
   })
-  return out
 })
 
 const servers = computed(() => new Set(props.bands.map((b) => b.host)).size)
