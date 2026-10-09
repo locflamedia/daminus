@@ -27,6 +27,7 @@ const COMMANDS: &[&str] = &[
     "projects_remove",
     "url_check",
     "app_launch",
+    "streak_get",
     "settings_get",
     "settings_set_general",
     "settings_set_appearance",

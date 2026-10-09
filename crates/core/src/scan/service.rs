@@ -20,6 +20,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::Instrument as _;
 
 use super::event::{ScanEvent, ScanEventBody, ScanRun};
+use super::report::record_scan_streak;
 use super::targets::{ScanScope, ScanTargets, resolve};
 use crate::checks::bundle::{self, Bundle, BundleVars, Selection};
 use crate::checks::manifest;
@@ -409,7 +410,15 @@ impl Job {
         let snapshot = self.snapshot(results, local);
         let store = self.shared.store.clone();
         let keep = self.settings.data.keep_scans;
-        let saved = tokio::task::spawn_blocking(move || store.save_snapshot(snapshot, keep)).await;
+        let saved = tokio::task::spawn_blocking(move || {
+            let seq = store.save_snapshot(snapshot, keep)?;
+            // The streak is bookkeeping: a failure to record it never fails the scan.
+            if let Err(e) = record_scan_streak(&store, Timestamp::new(OffsetDateTime::now_utc())) {
+                tracing::warn!(error = %e, "clear-week streak not recorded");
+            }
+            Ok::<u32, AppError>(seq)
+        })
+        .await;
         let body = match saved {
             Ok(Ok(seq)) => ScanEventBody::Done { snapshot_seq: seq },
             Ok(Err(error)) => ScanEventBody::Failed { error },

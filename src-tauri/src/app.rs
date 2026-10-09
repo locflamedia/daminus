@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use daminus_core::ai::view::AiStreamEvent;
 use daminus_core::data::{self, DataUsage};
 use daminus_core::diagnostics::{self, Diagnostics, DiagnosticsSource};
-use daminus_core::domain::app_state::{LaunchInfo, LaunchKind, launch_kind};
+use daminus_core::domain::app_state::{LaunchInfo, LaunchKind, StreakInfo, launch_kind};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
@@ -287,6 +287,19 @@ impl AppCore {
             kind: LaunchKind::Daily,
             previous: None,
         })
+    }
+
+    /// The clear-week streak. A state file that cannot be read shows no streak.
+    pub fn streak_get(&self) -> StreakInfo {
+        match self.store.load_state() {
+            Ok(state) => StreakInfo {
+                weeks: state.streak_weeks,
+            },
+            Err(e) => {
+                tracing::warn!(error = %e, "state.json not read");
+                StreakInfo::default()
+            }
+        }
     }
 
     /// `settings.json` as saved, with the defaults for what the file leaves out.

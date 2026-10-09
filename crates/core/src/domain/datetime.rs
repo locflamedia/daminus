@@ -52,6 +52,17 @@ impl Day {
     pub fn inner(self) -> Date {
         self.0
     }
+
+    /// The Monday of this day's ISO week.
+    pub fn week_start(self) -> Self {
+        let back = i64::from(self.0.weekday().number_days_from_monday());
+        Self(self.0 - time::Duration::days(back))
+    }
+
+    /// The day `days` later; negative values go back.
+    pub fn plus_days(self, days: i64) -> Self {
+        Self(self.0.saturating_add(time::Duration::days(days)))
+    }
 }
 
 mod day_format {
@@ -83,6 +94,20 @@ mod tests {
         let json = serde_json::to_string(&t).unwrap();
         assert_eq!(json, "\"2026-09-26T06:42:00Z\"");
         assert_eq!(serde_json::from_str::<Timestamp>(&json).unwrap(), t);
+    }
+
+    #[test]
+    fn week_start_is_the_monday_of_the_iso_week() {
+        let monday = Day::new(date!(2026 - 10 - 05));
+        for offset in 0..7 {
+            assert_eq!(monday.plus_days(offset).week_start(), monday);
+        }
+        assert_eq!(monday.plus_days(7).week_start(), monday.plus_days(7));
+        // Across a year boundary: Thursday 1 January 2026 belongs to the week of 29 December.
+        assert_eq!(
+            Day::new(date!(2026 - 01 - 01)).week_start(),
+            Day::new(date!(2025 - 12 - 29))
+        );
     }
 
     #[test]

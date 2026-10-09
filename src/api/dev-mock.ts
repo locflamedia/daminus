@@ -47,6 +47,7 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
     const ai = new AiMock(variant, speed)
     mockCommands((cmd, args) => {
       if (cmd === 'app_launch') return launchAnswer()
+      if (cmd === 'streak_get') return { weeks: 6 }
       const answered = setup.handle(cmd, args)
       if (answered !== undefined) return answered
       const aiAnswer = ai.handle(cmd, args)
@@ -73,6 +74,7 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
     withExpectedAndHostKey(
       (cmd, args) =>
         (cmd === 'app_launch' ? launchAnswer() : undefined) ??
+        (cmd === 'streak_get' ? { weeks: 6 } : undefined) ??
         results.handle(cmd, args) ??
         ai.handle(cmd, args) ??
         diagnosticsAnswer(cmd) ??
