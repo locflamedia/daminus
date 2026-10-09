@@ -1,0 +1,15 @@
+{
+  "intro": {
+    "reading": "Đang đọc ~/.ssh/config…",
+    "sixTitle": "vấn đề kể từ lần quét trước",
+    "crit": "{n} nghiêm trọng",
+    "warn": "{n} cảnh báo",
+    "disk": "{n} đĩa",
+    "offline": "ngoại tuyến",
+    "starDisk": "đĩa {n}%",
+    "starCrit": "{n} nghiêm trọng",
+    "starWarn": "{n} cảnh báo",
+    "pillBack": "{n} máy chủ của bạn, như một bầu trời đêm · after Van Gogh, 1889 | {n} máy chủ của bạn, như một bầu trời đêm · after Van Gogh, 1889",
+    "pillFirst": "Tìm thấy {n} host trong ~/.ssh/config · chưa quét gì · after Van Gogh, 1889 | Tìm thấy {n} host trong ~/.ssh/config · chưa quét gì · after Van Gogh, 1889"
+  }
+}

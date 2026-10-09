@@ -24,6 +24,13 @@ const HOST_COMMANDS = /^(hosts_list|ssh_environment|setup_)/
  * `?mock=ai` and the variants listed in `dev-mock-ai.ts` (Claude Code states, refused and
  * broken sends, a refusing Keychain); the send is scripted: summary pieces, three findings, done.
  */
+/** The intro journey of `?intro=first|returning|daily`; daily by default. */
+function launchAnswer() {
+  const asked = new URLSearchParams(location.search).get('intro')
+  const kind = asked === 'first' || asked === 'returning' ? asked : 'daily'
+  return { kind, previous: null }
+}
+
 export async function installDevMock(variant = '', speed = 1): Promise<void> {
   // The window opens as for a person who finished the AI step of Settings: a provider with its
   // key and a model, so a question can be sent. (Tests start from the plain defaults.)
@@ -39,6 +46,7 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
     const setup = new SetupMock(variant, speed)
     const ai = new AiMock(variant, speed)
     mockCommands((cmd, args) => {
+      if (cmd === 'app_launch') return launchAnswer()
       const answered = setup.handle(cmd, args)
       if (answered !== undefined) return answered
       const aiAnswer = ai.handle(cmd, args)
@@ -64,6 +72,7 @@ export async function installDevMock(variant = '', speed = 1): Promise<void> {
   mockCommands(
     withExpectedAndHostKey(
       (cmd, args) =>
+        (cmd === 'app_launch' ? launchAnswer() : undefined) ??
         results.handle(cmd, args) ??
         ai.handle(cmd, args) ??
         diagnosticsAnswer(cmd) ??

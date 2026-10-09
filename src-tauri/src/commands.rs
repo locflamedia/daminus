@@ -13,6 +13,8 @@ use daminus_core::ai::view::{
 };
 use daminus_core::data::{DataUsage, ExportedFile};
 use daminus_core::diagnostics::Diagnostics;
+use daminus_core::domain::app_state::LaunchInfo;
+use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
 use daminus_core::domain::expected::ExpectedRule;
@@ -266,6 +268,14 @@ pub async fn projects_remove(core: State<'_, AppCore>, id: String) -> Result<boo
 #[tauri::command]
 pub async fn url_check(core: State<'_, AppCore>, url: String) -> Result<UrlCheck, AppError> {
     Ok(core.url_check(&url).await)
+}
+
+/// Which intro journey to play (first, returning, daily); records this launch in `state.json`.
+#[tauri::command]
+pub async fn app_launch(core: State<'_, AppCore>) -> Result<LaunchInfo, AppError> {
+    let core = core.inner().clone();
+    let now = Timestamp::new(time::OffsetDateTime::now_utc());
+    run_blocking("app_launch", move || Ok(core.app_launch(now))).await
 }
 
 /// `settings.json` as saved (no key or secret is ever in it).

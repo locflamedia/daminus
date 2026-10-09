@@ -28,6 +28,7 @@
     "allow-projects-save",
     "allow-projects-remove",
     "allow-url-check",
+    "allow-app-launch",
     "allow-settings-get",
     "allow-settings-set-general",
     "allow-settings-set-appearance",

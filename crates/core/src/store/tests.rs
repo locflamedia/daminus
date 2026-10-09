@@ -362,6 +362,29 @@ fn state_is_lenient() {
 }
 
 #[test]
+fn update_state_edits_under_one_lock_and_writes_nothing_on_a_failed_load() {
+    let (dir, store) = store();
+    let saved = store.update_state(|s| s.streak_weeks = 3).unwrap();
+    assert_eq!(saved.streak_weeks, 3);
+    assert_eq!(store.load_state().unwrap().streak_weeks, 3);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let path = dir.path().join(STATE_FILE);
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o000)).unwrap();
+        if fs::read(&path).is_err() {
+            let before = fs::metadata(&path).unwrap().modified().unwrap();
+            assert!(store.update_state(|s| s.streak_weeks = 9).is_err());
+            assert_eq!(fs::metadata(&path).unwrap().modified().unwrap(), before);
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+            assert_eq!(store.load_state().unwrap().streak_weeks, 3);
+        } else {
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o600)).unwrap();
+        }
+    }
+}
+
+#[test]
 fn second_writer_waits_then_gets_store_busy() {
     let (dir, store) = store();
     let held = files::StoreLock::acquire(dir.path()).unwrap();

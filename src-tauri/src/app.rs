@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 use daminus_core::ai::view::AiStreamEvent;
 use daminus_core::data::{self, DataUsage};
 use daminus_core::diagnostics::{self, Diagnostics, DiagnosticsSource};
+use daminus_core::domain::app_state::{LaunchInfo, LaunchKind, launch_kind};
 use daminus_core::domain::datetime::Timestamp;
 use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
@@ -263,6 +264,29 @@ impl AppCore {
     /// `projects.json` as saved (names for the menu bar).
     pub fn projects(&self) -> Result<ProjectsFile, AppError> {
         Ok(self.store.load_projects()?.value)
+    }
+
+    /// Picks the intro journey from `state.json` and records this launch at `now`. A state
+    /// that cannot be read counts as a daily launch and is left as it is, so a temporary
+    /// failure never replays the first-launch intro or wipes the history; a failed write is
+    /// logged, not returned.
+    pub fn app_launch(&self, now: Timestamp) -> LaunchInfo {
+        let mut info = None;
+        let result = self.store.update_state(|state| {
+            let previous = state.last_opened_at;
+            info = Some(LaunchInfo {
+                kind: launch_kind(previous, now),
+                previous,
+            });
+            state.last_opened_at = Some(now);
+        });
+        if let Err(e) = result {
+            tracing::warn!(error = %e, "state.json not read or not written");
+        }
+        info.unwrap_or(LaunchInfo {
+            kind: LaunchKind::Daily,
+            previous: None,
+        })
     }
 
     /// `settings.json` as saved, with the defaults for what the file leaves out.

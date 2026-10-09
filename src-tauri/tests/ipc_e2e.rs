@@ -524,6 +524,48 @@ mod ipc {
     }
 
     #[test]
+    fn app_launch_picks_the_journey_and_records_the_launch() {
+        let app = mock_app(FakeTransport::new());
+        let first = app.invoke("app_launch", json!({})).unwrap();
+        assert_eq!(first, json!({ "kind": "first", "previous": null }));
+        let second = app.invoke("app_launch", json!({})).unwrap();
+        assert_eq!(second["kind"], json!("daily"));
+        assert!(second["previous"].is_string());
+
+        std::fs::write(
+            app._dir.path().join("state.json"),
+            r#"{ "last_opened_at": "2020-01-01T00:00:00Z" }"#,
+        )
+        .unwrap();
+        let back = app.invoke("app_launch", json!({})).unwrap();
+        assert_eq!(back["kind"], json!("returning"));
+        assert_eq!(back["previous"], json!("2020-01-01T00:00:00Z"));
+        assert_eq!(
+            app.invoke("app_launch", json!({})).unwrap()["kind"],
+            json!("daily")
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn app_launch_with_an_unreadable_state_is_daily_and_leaves_the_file() {
+        use std::os::unix::fs::PermissionsExt;
+        let app = mock_app(FakeTransport::new());
+        let path = app._dir.path().join("state.json");
+        let body = r#"{ "last_opened_at": "2020-01-01T00:00:00Z" }"#;
+        std::fs::write(&path, body).unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o000)).unwrap();
+        if std::fs::read(&path).is_err() {
+            let got = app.invoke("app_launch", json!({})).unwrap();
+            assert_eq!(got, json!({ "kind": "daily", "previous": null }));
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+            assert_eq!(std::fs::read_to_string(&path).unwrap(), body);
+        } else {
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+    }
+
+    #[test]
     fn settings_sections_are_saved_checked_and_kept_apart() {
         let app = mock_app(FakeTransport::new());
         let first = app.invoke("settings_get", json!({})).unwrap();
