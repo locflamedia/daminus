@@ -26,4 +26,26 @@ describe('brand marks', () => {
     expect(none.find('img').exists()).toBe(false)
     expect(none.find('.dot').exists()).toBe(true)
   })
+
+  it('keeps the class from the caller on a single mark and on a light and dark pair', () => {
+    const single = mount(UiBrandMark, { props: { name: 'docker' }, attrs: { class: 'mark' } })
+    expect(single.find('img.mark').exists()).toBe(true)
+    const pair = mount(UiBrandMark, { props: { name: 'anthropic' }, attrs: { class: 'mark' } })
+    expect(pair.classes()).toContain('mark')
+    expect(pair.findAll('img').map((i) => i.classes())).toEqual([
+      expect.arrayContaining(['brand-light']),
+      expect.arrayContaining(['brand-dark']),
+    ])
+  })
+
+  it('names the owner only when the mark stands alone', () => {
+    const quiet = mount(UiBrandMark, { props: { name: 'redis' } })
+    expect(quiet.attributes('aria-hidden')).toBe('true')
+    const single = mount(UiBrandMark, { props: { name: 'redis', labelled: true } })
+    expect(single.attributes('alt')).toBe('Redis')
+    expect(single.attributes('aria-hidden')).toBeUndefined()
+    const pair = mount(UiBrandMark, { props: { name: 'openai', labelled: true } })
+    expect(pair.attributes('role')).toBe('img')
+    expect(pair.attributes('aria-label')).toBe('OpenAI')
+  })
 })

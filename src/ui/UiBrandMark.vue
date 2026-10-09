@@ -18,35 +18,48 @@ const props = withDefaults(
 )
 const lifted = computed(() => props.name !== null && DARK_ON_DARK.includes(props.name))
 const darkFile = computed(() => (props.name ? BRAND_DARK_FILES[props.name] : undefined))
-const a11y = computed(() =>
-  props.labelled && props.name
-    ? { role: 'img', 'aria-label': BRAND_TITLES[props.name] }
-    : { alt: '', 'aria-hidden': 'true' as const },
-)
+/** The owner's name when the mark stands alone; nothing when it sits beside the word. */
+const title = computed(() => (props.labelled && props.name ? BRAND_TITLES[props.name] : ''))
 </script>
 
+<!-- One root element in every branch, so a class or style from the caller always lands. -->
 <template>
-  <template v-if="name">
+  <span
+    v-if="name && darkFile"
+    class="brand pair"
+    :style="{ width: `${size}px`, height: `${size}px` }"
+    :role="title ? 'img' : undefined"
+    :aria-label="title || undefined"
+    :aria-hidden="title ? undefined : 'true'"
+  >
     <img
-      class="brand"
-      :class="{ 'brand-lift': lifted, 'brand-light': darkFile }"
+      class="face brand-light"
       :src="BRAND_FILES[name]"
       :width="size"
       :height="size"
+      alt=""
       draggable="false"
-      v-bind="a11y"
     />
     <img
-      v-if="darkFile"
-      class="brand brand-dark"
+      class="face brand-dark"
       :src="darkFile"
       :width="size"
       :height="size"
       alt=""
-      aria-hidden="true"
       draggable="false"
     />
-  </template>
+  </span>
+  <img
+    v-else-if="name"
+    class="brand"
+    :class="{ 'brand-lift': lifted }"
+    :src="BRAND_FILES[name]"
+    :width="size"
+    :height="size"
+    :alt="title"
+    :aria-hidden="title ? undefined : 'true'"
+    draggable="false"
+  />
   <slot v-else />
 </template>
 
@@ -54,6 +67,13 @@ const a11y = computed(() =>
 .brand {
   display: block;
   flex: none;
+  object-fit: contain;
+}
+
+.face {
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
