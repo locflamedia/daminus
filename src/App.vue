@@ -7,6 +7,7 @@ import HostKeyHost from '@/features/host-key/HostKeyHost.vue'
 import IntroHost from '@/features/intro/IntroHost.vue'
 import ProjectSheet from '@/features/project-sheet/ProjectSheet.vue'
 import ScanPanel from '@/features/scan-panel/ScanPanel.vue'
+import ShortcutsHost from '@/features/shortcuts/ShortcutsHost.vue'
 import AppWindow from '@/layout/AppWindow.vue'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
@@ -51,5 +52,6 @@ onBeforeUnmount(() => scan.dispose())
   <AskDrawer />
   <PayloadSheet />
   <HostKeyHost />
+  <ShortcutsHost />
   <UiToastHost />
 </template>

@@ -1,0 +1,38 @@
+{
+  "shortcuts": {
+    "title": "Keyboard shortcuts",
+    "placeholder": "Search shortcuts",
+    "total": "{n} shortcut | {n} shortcuts",
+    "matches": "{n} match | {n} matches",
+    "footer": "Single-letter keys work when no text field has focus.",
+    "press": "Press",
+    "anywhere": "anywhere",
+    "groups": {
+      "anywhere": "Anywhere",
+      "move": "Move around",
+      "project": "In a project",
+      "finding": "On a finding"
+    },
+    "rows": {
+      "search": "Search projects, hosts, findings",
+      "scan": "Scan now",
+      "ask": "Ask AI about this screen",
+      "settings": "Settings",
+      "fold": "Fold sidebar",
+      "sheet": "This sheet",
+      "overview": "Overview",
+      "history": "Scan history",
+      "step": "Next / previous item",
+      "open": "Open",
+      "back": "Back",
+      "tabs": "Tabs",
+      "tabNumbers": "Overview … History",
+      "copy": "Copy command",
+      "terminal": "Open in Terminal",
+      "expected": "Mark as expected",
+      "followUp": "Ask a follow-up",
+      "useful": "Useful / not useful",
+      "evidence": "Show evidence"
+    }
+  }
+}

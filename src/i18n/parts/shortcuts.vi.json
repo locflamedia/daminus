@@ -1,0 +1,38 @@
+{
+  "shortcuts": {
+    "title": "Phím tắt",
+    "placeholder": "Tìm phím tắt",
+    "total": "{n} phím tắt | {n} phím tắt",
+    "matches": "{n} kết quả | {n} kết quả",
+    "footer": "Phím chữ đơn chỉ hoạt động khi không có ô nhập nào đang được chọn.",
+    "press": "Nhấn",
+    "anywhere": "ở bất cứ đâu",
+    "groups": {
+      "anywhere": "Mọi nơi",
+      "move": "Di chuyển",
+      "project": "Trong dự án",
+      "finding": "Trên một phát hiện"
+    },
+    "rows": {
+      "search": "Tìm dự án, máy chủ, phát hiện",
+      "scan": "Quét ngay",
+      "ask": "Hỏi AI về màn hình này",
+      "settings": "Cài đặt",
+      "fold": "Thu gọn thanh bên",
+      "sheet": "Bảng này",
+      "overview": "Tổng quan",
+      "history": "Lịch sử quét",
+      "step": "Mục sau / mục trước",
+      "open": "Mở",
+      "back": "Quay lại",
+      "tabs": "Các tab",
+      "tabNumbers": "Tổng quan … Lịch sử",
+      "copy": "Sao chép lệnh",
+      "terminal": "Mở trong Terminal",
+      "expected": "Đánh dấu là bình thường",
+      "followUp": "Hỏi tiếp",
+      "useful": "Hữu ích / không hữu ích",
+      "evidence": "Xem bằng chứng"
+    }
+  }
+}
