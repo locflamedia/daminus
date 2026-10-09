@@ -118,7 +118,7 @@ function onInput(event: Event) {
 }
 
 .control.invalid {
-  background: var(--crit-soft);
+  background: var(--field-error-bg);
   box-shadow: var(--field-error-ring);
 }
 

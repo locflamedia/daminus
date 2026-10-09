@@ -2,7 +2,7 @@
   The copy button of a command or a code block, from the board "AI" (Command safety): a 24 px
   pill with three faces in one cell, so it never changes width. Copy at rest; Copied, with a
   tick, for 1.6 s; Failed, with a cross, until the pointer comes back, with the tooltip
-  "Couldn't copy. Select the text and press ⌘C." open while it is showing. It copies exactly
+  "Couldn’t copy. Select the text and press ⌘C." open while it is showing. It copies exactly
   the text it is given (the caller has already cleaned it) through the clipboard wrapper, and
   the status region is the only thing that announces the result.
 

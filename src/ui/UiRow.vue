@@ -201,7 +201,7 @@ const flat = computed(() => props.header || props.tone !== 'neutral')
   height: 28px;
   border-radius: 8px;
   background: var(--surface-0);
-  box-shadow: var(--shadow-lift);
+  box-shadow: var(--shadow-tile);
   color: var(--ink-3);
 }
 

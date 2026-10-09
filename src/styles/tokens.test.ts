@@ -134,6 +134,19 @@ describe('light tokens match the canvas', () => {
     expect(light.get('--dur-theme')).toBe('200ms')
   })
 
+  it('opens a detail with a 12 px slide from the right in 220 ms', () => {
+    expect(light.get('--dur-push')).toBe('220ms')
+    expect(light.get('--push-shift')).toBe('12px')
+  })
+
+  it('keeps the badge and chip sizes the boards draw beside the six-size scale', () => {
+    expect(
+      ['--text-badge-9', '--text-badge-10', '--text-badge-10-5', '--text-mono-11-5'].map((n) =>
+        light.get(n),
+      ),
+    ).toEqual(['9px', '10px', '10.5px', '11.5px'])
+  })
+
   it('draws the segmented track in surface-1 in both themes', () => {
     expect(light.get('--seg-track')).toBe('var(--surface-1)')
     expect(darkAttr.get('--seg-track')).toBe('var(--surface-1)')
@@ -356,6 +369,21 @@ describe('theme blocks', () => {
   })
 })
 
+describe('reduced motion', () => {
+  const reduced = (() => {
+    const start = css.indexOf('@media (prefers-reduced-motion: reduce)')
+    const rest = css.slice(start)
+    const open = rest.indexOf(':root {')
+    return rest.slice(open, rest.indexOf('}', open))
+  })()
+
+  it('keeps colour and opacity changes linear and drops the slide of an opened detail', () => {
+    expect(reduced).toContain('--ease-state: linear;')
+    expect(reduced).toContain('--push-shift: 0px;')
+    expect(reduced).toContain('--dur-push: var(--dur-color);')
+  })
+})
+
 describe('dark controls', () => {
   it('draws a focused field inside in dark and outside in light, on the surface of the field', () => {
     expect(light.get('--field-focus-ring')).toBe('0 0 0 2px var(--accent)')
@@ -383,6 +411,31 @@ describe('dark controls', () => {
       expect(dark.get('--secondary-hover')).toBe('var(--surface-3)')
       expect(dark.get('--secondary-press')).toBe('#34374a')
       expect(dark.get('--secondary-shadow')).toBe('0 0 0 0 transparent')
+    }
+  })
+
+  it('rings a focused control 2 px out past a gap in the page tone, and a field flush', () => {
+    for (const set of [light, darkAttr, darkMedia]) {
+      expect(set.get('--focus-ring')).toBe('var(--control-ring)')
+      expect(set.get('--focus-ring-flush')).toBe('0 0 0 2px var(--accent)')
+    }
+  })
+
+  it('fills a field with an error in the soft rose in light and the darker rose in dark', () => {
+    expect(light.get('--field-error-bg')).toBe('var(--crit-soft)')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--field-error-bg')).toBe('#31202c')
+    }
+  })
+
+  it('draws the light switch that is on and disabled with the drawn track', () => {
+    expect(light.get('--switch-disabled-track')).toBe('#c9ccda')
+  })
+
+  it('keeps the leading tile of a row on the lighter lift', () => {
+    expect(light.get('--shadow-tile')).toBe('0 1px 2px rgba(40, 48, 90, 0.06)')
+    for (const dark of [darkAttr, darkMedia]) {
+      expect(dark.get('--shadow-tile')).toBe('var(--shadow-lift)')
     }
   })
 

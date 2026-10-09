@@ -37,7 +37,7 @@ withDefaults(defineProps<{ host: string; reachable?: boolean; unreachableLabel?:
 
 .name {
   color: var(--ink);
-  font: var(--weight-regular) 11.5px var(--font-mono);
+  font: var(--weight-regular) var(--text-mono-11-5) var(--font-mono);
 }
 
 .down .name {

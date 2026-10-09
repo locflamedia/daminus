@@ -577,7 +577,7 @@ const gid = (name: string) => `${name}-${uid}`
 
 .axis {
   fill: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-11);
 }
 
 .keyboard .axis.now {
@@ -613,7 +613,7 @@ const gid = (name: string) => `${name}-${uid}`
 
 .pill text {
   fill: var(--warn-ink);
-  font-size: 10px;
+  font-size: var(--text-badge-10);
   font-weight: 600;
 }
 
@@ -627,7 +627,7 @@ const gid = (name: string) => `${name}-${uid}`
 
 .band-text {
   fill: var(--warn-ink);
-  font-size: 11px;
+  font-size: var(--text-11);
   font-weight: 500;
 }
 
@@ -647,13 +647,13 @@ const gid = (name: string) => `${name}-${uid}`
 
 .end-value {
   fill: var(--ink);
-  font-size: 12px;
+  font-size: var(--text-12);
   font-weight: 500;
 }
 
 .end-delta {
   fill: var(--warn-ink);
-  font-size: 11px;
+  font-size: var(--text-11);
   font-weight: 500;
 }
 

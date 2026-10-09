@@ -546,7 +546,7 @@ if (props.defaultOpen) {
 }
 
 .select-language .field:focus-visible {
-  box-shadow: var(--focus-ring);
+  box-shadow: var(--focus-ring-flush);
 }
 
 .off .field {
@@ -689,7 +689,7 @@ if (props.defaultOpen) {
   border-radius: 5px;
   background: var(--surface-1);
   color: var(--ink-3);
-  font-size: 10px;
+  font-size: var(--text-badge-10);
   font-weight: var(--weight-medium);
 }
 

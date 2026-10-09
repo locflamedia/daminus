@@ -2,7 +2,7 @@
   Monogram tile, from the boards "Micro UI" and "Project card": the mark of a project, a
   square with a two-stop tint at 135 degrees and a white glyph or first letter. Four sizes
   with their radii: 18 (radius 6), 24 (8), 36 (10) and 40 (12, the head of a project card). `icon` draws a 16 px glyph (18 px on
-  the 36 tile), otherwise the first letter of `name` in 10, 12 or 15 px semibold. The tint is a
+  the 36 tile), otherwise the first letter of `name` in 10, 12, 14 or 16 px semibold. The tint is a
   named tone because the project's colour is the user's choice; the eight tones are the pairs the
   Micro UI board draws, in the order a new project is given them; the end stop is the colour of
   the project everywhere else.
@@ -58,7 +58,7 @@ const letter = computed(() => Array.from(props.name.trim())[0]?.toUpperCase() ??
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .size-40 {

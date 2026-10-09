@@ -158,7 +158,7 @@ const TONE = {
   left: 0;
   color: var(--ink);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-badge-10);
   text-align: center;
 }
 

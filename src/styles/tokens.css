@@ -167,6 +167,8 @@
   --shadow-none: none;
   --shadow-lift: 0 1px 2px rgba(40, 48, 90, 0.08);
   --shadow-node: 0 1px 2px rgba(40, 48, 90, 0.06);
+  /* The leading tile of a row: the node's lighter lift in light, the lift in dark. */
+  --shadow-tile: 0 1px 2px rgba(40, 48, 90, 0.06);
   --shadow-seg: 0 1px 2px rgba(40, 48, 90, 0.1);
   --shadow-hairline: 0 1px 2px rgba(40, 48, 90, 0.05);
   --shadow-knob: 0 1px 2px rgba(40, 48, 90, 0.2);
@@ -183,7 +185,10 @@
   --shadow-pop: 0 2px 6px rgba(40, 48, 90, 0.08), 0 24px 48px -24px rgba(40, 48, 90, 0.35);
   --shadow-drawer: -1px 0 0 rgba(40, 48, 90, 0.04), -24px 0 48px -24px rgba(40, 48, 90, 0.28);
   --shadow-panel: 0 1px 2px rgba(40, 48, 90, 0.08), 0 32px 80px -24px rgba(40, 48, 90, 0.45);
-  --focus-ring: 0 0 0 2px var(--accent);
+  /* Keyboard focus on a control: 2 px of the page tone, then 2 px of accent, 2 px out. */
+  --focus-ring: var(--control-ring);
+  /* A field, the select and the composer draw their ring flush. */
+  --focus-ring-flush: 0 0 0 2px var(--accent);
   /* The gap between a control and its focus ring, the page tone behind it. */
   --ring-gap: #ffffff;
   /* The ring around a focused control or chart: the gap tone, then 2 px of accent. */
@@ -192,11 +197,12 @@
   --field-focus-bg: var(--surface-0);
   --field-focus-ring: 0 0 0 2px var(--accent);
   --field-error-ring: 0 0 0 0 transparent;
+  --field-error-bg: var(--crit-soft);
   /* Text of a disabled field or quiet button, and a placeholder. */
   --ink-off: #80859a;
   --ink-placeholder: var(--ink-4);
   --seg-on: var(--surface-0);
-  --switch-disabled-track: color-mix(in srgb, var(--ink-5) 40%, var(--surface-3));
+  --switch-disabled-track: #c9ccda;
   --switch-disabled-knob: var(--surface-0);
   /* Ink at 16% behind a sheet and 24% behind a blocking dialog. */
   --scrim-sheet: rgba(27, 29, 42, 0.22);
@@ -212,6 +218,11 @@
   --text-13: 13px;
   --text-12: 12px;
   --text-11: 11px;
+  /* Sizes the boards draw only in badges and mono chips, beside the six-size scale. */
+  --text-mono-11-5: 11.5px;
+  --text-badge-10-5: 10.5px;
+  --text-badge-10: 10px;
+  --text-badge-9: 9px;
   --lh-28: 36px;
   --lh-20: 24px;
   --lh-15: 20px;
@@ -282,6 +293,9 @@
   --dur-state: 200ms;
   --dur-sheet: 200ms;
   --dur-toast: 220ms;
+  /* Opening a detail: the view slides 12 px in from the right; back slides it from the left. */
+  --dur-push: 220ms;
+  --push-shift: 12px;
   --dur-slide: 250ms;
   --dur-sidebar: 240ms;
   --dur-drawer: 300ms;
@@ -349,7 +363,7 @@
     --code-btn-ink: #ffffff;
     --code-track: rgba(255, 255, 255, 0.12);
     --code-thumb: rgba(255, 255, 255, 0.35);
-    /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
+    /* Components · Dark, Overlays: the toast and tooltip take the primary button's light fill. */
     --on-btn-accent: #3a55d6;
     --on-btn-ink-2: color-mix(in srgb, var(--btn-ink) 72%, var(--btn));
     --toast-ok-bg: transparent;
@@ -460,6 +474,7 @@
     --shadow-none: none;
     --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
     --shadow-node: none;
+    --shadow-tile: var(--shadow-lift);
     --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-hairline: 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-knob: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -478,11 +493,13 @@
     --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7);
     --shadow-drawer: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
     --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
-    --focus-ring: 0 0 0 2px var(--accent);
+    --focus-ring: var(--control-ring);
+    --focus-ring-flush: 0 0 0 2px var(--accent);
     --ring-gap: #101118;
     --field-focus-bg: var(--surface-1);
     --field-focus-ring: inset 0 0 0 1.5px var(--accent);
     --field-error-ring: inset 0 0 0 1.5px var(--crit-solid);
+    --field-error-bg: #31202c;
     --ink-off: #5e6377;
     --ink-placeholder: var(--ink-4);
     --seg-on: var(--surface-3);
@@ -534,7 +551,7 @@
   --code-btn-ink: #ffffff;
   --code-track: rgba(255, 255, 255, 0.12);
   --code-thumb: rgba(255, 255, 255, 0.35);
-  /* The canvas draws no dark toast or tooltip: the ink fill inverts with the primary button. */
+  /* Components · Dark, Overlays: the toast and tooltip take the primary button's light fill. */
   --on-btn-accent: #3a55d6;
   --on-btn-ink-2: color-mix(in srgb, var(--btn-ink) 72%, var(--btn));
   --toast-ok-bg: transparent;
@@ -645,6 +662,7 @@
   --shadow-none: none;
   --shadow-lift: 0 1px 2px rgba(0, 0, 0, 0.08);
   --shadow-node: none;
+  --shadow-tile: var(--shadow-lift);
   --shadow-seg: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-hairline: 0 1px 2px rgba(0, 0, 0, 0.1);
   --shadow-knob: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1px 3px rgba(0, 0, 0, 0.5);
@@ -663,11 +681,13 @@
   --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 40px -16px rgba(0, 0, 0, 0.7);
   --shadow-drawer: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
   --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.5), 0 40px 90px -40px rgba(0, 0, 0, 0.8);
-  --focus-ring: 0 0 0 2px var(--accent);
+  --focus-ring: var(--control-ring);
+  --focus-ring-flush: 0 0 0 2px var(--accent);
   --ring-gap: #101118;
   --field-focus-bg: var(--surface-1);
   --field-focus-ring: inset 0 0 0 1.5px var(--accent);
   --field-error-ring: inset 0 0 0 1.5px var(--crit-solid);
+  --field-error-bg: #31202c;
   --ink-off: #5e6377;
   --ink-placeholder: var(--ink-4);
   --seg-on: var(--surface-3);
@@ -683,11 +703,14 @@
  */
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --ease-state: linear;
     --dur-press: 0ms;
     --dur-popover: var(--dur-color);
     --dur-state: var(--dur-color);
     --dur-sheet: var(--dur-color);
     --dur-toast: var(--dur-color);
+    --dur-push: var(--dur-color);
+    --push-shift: 0px;
     --dur-slide: 0ms;
     --dur-sidebar: 0ms;
     --dur-drawer: var(--dur-color);
