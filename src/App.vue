@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineAsyncComponent, onBeforeUnmount, onMounted, watch } from 'vue'
+import { defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import { onTrayOpenProject } from '@/api'
 import PayloadSheet from '@/features/ai/payload/PayloadSheet.vue'
@@ -15,6 +15,7 @@ import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useScanStore } from '@/stores/scan'
 import UiToastHost from '@/ui/UiToastHost.vue'
+import { createInputTracker, playPush, pushDirection } from '@/ui/route-push'
 
 const scan = useScanStore()
 const projects = useProjectsStore()
@@ -47,9 +48,21 @@ onMounted(async () => {
   if (unmounted) stop()
   else stopTray = stop
 })
+// Opening a detail with the pointer slides it in; a keyboard move (shortcut, Enter) is instant.
+const input = createInputTracker(window)
+const stopPush = router.afterEach((to, from, failure) => {
+  const direction = pushDirection(from.name, to.name)
+  if (failure || direction === null || input.last() !== 'pointer') return
+  void nextTick(() => {
+    const main = document.querySelector('[data-app-main]')
+    if (main) playPush(main, direction)
+  })
+})
 onBeforeUnmount(() => {
   unmounted = true
   stopTray?.()
+  stopPush()
+  input.stop()
   scan.dispose()
 })
 </script>

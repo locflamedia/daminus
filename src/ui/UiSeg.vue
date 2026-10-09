@@ -143,7 +143,16 @@ function onKeydown(event: KeyboardEvent, index: number) {
   box-shadow: var(--focus-ring);
 }
 
+/* The selected segment keeps its lift under the ring. */
+.segment.on:is(:focus-visible, [data-force='focus']) {
+  box-shadow: var(--shadow-seg), var(--focus-ring);
+}
+
 .count {
   color: var(--ink-3);
+}
+
+.segment:not(.on) .count {
+  color: var(--ink-4);
 }
 </style>

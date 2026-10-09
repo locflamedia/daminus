@@ -192,7 +192,7 @@ const haloKey = ref(0)
           <span class="tint-row">
             <UiMonogram :name="tint" :tint="tint" :size="36" />
             <span class="disc" />
-            <span class="dot" />
+            <span class="tint-dot" />
           </span>
           <span class="tint-name">{{ tint }}</span>
           <span class="mono tint-pair">{{ tintHex(tint, 1) }} → {{ tintHex(tint, 2) }}</span>
@@ -483,7 +483,8 @@ const haloKey = ref(0)
   border-radius: var(--radius-full);
 }
 
-.dot {
+/* Not `.dot`: a scoped rule of that name would also reach the root of UiStatusDot. */
+.tint-dot {
   background: var(--mark);
   width: 8px;
   height: 8px;

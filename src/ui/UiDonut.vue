@@ -101,7 +101,7 @@ const legend = computed(() => [
 
 .caption {
   fill: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text-11);
 }
 
 .legend {

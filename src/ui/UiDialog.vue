@@ -225,7 +225,7 @@ useFocusTrap(panel, toRef(props, 'open'), {
 }
 
 .wide .title {
-  font-size: 20px;
+  font-size: var(--text-20);
   letter-spacing: -0.02em;
 }
 

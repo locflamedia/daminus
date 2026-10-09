@@ -50,7 +50,7 @@ const baseMessages = {
       explained: 'Disabled with a reason',
       explainedUse: 'Stays focusable; the tooltip says why.',
       do: 'Do',
-      dont: "Don't",
+      dont: 'Don’t',
       doText:
         'Keep one dark button per view. On Overview it is Scan all; in a finding it is Copy fix.',
       dontBlue:
@@ -206,7 +206,7 @@ const baseMessages = {
       rowScanning: 'Scanning vps-sg-1',
       rowStale: 'Last checked 3 days ago',
       rowStaleMeta: 'Stale, values may be old',
-      rowUnreachable: "Couldn't reach vps-sg-1",
+      rowUnreachable: 'Couldn’t reach vps-sg-1',
       rowUnreachableMeta: 'ssh timed out after 10 s',
       rowSkipped: 'Docker checks skipped',
       rowSkippedMeta: 'deploy is not in group docker',
@@ -302,7 +302,7 @@ const baseMessages = {
         'A small dialog: icon title, one sentence, one action. Escape or a press outside closes it and focus goes back to its trigger.',
       popoverTrigger: 'Why is this locked?',
       popoverTitle: 'Needs permission',
-      popoverText: "deploy can't read the Docker socket, so container checks were skipped.",
+      popoverText: 'deploy can’t read the Docker socket, so container checks were skipped.',
       popoverLabel: 'Needs permission',
       menu: 'Menu',
       menuLede:
@@ -324,7 +324,7 @@ const baseMessages = {
       toastDoneDetail: '2 new issues, 1 resolved',
       toastShow: 'Show',
       toastCopied: 'Fix copied to the clipboard',
-      toastFailed: "Claude didn't answer",
+      toastFailed: 'Claude didn’t answer',
       toastFailedDetail: 'Rate limited. Your last findings are kept.',
       toastRetry: 'Retry',
       toastPush: 'Show a toast',

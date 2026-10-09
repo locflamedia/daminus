@@ -143,7 +143,7 @@ const TICK = 'm3.5 8.4 3 3L12.5 5'
 .col {
   color: var(--ink-3);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--text-badge-10);
   text-align: center;
 }
 
@@ -172,7 +172,7 @@ const TICK = 'm3.5 8.4 3 3L12.5 5'
   height: 20px;
   border-radius: 5px;
   outline: none;
-  font-size: 10px;
+  font-size: var(--text-badge-10);
   font-weight: 700;
 }
 

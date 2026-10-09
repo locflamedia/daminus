@@ -58,6 +58,11 @@ p {
   box-shadow: var(--focus-ring);
 }
 
+/* A text field draws its ring flush; controls get the 2 px gap first. */
+:is(input:not([type='checkbox'], [type='radio'], [type='range']), textarea):focus-visible {
+  box-shadow: var(--focus-ring-flush);
+}
+
 .mono {
   font-family: var(--font-mono);
 }

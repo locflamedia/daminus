@@ -30,7 +30,7 @@ const text = computed(() => badgeText(props.count))
   height: 18px;
   padding: 0 5px;
   border-radius: var(--radius-full);
-  font-size: 10.5px;
+  font-size: var(--text-badge-10-5);
   font-weight: var(--weight-semibold);
   line-height: 1;
 }

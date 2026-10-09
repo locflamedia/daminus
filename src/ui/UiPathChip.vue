@@ -62,7 +62,7 @@ async function onCopy() {
 
 .text {
   color: var(--ink);
-  font: var(--weight-regular) 11.5px var(--font-mono);
+  font: var(--weight-regular) var(--text-mono-11-5) var(--font-mono);
   white-space: nowrap;
 }
 
