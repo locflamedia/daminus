@@ -123,56 +123,58 @@ const overviewTip = computed(() =>
         <UiIcon name="clock" />
       </RouterLink>
 
-      <template v-if="projects.projects.length">
-        <span class="line" />
-        <RouterLink
-          v-for="p in projects.projects"
-          :key="p.id"
-          v-slot="{ isActive }"
-          :to="{ name: 'project', params: { id: p.id } }"
-          class="ri project"
-          active-class="on"
-          :aria-label="issuesLabel(p.id, issueCount(p))"
-          @pointerenter="enter(issuesLabel(p.id, issueCount(p)), $event)"
-          @pointerleave="leave"
-        >
-          <ProjectTile
-            :color="projects.color(p.id)"
-            :level="p.level"
-            :count="issueCount(p)"
-            :active="isActive"
-          />
-        </RouterLink>
-      </template>
+      <!-- Projects and servers scroll on their own, so the AI mark and the Settings gear stay in
+           view in a short window. -->
+      <div class="mid">
+        <template v-if="projects.projects.length">
+          <span class="line" />
+          <RouterLink
+            v-for="p in projects.projects"
+            :key="p.id"
+            v-slot="{ isActive }"
+            :to="{ name: 'project', params: { id: p.id } }"
+            class="ri project"
+            active-class="on"
+            :aria-label="issuesLabel(p.id, issueCount(p))"
+            @pointerenter="enter(issuesLabel(p.id, issueCount(p)), $event)"
+            @pointerleave="leave"
+          >
+            <ProjectTile
+              :color="projects.color(p.id)"
+              :level="p.level"
+              :count="issueCount(p)"
+              :active="isActive"
+            />
+          </RouterLink>
+        </template>
 
-      <template v-if="projects.servers.length">
-        <span class="line" />
-        <RouterLink
-          v-for="s in projects.servers"
-          :key="s.host"
-          :to="{ name: 'server', params: { host: s.host } }"
-          class="ri"
-          active-class="on"
-          :aria-label="serverLabel(s.host, isUnreachable(s.outcome), projects.disk(s.host))"
-          @pointerenter="
-            enter(
-              serverLabel(s.host, isUnreachable(s.outcome), projects.disk(s.host)),
-              $event,
-              true,
-            )
-          "
-          @pointerleave="leave"
-        >
-          <DiskRing
-            :pct="projects.disk(s.host)"
-            :reading="reading.has(s.host)"
-            :dim="isUnreachable(s.outcome)"
-            :size="18"
-          />
-        </RouterLink>
-      </template>
-
-      <span class="grow" />
+        <template v-if="projects.servers.length">
+          <span class="line" />
+          <RouterLink
+            v-for="s in projects.servers"
+            :key="s.host"
+            :to="{ name: 'server', params: { host: s.host } }"
+            class="ri"
+            active-class="on"
+            :aria-label="serverLabel(s.host, isUnreachable(s.outcome), projects.disk(s.host))"
+            @pointerenter="
+              enter(
+                serverLabel(s.host, isUnreachable(s.outcome), projects.disk(s.host)),
+                $event,
+                true,
+              )
+            "
+            @pointerleave="leave"
+          >
+            <DiskRing
+              :pct="projects.disk(s.host)"
+              :reading="reading.has(s.host)"
+              :dim="isUnreachable(s.outcome)"
+              :size="18"
+            />
+          </RouterLink>
+        </template>
+      </div>
       <RouterLink
         v-if="aiName"
         :to="{ name: 'settings', params: { section: 'ai' } }"
@@ -222,8 +224,22 @@ const overviewTip = computed(() =>
   gap: 6px;
   height: 100%;
   padding: var(--space-4) 0;
+  overflow: hidden;
+}
+
+.mid {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  min-height: 0;
+  padding: 4px 0;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
 }
 
 .lights {
@@ -311,10 +327,6 @@ const overviewTip = computed(() =>
   background: var(--side-line);
 }
 
-.grow {
-  flex-grow: 1;
-}
-
 .live {
   position: absolute;
   top: 7px;
@@ -338,6 +350,22 @@ const overviewTip = computed(() =>
   pointer-events: none;
   transform: translateY(-50%);
   animation: tip-in var(--dur-popover) var(--ease-out) both;
+}
+
+@keyframes tip-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Under Reduce Motion the tip only fades in, as every tooltip does. */
+@media (prefers-reduced-motion: reduce) {
+  .tip {
+    animation-name: tip-fade;
+  }
 }
 
 @keyframes tip-in {

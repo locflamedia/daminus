@@ -250,6 +250,8 @@ function onEnter(event: KeyboardEvent) {
 .main {
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
+  /* One row as tall as the sheet allows, so a short window scrolls the list, not the sheet. */
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--space-4);
   flex: 1 1 auto;
   min-height: 300px;

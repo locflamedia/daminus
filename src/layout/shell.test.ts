@@ -154,6 +154,14 @@ describe('AppRail', () => {
     expect(gear?.attributes('aria-label')).toBe('Settings')
     expect(gear?.text()).toBe('')
   })
+
+  it('scrolls only the projects and servers, so the Settings gear stays in a short window', async () => {
+    const wrapper = await mountShell(AppRail, 'narrow')
+    const mid = wrapper.get('.mid')
+    expect(mid.findAll('a.project')).toHaveLength(3)
+    expect(mid.find('a[aria-label="Settings"]').exists()).toBe(false)
+    expect(wrapper.find('.scroll > a[aria-label="Settings"]').exists()).toBe(true)
+  })
 })
 
 describe('SettingsNav', () => {
