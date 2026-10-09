@@ -67,6 +67,14 @@ describe('AppSidebar project rows', () => {
     expect(foot.text()).toBe('Settings')
     expect(foot.get('a').attributes('href')).toBe('/settings')
   })
+
+  it('scrolls the lists alone, so the Settings row stays outside the scrolling part', async () => {
+    const wrapper = await mountShell(AppSidebar)
+    const scroll = wrapper.get('.scroll')
+    expect(scroll.text()).toContain('vps-sg-2')
+    expect(scroll.find('.foot').exists()).toBe(false)
+    expect(scroll.element.nextElementSibling?.classList.contains('foot')).toBe(true)
+  })
 })
 
 describe('AppSidebar title bar and scan state', () => {
