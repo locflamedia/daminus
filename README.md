@@ -33,7 +33,19 @@ Most monitoring tools want an agent on every server and a dashboard running 24/7
 - **Read-only.** Checks never write to or delete anything on the server. CI enforces this.
 - **Project-centric.** One card per project: URL health, SSL expiry, disk usage, containers/pm2 status, database size, security signals.
 - **On demand.** No daemon, no background polling. Each scan is a single SSH call per host.
-- **Optional AI analysis.** Bring your own key for Anthropic, OpenAI, Ollama (local), OpenRouter, or any OpenAI-compatible endpoint.
+- **Optional AI analysis.** Bring your own key for Anthropic, OpenAI, Gemini, DeepSeek, OpenRouter, Ollama (local) or any OpenAI-compatible endpoint. Off until you set it up.
+
+## Screenshots
+
+<p align="center">
+  <img src="assets/screenshots/overview-light.png" alt="Overview: three projects with their servers, issues and changes since the last scan" width="860">
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/security-dark.png" alt="Project security tab in dark mode: what to fix first, the evidence, and the checks of this scan" width="860">
+</p>
+
+<sub>Demo data from the app's built-in sample report. Light and dark themes follow your system; English and Vietnamese are built in.</sub>
 
 ## How it works
 
@@ -45,18 +57,27 @@ Most monitoring tools want an agent on every server and a dashboard running 24/7
              project cards + diff vs. last scan ──► (optional) AI summary
 ```
 
-- Checks live in `crates/core/checks/`. Each one is a small POSIX shell script that prints JSON. Adding a check means adding a shell file, no Rust required.
+- Checks live in `crates/core/checks/`. Each one is a small POSIX shell script that prints JSON facts; Rust decides the severity from thresholds in a manifest. Adding a check is a shell script, a manifest entry, two strings and a golden output file, with no Rust code (see [CONTRIBUTING.md](CONTRIBUTING.md)).
 - Config is a hand-editable `projects.json` that references SSH host aliases. It holds **no secrets**.
 - Database credentials are read from the `.env` file **on the server** and never leave it.
 - AI API keys are stored in the OS keychain and redaction runs before anything is sent.
 
 ## v0.1 features
 
-- [x] Setup: pick hosts from `~/.ssh/config`, auto-discover compose projects, pm2 apps, nginx vhosts, and databases
-- [x] Parallel scan with results streaming in per host
-- [x] Project cards sorted by severity, with deltas since the last scan
-- [x] URL checks: HTTP status, latency, TLS expiry, exposed `.env` / `.git`
-- [x] AI analysis panel (structured output, never runs commands)
+- [x] **Setup.** Pick hosts from `~/.ssh/config` (or Termius), auto-discover compose projects, pm2 apps, nginx vhosts and databases, group them into projects
+- [x] **21 read-only checks:**
+  - system: load, memory, swap, pressure, OOM kills;
+  - disk: filesystems, big folders, big logs, Docker usage;
+  - services: compose containers, pm2 apps, database size (MySQL/MariaDB, PostgreSQL);
+  - security signals: miner processes, PHP in upload folders, executables in `/tmp`, `ld.so.preload`, public ports, recently changed files;
+  - URLs: HTTP status and latency, TLS expiry, exposed `.env` / `.git`
+- [x] **Parallel scan** with results streaming in per host; a host that does not answer is shown as unreachable, never as healthy
+- [x] **Project cards** sorted by severity, with changes since the previous scan and a disk-fill forecast
+- [x] **History.** Scans are kept, results compare with an earlier scan, and "Mark as expected" for findings you accept
+- [x] **Menu bar** icon with the latest result, Scan now and quick-open of the project that needs a look
+- [x] **AI review and Ask** (optional): structured findings and follow-up questions on a redacted payload you can read first; it never runs commands. Includes a beta provider that uses your own signed-in Claude Code
+- [x] **Keyboard first:** ⌘K search, ⌘R scan, `?` for every shortcut
+- [x] English and Vietnamese, light and dark, Reduce motion respected
 - [ ] macOS `.dmg` release (published with the first tag; Linux/Windows best effort)
 
 ## Install
