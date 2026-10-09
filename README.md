@@ -70,7 +70,7 @@ shasum -a 256 -c SHA256SUMS --ignore-missing
 gh attestation verify Daminus_<version>_<arch>.dmg --repo locflamedia/daminus
 ```
 
-The second command checks the build provenance attestation that CI publishes for each file.
+The second command checks the build provenance attestation that CI publishes for each `.dmg`.
 
 ### Opening an app that is not notarized
 

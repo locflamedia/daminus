@@ -12,7 +12,7 @@ app_name = os.path.basename(app_path)
 repo_root = os.path.abspath(defines["root"])  # noqa: F821
 
 with open(os.path.join(app_path, "Contents", "Info.plist"), "rb") as fh:
-    icon_file = plistlib.load(fh)["CFBundleIconFile"]
+    icon_file = plistlib.load(fh).get("CFBundleIconFile", "icon.icns")
 if not icon_file.endswith(".icns"):
     icon_file += ".icns"
 
