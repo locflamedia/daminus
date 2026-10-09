@@ -177,7 +177,7 @@ impl SshTransport {
     /// Spawns `ssh` in its own process group and registers the group so it
     /// is killed when the returned guard drops or on [`Transport::kill_all`].
     fn spawn(&self, args: &[OsString]) -> Option<(Child, GroupGuard)> {
-        let child = match self.command(args).spawn() {
+        let child = match super::tools::spawn_retrying(&mut self.command(args)) {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!(error = %e, "could not start ssh");
