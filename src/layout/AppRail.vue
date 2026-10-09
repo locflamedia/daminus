@@ -8,7 +8,8 @@ import { useProjectsStore } from '@/stores/projects'
 import { useScanStore } from '@/stores/scan'
 import UiIcon from '@/ui/UiIcon.vue'
 import { badgeText } from '@/lib/micro'
-import { useAiProviderName } from './use-ai-provider-name'
+import UiBrandMark from '@/ui/UiBrandMark.vue'
+import { useAiModelMark, useAiProviderName } from './use-ai-provider-name'
 import DiskRing from './DiskRing.vue'
 import ProjectTile from './ProjectTile.vue'
 
@@ -16,6 +17,7 @@ const { t } = useI18n()
 const projects = useProjectsStore()
 const scan = useScanStore()
 const aiName = useAiProviderName()
+const aiMark = useAiModelMark()
 
 const reading = computed(
   () =>
@@ -180,7 +182,7 @@ const overviewTip = computed(() =>
         @pointerenter="enter(t('nav.aiProvider', { name: aiName }), $event)"
         @pointerleave="leave"
       >
-        <UiIcon name="spark" />
+        <UiBrandMark :name="aiMark" :size="16"><UiIcon name="spark" /></UiBrandMark>
         <span class="live" aria-hidden="true" />
       </RouterLink>
       <RouterLink

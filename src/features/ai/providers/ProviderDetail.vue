@@ -12,7 +12,8 @@ import ProviderBaseUrl from './ProviderBaseUrl.vue'
 import ProviderKey from './ProviderKey.vue'
 import ProviderModel from './ProviderModel.vue'
 import ProviderTest from './ProviderTest.vue'
-import { isActive, markOf, needsBaseUrl } from './provider-state'
+import ProviderMark from './ProviderMark.vue'
+import { isActive, needsBaseUrl } from './provider-state'
 
 const props = defineProps<{ entry: AiProviderEntry }>()
 const { t } = useI18n()
@@ -28,7 +29,7 @@ const adapterName = computed(() => props.entry.profile.adapter ?? props.entry.pr
 <template>
   <section class="card" :aria-label="entry.profile.name">
     <header class="head">
-      <span class="mark" aria-hidden="true">{{ markOf(entry) }}</span>
+      <span class="mark" aria-hidden="true"><ProviderMark :entry="entry" :size="22" /></span>
       <div class="who">
         <b class="name">{{ entry.profile.name }}</b>
         <i18n-t :keypath="adapterKey" tag="span" class="adapter" scope="global">

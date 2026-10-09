@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { LOCALES } from '@/i18n'
 import { useLayoutRange } from '@/lib/viewport'
 import { useDataStore } from '@/stores/data'
@@ -11,6 +11,8 @@ import { useSettingsStore } from '@/stores/settings'
 import { useSetupStore } from '@/stores/setup'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiKbd from '@/ui/UiKbd.vue'
+import { BRAND_TITLES } from '@/ui/brand-marks'
+import { useAiModelMark } from './use-ai-provider-name'
 import { SETTINGS_SECTIONS } from './settings-sections'
 
 const { t } = useI18n()
@@ -20,6 +22,10 @@ const scan = useScanSettingsStore()
 const setup = useSetupStore()
 const data = useDataStore()
 const range = useLayoutRange()
+const route = useRoute()
+const aiMark = useAiModelMark()
+/** Board 09: the AI providers section keeps a card at the bottom on where the keys are kept. */
+const onAi = computed(() => route.params.section === 'ai')
 
 /**
  * Right-hand hint of an item: the current value, where the app already knows it. Below 1080 px
@@ -42,6 +48,7 @@ const hints = computed((): Record<string, string> => {
     appearance: t(`theme.${settings.theme}`),
     scan: t('settingsNav.scanValue', { n: groupsOn(scan.scan), total: 6 }),
     hosts: setup.listing ? String(setup.entries.length) : '',
+    ai: aiMark.value ? BRAND_TITLES[aiMark.value] : '',
     ...dataHint.value,
     about: `v${__APP_VERSION__}`,
   }
@@ -84,6 +91,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         <span v-if="hints[s.id]" class="hint">{{ hints[s.id] }}</span>
       </RouterLink>
     </div>
+
+    <aside v-if="onAi" class="keys">
+      <span class="keys-title"><UiIcon name="lock" />{{ t('settingsNav.keysTitle') }}</span>
+      <i18n-t keypath="settingsNav.keysBody" tag="span" scope="global">
+        <template #service><span class="mono">dev.daminus.app</span></template>
+      </i18n-t>
+    </aside>
   </nav>
 </template>
 
@@ -179,5 +193,35 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   margin-left: auto;
   color: var(--ink-3);
   font-size: var(--text-11);
+}
+.keys {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding: var(--space-3);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-0) 72%, transparent);
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  line-height: 1.45;
+}
+
+.keys-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+
+.keys-title .icon {
+  color: var(--ink-3);
+}
+
+.keys .mono {
+  color: var(--ink-2);
+  font-family: var(--font-mono);
 }
 </style>

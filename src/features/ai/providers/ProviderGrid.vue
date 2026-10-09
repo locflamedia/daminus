@@ -5,8 +5,9 @@
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import ProviderMark from './ProviderMark.vue'
 import { useAiProvidersStore } from '@/stores/ai-providers'
-import { markOf, tileStatus } from './provider-state'
+import { tileStatus } from './provider-state'
 
 const { t } = useI18n()
 const store = useAiProvidersStore()
@@ -25,7 +26,7 @@ const store = useAiProvidersStore()
       @click="store.select(entry.profile.id)"
     >
       <span class="top">
-        <span class="mark" aria-hidden="true">{{ markOf(entry) }}</span>
+        <span class="mark" aria-hidden="true"><ProviderMark :entry="entry" :size="20" /></span>
         <span
           class="dot"
           :class="tileStatus(entry, store.view)[0]"

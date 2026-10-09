@@ -27,6 +27,21 @@ describe('SidebarAiChip', () => {
     expect(chip.find('a').attributes('href')).toBe('/settings/ai')
   })
 
+  it('draws the provider logo and says where the key is kept', () => {
+    const chip = mountChip({
+      provider: 'anthropic',
+      model: 'claude-sonnet-5',
+      providers: [
+        {
+          profile: { id: 'anthropic', name: 'Anthropic', models: ['claude-sonnet-5'] },
+          key_set: true,
+        },
+      ] as AiProvidersView['providers'],
+    })
+    expect(chip.find('img').exists()).toBe(true)
+    expect(chip.text()).toContain('Anthropic · key in Keychain')
+  })
+
   it('draws nothing while AI is off', () => {
     expect(mountChip({ provider: null, model: null }).find('a').exists()).toBe(false)
   })
