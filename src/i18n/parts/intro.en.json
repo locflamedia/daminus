@@ -1,0 +1,12 @@
+{
+  "intro": {
+    "reading": "Reading ~/.ssh/config…",
+    "sixTitle": "issues since your last scan",
+    "crit": "{n} critical",
+    "warn": "{n} warning | {n} warnings",
+    "disk": "{n} disk",
+    "offline": "offline",
+    "pillBack": "Your {n} server, as a night sky · after Van Gogh, 1889 | Your {n} servers, as a night sky · after Van Gogh, 1889",
+    "pillFirst": "{n} host found in ~/.ssh/config · nothing scanned yet · after Van Gogh, 1889 | {n} hosts found in ~/.ssh/config · nothing scanned yet · after Van Gogh, 1889"
+  }
+}
