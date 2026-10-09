@@ -218,10 +218,10 @@ describe('Overview tab', () => {
     const w = await mountTab(ProjectOverviewTab, 'results', 'tiemtra')
     expect(w.findAll('.band .host').map((h) => h.text())).toEqual([
       'vps-sg-1',
-      'vps-sg-1',
       'vps-sg-2',
       'vps-sg-2 · data',
     ])
+    expect(w.findAll('.node .role').map((r) => r.text())).toEqual(['FE', 'WORKER', 'BE', 'DB'])
   })
 
   it('writes the status next to the uptime and marks restarts in the parts table', async () => {
