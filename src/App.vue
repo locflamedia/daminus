@@ -4,6 +4,7 @@ import { RouterView, useRoute } from 'vue-router'
 import PayloadSheet from '@/features/ai/payload/PayloadSheet.vue'
 import AskDrawer from '@/features/ai/ask/AskDrawer.vue'
 import HostKeyHost from '@/features/host-key/HostKeyHost.vue'
+import IntroHost from '@/features/intro/IntroHost.vue'
 import ProjectSheet from '@/features/project-sheet/ProjectSheet.vue'
 import ScanPanel from '@/features/scan-panel/ScanPanel.vue'
 import AppWindow from '@/layout/AppWindow.vue'
@@ -36,6 +37,7 @@ onBeforeUnmount(() => scan.dispose())
 </script>
 
 <template>
+  <IntroHost v-if="route.meta.bare !== true" />
   <!-- A bare route (the dev gallery) draws without the window frame. -->
   <RouterView v-if="route.meta.bare === true" />
   <AppWindow v-else>
