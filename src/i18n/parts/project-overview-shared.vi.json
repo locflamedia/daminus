@@ -16,9 +16,9 @@
       "retry": "Thử lại"
     },
     "off": {
-      "title": "{group} đang tắt trong Cài đặt",
-      "text": "Bật lại ở Cài đặt › Quét, chúng sẽ chạy từ lần quét sau.",
-      "open": "Mở Cài đặt"
+      "title": "{group} đang tắt",
+      "text": "Đã tắt trong Cài đặt › Quét. Tab này không đọc gì cả.",
+      "open": "Mở Cài đặt › Quét"
     },
     "unreachable": {
       "title": "{hosts} không trả lời",

@@ -90,7 +90,9 @@ describe('Disk tab', () => {
       const latest = reports.latest
       if (latest) reports.latest = { ...latest, disabled_groups: ['disk'] }
     })
-    expect(w.text()).toContain('Disk checks are off in Settings')
+    expect(w.text()).toContain('Disk checks are off')
+    expect(w.text()).toContain('Turned off in Settings › Scan. Nothing is read for this tab.')
+    expect(w.text()).toContain('Open Settings › Scan')
     expect(w.find('.treemap').exists()).toBe(false)
   })
 

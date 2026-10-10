@@ -16,9 +16,9 @@
       "retry": "Try again"
     },
     "off": {
-      "title": "{group} are off in Settings",
-      "text": "Switch them on in Settings › Scan and they run with the next scan.",
-      "open": "Open Settings"
+      "title": "{group} are off",
+      "text": "Turned off in Settings › Scan. Nothing is read for this tab.",
+      "open": "Open Settings › Scan"
     },
     "unreachable": {
       "title": "{hosts} did not answer",
