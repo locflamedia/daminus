@@ -224,6 +224,14 @@ describe('servers that could not be scanned', () => {
     expect(label('legacy-shop')?.text()).toBe('Unreachable')
   })
 
+  it('keeps the host name and the full cause in the tooltip when the label is cut', async () => {
+    withCauses()
+    const wrapper = await mountShell(AppSidebar)
+    const row = wrapper.findAll('a.server').find((a) => a.get('.name').text() === 'vps-sg-2')
+    expect(row?.attributes('title')).toBe('vps-sg-2 · Not in ~/.ssh/config')
+    expect(row?.get('.count').classes()).toContain('cause')
+  })
+
   it('names the cause in the rail tooltip', async () => {
     withCauses()
     const wrapper = await mountShell(AppRail, 'narrow')

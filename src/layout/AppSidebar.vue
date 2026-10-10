@@ -163,6 +163,7 @@ const serverRows = computed(() =>
           :to="{ name: 'server', params: { host: s.host } }"
           class="item server"
           :class="{ off: s.unreachable }"
+          :title="s.cause ? `${s.host} · ${t(`outcome.${s.cause}`)}` : undefined"
           active-class="on"
         >
           <DiskRing
@@ -174,7 +175,7 @@ const serverRows = computed(() =>
           <span class="mono name">{{ s.host }}</span>
           <span
             v-if="s.cause"
-            class="count strong"
+            class="count strong cause"
             :class="s.causeTone === 'quiet' ? '' : s.causeTone"
             >{{ t(`outcome.${s.cause}`) }}</span
           >
@@ -349,8 +350,18 @@ const serverRows = computed(() =>
   color: var(--ink);
 }
 
+/* A cause label gives way first: the host keeps at least 8 characters, the label ellipsizes. */
 .server .name {
+  min-width: 8ch;
   font-size: var(--text-12);
+}
+
+.count.cause {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 100;
 }
 
 .server.off {
