@@ -26,7 +26,7 @@
     "stop": "Stop",
     "tryAgain": "Try again",
     "askAgain": "Ask again",
-    "stopped": "Stopped. Nothing more will arrive.",
+    "stopped": "Stopped. Nothing more was received.",
     "failed": "No answer",
     "threadLabel": "Conversation about {name}",
     "composerLabel": "Question for the AI",

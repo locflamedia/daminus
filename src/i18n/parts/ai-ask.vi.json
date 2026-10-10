@@ -26,7 +26,7 @@
     "stop": "Dừng",
     "tryAgain": "Thử lại",
     "askAgain": "Hỏi lại",
-    "stopped": "Đã dừng. Sẽ không có thêm nội dung.",
+    "stopped": "Đã dừng. Không nhận thêm nội dung nào nữa.",
     "failed": "Chưa có câu trả lời",
     "threadLabel": "Cuộc trò chuyện về {name}",
     "composerLabel": "Câu hỏi cho AI",
