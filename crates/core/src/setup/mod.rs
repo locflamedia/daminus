@@ -15,6 +15,7 @@
 //! One run at a time (a second `start` joins the running one). A run that is
 //! cancelled leaves what was already found.
 
+mod agent_keys;
 mod environment;
 mod event;
 mod url_check;
@@ -632,6 +633,16 @@ impl HostTask {
             host_key = Some(info);
         }
 
+        // A refused login: is the config's key in the agent? It picks the sentence.
+        let key_in_agent = match (&outcome, resolved.as_ref()) {
+            (HostOutcome::AuthFailed, Some(r)) => tokio::select! {
+                biased;
+                _ = self.cancel.cancelled() => return None,
+                k = agent_keys::check(tools, &r.identity_files) => k,
+            },
+            _ => None,
+        };
+
         let items = u32::try_from(ran.records.len()).unwrap_or(u32::MAX);
         let step = self.step;
         let kept = outcome.answered() || outcome == HostOutcome::Timeout;
@@ -640,6 +651,7 @@ impl HostTask {
             h.outcome = Some(finished);
             h.resolved = resolved;
             h.host_key = host_key;
+            h.key_in_agent = key_in_agent;
             match step {
                 Step::Test => h.login = kept.then(|| LoginResult::from_records(ran.records)),
                 Step::Discover => {

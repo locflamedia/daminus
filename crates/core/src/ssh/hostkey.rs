@@ -187,7 +187,7 @@ fn preferred(offered: Vec<String>) -> Option<String> {
 }
 
 /// `~` and `~/…` in a known-hosts path; `None` for paths with `%` tokens.
-fn expand(tools: &SshTools, file: &str) -> Option<PathBuf> {
+pub(crate) fn expand(tools: &SshTools, file: &str) -> Option<PathBuf> {
     if file.contains('%') {
         return None;
     }

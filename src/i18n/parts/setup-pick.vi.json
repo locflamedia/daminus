@@ -86,7 +86,8 @@
       "offered": "Máy chủ đưa ra",
       "known": "Đã lưu",
       "skip": "Bỏ qua host",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "key_refused_loaded": "Khoá đã nạp nhưng {host} từ chối. Kiểm tra User trong ~/.ssh/config và khoá đã có trong authorized_keys trên máy chủ."
     },
     "perm": {
       "reached": "Đã vào được · {time}",
