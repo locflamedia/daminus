@@ -11,7 +11,6 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useFormat } from '@/composables/use-format'
-import { useHostKeyReview } from '@/features/host-key/use-host-key-review'
 import { useNow } from '@/composables/use-now'
 import { coresOf, itemOf } from '@/lib/server-facts'
 import { dataOf, num } from '@/lib/project-facts'
@@ -40,7 +39,6 @@ import { provideResultsAged } from '@/features/project/common/results-aged'
 import { useResultScan } from '@/features/project/common/use-result-scan'
 
 const { t } = useI18n()
-const keys = useHostKeyReview()
 const fmt = useFormat()
 const route = useRoute()
 const reports = useReportStore()
@@ -163,41 +161,16 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
         :seq="seq"
         :busy="run.busy.value"
       />
-      <UiBanner
+      <ResultNotes
         v-if="data.state.value === 'unreachable'"
-        tone="crit"
-        icon="unreachable"
-        :title="
-          lastReached
-            ? t('projectShared.unreachable.title', { hosts: host, seq: lastReached.seq })
-            : t('projectShared.unreachable.noneTitle', { hosts: host, seq })
-        "
-        :text="
-          lastReached
-            ? t('projectShared.unreachable.kept', { seq: lastReached.seq })
-            : t('projectShared.unreachable.none')
-        "
-      >
-        <template #trailing>
-          <UiButton
-            v-if="keys.has(data.failed.value)"
-            size="small"
-            icon="shield"
-            @click="keys.review(host, data.failed.value)"
-          >
-            {{ t('hostKey.review') }}
-          </UiButton>
-          <UiButton
-            v-else
-            size="small"
-            icon="refresh"
-            :disabled="run.busy.value"
-            @click="run.retry([host])"
-          >
-            {{ t('projectShared.unreachable.retry', { hosts: host }) }}
-          </UiButton>
-        </template>
-      </UiBanner>
+        :scanning-host="null"
+        :unreachable="[host]"
+        :unreachable-since="lastReached?.seq ?? null"
+        :old-days="null"
+        :seq="seq"
+        :busy="run.busy.value"
+        @retry="(hosts) => run.retry(hosts)"
+      />
       <UiBanner
         v-else-if="data.state.value === 'not-scanned'"
         tone="warn"

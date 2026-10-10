@@ -74,18 +74,17 @@ provideResultsAged(aged)
       :busy="run.busy.value"
       @scan="run.scanThis()"
     />
-    <UiEmptyState
+    <ResultNotes
       v-else-if="status === 'unreachable'"
-      icon="unreachable"
-      :title="
-        t('projectShared.unreachable.noneTitle', { hosts: unreachable.join(', '), seq: seq ?? 0 })
-      "
-      :text="t('projectShared.unreachable.none')"
-    >
-      <UiButton icon="refresh" :disabled="run.busy.value" @click="run.retry(unreachable)">
-        {{ t('projectShared.unreachable.retry', { hosts: unreachable.join(', ') }) }}
-      </UiButton>
-    </UiEmptyState>
+      :scanning-host="null"
+      :unreachable="unreachable"
+      :unreachable-since="null"
+      :old-days="null"
+      :seq="seq"
+      :busy="run.busy.value"
+      :project="projectId"
+      @retry="(hosts) => run.retry(hosts)"
+    />
     <template v-if="showBody">
       <ResultNotes
         :scanning-host="run.scanningHost.value"
@@ -94,6 +93,7 @@ provideResultsAged(aged)
         :old-days="oldDays"
         :seq="seq"
         :busy="run.busy.value"
+        :project="projectId"
         @scan="run.scanThis()"
         @retry="(hosts) => run.retry(hosts)"
       />
