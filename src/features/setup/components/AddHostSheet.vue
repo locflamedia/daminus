@@ -10,7 +10,7 @@
   setup store's `addHostOpen` (bind it with v-model).
 -->
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import type { SkipReason } from '@/api'
@@ -87,6 +87,17 @@ const result = computed<Result | null>(() => {
 
 const found = computed(() => (result.value?.kind === 'found' ? result.value : null))
 
+/** The sheet body; a new answer may sit below the block, out of sight in a short window. */
+const bodyEl = ref<HTMLElement | null>(null)
+watch(
+  () => result.value?.kind,
+  async (kind) => {
+    if (!kind || kind === 'reading') return
+    await nextTick()
+    bodyEl.value?.querySelector('.result')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  },
+)
+
 /**
  * Import is offered where it leads to Pick hosts without losing anything: not on a later setup
  * step (Discover, Group), and not while the agent holds no key (the test would only fail).
@@ -138,7 +149,7 @@ function copyBlock() {
     pinned
     @close="open = false"
   >
-    <div class="body">
+    <div ref="bodyEl" class="body">
       <HostBlockForm v-model="fields" variant="sheet" />
       <SshConfigBanner
         v-if="setup.configProblem"

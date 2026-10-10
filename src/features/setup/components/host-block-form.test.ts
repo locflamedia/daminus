@@ -250,6 +250,22 @@ describe('AddHostSheet', () => {
     expect(router.currentRoute.value.path).toBe('/setup')
   })
 
+  it('brings the answer into view, below the block it may sit under', async () => {
+    const seen: Element[] = []
+    const spy = vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(function (
+      this: Element,
+    ) {
+      seen.push(this)
+    })
+    mountSheet(() => configWith(['apollo-2']))
+    await flushPromises()
+    await typeAlias('apollo-2')
+    footerButton('Check again')?.click()
+    await flushPromises()
+    expect(seen.some((el) => el.classList.contains('found'))).toBe(true)
+    spy.mockRestore()
+  })
+
   it('says the typed host is not in the config yet, and Copy block copies and says so', async () => {
     mountSheet(() => configWith(['vps-a']))
     await flushPromises()
