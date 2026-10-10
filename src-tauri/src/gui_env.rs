@@ -92,7 +92,11 @@ fn login_shell_env(shell: &str, timeout: Duration) -> Result<Vec<(String, String
         .stderr(Stdio::null())
         .process_group(0)
         .spawn()
-        .map_err(|_| "spawn")?;
+        .map_err(|e| {
+            // The cause is kept for tests and logs; callers get the one word.
+            tracing::debug!(error = ?e, shell, "login shell did not spawn");
+            "spawn"
+        })?;
     let mut stdout = child.stdout.take().ok_or("stdout")?;
     // Read on a thread so a chatty shell cannot fill the pipe and stall. The
     // result comes back over a channel with a deadline: a process the startup
@@ -208,21 +212,29 @@ mod tests {
         assert!(mode & 0o111 != 0, "{} is not executable", path.display());
     }
 
-    /// Why a spawn of `path` failed, in the kernel's own words. The production
-    /// code maps every spawn failure to one word, which on CI says only that
-    /// something went wrong; a test that is about to assert on the outcome can
-    /// say whether it was ETXTBSY, ENOEXEC, EACCES or something else. The
-    /// script is never run here: these scripts have side effects on disk, and
-    /// a second run would disturb the one the test is making.
-    fn spawn_error(path: &std::path::Path) -> String {
-        match Command::new(path)
-            .arg("--probe")
-            .stdin(Stdio::null())
-            .spawn()
-        {
-            Ok(_) => "spawn succeeded on the probe".to_owned(),
-            Err(e) => format!("{e:?} (raw os error {:?})", e.raw_os_error()),
+    /// Runs `login_shell_env`, waiting out a spawn that failed for want of a
+    /// process slot rather than for anything about the script.
+    ///
+    /// These tests leak on purpose: each leaves a 30 s sleeper, and by design
+    /// a reader thread outlives the call ("such a reader is left behind",
+    /// above). `cargo test` runs the suite in parallel, so on a small runner
+    /// the fork limit can be reached for a moment. On CI this showed as
+    /// `Err("spawn")` while a probe spawned the very same script a moment
+    /// later without trouble, which rules out the file itself and leaves a
+    /// transient EAGAIN. Waiting for a slot is the honest fix: these tests are
+    /// about what happens once the shell runs, not about getting a slot.
+    fn env_of(
+        shell: &std::path::Path,
+        timeout: Duration,
+    ) -> Result<Vec<(String, String)>, &'static str> {
+        let path = shell.to_str().expect("utf-8 path");
+        for _ in 0..50 {
+            match login_shell_env(path, timeout) {
+                Err("spawn") => std::thread::sleep(Duration::from_millis(20)),
+                other => return other,
+            }
         }
+        login_shell_env(path, timeout)
     }
 
     #[test]
@@ -231,7 +243,7 @@ mod tests {
         let shell = dir.path().join("slow-sh");
         executable_script(&shell, "#!/bin/sh\nsleep 30\n");
         let started = Instant::now();
-        let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(300));
+        let got = env_of(&shell, Duration::from_millis(300));
         assert_eq!(got, Err("timeout"));
         assert!(started.elapsed() < Duration::from_secs(3));
     }
@@ -250,12 +262,7 @@ mod tests {
              exit 0\n",
         );
         let started = Instant::now();
-        let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(500));
-        // `Err("spawn")` means the script never ran, which says nothing about
-        // the behaviour under test; name the kernel's reason when that happens.
-        if got == Err("spawn") {
-            panic!("{} did not run: {}", shell.display(), spawn_error(&shell));
-        }
+        let got = env_of(&shell, Duration::from_millis(500));
         assert_eq!(got, Err("timeout"));
         assert!(
             started.elapsed() < Duration::from_secs(2),
