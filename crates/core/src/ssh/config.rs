@@ -577,9 +577,9 @@ async fn resolve_checked(
 /// and `Can't open user config file <file>: ...` for a file it cannot read.
 pub fn ssh_config_problem(stderr: &str) -> Option<ErrorCode> {
     const CANT_OPEN: &str = "Can't open user config file ";
-    // Lines ssh named before giving up; a warning it went on after (a
-    // deprecated option) is among them, so only the file that stopped it, and
-    // its last named line, count.
+    // Lines ssh named before giving up. Most errors end with
+    // `<file>: terminating, ...`; then the last line named in that file is
+    // the one. A few stop ssh at once with only `<file> line <n>: ...`.
     let mut named: Vec<(String, u32)> = Vec::new();
     for raw in stderr.lines() {
         let line = raw.trim_end();
@@ -603,7 +603,10 @@ pub fn ssh_config_problem(stderr: &str) -> Option<ErrorCode> {
             named.push(found);
         }
     }
-    None
+    named.pop().map(|(path, line)| ErrorCode::SshConfigInvalid {
+        path,
+        line: Some(line),
+    })
 }
 
 /// `<file> line <n>: ...` or `<file>: line <n>: ...`.
