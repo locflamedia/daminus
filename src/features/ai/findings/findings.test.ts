@@ -6,6 +6,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import type { CheckKey } from '@/api'
 import { i18n } from '@/i18n'
 import { type AskedFinding, useAiThreadStore } from '@/stores/ai-thread'
+import { useAiProvidersStore } from '@/stores/ai-providers'
 import { useReportStore } from '@/stores/report'
 import { item } from '@/testing/item-fixture'
 import { report, server } from '@/testing/report-fixture'
@@ -97,8 +98,18 @@ describe('resolving findings', () => {
       ],
       servers: [server('vps-a'), server('legacy', { outcome: { state: 'unreachable' } as never })],
     })
-    expect(footerRows(r)).toEqual({ passed: 2, expected: 1, unreachable: ['legacy'] })
-    expect(footerRows(null)).toEqual({ passed: 0, expected: 0, unreachable: [] })
+    expect(footerRows(r)).toEqual({
+      passed: 2,
+      expected: 1,
+      expectedProjects: [],
+      unreachable: ['legacy'],
+    })
+    expect(footerRows(null)).toEqual({
+      passed: 0,
+      expected: 0,
+      expectedProjects: [],
+      unreachable: [],
+    })
   })
 
   it('filters by the check’s severity', () => {
@@ -157,9 +168,7 @@ describe('Findings page', () => {
 
   it('falls back to the checks’ list, unranked, when there is no answer', async () => {
     const { view } = await page()
-    expect(view.text()).not.toContain('No AI review yet')
     expect(view.text()).toContain('From the checks, not ranked')
-    expect(view.text()).toContain('AI providers')
     const rows = view.findAll('[role="option"]')
     expect(rows).toHaveLength(2)
     expect(rows[0]?.text()).toContain('1')
@@ -223,5 +232,49 @@ describe('Findings page', () => {
     const detail = view.get('article')
     expect(detail.text()).toContain('From the check: sec.upload_php')
     expect(detail.findAll('button').some((b) => b.text() === 'Open in Security')).toBe(false)
+  })
+})
+
+describe('Findings page: no review yet', () => {
+  const button = (view: Awaited<ReturnType<typeof page>>['view'], label: string) =>
+    view.findAll('.none button').find((b) => b.text() === label)
+
+  it('says so, with Ask the AI, and offers AI providers only while no provider is set', async () => {
+    const { view } = await page()
+    const none = view.get('[data-testid="findings-none"]')
+    expect(none.text()).toContain('No AI review yet')
+    expect(none.text()).toContain('Ask a question to get the findings ranked.')
+    expect(button(view, 'Ask the AI')).toBeDefined()
+    expect(button(view, 'AI providers')).toBeDefined()
+  })
+
+  it('hides AI providers once a provider is set', async () => {
+    useAiProvidersStore().view = { provider: 'claude-code', providers: [] } as never
+    const { view } = await page()
+    expect(button(view, 'AI providers')).toBeUndefined()
+    await button(view, 'Ask the AI')?.trigger('click')
+    expect(useAiThreadStore().drawerOpen).toBe(true)
+  })
+
+  it('titles the page with the newest scan and notes what each footer row leaves out', async () => {
+    const r = report({
+      items: [
+        item({ host: 'vps-a', check: 'disk.fs', target: '/', level: { level: 'ok' } }),
+        item({
+          host: 'vps-a',
+          check: 'disk.fs',
+          target: '/b',
+          level: { level: 'warn' },
+          owner: { kind: 'project', id: 'booking' },
+          disposition: { kind: 'expected', rule: 'r1' },
+        }),
+      ],
+    })
+    r.seq = 12
+    const { view } = await page(r)
+    expect(view.get('.title').text()).toBe('AI review of scan #12')
+    const rows = view.findAll('.frow')
+    expect(rows[0]?.text()).toContain('not sent in detail')
+    expect(rows[1]?.text()).toContain('booking')
   })
 })

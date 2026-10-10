@@ -79,10 +79,10 @@ watch(
   { immediate: true },
 )
 
+/** The scan the page speaks of: the newest report's, else the one the answer was written for. */
+const scanSeq = computed(() => report.value?.seq ?? turn.value?.seq ?? null)
 const title = computed(() =>
-  turn.value?.seq != null
-    ? t('aiFindings.title', { n: turn.value.seq })
-    : t('aiFindings.titleNoScan'),
+  scanSeq.value != null ? t('aiFindings.title', { n: scanSeq.value }) : t('aiFindings.titleNoScan'),
 )
 const model = computed(() => {
   const view = providers.view
@@ -169,6 +169,22 @@ if (providers.view === null) void providers.load()
           {{ ranked ? t('aiFindings.ranked') : t('aiFindings.fromChecks')
           }}<span class="note">{{ t('aiFindings.count', { n: counts.all }) }}</span>
         </div>
+        <div v-if="!ranked" class="none" data-testid="findings-none">
+          <b>{{ t('aiFindings.none') }}</b>
+          <span>{{ t('aiFindings.noneBody') }}</span>
+          <div class="acts">
+            <UiButton variant="primary" size="small" @click="followUp">{{
+              t('aiFindings.ask')
+            }}</UiButton>
+            <UiButton
+              v-if="!providers.on"
+              variant="ghost"
+              size="small"
+              @click="router.push({ name: 'settings', params: { section: 'ai' } })"
+              >{{ t('aiFindings.providers') }}</UiButton
+            >
+          </div>
+        </div>
         <FindingsList
           :findings="shown"
           :selected="selected?.id ?? ''"
@@ -179,10 +195,14 @@ if (providers.view === null) void providers.load()
           <div v-if="footer.passed > 0" class="frow">
             <UiIcon name="check" :size="14" class="ok" />
             <span>{{ t('aiFindings.passed', { n: footer.passed }, footer.passed) }}</span>
+            <span class="note">{{ t('aiFindings.passedNote') }}</span>
           </div>
           <div v-if="footer.expected > 0" class="frow">
             <UiIcon name="eye" :size="14" />
             <span>{{ t('aiFindings.expectedCount', { n: footer.expected }) }}</span>
+            <span v-if="footer.expectedProjects.length > 0" class="note">{{
+              footer.expectedProjects.join(', ')
+            }}</span>
           </div>
           <div v-for="host in footer.unreachable" :key="host" class="frow">
             <UiIcon name="close" :size="14" class="crit" />
@@ -190,13 +210,6 @@ if (providers.view === null) void providers.load()
             <span class="note">{{ t('aiFindings.unreachableWord') }}</span>
           </div>
           <p v-if="ranked" class="note order">{{ t('aiFindings.orderNote') }}</p>
-          <UiButton
-            v-else
-            class="quiet"
-            variant="link"
-            @click="router.push({ name: 'settings', params: { section: 'ai' } })"
-            >{{ t('aiFindings.providers') }}</UiButton
-          >
         </div>
       </UiCard>
       <FindingDetail v-if="selected" class="card16" :finding="selected" @follow-up="followUp" />
@@ -378,8 +391,28 @@ if (providers.view === null) void providers.load()
   padding-top: 6px;
 }
 
-.quiet {
-  align-self: flex-start;
-  margin-top: 6px;
+.none {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface-well);
+}
+
+.none b {
+  font-size: var(--text-13);
+  font-weight: var(--weight-medium);
+}
+
+.none span {
+  color: var(--ink-3);
+  font-size: var(--text-11);
+  line-height: 1.45;
+}
+
+.acts {
+  display: flex;
+  gap: 8px;
 }
 </style>

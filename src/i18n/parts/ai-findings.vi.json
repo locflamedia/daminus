@@ -35,6 +35,7 @@
     "detail": "Chi tiết phát hiện {n}",
     "provenanceNoSize": "{model} · {time} · chưa rõ kích thước",
     "passed": "{n} phép kiểm tra đạt",
+    "passedNote": "không gửi chi tiết",
     "expectedCount": "{n} đã đánh dấu là bình thường",
     "notScanned": "{host} chưa được quét",
     "unreachableWord": "không kết nối được",
