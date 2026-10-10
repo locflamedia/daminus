@@ -97,6 +97,14 @@ describe('Result screens, shared states (board 30)', () => {
     expect(starts).toEqual([{ projects: ['tiemtra'], hosts: [] }])
   })
 
+  it('over a day old drops the change and the outline of the folder that grew', async () => {
+    const { wrapper } = await mountTab(ProjectDiskTab, 'stale')
+    const map = wrapper.get('.treemap').text()
+    expect(map).not.toContain('no change')
+    expect(map).not.toMatch(/\+\d/)
+    expect(wrapper.find('.treemap .tone-grow').exists()).toBe(false)
+  })
+
   it('keeps the changes and colours when the results are current', async () => {
     const { wrapper } = await mountTab(ProjectDatabaseTab, 'results')
     expect(wrapper.find('.results-aged').exists()).toBe(false)

@@ -42,7 +42,7 @@ const deltaText = (d: number | null) =>
         <div class="bar">
           <i
             class="fill m-grow"
-            :class="{ hot: r.name === section.grower }"
+            :class="{ hot: !aged && r.name === section.grower }"
             :style="{ width: `${Math.max(2, r.share * 100)}%`, '--d': `${i * 60}ms` }"
           />
         </div>
