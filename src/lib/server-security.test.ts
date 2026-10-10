@@ -19,13 +19,20 @@ describe('buildFindings', () => {
       }),
     ]
     const { rows, tally } = buildFindings(items)
-    expect(rows.map((r) => r.item.key.check)).toEqual([
-      'sec.ports',
-      'disk.fs',
-      'sys.load',
-      'docker.df',
-    ])
-    expect(tally).toEqual({ crit: 1, warn: 1, info: 1, unknown: 1, expected: 1, ok: 2 })
+    expect(rows.map((r) => r.item.key.check)).toEqual(['sec.ports', 'disk.fs', 'sys.load'])
+    expect(tally).toEqual({ crit: 1, warn: 1, info: 0, unknown: 1, expected: 1, ok: 2 })
+  })
+
+  it('leaves the always-info sizes to "What uses it", but keeps one that warns', () => {
+    const items = [
+      item({ check: 'disk.path', target: '/srv/booking', level: { level: 'info' } }),
+      item({ check: 'db.size', target: 'tiemtra', level: { level: 'info' } }),
+      item({ check: 'docker.df', level: { level: 'info' } }),
+      item({ check: 'docker.df', target: 'x', level: { level: 'warn' } }),
+    ]
+    const { rows, tally } = buildFindings(items)
+    expect(rows.map((r) => `${r.item.key.check} ${r.level}`)).toEqual(['docker.df warn'])
+    expect(tally.info).toBe(0)
   })
 
   it('says since which scan a kept result was last checked', () => {

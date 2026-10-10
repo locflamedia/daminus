@@ -157,7 +157,10 @@
         "check": "sys.mem",
         "target": "",
         "value": 41.8,
-        "unit": "%"
+        "unit": "%",
+        "data": {
+          "total": 4294967296.0
+        }
       },
       {
         "check": "sys.swap",
@@ -175,8 +178,12 @@
         "check": "disk.fs",
         "target": "/",
         "data": {
+          "avail": 60236916326.399994,
+          "fs": "ext4",
           "ipct": 12,
-          "pct": 41
+          "pct": 41,
+          "size": 102005473280.0,
+          "used": 41768556953.600006
         }
       },
       {
@@ -232,7 +239,10 @@
         "check": "sys.mem",
         "target": "",
         "value": 36.8,
-        "unit": "%"
+        "unit": "%",
+        "data": {
+          "total": 4294967296.0
+        }
       },
       {
         "check": "sys.swap",
@@ -250,8 +260,12 @@
         "check": "disk.fs",
         "target": "/",
         "data": {
+          "avail": 49070001356.799995,
+          "fs": "ext4",
           "ipct": 12,
-          "pct": 52
+          "pct": 52,
+          "size": 102005473280.0,
+          "used": 52935471923.200005
         }
       },
       {
@@ -309,7 +323,10 @@
         "check": "sys.mem",
         "target": "",
         "value": 48.8,
-        "unit": "%"
+        "unit": "%",
+        "data": {
+          "total": 4294967296.0
+        }
       },
       {
         "check": "sys.swap",
@@ -327,8 +344,12 @@
         "check": "disk.fs",
         "target": "/",
         "data": {
+          "avail": 36829344563.2,
+          "fs": "ext4",
           "ipct": 12,
-          "pct": 64
+          "pct": 64,
+          "size": 102005473280.0,
+          "used": 65176128716.8
         }
       },
       {
@@ -421,7 +442,10 @@
         "check": "sys.mem",
         "target": "",
         "value": 23.8,
-        "unit": "%"
+        "unit": "%",
+        "data": {
+          "total": 8589934592.0
+        }
       },
       {
         "check": "sys.swap",
@@ -439,8 +463,12 @@
         "check": "disk.fs",
         "target": "/",
         "data": {
+          "avail": 21474836480.0,
+          "fs": "ext4",
           "ipct": 12,
-          "pct": 79
+          "pct": 79,
+          "size": 102005473280.0,
+          "used": 80530636800.0
         }
       },
       {
@@ -470,7 +498,7 @@
           "running": 4,
           "services": [
             {
-              "cpu": 3.2,
+              "cpu": 3.5,
               "exit": 0,
               "image": "tiemtra-api:1.5.0",
               "limit": 536870912.0,
@@ -483,7 +511,7 @@
               "svc": "api"
             },
             {
-              "cpu": 0.8,
+              "cpu": 0.9,
               "exit": 0,
               "image": "tiemtra-api:1.5.0",
               "limit": 536870912.0,
@@ -496,7 +524,7 @@
               "svc": "worker"
             },
             {
-              "cpu": 1.1,
+              "cpu": 1.2,
               "exit": 0,
               "image": "postgres:16.4",
               "limit": 2147483648.0,

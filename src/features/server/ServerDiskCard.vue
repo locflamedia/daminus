@@ -30,9 +30,12 @@ const PLOT = { left: 12, right: 12, top: 8, bottom: 26 }
 const sizes = computed(() => {
   const s = props.chart?.sizes
   if (!s || s.used === null || s.size === null || s.avail === null) return ''
+  const used = fmt.measure(s.used, 'bytes')
+  const size = fmt.measure(s.size, 'bytes')
+  // "82.6 of 95 GB": the unit once when both sides share it.
   return t('serverScreen.disk.sizes', {
-    used: fmt.measure(s.used, 'bytes').text,
-    size: fmt.measure(s.size, 'bytes').text,
+    used: used.unit === size.unit ? used.value : used.text,
+    size: size.text,
     avail: fmt.measure(s.avail, 'bytes').text,
   })
 })

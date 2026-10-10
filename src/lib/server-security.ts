@@ -28,6 +28,9 @@ export interface FindingTally {
 const ORDER: Record<FindingLevel, number> = { crit: 0, warn: 1, unknown: 2, info: 3 }
 
 /** Results of the host that are not ok, worst first, and the count of each kind. */
+/** Checks that only measure a size: their info results are not findings. */
+const SIZE_ONLY = new Set(['disk.path', 'db.size', 'docker.df'])
+
 export function buildFindings(items: readonly Item[]): { rows: Finding[]; tally: FindingTally } {
   const tally: FindingTally = { crit: 0, warn: 0, info: 0, unknown: 0, expected: 0, ok: 0 }
   const rows: Finding[] = []
@@ -37,6 +40,8 @@ export function buildFindings(items: readonly Item[]): { rows: Finding[]; tally:
       continue
     }
     const level = item.severity.level
+    // Sizes are always info: they live in "What uses it", not here.
+    if (level === 'info' && SIZE_ONLY.has(item.key.check)) continue
     if (level === 'ok') {
       tally.ok += 1
       continue

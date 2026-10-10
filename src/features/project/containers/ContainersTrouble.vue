@@ -35,7 +35,13 @@ const stats = computed(() => statsCommand(props.host, props.service.name))
 const limit = computed(() =>
   props.service.limit === null ? null : fmt.measure(props.service.limit, 'bytes').text,
 )
-const time = (iso: string | null) => (iso ? fmt.when(iso) : '—')
+// docker inspect's start time as a clock time ("13:19"), with the date when it was not today.
+const time = (iso: string | null) => {
+  if (!iso) return '—'
+  return new Date(iso).toDateString() === new Date().toDateString()
+    ? fmt.clock(iso)
+    : fmt.dateTime(iso)
+}
 
 const title = computed(() => sentence(rawTitle.value))
 const rawTitle = computed(() => {
