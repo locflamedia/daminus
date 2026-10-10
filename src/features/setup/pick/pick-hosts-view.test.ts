@@ -550,3 +550,29 @@ describe('Language', () => {
     setI18nLocale('en')
   })
 })
+
+describe('A refused login with the key loaded', () => {
+  it('says the server refused a loaded key, without an ssh-add line', async () => {
+    const setup = seed()
+    setup.result = {
+      hosts: [
+        {
+          host: 'staging',
+          outcome: { state: 'auth_failed' },
+          resolved: null,
+          host_key: null,
+          key_in_agent: true,
+          login: null,
+          discovery: null,
+        },
+      ],
+      proposal: null,
+    }
+    const { wrapper } = await mountPick()
+    const card = row(wrapper, 'staging').find('.card')
+    expect(card.text()).toContain(
+      'The key is loaded, but staging refused it. Check User in ~/.ssh/config and that the key is in authorized_keys on the server.',
+    )
+    expect(card.find('code').exists()).toBe(false)
+  })
+})

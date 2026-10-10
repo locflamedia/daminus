@@ -11,4 +11,8 @@ proxy_command: boolean,
 /**
  * The files ssh looks the host key up in: the user's, then the system's.
  */
-known_hosts_files: Array<string>, host_key_alias?: string | null, };
+known_hosts_files: Array<string>, host_key_alias?: string | null, 
+/**
+ * An `IdentityAgent` other than the default socket (1Password, Secretive…).
+ */
+identity_agent?: string | null, };

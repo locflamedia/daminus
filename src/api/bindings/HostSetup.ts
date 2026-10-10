@@ -21,4 +21,9 @@ resolved: ResolvedHost | null,
 /**
  * Set when the host key is not accepted yet (or changed).
  */
-host_key: HostKeyInfo | null, login: LoginResult | null, discovery: HostDiscovery | null, };
+host_key: HostKeyInfo | null, 
+/**
+ * After a refused login: whether the key the config points at is in the
+ * SSH agent (`None`: not asked, or the tools could not tell).
+ */
+key_in_agent?: boolean | null, login: LoginResult | null, discovery: HostDiscovery | null, };

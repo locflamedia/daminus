@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n'
 import type { HostKeyInfo, HostOutcome } from '@/api'
 import { CONNECT_TIMEOUT_S, type CardKind, type HostRowModel, netReason } from '@/lib/host-rows'
 import { addKeyCommand, shellQuote } from '@/lib/host-test'
+import { useSetupStore } from '@/stores/setup'
 import UiButton from '@/ui/UiButton.vue'
 import CopyLine from './CopyLine.vue'
 
@@ -22,6 +23,10 @@ const props = defineProps<{
 const emit = defineEmits<{ skip: []; retry: [] }>()
 
 const { t } = useI18n()
+const setup = useSetupStore()
+
+/** After a refused login: the config's key was in the agent, so the server refused it. */
+const keyLoaded = computed(() => setup.keyInAgent(props.row.alias) === true)
 
 const warn = computed(() => props.kind === 'host_key_unknown')
 const keyCommand = computed(() => addKeyCommand(props.row.identityFiles))
@@ -38,6 +43,9 @@ const offered = computed(() => {
 const sentence = computed(() => {
   switch (props.kind) {
     case 'key_rejected':
+      if (keyLoaded.value) {
+        return t('setupPick.fail.key_refused_loaded', { host: props.row.alias })
+      }
       return keyCommand.value
         ? t('setupPick.fail.key_rejected')
         : t('setupPick.fail.key_rejected_nokey')
@@ -58,7 +66,8 @@ const sentence = computed(() => {
 // A host key that is not trusted yet is accepted by connecting once by hand; a changed one is
 // not something to paste a command for.
 const command = computed(() => {
-  if (props.kind === 'key_rejected') return keyCommand.value
+  // A loaded key that the server refused is not fixed by ssh-add.
+  if (props.kind === 'key_rejected') return keyLoaded.value ? null : keyCommand.value
   if (props.kind === 'host_key_unknown') return `ssh ${shellQuote(props.row.alias)}`
   return null
 })

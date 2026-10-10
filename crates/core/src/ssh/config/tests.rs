@@ -363,6 +363,14 @@ proxycommand none
         ]
     );
     assert_eq!(r.host_key_alias.as_deref(), Some("vps-a-key"));
+    assert_eq!(r.identity_agent, None);
+    let own = ResolvedHost::parse("hostname h\nidentityagent ~/.1password/agent.sock\n").unwrap();
+    assert_eq!(
+        own.identity_agent.as_deref(),
+        Some("~/.1password/agent.sock")
+    );
+    let default = ResolvedHost::parse("hostname h\nidentityagent SSH_AUTH_SOCK\n").unwrap();
+    assert_eq!(default.identity_agent, None);
     assert_eq!(ResolvedHost::parse("port 22\n"), None);
 }
 

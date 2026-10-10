@@ -88,7 +88,8 @@
       "offered": "Offers",
       "known": "On record",
       "skip": "Skip host",
-      "retry": "Retry"
+      "retry": "Retry",
+      "key_refused_loaded": "The key is loaded, but {host} refused it. Check User in ~/.ssh/config and that the key is in authorized_keys on the server."
     },
     "perm": {
       "reached": "Reached · {time}",

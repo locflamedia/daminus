@@ -490,6 +490,9 @@ pub struct ResolvedHost {
     pub known_hosts_files: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub host_key_alias: Option<String>,
+    /// An `IdentityAgent` other than the default socket (1Password, Secretive…).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub identity_agent: Option<String>,
 }
 
 impl ResolvedHost {
@@ -510,6 +513,7 @@ impl ResolvedHost {
             proxy_command: false,
             known_hosts_files: Vec::new(),
             host_key_alias: None,
+            identity_agent: None,
         };
         // ssh -G lists its options alphabetically; the user's files come first.
         let (mut user_files, mut global_files) = (Vec::new(), Vec::new());
@@ -533,6 +537,9 @@ impl ResolvedHost {
                     global_files.extend(tokens(value).into_iter().filter(|f| f != "none"));
                 }
                 "hostkeyalias" => r.host_key_alias = set(value),
+                "identityagent" => {
+                    r.identity_agent = set(value).filter(|v| v != "SSH_AUTH_SOCK");
+                }
                 _ => {}
             }
         }

@@ -183,6 +183,10 @@ pub struct HostSetup {
     pub resolved: Option<ResolvedHost>,
     /// Set when the host key is not accepted yet (or changed).
     pub host_key: Option<HostKeyInfo>,
+    /// After a refused login: whether the key the config points at is in the
+    /// SSH agent (`None`: not asked, or the tools could not tell).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key_in_agent: Option<bool>,
     pub login: Option<LoginResult>,
     pub discovery: Option<HostDiscovery>,
 }
@@ -194,6 +198,7 @@ impl HostSetup {
             outcome: None,
             resolved: None,
             host_key: None,
+            key_in_agent: None,
             login: None,
             discovery: None,
         }

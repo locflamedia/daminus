@@ -188,6 +188,11 @@ export const useSetupStore = defineStore('setup', () => {
     return chipOf(progress, login)
   }
 
+  /** After a refused login: whether the config's key was in the agent (`null`: unknown). */
+  function keyInAgent(host: string): boolean | null {
+    return result.value?.hosts.find((h) => h.host === host)?.key_in_agent ?? null
+  }
+
   function isTicked(host: string): boolean {
     return ticked.value.includes(host)
   }
@@ -542,6 +547,7 @@ export const useSetupStore = defineStore('setup', () => {
     queue,
     scanning,
     chip,
+    keyInAgent,
     isTicked,
     ready,
     failedHosts,

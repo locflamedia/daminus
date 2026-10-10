@@ -89,6 +89,7 @@ impl Rig {
             proxy_command: false,
             known_hosts_files: vec![self.known.display().to_string()],
             host_key_alias: None,
+            identity_agent: None,
         }
     }
 }
