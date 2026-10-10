@@ -15,6 +15,8 @@ pub const PEM: &str = "[redacted:pem]";
 pub const KEY: &str = "[redacted:key]";
 pub const TOKEN: &str = "[redacted:token]";
 
+/// Base64 characters of an OpenSSH SHA256 key fingerprint, without padding.
+const FINGERPRINT_LEN: usize = 43;
 /// Shortest run treated as a possible random secret.
 const ENTROPY_MIN_LEN: usize = 20;
 /// Bits per character above which an upper+lower+digit token is treated as random.
@@ -69,7 +71,9 @@ pub fn redact_secrets(text: &str) -> String {
                 let token = &c[0];
                 let start = c.get(0).map_or(0, |m| m.start());
                 // An OpenSSH key fingerprint (`SHA256:<base64>`) is public and needed to compare keys.
-                let fingerprint = haystack[..start].ends_with("SHA256:");
+                let fingerprint = haystack[..start].ends_with("SHA256:")
+                    && token.len() == FINGERPRINT_LEN
+                    && !token.contains('=');
                 if looks_random(token) && !fingerprint {
                     TOKEN.to_owned()
                 } else {
@@ -345,6 +349,12 @@ mod tests {
         for (input, want) in cases {
             assert_eq!(redact_secrets(input), want, "{input:?}");
         }
+    }
+
+    #[test]
+    fn only_a_fingerprint_sized_value_after_sha256_is_kept() {
+        let secret = "SECRET=SHA256:Zx8kQ2mVb7rT4pL9wN3cY6hJ1sD5fG8kQ2mVb7rT4pL9wN3cY6hJ1sD5";
+        assert_eq!(redact_secrets(secret), "SECRET=SHA256:[redacted:token]");
     }
 
     #[test]

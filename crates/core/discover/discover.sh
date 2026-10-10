@@ -237,7 +237,7 @@ disc_compose() {
 		;;
 	esac
 	_fmt='{{.Label "com.docker.compose.project"}}'"$TAB"'{{.Label "com.docker.compose.project.working_dir"}}'"$TAB"'{{.Label "com.docker.compose.service"}}'"$TAB"'{{.Label "com.docker.compose.oneoff"}}'"$TAB"'{{.Names}}'"$TAB"'{{.Image}}'"$TAB"'{{.State}}'"$TAB"'{{.Ports}}'
-	_rows=$(run_for 15 docker ps -a --format "$_fmt")
+	_rows=$(run_for 15 docker ps -a --format "$_fmt") && _docker_listed=1
 	_out=$(printf '%s\n' "$_rows" | awk -F '\t' '
 		function ok(s) { return s !~ /["\\]/ && s !~ /[[:cntrl:]]/ }
 		!(NF < 8) && ok($1) && ok($2) && ok($3) && ok($5) && ok($6) && ok($8) {
@@ -359,8 +359,10 @@ disc_pm2() {
 # ------------------------------------------------------------------ database
 
 # Database servers running here as processes, by the name the kernel keeps
-# in /proc/PID/comm (never the command line). A process in a container's
-# cgroup is skipped: the host sees it, but the container already lists it.
+# in /proc/PID/comm (never the command line). Once `docker ps` listed the
+# containers, a process in a Docker container's cgroup is skipped: the host
+# sees it, but its container is already listed. Other runtimes (podman, LXC,
+# Kubernetes) are not listed as containers, so their databases stay here.
 disc_db() {
 	_proc=${DAMINUS_PROC:-/proc}
 	_found=" "
@@ -374,11 +376,11 @@ disc_db() {
 		postgres | postmaster) _e=postgres ;;
 		*) continue ;;
 		esac
-		_cg=""
-		if [ -r "$_d/cgroup" ]; then
+		if [ "${_docker_listed-}" = 1 ] && [ -r "$_d/cgroup" ]; then
+			_cg=""
 			while IFS= read -r _l; do _cg="$_cg $_l"; done <"$_d/cgroup"
+			case $_cg in */docker-*.scope* | */docker/*) continue ;; esac
 		fi
-		case $_cg in *docker* | *containerd* | *kubepods* | *libpod* | */lxc/*) continue ;; esac
 		case $_found in *" $_e "*) continue ;; esac
 		_found="$_found$_e "
 		printf '{"rec":"db","engine":"%s","origin":"process","name":%s}\n' "$_e" "$(json_str "$_n")"

@@ -154,14 +154,16 @@ function minerValue(item: Item, state: RowState): Pick<SecurityRow, 'strong' | '
   }
 }
 
-function countFiles(items: readonly Item[]): number {
+function countFiles(items: readonly Item[], id: SecurityCheck): number {
   // One fact per listed file, at most 50 a folder; `total` is what the check found in the
   // folder and every fact of that folder carries it, so it is counted once per folder.
   const folders = new Map<string, { total: number; listed: number }>()
   for (const item of items) {
     // A found file comes without a value, carrying the folder's total; a clean folder is value 0.
     if ((valueOf(item) ?? 0) <= 0 && (num(dataOf(item).total) ?? 0) <= 0) continue
-    const key = `${item.key.host}\0${folderGuess(item.key.target)}`
+    // sec.tmp_exec counts /tmp, /var/tmp and /dev/shm together, so its total is per host.
+    const where = id === 'sec.tmp_exec' ? '' : folderGuess(item.key.target)
+    const key = `${item.key.host}\0${where}`
     const seen = folders.get(key) ?? { total: 0, listed: 0 }
     folders.set(key, {
       total: Math.max(seen.total, num(dataOf(item).total) ?? 0),
@@ -238,7 +240,7 @@ function describe(
     }
     case 'sec.tmp_exec':
     case 'sec.upload_php': {
-      const n = countFiles(deciding)
+      const n = countFiles(deciding, id)
       return {
         strong: null,
         value: clean || n === 0 ? { key: 'none' } : { key: 'files', params: { n } },

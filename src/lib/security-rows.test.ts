@@ -102,6 +102,19 @@ describe('securityRows', () => {
     expect(row.value).toEqual({ key: 'files', params: { n: 1 } })
   })
 
+  it('counts the temp-folder total once per host, wherever the files sit', () => {
+    const tmp = (path: string) =>
+      secItem({
+        check: 'sec.tmp_exec',
+        target: path,
+        level: { level: 'crit' },
+        value: null,
+        data: { size: 10, mtime: 1_000, total: 2 },
+      })
+    const row = securityRow('sec.tmp_exec', [tmp('/tmp/a/x'), tmp('/dev/shm/b/y')], [], 12, 'en')
+    expect(row.value).toEqual({ key: 'files', params: { n: 2 } })
+  })
+
   it('adds the totals of separate project folders', () => {
     const list = [uploads('/srv/a/uploads/1.php', 3), uploads('/srv/b/uploads/1.php', 4)]
     expect(securityRow('sec.upload_php', list, [], 12, 'en').value?.params).toEqual({ n: 7 })
