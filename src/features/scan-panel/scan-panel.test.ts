@@ -2,10 +2,11 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { ScanRun } from '@/api'
+import type { Report, ScanRun } from '@/api'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n, setI18nLocale } from '@/i18n'
 import { useProjectsStore } from '@/stores/projects'
+import { useReportStore } from '@/stores/report'
 import { useScanPanelStore } from '@/stores/scan-panel'
 import { useScanStore } from '@/stores/scan'
 import timeline from '@/testing/fixtures/results.json'
@@ -59,6 +60,8 @@ beforeEach(() => {
   setActivePinia(createPinia())
   setI18nLocale('en')
   useProjectsStore().details = bundle.projects
+  // The last saved scan is #12, so the one running is #13.
+  useReportStore().latest = { ...(bundle.reports['12'] as Report), seq: 12 }
 })
 afterEach(() => {
   mounted.splice(0).forEach((w) => w.unmount())
@@ -112,6 +115,7 @@ describe('Scan panel while a scan runs', () => {
       expect.stringContaining('Containers'),
       expect.stringContaining('Databases'),
       expect.stringContaining('Security'),
+      expect.stringContaining('Compare with #12'),
     ])
     expect(rows[3]?.querySelectorAll('.step')).toHaveLength(0)
     expect(rows[3]?.textContent).toContain('waiting for a slot')
@@ -127,13 +131,28 @@ describe('Scan panel while a scan runs', () => {
     expect(retry?.getAttribute('aria-disabled')).toBe('true')
   })
 
-  it('lists what finished hosts read', async () => {
+  it('says how each host stands so far, never a count of facts', async () => {
     useScanStore().run = midScan()
     useScanPanelStore().show()
     await mountPanel()
     expect(panelText()).toContain('Found so far')
-    expect(panelText()).toContain('kho-hang: 14 checks read')
-    expect(panelText()).toContain('tiemtra: 9 checks read')
+    const lines = [...document.body.querySelectorAll('.found .text')].map((l) => l.textContent)
+    expect(lines).toEqual([
+      'kho-hang: done',
+      'tiemtra: done',
+      'tiemtra · booking: scanning…',
+      'no project: Timed out',
+    ])
+    expect(panelText()).not.toContain('checks read')
+  })
+
+  it('is titled with the number of the scan it reads and leaves the page usable', async () => {
+    useScanStore().run = midScan()
+    useScanPanelStore().show()
+    await mountPanel()
+    expect(document.body.querySelector('aside h2')?.textContent).toBe('Scan #13')
+    // No scrim: the page behind the drawer stays usable.
+    expect(document.body.querySelector('.scrim')).toBeNull()
   })
 
   it('stops the scan from "Stop scan"', async () => {

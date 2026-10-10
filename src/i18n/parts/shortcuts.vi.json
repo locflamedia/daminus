@@ -10,8 +10,7 @@
     "groups": {
       "anywhere": "Mọi nơi",
       "move": "Di chuyển",
-      "project": "Trong dự án",
-      "finding": "Trên một phát hiện"
+      "project": "Trong dự án"
     },
     "rows": {
       "search": "Tìm dự án, máy chủ, phát hiện",
@@ -22,17 +21,8 @@
       "sheet": "Bảng này",
       "overview": "Tổng quan",
       "history": "Lịch sử quét",
-      "step": "Mục sau / mục trước",
-      "open": "Mở",
       "back": "Quay lại",
-      "tabs": "Các tab",
-      "tabNumbers": "Tổng quan … Lịch sử",
-      "copy": "Sao chép lệnh",
-      "terminal": "Mở trong Terminal",
-      "expected": "Đánh dấu là bình thường",
-      "followUp": "Hỏi tiếp",
-      "useful": "Hữu ích / không hữu ích",
-      "evidence": "Xem bằng chứng"
+      "tabNumbers": "Tổng quan … Lịch sử"
     }
   }
 }

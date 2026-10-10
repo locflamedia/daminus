@@ -70,3 +70,14 @@ export function endpointHost(entry: AiProviderEntry, baseUrl: string | null): st
     return entry.profile.name
   }
 }
+
+export type ModelHint = 'balanced' | 'deepest' | 'fastest'
+
+/** What a suggested model is for, by its family name; null when the name says nothing. */
+export function modelHint(name: string): ModelHint | null {
+  const n = name.toLowerCase()
+  if (n.includes('sonnet')) return 'balanced'
+  if (n.includes('opus')) return 'deepest'
+  if (n.includes('haiku')) return 'fastest'
+  return null
+}

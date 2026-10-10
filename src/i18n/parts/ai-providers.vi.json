@@ -6,7 +6,11 @@
     "retry": "Thử lại",
     "grid": "Nhà cung cấp",
     "active": "Đang dùng",
-    "tag": { "recommended": "Nên dùng", "free_local": "Miễn phí · cục bộ", "beta": "Beta" },
+    "tag": {
+      "recommended": "Nên dùng",
+      "free_local": "Miễn phí · cục bộ",
+      "beta": "Beta"
+    },
     "status": {
       "connected": "Đã kết nối",
       "keySaved": "Đã lưu khoá",
@@ -47,7 +51,12 @@
       "placeholder": "Tên mô hình",
       "example": "vd: llama-3.1-70b",
       "use": "Dùng",
-      "suggested": "Gợi ý"
+      "suggested": "Gợi ý",
+      "hint": {
+        "balanced": "cân bằng",
+        "deepest": "sâu nhất",
+        "fastest": "nhanh nhất"
+      }
     },
     "test": {
       "button": "Kiểm tra kết nối",
@@ -64,7 +73,10 @@
       "neverEnv": "Giá trị .env và mật khẩu cơ sở dữ liệu",
       "neverSsh": "Khoá SSH, agent hoặc known_hosts",
       "neverFiles": "Nội dung tệp trên máy chủ của bạn",
-      "neverUrl": "Mọi thứ trong nội dung của kiểm tra URL bị lộ"
+      "neverUrl": "Mọi thứ trong nội dung của kiểm tra URL bị lộ",
+      "full": "Xem toàn bộ dữ liệu gửi đi",
+      "needScan": "Quét một lần trước để xem dữ liệu sẽ được gửi.",
+      "fullContext": "Toàn bộ lần quét gần nhất"
     }
   },
   "aiClaudeCode": {

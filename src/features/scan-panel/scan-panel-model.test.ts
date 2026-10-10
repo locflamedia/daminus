@@ -94,8 +94,17 @@ describe('panelHosts', () => {
     expect(rows.map((r) => r.progress)).toEqual([2 / 6, 3 / 6])
   })
 
-  it('lists what finished hosts read', () => {
-    expect(foundSoFar(panelHosts(run, projects, [])).map((h) => h.host)).toEqual(['vps-3'])
+  it('lists the hosts that finished or are being read, not those still waiting', () => {
+    expect(foundSoFar(panelHosts(run, projects, [])).map((h) => h.host)).toEqual(['vps-1', 'vps-3'])
+  })
+
+  it('ends the steps of a host with the comparison with the last saved scan', () => {
+    const steps = stepsOf({ state: 'running', step: 'security' }, [], 12)
+    expect(steps.at(-1)).toEqual({ id: 'compare', state: 'running', agentWait: false })
+    expect(stepsOf({ state: 'running', step: 'disk' }, [], 12).at(-1)?.state).toBe('waiting')
+    expect(stepsOf({ state: 'running', step: 'disk' }, []).some((s) => s.id === 'compare')).toBe(
+      false,
+    )
   })
 })
 
