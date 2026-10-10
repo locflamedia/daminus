@@ -52,12 +52,12 @@
       "envPathUnchecked": "Daminus does not open the file; the server checks the path at scan time.",
       "envLabel": ".env file · {n} found, pick the one this app uses",
       "alsoFound": "Also found",
-      "nameLabel": "Database name · required",
+      "nameLabel": "Database name · needed to read its size",
       "namePlaceholder": "booking_prod",
       "nameHelp": "Daminus never reads your .env, so it cannot know the name. Type the value of DB_DATABASE.",
       "nameSet": "Name set",
       "saveAllowedLead": "Save is allowed.",
-      "saveAllowedBody": "{project} is saved; this database part is left out until it has a name, and its size shows Not set up."
+      "saveAllowedBody": "{project} is saved with this database part; its size shows Not set up until it has a name."
     },
     "replaces": {
       "chip": "Already saved · Save replaces it",
