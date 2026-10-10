@@ -119,11 +119,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   height: var(--lights-row);
 }
 
-:global(:root[data-fullscreen='true']) .lights {
+:root[data-fullscreen='true'] .lights {
   display: none;
 }
 
-:global(:root[data-fullscreen='true']) .settings-nav {
+:root[data-fullscreen='true'] .settings-nav {
   padding-top: var(--side-top-fullscreen);
 }
 

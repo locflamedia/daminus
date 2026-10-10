@@ -248,11 +248,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 }
 
 /* The scrim starts where the main column does: after the sidebar or the rail. */
-:global(body:has(.window[data-column='medium'])) .scrim {
+body:has(.window[data-column='medium']) .scrim {
   inset-inline-start: var(--sidebar-w-medium);
 }
 
-:global(body:has(.window[data-column='rail'])) .scrim {
+body:has(.window[data-column='rail']) .scrim {
   inset-inline-start: var(--rail-w);
 }
 

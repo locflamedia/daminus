@@ -247,7 +247,7 @@ const overviewTip = computed(() =>
   height: var(--lights-row-rail);
 }
 
-:global(:root[data-fullscreen='true']) .lights {
+:root[data-fullscreen='true'] .lights {
   display: none;
 }
 
