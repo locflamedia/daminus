@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { computed } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import type { HostOutcome } from '@/api'
 import { i18n } from '@/i18n'
 import { LAYOUT_RANGE, type SidebarRange } from '@/lib/viewport'
 import { useProjectsStore } from '@/stores/projects'
@@ -189,5 +190,46 @@ describe('SettingsNav', () => {
       'Data',
       'About',
     ])
+  })
+})
+
+describe('servers that could not be scanned', () => {
+  // The fixture's legacy-shop timed out connecting; give two more hosts other causes.
+  function withCauses() {
+    const report = shellReport()
+    const outcomes: Record<string, HostOutcome> = {
+      'vps-sg-1': { state: 'auth_failed' },
+      'vps-sg-2': { state: 'not_in_config' },
+    }
+    useReportStore().latest = {
+      ...report,
+      servers: report.servers.map((s) =>
+        outcomes[s.host] ? { ...s, outcome: outcomes[s.host] } : s,
+      ),
+    }
+  }
+
+  it('names the cause in the sidebar, red when the user must act', async () => {
+    withCauses()
+    const wrapper = await mountShell(AppSidebar)
+    const label = (host: string) =>
+      wrapper
+        .findAll('a.server')
+        .find((a) => a.get('.name').text() === host)
+        ?.get('.count')
+    expect(label('vps-sg-1')?.text()).toBe('Key refused')
+    expect(label('vps-sg-1')?.classes()).toContain('crit')
+    expect(label('vps-sg-2')?.text()).toBe('Not in ~/.ssh/config')
+    expect(label('vps-sg-2')?.classes()).toContain('warn')
+    expect(label('legacy-shop')?.text()).toBe('Unreachable')
+  })
+
+  it('names the cause in the rail tooltip', async () => {
+    withCauses()
+    const wrapper = await mountShell(AppRail, 'narrow')
+    const labels = wrapper.findAll('a.ri').map((a) => a.attributes('aria-label'))
+    expect(labels).toContain('vps-sg-1 · Key refused')
+    expect(labels).toContain('vps-sg-2 · Not in ~/.ssh/config')
+    expect(labels).toContain('legacy-shop · Unreachable')
   })
 })

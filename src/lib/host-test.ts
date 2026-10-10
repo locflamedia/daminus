@@ -58,6 +58,8 @@ export function chipOfOutcome(outcome: HostOutcome, login: LoginResult | null): 
       return 'host_key_changed'
     case 'timeout':
       return 'timed_out'
+    case 'not_in_config':
+      return 'unreachable'
   }
 }
 

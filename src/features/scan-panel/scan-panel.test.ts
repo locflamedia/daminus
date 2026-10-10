@@ -81,7 +81,7 @@ describe('Scan panel while a scan runs', () => {
     useScanStore().run = midScan()
     useScanPanelStore().show()
     await mountPanel()
-    expect(panelText()).toContain('2 of 5 hosts done · 1 unreachable')
+    expect(panelText()).toContain('2 of 5 hosts done · 1 could not be scanned')
     expect(panelText()).toContain('Running')
     expect(panelText()).toContain('Read-only commands. Nothing is installed or changed.')
   })

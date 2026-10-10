@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
+import type { HostOutcome } from '@/api'
+import { outcomeKey } from '@/lib/outcome-label'
 import { isUnreachable, issueCount } from '@/lib/rollups'
 import { useEmptyStore } from '@/features/empty/empty-store'
 import { useProjectsStore } from '@/stores/projects'
@@ -70,8 +72,12 @@ function issuesLabel(name: string, n: number): string {
   return n > 0 ? t('tooltip.issues', { name, count: t('nav.issues', { n }, n) }) : name
 }
 
-function serverLabel(host: string, unreachable: boolean, pct: number | null): string {
-  if (unreachable) return `${host} · ${t('nav.unreachable')}`
+function serverLabel(
+  host: string,
+  outcome: HostOutcome | null | undefined,
+  pct: number | null,
+): string {
+  if (isUnreachable(outcome)) return `${host} · ${t(`outcome.${outcomeKey(outcome)}`)}`
   return pct === null ? host : `${host} · ${Math.round(pct)}%`
 }
 
@@ -159,13 +165,9 @@ const overviewTip = computed(() =>
             :to="{ name: 'server', params: { host: s.host } }"
             class="ri"
             active-class="on"
-            :aria-label="serverLabel(s.host, isUnreachable(s.outcome), projects.disk(s.host))"
+            :aria-label="serverLabel(s.host, s.outcome, projects.disk(s.host))"
             @pointerenter="
-              enter(
-                serverLabel(s.host, isUnreachable(s.outcome), projects.disk(s.host)),
-                $event,
-                true,
-              )
+              enter(serverLabel(s.host, s.outcome, projects.disk(s.host)), $event, true)
             "
             @pointerleave="leave"
           >

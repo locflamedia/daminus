@@ -9,7 +9,7 @@
     "stopped": "Stopped",
     "close": "Close the panel",
     "progress": "{done} of {total} hosts done",
-    "unreachable": "{n} unreachable",
+    "unreachable": "{n} could not be scanned",
     "left": "about {time} left",
     "hostsLabel": "Hosts in this scan",
     "noProject": "no project",

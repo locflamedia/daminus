@@ -242,7 +242,8 @@
     "auth_failed": "key refused",
     "host_key_unknown": "host key unknown",
     "host_key_changed": "host key changed",
-    "timeout": "timed out"
+    "timeout": "timed out",
+    "not_in_config": "not in ~/.ssh/config"
   },
   "severity": {
     "crit": "Critical",
@@ -326,6 +327,7 @@
     "ssh_host_key_unknown": "This server is not in known_hosts yet. Check its fingerprint, then connect once from Terminal to trust it.",
     "ssh_host_key_changed": "The server's host key changed. Do not continue until you know why.",
     "ssh_unreachable": "Couldn’t reach the server over SSH. Check the address and your network.",
+    "ssh_not_in_config": "This host is no longer in ~/.ssh/config. Add it back or edit the project.",
     "timeout": "The server did not answer in time.",
     "scan_in_progress": "A scan is already running.",
     "nothing_to_scan": "There is nothing to scan. Add a host or a project first.",
@@ -502,5 +504,13 @@
     "empty": {
       "title": "Nothing here yet"
     }
+  },
+  "outcome": {
+    "key_refused": "Key refused",
+    "host_key_changed": "Host key changed",
+    "host_key_unknown": "Host key unknown",
+    "unreachable": "Unreachable",
+    "timed_out": "Timed out",
+    "not_in_config": "Not in ~/.ssh/config"
   }
 }

@@ -10,6 +10,7 @@ import SidebarGhosts from '@/features/empty/components/SidebarGhosts.vue'
 import SidebarPlainSsh from '@/features/empty/components/SidebarPlainSsh.vue'
 import { useEmptyStore } from '@/features/empty/empty-store'
 import { usePaletteStore } from '@/features/palette/palette-store'
+import { outcomeKey, outcomeTone } from '@/lib/outcome-label'
 import { diskTone, isUnreachable, issueCount } from '@/lib/rollups'
 import { staleDays } from '@/lib/staleness'
 import { useProjectsStore } from '@/stores/projects'
@@ -66,6 +67,8 @@ const serverRows = computed(() =>
     return {
       host: s.host,
       unreachable,
+      cause: unreachable ? outcomeKey(s.outcome) : null,
+      causeTone: outcomeTone(s.outcome),
       pct,
       tone: pct === null || oldDays.value !== null ? '' : diskTone(pct),
       reading: reading.value.has(s.host),
@@ -169,7 +172,12 @@ const serverRows = computed(() =>
             :neutral="oldDays !== null"
           />
           <span class="mono name">{{ s.host }}</span>
-          <span v-if="s.unreachable" class="count strong">{{ t('nav.unreachable') }}</span>
+          <span
+            v-if="s.cause"
+            class="count strong"
+            :class="s.causeTone === 'quiet' ? '' : s.causeTone"
+            >{{ t(`outcome.${s.cause}`) }}</span
+          >
           <span v-else-if="s.pct !== null" class="count strong" :class="s.tone">
             {{ Math.round(s.pct) }}%
           </span>

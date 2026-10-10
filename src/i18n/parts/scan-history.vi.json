@@ -32,7 +32,7 @@
       "oldest": "Mở lâu nhất",
       "oldestValue": "{n} lần quét | {n} lần quét",
       "none": "không có",
-      "unreachable": "{host} mất kết nối từ #{since}, nên các kiểm tra của nó vắng ở cột cuối. | {host} mất kết nối từ #{since}, nên các kiểm tra của nó vắng ở {n} cột cuối."
+      "unreachable": "{host} không quét được từ #{since}, nên các kiểm tra của nó vắng ở cột cuối. | {host} không quét được từ #{since}, nên các kiểm tra của nó vắng ở {n} cột cuối."
     },
     "list": {
       "title": "Các lần quét",
