@@ -7,10 +7,9 @@
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AddHostSheet from '@/features/setup/components/AddHostSheet.vue'
-import { errorText } from '@/lib/issue-text'
+import SshConfigBanner from '@/features/setup/components/SshConfigBanner.vue'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useSetupStore } from '@/stores/setup'
-import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import HostDetail from './HostDetail.vue'
 import HostsLeftOut from './HostsLeftOut.vue'
@@ -34,14 +33,12 @@ onMounted(() => {
     <UiButton icon="plus" @click="setup.addHostOpen = true">{{ t('settingsHosts.add') }}</UiButton>
   </Teleport>
   <div class="hosts">
-    <UiBanner
-      v-if="setup.problem"
+    <SshConfigBanner
+      v-if="setup.configProblem"
       class="problem"
-      tone="crit"
-      icon="critical"
-      alert
-      :title="t('setupPick.error.title')"
-      :text="errorText(setup.problem)"
+      :problem="setup.configProblem"
+      :busy="store.loading"
+      @recheck="store.load()"
     />
     <div class="layout">
       <div class="column">

@@ -631,7 +631,76 @@ pub struct HostListing {
     /// named file (and line) is fixed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[cfg_attr(feature = "ts", ts(optional))]
-    pub config_error: Option<AppError>,
+    pub config_error: Option<SshConfigProblem>,
+}
+
+/// A config `ssh` refused, with the refused line quoted so the person sees
+/// what to fix.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct SshConfigProblem {
+    /// `ssh_config_invalid`, with the file and the line when ssh named one.
+    pub error: AppError,
+    /// The refused line and one line each side, in file order. Empty when
+    /// ssh named no line or the file cannot be read; nothing else of the file
+    /// is ever sent.
+    #[serde(default)]
+    pub excerpt: Vec<ConfigLine>,
+}
+
+/// One line of a config file, numbered from 1 as ssh numbers it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct ConfigLine {
+    pub number: u32,
+    pub text: String,
+}
+
+/// Most characters of a quoted config line; a longer one is cut.
+pub const EXCERPT_LINE_CHARS: usize = 200;
+
+/// Largest config file read for an excerpt.
+const EXCERPT_MAX_FILE: u64 = 1024 * 1024;
+
+/// Line `line` of `file` with one line each side. Empty when the file cannot
+/// be read, is too large, or has no such line.
+pub fn config_excerpt(file: &Path, line: u32) -> Vec<ConfigLine> {
+    let readable =
+        std::fs::metadata(file).is_ok_and(|m| m.is_file() && m.len() <= EXCERPT_MAX_FILE);
+    let Some(text) = readable.then(|| std::fs::read(file).ok()).flatten() else {
+        return Vec::new();
+    };
+    let text = String::from_utf8_lossy(&text);
+    let lines: Vec<&str> = text.lines().collect();
+    let Ok(at) = usize::try_from(line) else {
+        return Vec::new();
+    };
+    if at == 0 || at > lines.len() {
+        return Vec::new();
+    }
+    (at.saturating_sub(1).max(1)..=(at + 1).min(lines.len()))
+        .filter_map(|n| {
+            Some(ConfigLine {
+                number: u32::try_from(n).ok()?,
+                text: lines[n - 1].chars().take(EXCERPT_LINE_CHARS).collect(),
+            })
+        })
+        .collect()
+}
+
+/// The listing's account of a config ssh refused.
+fn config_problem(code: ErrorCode) -> SshConfigProblem {
+    let excerpt = match &code {
+        ErrorCode::SshConfigInvalid {
+            path,
+            line: Some(line),
+        } => config_excerpt(Path::new(path), *line),
+        _ => Vec::new(),
+    };
+    SshConfigProblem {
+        error: AppError::from(code),
+        excerpt,
+    }
 }
 
 /// Resolves every listed host with `ssh -G`, a few at a time, in list order,
@@ -667,7 +736,7 @@ pub async fn resolve_listing(tools: &SshTools, list: HostList) -> HostListing {
     HostListing {
         list,
         entries,
-        config_error: config_error.map(AppError::from),
+        config_error: config_error.map(config_problem),
     }
 }
 

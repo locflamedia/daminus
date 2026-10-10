@@ -22,6 +22,7 @@ import {
 } from '@/lib/host-rows'
 import { useSetupStore } from '@/stores/setup'
 import UiBanner from '@/ui/UiBanner.vue'
+import SshConfigBanner from './components/SshConfigBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiChipMorph from '@/ui/UiChipMorph.vue'
 import UiCheckbox from '@/ui/UiCheckbox.vue'
@@ -169,13 +170,19 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       />
     </template>
 
+    <SshConfigBanner
+      v-if="setup.configProblem"
+      :problem="setup.configProblem"
+      :busy="setup.loading"
+      @recheck="setup.load()"
+    />
     <UiBanner
-      v-if="setup.problem"
+      v-else-if="setup.error"
       tone="crit"
       icon="critical"
       alert
       :title="t('setupPick.error.title')"
-      :text="errorText(setup.problem)"
+      :text="errorText(setup.error)"
     >
       <template #trailing>
         <UiButton icon="refresh" :busy="setup.loading" @click="setup.load()">

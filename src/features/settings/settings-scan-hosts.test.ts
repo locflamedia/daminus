@@ -167,13 +167,17 @@ describe('Settings › Hosts', () => {
 
   it('says which line of the ssh config ssh refused', async () => {
     configError = {
-      code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
-      retryable: false,
+      error: {
+        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+        retryable: false,
+      },
+      excerpt: [{ number: 6, text: '  Port 99999' }],
     }
     const wrapper = await mountView(SettingsHosts)
     const alert = wrapper.get('[role="alert"]')
     expect(alert.text()).toContain('Could not read your SSH config')
     expect(alert.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
+    expect(alert.text()).toContain('Port 99999')
     expect(wrapper.text()).toContain('vps-sg-2')
   })
 

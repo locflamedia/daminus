@@ -220,8 +220,15 @@ describe('AddHostSheet', () => {
       entries: [{ host, resolved: null }],
       ...(broken && {
         config_error: {
-          code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
-          retryable: false,
+          error: {
+            code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+            retryable: false,
+          },
+          excerpt: [
+            { number: 5, text: 'Host apollo-2' },
+            { number: 6, text: '  Port 99999' },
+            { number: 7, text: '  User root' },
+          ],
         },
       }),
     }))

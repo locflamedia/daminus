@@ -13,6 +13,11 @@ function stringParam(v: unknown): string {
   return typeof v === 'string' ? v : ''
 }
 
+/** `/Users/<name>/.ssh/config` as the person knows it: `~/.ssh/config`. */
+export function homeTilde(path: string): string {
+  return path.replace(/^\/Users\/[^/]+(?=\/)/, '~')
+}
+
 /** The sentence for a rejected command. Params carry paths and numbers, never prose. */
 export function errorText(error: AppError, locale: Locale = currentLocale()): string {
   const { t } = i18n.global
@@ -22,10 +27,12 @@ export function errorText(error: AppError, locale: Locale = currentLocale()): st
       return code.line == null
         ? t('error.config_invalid', { path: code.path }, { locale })
         : t('error.config_invalid_at', { path: code.path, line: code.line }, { locale })
-    case 'ssh_config_invalid':
+    case 'ssh_config_invalid': {
+      const path = homeTilde(code.path)
       return code.line == null
-        ? t('error.ssh_config_invalid', { path: code.path }, { locale })
-        : t('error.ssh_config_invalid_at', { path: code.path, line: code.line }, { locale })
+        ? t('error.ssh_config_invalid', { path }, { locale })
+        : t('error.ssh_config_invalid_at', { path, line: code.line }, { locale })
+    }
     case 'config_from_newer_version':
       return t(
         'error.config_from_newer_version',

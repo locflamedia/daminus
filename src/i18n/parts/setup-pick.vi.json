@@ -41,6 +41,7 @@
       "eolTip": "Không còn nhận bản vá bảo mật."
     },
     "chip": {
+      "not_checked": "Chưa kiểm tra",
       "queued": "Đang chờ",
       "connecting": "Đang kết nối",
       "agent_wait": "Chờ SSH agent",
@@ -151,7 +152,9 @@
     },
     "error": {
       "title": "Không đọc được cấu hình SSH của bạn",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "reveal": "Mở trong Finder",
+      "checkAgain": "Kiểm tra lại"
     }
   }
 }

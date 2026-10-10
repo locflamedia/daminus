@@ -16,6 +16,7 @@ import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiSheet from '@/ui/UiSheet.vue'
 import HostBlockForm from './HostBlockForm.vue'
+import SshConfigBanner from './SshConfigBanner.vue'
 
 const open = defineModel<boolean>({ required: true })
 
@@ -49,13 +50,19 @@ async function checkAgain() {
     @close="open = false"
   >
     <div class="body">
+      <SshConfigBanner
+        v-if="setup.configProblem"
+        :problem="setup.configProblem"
+        :busy="checking"
+        @recheck="checkAgain"
+      />
       <UiBanner
-        v-if="setup.problem"
+        v-else-if="setup.error"
         tone="crit"
         icon="critical"
         alert
         :title="t('setupPick.error.title')"
-        :text="errorText(setup.problem)"
+        :text="errorText(setup.error)"
       />
       <HostBlockForm v-model="fields" variant="sheet" />
     </div>

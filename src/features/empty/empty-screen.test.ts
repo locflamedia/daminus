@@ -79,13 +79,20 @@ describe('the first screen', () => {
     world.listing = {
       ...sampleListing(),
       config_error: {
-        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
-        retryable: false,
+        error: {
+          code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+          retryable: false,
+        },
+        excerpt: [
+          { number: 5, text: 'Host apollo-2' },
+          { number: 6, text: '  Port 99999' },
+          { number: 7, text: '  User root' },
+        ],
       },
     }
     const { wrapper } = await mountScreen()
     const alert = wrapper.get('[role="alert"]')
-    expect(alert.text()).toContain('Could not read your ssh setup.')
+    expect(alert.text()).toContain('Could not read your SSH config')
     expect(alert.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
     expect(wrapper.findAll('.host')).toHaveLength(6)
   })

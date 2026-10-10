@@ -498,15 +498,50 @@ Host vps-b
     let listing = resolve_listing(&tools, list).await;
     assert_eq!(listing.entries.len(), 2);
     assert!(listing.entries.iter().all(|e| e.resolved.is_none()));
-    let error = listing.config_error.expect("a config error");
+    let problem = listing.config_error.expect("a config error");
     assert_eq!(
-        error.code,
+        problem.error.code,
         ErrorCode::SshConfigInvalid {
             path: config.to_string_lossy().into_owned(),
             line: Some(6),
         }
     );
-    assert!(!error.retryable);
+    assert!(!problem.error.retryable);
+    // The refused line with one line of context each side, nothing more.
+    assert_eq!(
+        problem.excerpt,
+        vec![
+            ConfigLine {
+                number: 5,
+                text: "    HostName 203.0.113.11".into()
+            },
+            ConfigLine {
+                number: 6,
+                text: "    Port 99999".into()
+            },
+        ]
+    );
+}
+
+#[test]
+fn the_excerpt_is_the_line_and_one_line_each_side() {
+    let rig = Rig::new("a\nb\nc\nd\ne\n");
+    let file = rig.dir.path().join(".ssh/config");
+    let numbers = |line| {
+        config_excerpt(&file, line)
+            .into_iter()
+            .map(|l| l.number)
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(numbers(3), vec![2, 3, 4]);
+    assert_eq!(numbers(1), vec![1, 2]);
+    assert_eq!(numbers(5), vec![4, 5]);
+    assert_eq!(numbers(9), Vec::<u32>::new());
+    assert_eq!(config_excerpt(&file, 2)[1].text, "b");
+    // A long line is cut, never sent whole.
+    rig.write(".ssh/config", &format!("{}\n", "x".repeat(5000)));
+    assert!(config_excerpt(&file, 1)[0].text.chars().count() <= EXCERPT_LINE_CHARS);
+    assert!(config_excerpt(&rig.dir.path().join("missing"), 1).is_empty());
 }
 
 #[tokio::test]

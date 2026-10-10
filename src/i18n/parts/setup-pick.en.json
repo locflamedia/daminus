@@ -41,6 +41,7 @@
       "eolTip": "No longer gets security updates."
     },
     "chip": {
+      "not_checked": "Not checked",
       "queued": "Queued",
       "connecting": "Connecting",
       "agent_wait": "Waiting for SSH agent",
@@ -151,7 +152,9 @@
     },
     "error": {
       "title": "Could not read your SSH config",
-      "retry": "Try again"
+      "retry": "Try again",
+      "reveal": "Reveal in Finder",
+      "checkAgain": "Check again"
     }
   }
 }

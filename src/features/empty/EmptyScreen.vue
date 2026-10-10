@@ -5,10 +5,11 @@
   owns the "Add a host by hand" sheet. Import leads into the three setup steps.
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AddHostSheet from '@/features/setup/components/AddHostSheet.vue'
+import SshConfigBanner from '@/features/setup/components/SshConfigBanner.vue'
 import { errorText } from '@/lib/issue-text'
 import { useSetupStore } from '@/stores/setup'
 import UiBanner from '@/ui/UiBanner.vue'
@@ -21,12 +22,6 @@ const { t } = useI18n()
 const router = useRouter()
 const setup = useSetupStore()
 const empty = useEmptyStore()
-
-/**
- * A failed first read (nothing listed yet), or a config ssh refused: the hosts may be listed,
- * but none can connect until the named line is fixed.
- */
-const banner = computed(() => (setup.error && !empty.known ? setup.error : setup.configError))
 
 function importHosts() {
   void router.push('/setup')
@@ -80,13 +75,19 @@ onBeforeUnmount(() => {
 <template>
   <div class="empty-screen">
     <EmptyToolbar :keys="empty.screen === 'app' ? empty.input.keys : 0" />
+    <SshConfigBanner
+      v-if="setup.configProblem"
+      :problem="setup.configProblem"
+      :busy="setup.loading"
+      @recheck="recheck"
+    />
     <UiBanner
-      v-if="banner"
+      v-else-if="setup.error && !empty.known"
       tone="warn"
       icon="warn"
       alert
       :title="t('empty.loadFailed')"
-      :text="errorText(banner)"
+      :text="errorText(setup.error)"
     />
     <EmptyNoConfigView
       v-if="empty.help"
