@@ -135,7 +135,7 @@ function onClick(event: MouseEvent) {
 
 .cols {
   display: grid;
-  grid-template-columns: var(--pick-cols);
+  /* The columns come from the table (PickHostsView), shared with its header row. */
   gap: var(--space-4);
   align-items: center;
   padding: 0 var(--space-4);

@@ -344,6 +344,11 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
   padding: 0 var(--space-4);
 }
 
+/* The rows (PickRow) take the same columns as the header. */
+.table :deep(.item > .cols) {
+  grid-template-columns: var(--pick-cols);
+}
+
 .head > span {
   overflow: hidden;
   text-overflow: ellipsis;
