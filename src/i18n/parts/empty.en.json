@@ -164,6 +164,10 @@
       }
     },
     "addHost": {
+      "reading": "Reading ~/.ssh/config…",
+      "found": "Found {alias} in {file}, line {line}",
+      "missing": "{alias} is not in {file} yet. Paste the block at the end, save, then check again.",
+      "import": "Import {alias}",
       "title": "Add a host by hand",
       "context": "Daminus never writes ~/.ssh/config. Fill the fields, copy the block and paste it there.",
       "close": "Close",

@@ -164,6 +164,10 @@
       }
     },
     "addHost": {
+      "reading": "Đang đọc ~/.ssh/config…",
+      "found": "Đã thấy {alias} trong {file}, dòng {line}",
+      "missing": "{alias} chưa có trong {file}. Dán khối vào cuối file, lưu, rồi kiểm tra lại.",
+      "import": "Nhập {alias}",
       "title": "Thêm host thủ công",
       "context": "Daminus không bao giờ ghi vào ~/.ssh/config. Điền các ô, chép khối rồi dán vào đó.",
       "close": "Đóng",
