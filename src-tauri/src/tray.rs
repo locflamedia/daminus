@@ -1,40 +1,38 @@
-//! The menu bar item (board Release assets › Menu bar; design decision 15).
+//! The menu bar item (board Release assets › Menu bar).
 //!
-//! Idle: the black template mark, tinted by macOS. Scanning: the mark at
-//! half opacity, breathing slowly (held still under Reduce Motion). Warning / critical: an amber or pink dot
-//! beside the mark. A coloured dot cannot live in a template image, so those
-//! two states use a plain image with the mark drawn in the colour of the
-//! current appearance (see ui-change-requests). Nothing scans in the
-//! background: the item only reflects scans the user started.
+//! The icon is the template mark only, so macOS tints it to suit the bar and
+//! the wallpaper. Beside it, as plain text that takes the bar's colour too:
+//! the count of criticals (or of warnings when there is none), or "!" when no
+//! saved result can be read. While a scan runs the mark is at half opacity and
+//! breathes by swapping two template frames, still under Reduce Motion, with no
+//! count. Nothing scans in the background: the item only reflects scans the
+//! user started, and starts one when asked.
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use daminus_core::domain::datetime::Timestamp;
+use daminus_core::domain::error::AppError;
 use daminus_core::domain::evaluate::Report;
 use daminus_core::scan::ScanScope;
 use tauri::image::Image;
-use tauri::menu::{IsMenuItem, Menu, MenuItem};
+use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIcon, TrayIconBuilder};
-use tauri::{AppHandle, Emitter, Manager, Runtime, Theme};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 use time::UtcOffset;
 
 use crate::app::AppCore;
-use crate::tray_text::{Strings, TrayLevel, TrayView, reduce_motion, view};
+use crate::tray_text::{
+    Inputs, OPEN, OPEN_PROJECT, OPEN_TO_FIX, QUIT, SCAN_NOW, SET_UP, STOP, Strings, TRY_AGAIN,
+    TrayIcon as Icon, TrayView, reduce_motion, view,
+};
 
 const MARK_2X: &[u8] = include_bytes!("../../assets/brand/menubar-template@2x.png");
 const TRAY_ID: &str = "daminus";
-const AMBER: [u8; 3] = [0xE9, 0xA2, 0x3B];
-const PINK: [u8; 3] = [0xE5, 0x57, 0x7E];
-/// One breath: opacity 0.3 → 0.7 → 0.3 around the board's 0.5.
-const BREATH_FRAMES: usize = 16;
-const BREATH_FRAME: Duration = Duration::from_millis(150);
+/// The two frames of a breath, swapped while a scan runs.
+const BREATH: [f32; 2] = [0.5, 0.3];
+const BREATH_FRAME: Duration = Duration::from_millis(1200);
 
-/// Menu item ids.
-pub const SCAN_NOW: &str = "scan_now";
-pub const OPEN: &str = "open";
-pub const QUIT: &str = "quit";
-/// Prefix of the quick-open item id; the project id follows it.
-pub const OPEN_PROJECT: &str = "open_project:";
 /// Emitted to the webview when the quick-open item is chosen; the payload is
 /// `{ "project_id": "<id>" }`.
 pub const OPEN_PROJECT_EVENT: &str = "tray://open-project";
@@ -56,10 +54,9 @@ pub struct Tray<R: Runtime> {
 struct State {
     /// The last report read; kept when a later read fails.
     report: Option<Report>,
-    /// The last read failed.
-    report_error: bool,
-    level: Option<TrayLevel>,
-    dark: bool,
+    /// Why the last read failed, if it did.
+    report_error: Option<AppError>,
+    icon: Option<Icon>,
     /// Bumped on every icon change; a breathing loop stops once it differs
     /// from the value it started with.
     icon_gen: u64,
@@ -88,37 +85,6 @@ impl Mark {
         let mut px = self.rgba.clone();
         for a in px.iter_mut().skip(3).step_by(4) {
             *a = (f32::from(*a) * alpha).round().clamp(0.0, 255.0) as u8;
-        }
-        Image::new_owned(px, self.width, self.height)
-    }
-
-    /// The mark in black or white with a 6 pt dot at its top right.
-    fn with_dot(&self, dot: [u8; 3], dark: bool) -> Image<'static> {
-        let mut px = self.rgba.clone();
-        let ink = if dark { 255 } else { 0 };
-        for p in px.as_chunks_mut::<4>().0 {
-            p[..3].fill(ink);
-        }
-        // 18 pt icon at 2×: a 12 px dot centred 3 pt in from the top right corner.
-        let (cx, cy, r) = (self.width as f32 - 6.0, 6.0, 6.0);
-        for y in 0..self.height {
-            for x in 0..self.width {
-                let d = ((x as f32 + 0.5 - cx).powi(2) + (y as f32 + 0.5 - cy).powi(2)).sqrt();
-                // Clear a ring around the dot so it reads against the mark.
-                let i = ((y * self.width + x) * 4) as usize;
-                let Some(p) = px.get_mut(i..i + 4) else {
-                    continue;
-                };
-                if d <= r {
-                    let cover = (r - d + 0.5).clamp(0.0, 1.0);
-                    p[0] = dot[0];
-                    p[1] = dot[1];
-                    p[2] = dot[2];
-                    p[3] = (cover * 255.0) as u8;
-                } else if d <= r + 2.0 {
-                    p[3] = 0;
-                }
-            }
         }
         Image::new_owned(px, self.width, self.height)
     }
@@ -153,11 +119,11 @@ impl<R: Runtime> Tray<R> {
             match read {
                 Ok(r) => {
                     s.report = Some(r);
-                    s.report_error = false;
+                    s.report_error = None;
                 }
                 Err(e) => {
                     tracing::warn!(error = ?e.code, "tray: report not read; keeping the last one");
-                    s.report_error = true;
+                    s.report_error = Some(e);
                 }
             }
         }
@@ -170,8 +136,8 @@ impl<R: Runtime> Tray<R> {
         let Some(core) = app.try_state::<AppCore>() else {
             return;
         };
-        let scanning = core.scan_status().is_some();
-        let projects = core.projects().unwrap_or_default();
+        let scan = core.scan_status();
+        let projects = core.projects();
         let settings = core.settings_get().ok();
         let language = core.language();
         // Read each time, so a change applies from the next scan.
@@ -181,47 +147,41 @@ impl<R: Runtime> Tray<R> {
                 .is_none_or(|s| s.appearance.animate_charts),
             os_reduces_motion(app),
         );
-        let dark = app
-            .get_webview_window("main")
-            .and_then(|w| w.theme().ok())
-            .is_some_and(|t| t == Theme::Dark);
         let Ok(mut s) = self.state.lock() else {
             return;
         };
         let v = view(
-            s.report.as_ref(),
-            s.report_error,
-            &projects,
-            scanning,
+            &Inputs {
+                report: s.report.as_ref(),
+                report_error: s.report_error.as_ref(),
+                projects: projects.as_ref(),
+                scan: scan.as_ref(),
+                now: Timestamp::new(time::OffsetDateTime::now_utc()),
+                offset: self.offset,
+            },
             &Strings::new(&language),
-            self.offset,
         );
         if let Err(e) = self.set_menu(app, &v) {
             tracing::warn!(error = %e, "tray: menu not set");
         }
-        let _ = self.icon.set_tooltip(Some(tooltip(&v)));
-        if s.level == Some(v.level) && s.dark == dark {
+        let _ = self.icon.set_tooltip(Some(v.tooltip()));
+        // Plain text beside the mark; macOS draws it in the bar's colour.
+        let _ = self.icon.set_title(v.title.as_deref());
+        if s.icon == Some(v.icon) {
             return;
         }
-        s.level = Some(v.level);
-        s.dark = dark;
+        s.icon = Some(v.icon);
         // Stops a breathing loop. It sets each frame under this lock after
         // checking the counter, so no frame can land after the icon below.
         s.icon_gen += 1;
-        let result = match v.level {
-            TrayLevel::Idle => self
+        let result = match v.icon {
+            Icon::Mark => self
                 .icon
                 .set_icon_with_as_template(Some(self.mark.faded(1.0)), true),
-            TrayLevel::Warn => self
+            Icon::Scanning if still => self
                 .icon
-                .set_icon_with_as_template(Some(self.mark.with_dot(AMBER, dark)), false),
-            TrayLevel::Crit => self
-                .icon
-                .set_icon_with_as_template(Some(self.mark.with_dot(PINK, dark)), false),
-            TrayLevel::Scanning if still => self
-                .icon
-                .set_icon_with_as_template(Some(self.mark.faded(0.5)), true),
-            TrayLevel::Scanning => {
+                .set_icon_with_as_template(Some(self.mark.faded(BREATH[0])), true),
+            Icon::Scanning => {
                 self.breathe(s.icon_gen);
                 Ok(())
             }
@@ -231,15 +191,10 @@ impl<R: Runtime> Tray<R> {
         }
     }
 
-    /// Loops the half-opacity mark through one slow breath until the icon
-    /// changes again (`icon_gen` moves on).
+    /// Swaps the two half-opacity template frames until the icon changes
+    /// again (`icon_gen` moves on).
     fn breathe(self: &Arc<Self>, generation: u64) {
-        let frames: Vec<Image<'static>> = (0..BREATH_FRAMES)
-            .map(|i| {
-                let phase = i as f32 / BREATH_FRAMES as f32 * std::f32::consts::TAU;
-                self.mark.faded(0.5 - 0.2 * phase.cos())
-            })
-            .collect();
+        let frames: Vec<Image<'static>> = BREATH.iter().map(|a| self.mark.faded(*a)).collect();
         let tray = Arc::clone(self);
         tauri::async_runtime::spawn(async move {
             for frame in frames.iter().cycle() {
@@ -259,42 +214,29 @@ impl<R: Runtime> Tray<R> {
         });
     }
 
+    /// The grey lines (disabled items: a native menu cannot bold a line), a
+    /// separator, then the actions, with Quit after one more separator.
     fn set_menu(&self, app: &AppHandle<R>, v: &TrayView) -> tauri::Result<()> {
-        let headline = MenuItem::new(app, &v.headline, false, None::<&str>)?;
-        let detail = MenuItem::new(app, &v.detail, false, None::<&str>)?;
-        let scan = MenuItem::with_id(app, SCAN_NOW, &v.scan_now, true, Some("CmdOrCtrl+R"))?;
-        let open = MenuItem::with_id(app, OPEN, &v.open, true, Some("CmdOrCtrl+O"))?;
-        let quit = MenuItem::with_id(app, QUIT, &v.quit, true, Some("CmdOrCtrl+Q"))?;
-        let quick = match &v.attention {
-            Some(a) => Some(MenuItem::with_id(
+        let mut owned: Vec<Box<dyn IsMenuItem<R>>> = Vec::new();
+        for line in &v.info {
+            owned.push(Box::new(MenuItem::new(app, line, false, None::<&str>)?));
+        }
+        owned.push(Box::new(PredefinedMenuItem::separator(app)?));
+        for it in &v.items {
+            if it.id == QUIT {
+                owned.push(Box::new(PredefinedMenuItem::separator(app)?));
+            }
+            owned.push(Box::new(MenuItem::with_id(
                 app,
-                format!("{OPEN_PROJECT}{}", a.project_id),
-                &a.label,
-                true,
-                None::<&str>,
-            )?),
-            None => None,
-        };
-        let mut items: Vec<&dyn IsMenuItem<R>> = vec![&headline];
-        if !v.detail.is_empty() {
-            items.push(&detail);
+                &it.id,
+                &it.label,
+                it.enabled,
+                it.accelerator,
+            )?));
         }
-        items.push(&scan);
-        items.push(&open);
-        if let Some(q) = &quick {
-            items.push(q);
-        }
-        items.push(&quit);
+        let items: Vec<&dyn IsMenuItem<R>> = owned.iter().map(AsRef::as_ref).collect();
         let menu = Menu::with_items(app, &items)?;
         self.icon.set_menu(Some(menu))
-    }
-}
-
-fn tooltip(v: &TrayView) -> String {
-    if v.detail.is_empty() {
-        format!("Daminus · {}", v.headline)
-    } else {
-        format!("Daminus · {} · {}", v.headline, v.detail)
     }
 }
 
@@ -314,7 +256,22 @@ fn on_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
                 refresh(&app);
             });
         }
-        OPEN => crate::show_main(app),
+        STOP => {
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Some(core) = app.try_state::<AppCore>() {
+                    core.scan_stop();
+                }
+                refresh(&app);
+            });
+        }
+        TRY_AGAIN => {
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move { reload(&app) });
+        }
+        // The window shows the empty app when nothing is set up, and the
+        // error where it is when a file cannot be read.
+        OPEN | SET_UP | OPEN_TO_FIX => crate::show_main(app),
         QUIT => app.exit(0),
         _ => {
             if let Some(project_id) = id.strip_prefix(OPEN_PROJECT) {
