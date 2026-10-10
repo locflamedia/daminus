@@ -164,6 +164,7 @@
       }
     },
     "addHost": {
+      "leftOut": "{alias} có trong {file}, dòng {line}, nhưng bị bỏ qua: {reason}. Sửa khối đó, lưu, rồi kiểm tra lại.",
       "reading": "Đang đọc ~/.ssh/config…",
       "found": "Đã thấy {alias} trong {file}, dòng {line}",
       "missing": "{alias} chưa có trong {file}. Dán khối vào cuối file, lưu, rồi kiểm tra lại.",

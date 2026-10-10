@@ -164,6 +164,7 @@
       }
     },
     "addHost": {
+      "leftOut": "{alias} is in {file}, line {line}, but left out: {reason}. Fix that block, save, then check again.",
       "reading": "Reading ~/.ssh/config…",
       "found": "Found {alias} in {file}, line {line}",
       "missing": "{alias} is not in {file} yet. Paste the block at the end, save, then check again.",
