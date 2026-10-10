@@ -54,10 +54,30 @@ pub struct CliStatus {
 /// The first executable file named `claude` on `path_var` (a `PATH` value).
 /// Empty and relative entries are skipped.
 pub fn find_claude(path_var: &str) -> Option<PathBuf> {
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    find_claude_in(path_var, &fallback_dirs(home.as_deref()))
+}
+
+/// Where Claude Code installs itself when the login shell's PATH does not
+/// name it: the native installer, the old local install, Homebrew on Apple
+/// silicon and on Intel. Looked at after PATH, in this order.
+fn fallback_dirs(home: Option<&Path>) -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+    if let Some(home) = home.filter(|h| h.is_absolute()) {
+        dirs.push(home.join(".local/bin"));
+        dirs.push(home.join(".claude/local"));
+    }
+    dirs.push(PathBuf::from("/opt/homebrew/bin"));
+    dirs.push(PathBuf::from("/usr/local/bin"));
+    dirs
+}
+
+fn find_claude_in(path_var: &str, fallbacks: &[PathBuf]) -> Option<PathBuf> {
     path_var
         .split(':')
-        .map(Path::new)
+        .map(PathBuf::from)
         .filter(|dir| dir.is_absolute())
+        .chain(fallbacks.iter().cloned())
         .map(|dir| dir.join("claude"))
         .find(|candidate| {
             std::fs::metadata(candidate)
@@ -235,24 +255,100 @@ fn run_args(req: &AiRequest) -> Vec<String> {
     args
 }
 
-/// The only variables `claude` gets: where to find programs, where its login
-/// lives (`HOME`, and `USER`/`LOGNAME`: on macOS Claude Code finds its sign-in
-/// in the Keychain by user name, and reads as signed out without it), and a
-/// language. Nothing from `ANTHROPIC_*` or `CLAUDE_CODE_*`, so no API key is
-/// used behind the user's back.
-fn scrubbed_env(
+/// Credentials a child must never see. Ported from Hermes
+/// (NousResearch/hermes-agent dce1e9b, `tools/environments/local_env_policy.py`
+/// `_STATIC_PROVIDER_ENV_BLOCKLIST`), the provider keys and service secrets it
+/// strips from every CLI it spawns.
+const SECRET_ENV: &[&str] = &[
+    "OPENAI_BASE_URL",
+    "OPENAI_API_KEY",
+    "OPENAI_API_BASE",
+    "OPENAI_ORG_ID",
+    "OPENAI_ORGANIZATION",
+    "OPENROUTER_API_KEY",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_TOKEN",
+    "LLM_MODEL",
+    "GOOGLE_API_KEY",
+    "VERTEX_CREDENTIALS_PATH",
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    "DEEPSEEK_API_KEY",
+    "MISTRAL_API_KEY",
+    "GROQ_API_KEY",
+    "TOGETHER_API_KEY",
+    "PERPLEXITY_API_KEY",
+    "COHERE_API_KEY",
+    "FIREWORKS_API_KEY",
+    "XAI_API_KEY",
+    "HELICONE_API_KEY",
+    "PARALLEL_API_KEY",
+    "FIRECRAWL_API_KEY",
+    "FIRECRAWL_API_URL",
+    "EMAIL_PASSWORD",
+    "GH_TOKEN",
+    "GITHUB_APP_PRIVATE_KEY_PATH",
+    "MODAL_TOKEN_ID",
+    "MODAL_TOKEN_SECRET",
+    "DAYTONA_API_KEY",
+    "GATEWAY_RELAY_SECRET",
+    "GATEWAY_RELAY_DELIVERY_KEY",
+    "VERCEL_OIDC_TOKEN",
+    "VERCEL_TOKEN",
+    "NOUS_API_KEY",
+    "QWEN_API_KEY",
+    "AWS_BEARER_TOKEN_BEDROCK",
+    "MSGRAPH_CLIENT_SECRET",
+    "QQ_STT_API_KEY",
+];
+
+/// Whether `name` holds a secret: the Hermes list and its dynamic names
+/// (`AUXILIARY_*_API_KEY`/`_BASE_URL`, `GATEWAY_RELAY_*_SECRET`/`_KEY`/`_TOKEN`,
+/// `_is_hermes_internal_secret`), every `ANTHROPIC_*` and `CLAUDE_CODE_*` (no
+/// key or token may steer `claude` away from the user's own sign-in), and any
+/// name ending in `_API_KEY`, `_TOKEN`, `_SECRET` or `_PASSWORD`. Case-folded,
+/// as Hermes matches.
+fn is_secret_env(name: &str) -> bool {
+    let upper = name.to_ascii_uppercase();
+    SECRET_ENV.contains(&upper.as_str())
+        || upper.starts_with("ANTHROPIC_")
+        || upper.starts_with("CLAUDE_CODE_")
+        || (upper.starts_with("AUXILIARY_")
+            && (upper.ends_with("_API_KEY") || upper.ends_with("_BASE_URL")))
+        || (upper.starts_with("GATEWAY_RELAY_")
+            && ["_SECRET", "_KEY", "_TOKEN"]
+                .iter()
+                .any(|s| upper.ends_with(s)))
+        || ["_API_KEY", "_TOKEN", "_SECRET", "_PASSWORD"]
+            .iter()
+            .any(|s| upper.ends_with(s))
+}
+
+/// The environment `claude` runs with, the way Hermes spawns a CLI: the app's
+/// own environment, PATH from the login shell, and every secret left out
+/// ([`is_secret_env`]). `USER` and `LOGNAME` are filled in when missing: on
+/// macOS Claude Code finds its sign-in in the Keychain by user name and reads
+/// as signed out without it. `LANG` falls back to `en_US.UTF-8`.
+fn child_env(
+    app: impl IntoIterator<Item = (String, String)>,
     path_var: &str,
-    home: Option<String>,
-    lang: Option<String>,
-    user: Option<String>,
-) -> Vec<(&'static str, String)> {
-    let mut env = vec![("PATH", path_var.to_owned())];
-    env.extend(home.filter(|h| !h.is_empty()).map(|h| ("HOME", h)));
-    let lang = lang.filter(|l| !l.is_empty());
-    env.push(("LANG", lang.unwrap_or_else(|| "en_US.UTF-8".to_owned())));
-    if let Some(user) = user.filter(|u| !u.is_empty()) {
-        env.push(("USER", user.clone()));
-        env.push(("LOGNAME", user));
+) -> Vec<(String, String)> {
+    let mut env: Vec<(String, String)> = app
+        .into_iter()
+        .filter(|(name, _)| name != "PATH" && !is_secret_env(name))
+        .collect();
+    env.push(("PATH".to_owned(), path_var.to_owned()));
+    let has =
+        |env: &[(String, String)], name: &str| env.iter().any(|(n, v)| n == name && !v.is_empty());
+    if !has(&env, "LANG") {
+        env.retain(|(n, _)| n != "LANG");
+        env.push(("LANG".to_owned(), "en_US.UTF-8".to_owned()));
+    }
+    let given = |name: &str| env.iter().find(|(n, _)| n == name).map(|(_, v)| v.clone());
+    if let Some(user) = user_name(given("USER"), given("LOGNAME")) {
+        env.retain(|(n, _)| n != "USER" && n != "LOGNAME");
+        env.push(("USER".to_owned(), user.clone()));
+        env.push(("LOGNAME".to_owned(), user));
     }
     env
 }
@@ -273,12 +369,7 @@ fn user_name(user: Option<String>, logname: Option<String>) -> Option<String> {
 fn command(bin: &Path, path_var: &str, cwd: &Path) -> Command {
     let mut cmd = Command::new(bin);
     cmd.env_clear()
-        .envs(scrubbed_env(
-            path_var,
-            std::env::var("HOME").ok(),
-            std::env::var("LANG").ok(),
-            user_name(std::env::var("USER").ok(), std::env::var("LOGNAME").ok()),
-        ))
+        .envs(child_env(std::env::vars(), path_var))
         .current_dir(cwd)
         .process_group(0)
         .kill_on_drop(true);
@@ -783,45 +874,99 @@ END
         for line in env.lines() {
             let name = line.split('=').next().unwrap_or_default();
             assert!(
-                [
-                    "PATH", "HOME", "LANG", "USER", "LOGNAME", "PWD", "SHLVL", "_", "OLDPWD"
-                ]
-                .contains(&name),
-                "unexpected variable {name}"
+                !is_secret_env(name),
+                "secret variable {name} reached claude"
             );
         }
+        assert!(env.lines().any(|l| l.starts_with("PATH=")), "{env}");
+        assert!(env.lines().any(|l| l.starts_with("USER=")), "{env}");
         assert!(!env.contains("ANTHROPIC_") && !env.contains("CLAUDE_CODE"));
     }
 
-    #[test]
-    fn env_is_minimal() {
-        let env = scrubbed_env("/a:/b", Some("/home/x".into()), None, Some("ann".into()));
-        assert_eq!(
-            env,
-            [
-                ("PATH", "/a:/b".to_owned()),
-                ("HOME", "/home/x".to_owned()),
-                ("LANG", "en_US.UTF-8".to_owned()),
-                ("USER", "ann".to_owned()),
-                ("LOGNAME", "ann".to_owned())
-            ]
-        );
-        assert_eq!(scrubbed_env("/a", None, Some("C".into()), None).len(), 2);
+    fn vars(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
+        pairs
+            .iter()
+            .map(|(k, v)| ((*k).to_owned(), (*v).to_owned()))
+            .collect()
+    }
+
+    fn value<'a>(env: &'a [(String, String)], name: &str) -> Option<&'a str> {
+        env.iter().find(|(n, _)| n == name).map(|(_, v)| v.as_str())
     }
 
     #[test]
-    fn the_user_name_is_filled_in_when_the_environment_lacks_it() {
-        assert_eq!(
-            user_name(Some("ann".into()), Some("bob".into())).as_deref(),
-            Some("ann")
-        );
-        assert_eq!(user_name(None, Some("bob".into())).as_deref(), Some("bob"));
+    fn secrets_never_reach_claude() {
+        let app = vars(&[
+            ("ANTHROPIC_API_KEY", "sk-ant-x"),
+            ("ANTHROPIC_BASE_URL", "https://proxy"),
+            ("CLAUDE_CODE_OAUTH_TOKEN", "t"),
+            ("CLAUDE_CODE_USE_BEDROCK", "1"),
+            ("OPENAI_API_KEY", "sk"),
+            ("openrouter_api_key", "sk"),
+            ("MY_SERVICE_API_KEY", "k"),
+            ("SOME_TOKEN", "t"),
+            ("DB_PASSWORD", "p"),
+            ("AUXILIARY_VISION_BASE_URL", "u"),
+            ("GATEWAY_RELAY_X_SECRET", "s"),
+            ("GH_TOKEN", "g"),
+        ]);
+        let env = child_env(app, "/bin");
+        for (name, _) in &env {
+            assert!(!is_secret_env(name), "{name} leaked");
+        }
+        assert!(value(&env, "ANTHROPIC_API_KEY").is_none());
+        assert!(value(&env, "SOME_TOKEN").is_none());
+    }
+
+    #[test]
+    fn the_rest_of_the_app_environment_passes() {
+        let app = vars(&[
+            ("PATH", "/usr/bin"),
+            ("HOME", "/Users/ann"),
+            ("USER", "ann"),
+            ("TMPDIR", "/var/folders/x/T/"),
+            ("SHELL", "/bin/zsh"),
+            ("HTTPS_PROXY", "http://proxy:8080"),
+            ("no_proxy", "localhost"),
+            ("NODE_EXTRA_CA_CERTS", "/etc/ca.pem"),
+            ("CLAUDE_CONFIG_DIR", "/Users/ann/.claude-work"),
+            ("LANG", "vi_VN.UTF-8"),
+        ]);
+        let env = child_env(app, "/opt/homebrew/bin:/usr/bin");
+        assert_eq!(value(&env, "PATH"), Some("/opt/homebrew/bin:/usr/bin"));
+        assert_eq!(env.iter().filter(|(n, _)| n == "PATH").count(), 1);
+        for (name, want) in [
+            ("HOME", "/Users/ann"),
+            ("USER", "ann"),
+            ("LOGNAME", "ann"),
+            ("TMPDIR", "/var/folders/x/T/"),
+            ("SHELL", "/bin/zsh"),
+            ("HTTPS_PROXY", "http://proxy:8080"),
+            ("no_proxy", "localhost"),
+            ("NODE_EXTRA_CA_CERTS", "/etc/ca.pem"),
+            ("CLAUDE_CONFIG_DIR", "/Users/ann/.claude-work"),
+            ("LANG", "vi_VN.UTF-8"),
+        ] {
+            assert_eq!(value(&env, name), Some(want), "{name}");
+        }
+    }
+
+    #[test]
+    fn user_and_language_are_filled_in_when_the_app_lacks_them() {
+        let env = child_env(vars(&[("HOME", "/h")]), "/bin");
         let own = nix::unistd::User::from_uid(nix::unistd::Uid::current())
             .unwrap()
             .unwrap()
             .name;
-        assert_eq!(user_name(None, None), Some(own.clone()));
-        assert_eq!(user_name(Some(String::new()), None), Some(own));
+        assert_eq!(value(&env, "USER"), Some(own.as_str()));
+        assert_eq!(value(&env, "LOGNAME"), Some(own.as_str()));
+        assert_eq!(value(&env, "LANG"), Some("en_US.UTF-8"));
+        let env = child_env(vars(&[("LOGNAME", "bob"), ("USER", "")]), "/bin");
+        assert_eq!(value(&env, "USER"), Some("bob"));
+        assert_eq!(
+            user_name(Some("ann".into()), Some("bob".into())).as_deref(),
+            Some("ann")
+        );
     }
 
     #[tokio::test]
@@ -1082,8 +1227,53 @@ esac
             ),
         ];
         for (path, want) in cases {
-            assert_eq!(find_claude(&path), want, "{path}");
+            assert_eq!(find_claude_in(&path, &[]), want, "{path}");
         }
+    }
+
+    /// Asks the real `claude` on this Mac whether it is signed in, with the
+    /// environment the app builds (no prompt is sent). Run by hand:
+    /// `cargo test -p daminus-core real_claude -- --ignored`.
+    #[tokio::test]
+    #[ignore = "needs a signed-in Claude Code on this machine"]
+    async fn real_claude_reads_as_signed_in() {
+        let path_var = std::env::var("PATH").unwrap_or_default();
+        let bin = find_claude(&path_var).expect("claude installed");
+        let status = detect(&bin, &path_var).await.expect("claude answered");
+        assert!(status.logged_in, "{status:?}");
+    }
+
+    #[test]
+    fn find_claude_looks_in_the_install_folders_after_path() {
+        let root = tempfile::tempdir().unwrap();
+        let bin = |name: &str| {
+            let d = root.path().join(name);
+            fs::create_dir_all(&d).unwrap();
+            let f = d.join("claude");
+            fs::write(&f, "#!/bin/sh\n").unwrap();
+            fs::set_permissions(&f, fs::Permissions::from_mode(0o755)).unwrap();
+            d
+        };
+        let on_path = bin("on-path");
+        let local = bin("home/.local/bin");
+        let missing = root.path().join("nothing-here");
+        let fallbacks = [missing, local.clone()];
+        assert_eq!(find_claude_in("", &fallbacks), Some(local.join("claude")));
+        assert_eq!(
+            find_claude_in(&on_path.display().to_string(), &fallbacks),
+            Some(on_path.join("claude"))
+        );
+        let dirs = fallback_dirs(Some(Path::new("/Users/ann")));
+        assert_eq!(
+            dirs,
+            [
+                PathBuf::from("/Users/ann/.local/bin"),
+                PathBuf::from("/Users/ann/.claude/local"),
+                PathBuf::from("/opt/homebrew/bin"),
+                PathBuf::from("/usr/local/bin"),
+            ]
+        );
+        assert_eq!(fallback_dirs(None).len(), 2);
     }
 
     #[test]
