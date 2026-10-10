@@ -143,7 +143,11 @@ export const useAiProvidersStore = defineStore('aiProviders', () => {
       busyKey.value = null
     }
     models.value = omit(models.value, providerId)
+    // The old verdict was about the old key: drop it, then test the new one so the card says
+    // what this key does, not what the last one did.
+    tests.value = omit(tests.value, providerId)
     await load()
+    void test(providerId)
     return true
   }
 

@@ -239,6 +239,54 @@ describe('Settings › AI providers: the test', () => {
   })
 })
 
+describe('Settings › AI providers: a key that is rejected', () => {
+  const testButton = (wrapper: VueWrapper) =>
+    wrapper.findAll('button').find((b) => b.text() === 'Test connection')
+
+  it('is saved, not Connected, after its test fails', async () => {
+    const wrapper = await mountAi('ai-test-fail')
+    await open(wrapper, 'anthropic')
+    await testButton(wrapper)?.trigger('click')
+    await flushPromises()
+    expect(tile(wrapper, 'anthropic').text()).toContain('Key saved')
+    expect(tile(wrapper, 'anthropic').text()).not.toContain('Connected')
+    expect(tile(wrapper, 'anthropic').get('[data-dot]').attributes('data-dot')).toBe('accent')
+  })
+
+  it('is tested again when a key is saved, and the old verdict does not stay', async () => {
+    const wrapper = await mountAi()
+    await open(wrapper, 'anthropic')
+    await testButton(wrapper)?.trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('Works')
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Replace')
+      ?.trigger('click')
+    await wrapper.get('input[type="password"]').setValue('sk-new-key-123456')
+    const before = sent('ai_test').length
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(sent('ai_test')).toHaveLength(before + 1)
+    expect(useAiProvidersStore().tests['anthropic']).toEqual({ phase: 'ok', ms: 640 })
+  })
+
+  it('forgets the failed test of the old key when a new one is saved', async () => {
+    const wrapper = await mountAi('ai-test-fail')
+    await open(wrapper, 'anthropic')
+    const store = useAiProvidersStore()
+    store.tests = { anthropic: { phase: 'fail', message: 'old error' } }
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text() === 'Replace')
+      ?.trigger('click')
+    await wrapper.get('input[type="password"]').setValue('sk-new-key-123456')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).not.toContain('old error')
+  })
+})
+
 describe('Settings › AI providers: a custom endpoint', () => {
   it('refuses plain http to another machine with a message, and sends nothing', async () => {
     const wrapper = await mountAi()

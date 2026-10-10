@@ -7,10 +7,16 @@
 import { useI18n } from 'vue-i18n'
 import ProviderMark from './ProviderMark.vue'
 import { useAiProvidersStore } from '@/stores/ai-providers'
+import type { AiProviderEntry } from '@/api/bindings/AiProviderEntry'
 import { tileStatus } from './provider-state'
 
 const { t } = useI18n()
 const store = useAiProvidersStore()
+
+/** A key whose last test failed is not "Connected". */
+function statusOf(entry: AiProviderEntry) {
+  return tileStatus(entry, store.view!, store.tests[entry.profile.id]?.phase === 'fail')
+}
 </script>
 
 <template>
@@ -29,15 +35,15 @@ const store = useAiProvidersStore()
         <span class="mark" aria-hidden="true"><ProviderMark :entry="entry" :size="20" /></span>
         <span
           class="dot"
-          :class="tileStatus(entry, store.view)[0]"
-          :data-dot="tileStatus(entry, store.view)[0]"
+          :class="statusOf(entry)[0]"
+          :data-dot="statusOf(entry)[0]"
           aria-hidden="true"
         />
       </span>
       <span class="words">
         <b class="name">{{ entry.profile.name }}</b>
-        <span class="state" :class="tileStatus(entry, store.view)[0]">{{
-          t(`aiProviders.status.${tileStatus(entry, store.view)[1]}`)
+        <span class="state" :class="statusOf(entry)[0]">{{
+          t(`aiProviders.status.${statusOf(entry)[1]}`)
         }}</span>
         <span v-if="entry.profile.tag" class="tag" :class="entry.profile.tag">{{
           t(`aiProviders.tag.${entry.profile.tag}`)
