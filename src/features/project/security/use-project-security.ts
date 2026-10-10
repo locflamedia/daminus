@@ -17,6 +17,7 @@ import {
   CHECK_GROUP,
   SECURITY_CHECKS,
   securityItems,
+  securityRowItems,
   securityRows,
   severityMix,
 } from '@/lib/security-rows'
@@ -52,8 +53,17 @@ export function useProjectSecurity(id: Ref<string>) {
   )
 
   const items = computed(() => securityItems(report.value?.items ?? [], id.value))
+  const hosts = computed(() =>
+    projects.servers.filter((s) => s.used_by.includes(id.value)).map((s) => s.host),
+  )
+  // The rows also read the host-level results of a shared host; the findings stay the project's.
   const rows = computed(() =>
-    securityRows(items.value, disabled.value, seq.value, settings.language),
+    securityRows(
+      securityRowItems(report.value?.items ?? [], id.value, hosts.value),
+      disabled.value,
+      seq.value,
+      settings.language,
+    ),
   )
   const mix = computed(() => severityMix(rows.value))
 
@@ -77,11 +87,8 @@ export function useProjectSecurity(id: Ref<string>) {
   const checkMs = computed(() => {
     const scan = history.view?.scans.find((s) => s.seq === seq.value)
     if (!scan) return null
-    const hosts = new Set([
-      '@local',
-      ...projects.servers.filter((s) => s.used_by.includes(id.value)).map((s) => s.host),
-    ])
-    const times = [...hosts].flatMap((h) => {
+    const measured = new Set(['@local', ...hosts.value])
+    const times = [...measured].flatMap((h) => {
       const ms = scan.hosts[h]?.ms
       return typeof ms === 'number' ? [ms] : []
     })

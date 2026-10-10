@@ -44,6 +44,24 @@ export function securityItems(items: readonly Item[], projectId: string): Item[]
   )
 }
 
+/**
+ * What the check rows read: the project's results, plus the host-level results of the hosts
+ * it runs on. A host shared by several projects keeps those results under the server, so an
+ * issue is counted once, but the check still ran there and its row must say how it went.
+ */
+export function securityRowItems(
+  items: readonly Item[],
+  projectId: string,
+  hosts: readonly string[],
+): Item[] {
+  return items.filter(
+    (i) =>
+      isSecurityCheck(i.key.check) &&
+      ((i.owner.kind === 'project' && i.owner.id === projectId) ||
+        (i.owner.kind === 'server' && hosts.includes(i.owner.host))),
+  )
+}
+
 export type RowState =
   'crit' | 'warn' | 'info' | 'ok' | 'needs_perm' | 'unknown' | 'expected' | 'off' | 'none'
 
@@ -141,7 +159,8 @@ function countFiles(items: readonly Item[]): number {
   // folder and every fact of that folder carries it, so it is counted once per folder.
   const folders = new Map<string, { total: number; listed: number }>()
   for (const item of items) {
-    if ((valueOf(item) ?? 0) <= 0) continue
+    // A found file comes without a value, carrying the folder's total; a clean folder is value 0.
+    if ((valueOf(item) ?? 0) <= 0 && (num(dataOf(item).total) ?? 0) <= 0) continue
     const key = `${item.key.host}\0${folderGuess(item.key.target)}`
     const seen = folders.get(key) ?? { total: 0, listed: 0 }
     folders.set(key, {

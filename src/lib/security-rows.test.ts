@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { secItem } from '@/testing/security-items'
-import { securityRow, securityRows, severityMix } from './security-rows'
+import { securityRow, securityRowItems, securityRows, severityMix } from './security-rows'
 
 const uploads = (path: string, total: number, extra = {}) =>
   secItem({
@@ -94,6 +94,14 @@ describe('securityRows', () => {
     expect(row.value).toEqual({ key: 'files', params: { n: 137 } })
   })
 
+  it('counts a found file whose fact has no value, only the folder total, as the check sends it', () => {
+    const file = uploads('/var/www/shop/public/uploads/avatar.php', 1, { value: null })
+    const clean = secItem({ check: 'sec.upload_php', target: '/srv/api', value: 0 })
+    const row = securityRow('sec.upload_php', [clean, file], [], 12, 'en')
+    expect(row.state).toBe('crit')
+    expect(row.value).toEqual({ key: 'files', params: { n: 1 } })
+  })
+
   it('adds the totals of separate project folders', () => {
     const list = [uploads('/srv/a/uploads/1.php', 3), uploads('/srv/b/uploads/1.php', 4)]
     expect(securityRow('sec.upload_php', list, [], 12, 'en').value?.params).toEqual({ n: 7 })
@@ -170,5 +178,25 @@ describe('securityRows', () => {
       'en',
     )
     expect(severityMix(rows)).toEqual({ crit: 1, warn: 1, info: 0, ok: 1 })
+  })
+})
+
+describe('securityRowItems', () => {
+  const onServer = (host: string) => ({
+    ...secItem({ check: 'sec.miner', host, data: { seen: 80, total: 80 } }),
+    owner: { kind: 'server' as const, host },
+  })
+
+  it('keeps the results of a shared host, so its clean checks do not read as never run', () => {
+    const own = secItem({ check: 'sec.upload_php', project: 'shop', host: 'vps-1' })
+    const other = secItem({ check: 'sec.upload_php', project: 'api', host: 'vps-1' })
+    const items = securityRowItems([own, other, onServer('vps-1'), onServer('vps-9')], 'shop', [
+      'vps-1',
+    ])
+    expect(items.map((i) => `${i.key.check}@${i.key.host}`)).toEqual([
+      'sec.upload_php@vps-1',
+      'sec.miner@vps-1',
+    ])
+    expect(securityRow('sec.miner', items, [], 12, 'en').state).toBe('ok')
   })
 })
