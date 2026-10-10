@@ -24,15 +24,13 @@ const cellTitle = (c: StripCell) =>
   c.ms === null
     ? t('projectOverview.response.cellNone', { seq: c.seq })
     : t('projectOverview.response.cell', { seq: c.seq, ms: ms(c.ms) })
-const sentence = computed(() =>
-  props.worst
-    ? t(
-        'projectOverview.response.slow',
-        { n: props.slowCount, seq: props.worst.seq, ms: ms(props.worst.ms) },
-        props.slowCount,
-      )
-    : t('projectOverview.response.allGood'),
-)
+const sentence = computed(() => {
+  const worst = props.worst
+  if (!worst) return t('projectOverview.response.allGood')
+  const key = worst.ms === null ? 'slowNoAnswer' : 'slow'
+  const params = { n: props.slowCount, seq: worst.seq, ms: ms(worst.ms) }
+  return t(`projectOverview.response.${key}`, params, props.slowCount)
+})
 
 function answer(row: UrlRow): { text: string; tone: string } {
   const item = row.http

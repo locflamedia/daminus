@@ -86,6 +86,7 @@
       "cellNone": "#{seq} · không phản hồi",
       "today": "hôm nay",
       "slow": "{n} lần quét không ổn; chậm nhất là #{seq}, {ms}.",
+      "slowNoAnswer": "{n} lần quét không ổn; #{seq} không có phản hồi.",
       "allGood": "Mọi lần quét đều phản hồi kịp.",
       "answered": "{status} · {ms}",
       "failed": "không phản hồi · {why}",
