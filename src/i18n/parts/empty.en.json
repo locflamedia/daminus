@@ -72,7 +72,9 @@
       "headline": {
         "noConfig": "No ssh config yet. Let’s make your servers visible to ssh.",
         "noUsableHosts": "Your ssh config has no host Daminus can use yet.",
-        "agent": "Your ssh-agent holds no key yet. Let’s load one."
+        "agent": "Your ssh-agent holds no key yet. Let’s load one.",
+        "keyLoaded": "Key loaded. One step left: describe your servers.",
+        "ready": "Ready. Import {n} host. | Ready. Import {n} hosts."
       },
       "subtitle": "Daminus uses the same {ssh} as Terminal. Three one-time steps, about five minutes.",
       "subtitleFew": "Daminus uses the same {ssh} as Terminal. {n} one-time step. | Daminus uses the same {ssh} as Terminal. {n} one-time steps.",
@@ -98,6 +100,7 @@
         "okChip": "{n} key | {n} keys"
       },
       "step": {
+        "done": "Done",
         "key": {
           "title": "Save your key as a file in ~/.ssh",
           "body": "Put the private key for your servers in ~/.ssh (or create one with ssh-keygen). Then lock its permissions:"

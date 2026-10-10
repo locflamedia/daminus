@@ -72,7 +72,9 @@
       "headline": {
         "noConfig": "Chưa có cấu hình ssh. Hãy để ssh nhìn thấy máy chủ của bạn.",
         "noUsableHosts": "Cấu hình ssh của bạn chưa có host nào Daminus dùng được.",
-        "agent": "ssh-agent của bạn chưa giữ khóa nào. Hãy nạp một khóa."
+        "agent": "ssh-agent của bạn chưa giữ khóa nào. Hãy nạp một khóa.",
+        "keyLoaded": "Đã nạp khóa. Còn một bước: mô tả các máy chủ của bạn.",
+        "ready": "Sẵn sàng. Nhập {n} máy chủ."
       },
       "subtitle": "Daminus dùng cùng {ssh} với Terminal. Ba bước làm một lần, khoảng năm phút.",
       "subtitleFew": "Daminus dùng cùng {ssh} với Terminal. {n} bước làm một lần. | Daminus dùng cùng {ssh} với Terminal. {n} bước làm một lần.",
@@ -98,6 +100,7 @@
         "okChip": "{n} khóa | {n} khóa"
       },
       "step": {
+        "done": "Xong",
         "key": {
           "title": "Lưu khóa thành một tệp trong ~/.ssh",
           "body": "Đặt khóa riêng cho máy chủ của bạn vào ~/.ssh (hoặc tạo một khóa bằng ssh-keygen). Rồi khóa quyền truy cập của tệp:"

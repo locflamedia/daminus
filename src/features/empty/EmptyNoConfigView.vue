@@ -54,7 +54,7 @@ const importLabel = computed(() =>
           />
         </span>
         <div class="words">
-          <h2>{{ t(`empty.help.headline.${view.headline}`) }}</h2>
+          <h2>{{ t(`empty.help.headline.${view.headline}`, { n: view.hosts }, view.hosts) }}</h2>
           <I18nT v-if="stepCount === 3" keypath="empty.help.subtitle" tag="p" scope="global">
             <template #ssh><span class="mono">ssh</span></template>
           </I18nT>
@@ -73,7 +73,7 @@ const importLabel = computed(() =>
 
       <div v-enter="{ index: 1 }" class="cards">
         <HelpFound :view="view" :names="names" :busy="setup.loading" @recheck="$emit('recheck')" />
-        <HelpSteps v-if="stepCount > 0" :steps="view.steps" :alias="alias" />
+        <HelpSteps v-if="stepCount > 0" :steps="view.steps" :done="view.done" :alias="alias" />
         <HelpTest :alias="alias" :agent-step="agentStep" />
       </div>
     </div>

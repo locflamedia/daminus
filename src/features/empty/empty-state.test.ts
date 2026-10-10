@@ -142,8 +142,25 @@ describe('helpView', () => {
     expect(v.rows).toEqual({ config: true, agent: true })
     expect(v.config).toBe('ok')
     expect(v.agent).toBe('keys')
-    expect(v.headline).toBe('noConfig')
+    // Both rows green: the headline says it is ready, and every step reads Done.
+    expect(v.headline).toBe('ready')
+    expect(v.done).toEqual({ key: true, agent: true, block: true })
     expect(v.canImport).toBe(true)
+  })
+
+  it('names the step left once the key is loaded and the config is still missing', () => {
+    const before = shownRows(input({ ...NO_CONFIG, agent: 'empty', termiusInstalled: true }), null)
+    const keyed = input({ ...NO_CONFIG, agent: 'keys', keys: 1, termiusInstalled: true })
+    const v = helpView(keyed, shownRows(keyed, before))
+    expect(v.headline).toBe('keyLoaded')
+    expect(v.rows.agent).toBe(true)
+    expect(v.done).toEqual({ key: true, agent: true, block: false })
+    expect(v.canImport).toBe(false)
+  })
+
+  it('marks nothing done while every row is still missing', () => {
+    const v = view({ ...NO_CONFIG, agent: 'empty', keys: 0, termiusInstalled: true })
+    expect(v.done).toEqual({ key: false, agent: false, block: false })
   })
 
   it('moves the headline from cause A to cause B while the config is still the problem', () => {
