@@ -321,3 +321,21 @@ fn every_tray_key_is_in_both_languages() {
     };
     assert_eq!(keys(EN), keys(VI));
 }
+
+#[test]
+fn among_critical_projects_the_one_with_most_criticals_needs_you() {
+    let mut r = report(5, 1);
+    let with = |id: &str, crit, warn| ProjectRollup {
+        counts: Counts {
+            crit,
+            warn,
+            ..Counts::default()
+        },
+        ..rollup(id, Level::Crit)
+    };
+    // In report order the first critical project has the fewest issues.
+    r.projects = vec![with("c", 1, 0), with("a", 2, 0), with("b", 2, 1)];
+    let p = projects();
+    let v = view(&inputs(Some(&r), &p), &en());
+    assert_eq!(v.info[1], "Scan #12 · 13:42 · kho-hang needs you");
+}

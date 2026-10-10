@@ -333,17 +333,20 @@ fn error_line(e: &AppError, s: &Strings) -> String {
     }
 }
 
-/// The id and name of the project with the worst open issue (first on a tie).
+/// The id and name of the project that needs a look most: the worst level,
+/// then the most criticals, then the most warnings; the first in the report
+/// on a full tie.
 fn needs_you(report: &Report, projects: &ProjectsFile) -> Option<(String, String)> {
     let rank = |l: Level| match l {
         Level::Crit => 2,
         Level::Warn => 1,
         _ => 0,
     };
+    let key = |p: &ProjectRollup| (rank(p.level), p.counts.crit, p.counts.warn);
     let worst = report.projects.iter().filter(|p| rank(p.level) > 0).fold(
         None,
         |best: Option<&ProjectRollup>, p| match best {
-            Some(b) if rank(b.level) >= rank(p.level) => Some(b),
+            Some(b) if key(b) >= key(p) => Some(b),
             _ => Some(p),
         },
     )?;
