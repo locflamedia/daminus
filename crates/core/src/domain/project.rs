@@ -66,13 +66,23 @@ pub enum ComponentKind {
         pm2_home: Option<String>,
     },
     /// A database reached with credentials read on the server from `env_file`,
-    /// optionally through `docker exec` into `container`.
+    /// optionally through `docker exec` into `container`. A database whose
+    /// name or `.env` is not known yet is kept (the user added it), but its
+    /// size is not read until both are set.
     Db {
         engine: DbEngine,
-        #[serde(deserialize_with = "plain_name")]
-        database: String,
-        #[serde(deserialize_with = "abs_path")]
-        env_file: String,
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "opt_plain_name"
+        )]
+        database: Option<String>,
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "opt_abs_path"
+        )]
+        env_file: Option<String>,
         #[serde(
             default,
             skip_serializing_if = "Option::is_none",
@@ -125,7 +135,7 @@ fn opt_abs_path<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::Er
         None => Ok(None),
         Some(raw) if is_abs_path(&raw) => Ok(Some(raw)),
         Some(raw) => Err(serde::de::Error::custom(format!(
-            "invalid pm2_home: {raw:?}"
+            "invalid absolute path: {raw:?}"
         ))),
     }
 }
@@ -134,9 +144,7 @@ fn opt_plain_name<'de, D: Deserializer<'de>>(d: D) -> Result<Option<String>, D::
     match Option::<String>::deserialize(d)? {
         None => Ok(None),
         Some(raw) if is_plain_name(&raw) => Ok(Some(raw)),
-        Some(raw) => Err(serde::de::Error::custom(format!(
-            "invalid container name: {raw:?}"
-        ))),
+        Some(raw) => Err(serde::de::Error::custom(format!("invalid name: {raw:?}"))),
     }
 }
 
@@ -158,7 +166,7 @@ impl Component {
             ComponentKind::Path { path } => path.trim_end_matches('/'),
             ComponentKind::Compose { project } => project,
             ComponentKind::Pm2 { app, .. } => app,
-            ComponentKind::Db { database, .. } => database,
+            ComponentKind::Db { database, .. } => database.as_deref().unwrap_or_default(),
         }
     }
 
@@ -270,6 +278,9 @@ mod tests {
                    "env_file": "/srv/shop/.env", "container": "shop-db-1"}),
             json!({"kind": "db", "engine": "postgres", "database": "shop",
                    "env_file": "/srv/shop/.env"}),
+            // Added by the user before its name and .env were known.
+            json!({"kind": "db", "engine": "postgres", "container": "blog-db-1"}),
+            json!({"kind": "db", "engine": "mysql", "env_file": "/srv/shop/.env"}),
         ];
         for v in ok {
             assert!(

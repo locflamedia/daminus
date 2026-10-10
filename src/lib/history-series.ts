@@ -47,7 +47,7 @@ export function projectSeries(
   )
   const databases = new Set(
     (project?.components ?? []).flatMap((c) =>
-      c.kind === 'db' ? [`${c.host}\0${c.database}`] : [],
+      c.kind === 'db' && c.database ? [`${c.host}\0${c.database}`] : [],
     ),
   )
   const url = project?.urls[0]
@@ -96,7 +96,7 @@ export function topAt(
     (project?.components ?? []).flatMap((c) =>
       check === 'disk.path' && c.kind === 'path'
         ? [`${c.host}\0${c.path}`]
-        : check === 'db.size' && c.kind === 'db'
+        : check === 'db.size' && c.kind === 'db' && c.database
           ? [`${c.host}\0${c.database}`]
           : [],
     ),

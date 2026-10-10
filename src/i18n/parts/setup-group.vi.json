@@ -52,12 +52,12 @@
       "envPathUnchecked": "Daminus không mở file này; máy chủ kiểm tra đường dẫn khi quét.",
       "envLabel": "File .env · tìm thấy {n}, chọn file ứng dụng này dùng",
       "alsoFound": "Cũng tìm thấy",
-      "nameLabel": "Tên database · bắt buộc",
+      "nameLabel": "Tên database · cần để đọc dung lượng",
       "namePlaceholder": "booking_prod",
       "nameHelp": "Daminus không bao giờ đọc .env của bạn nên không biết tên này. Hãy gõ giá trị của DB_DATABASE.",
       "nameSet": "Đã có tên",
       "saveAllowedLead": "Vẫn lưu được.",
-      "saveAllowedBody": "{project} được lưu; thành phần database này tạm bị bỏ ra cho đến khi có tên, và dung lượng hiện Chưa thiết lập."
+      "saveAllowedBody": "{project} được lưu cùng thành phần database này; dung lượng hiện Chưa thiết lập cho đến khi có tên."
     },
     "replaces": {
       "chip": "Đã lưu trước đó · Lưu sẽ thay thế",

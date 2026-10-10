@@ -196,11 +196,11 @@ pub fn discover(store: FsStore, ssh_config: Option<PathBuf>, args: DiscoverArgs)
         let mut projects = Vec::new();
         for p in &proposal.projects {
             let db = databases.get(&p.id).map(String::as_str);
-            let (project, left_out) = p.to_project(db);
-            if left_out > 0 {
+            let (project, incomplete) = p.to_project(db);
+            if incomplete > 0 {
                 println!(
-                    "{}: {left_out} database component(s) not saved, they need the database name \
-                     (--database {}=NAME, or add it to projects.json)",
+                    "{}: {incomplete} database component(s) saved without a name or .env, so their \
+                     size is not read yet (--database {}=NAME, or add it to projects.json)",
                     p.id, p.id
                 );
             }

@@ -107,8 +107,8 @@ fn projects() -> ProjectsFile {
                         "vps-sg-2",
                         ComponentKind::Db {
                             engine: DbEngine::Postgres,
-                            database: "tiemtra".into(),
-                            env_file: "/srv/tiemtra-api/.env".into(),
+                            database: Some("tiemtra".into()),
+                            env_file: Some("/srv/tiemtra-api/.env".into()),
                             container: Some("tiemtra-api-db-1".into()),
                         },
                     ),
@@ -133,8 +133,8 @@ fn projects() -> ProjectsFile {
                         "db-main",
                         ComponentKind::Db {
                             engine: DbEngine::Mysql,
-                            database: "booking".into(),
-                            env_file: "/srv/booking/.env".into(),
+                            database: Some("booking".into()),
+                            env_file: Some("/srv/booking/.env".into()),
                             container: None,
                         },
                     ),

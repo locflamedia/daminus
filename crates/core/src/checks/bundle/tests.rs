@@ -706,6 +706,10 @@ fn components_of_the_host_travel_as_lists() {
                 {"role": "db", "host": "vps-a", "kind": "db", "engine": "postgres",
                  "database": "reports", "env_file": "/srv/shop/.env.pg",
                  "container": "shop-pg-1"},
+                {"role": "db", "host": "vps-a", "kind": "db", "engine": "postgres",
+                 "container": "blog-db-1"},
+                {"role": "db", "host": "vps-a", "kind": "db", "engine": "mysql",
+                 "env_file": "/srv/blog/.env"},
                 {"role": "fe", "host": "vps-b", "kind": "path", "path": "/srv/other"}
             ]},
             {"id": "b", "name": "B", "components": [
@@ -721,7 +725,8 @@ fn components_of_the_host_travel_as_lists() {
     assert_eq!(vars.0[PATHS_VAR], "/srv/shop\n/");
     assert_eq!(vars.0[COMPOSE_VAR], "shop");
     assert_eq!(vars.0[PM2_VAR], "queue\nadmin\t/home/www/.pm2");
-    // Names and paths only: the credentials stay in the .env on the server.
+    // Names and paths only: the credentials stay in the .env on the server. A
+    // database without a name or an .env yet is not sent: there is nothing to read.
     assert_eq!(
         vars.0[DB_VAR],
         "mysql\tshop\t/srv/shop/.env\t\npostgres\treports\t/srv/shop/.env.pg\tshop-pg-1"

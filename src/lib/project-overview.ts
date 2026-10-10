@@ -255,11 +255,11 @@ export function partRows(project: Project | undefined, items: readonly Item[]): 
         item,
       }
     }
-    const item = findItem(items, 'db.size', c.host, c.database)
+    const item = c.database ? findItem(items, 'db.size', c.host, c.database) : undefined
     const v = item ? parseDb(item) : null
     return {
       ...base,
-      name: c.database,
+      name: c.database ?? c.container ?? c.engine,
       tone: toneOf(item),
       state: { kind: 'db', engine: c.engine, bytes: v?.size ?? null, tables: v?.tables ?? null },
       item,

@@ -654,13 +654,22 @@ fn pm2_apps_of_another_daemon_name_their_home() {
 fn a_proposal_becomes_projects_json_with_or_without_the_database() {
     let p = group(&five_servers());
     let tiemtra = &p.projects[1];
-    let (without, left_out) = tiemtra.to_project(None);
-    assert_eq!(left_out, 1);
-    assert_eq!(without.components.len(), 3);
+    // Without a name the database is kept (the user added it), only not read yet.
+    let (without, incomplete) = tiemtra.to_project(None);
+    assert_eq!(incomplete, 1);
+    assert_eq!(without.components.len(), 4);
     assert_eq!(without.urls, tiemtra.urls);
+    assert!(matches!(
+        without.components.last().map(|c| &c.kind),
+        Some(ComponentKind::Db {
+            database: None,
+            env_file: Some(_),
+            ..
+        })
+    ));
 
-    let (with, left_out) = tiemtra.to_project(Some("tiemtra"));
-    assert_eq!(left_out, 0);
+    let (with, incomplete) = tiemtra.to_project(Some("tiemtra"));
+    assert_eq!(incomplete, 0);
     assert_eq!(with.components.len(), 4);
     let Some(ComponentKind::Db {
         engine,
@@ -672,8 +681,8 @@ fn a_proposal_becomes_projects_json_with_or_without_the_database() {
         panic!("last component is not a database");
     };
     assert_eq!(engine, DbEngine::Postgres);
-    assert_eq!(database, "tiemtra");
-    assert_eq!(env_file, "/srv/tiemtra-api/.env");
+    assert_eq!(database.as_deref(), Some("tiemtra"));
+    assert_eq!(env_file.as_deref(), Some("/srv/tiemtra-api/.env"));
     assert_eq!(container.as_deref(), Some("tiemtra-api-db-1"));
     // It round-trips through the file format, which re-checks every string.
     let file = crate::domain::project::ProjectsFile {
