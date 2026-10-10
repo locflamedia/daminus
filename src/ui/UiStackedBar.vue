@@ -17,10 +17,17 @@ export interface StackPart {
   /** The grey part that holds everything else; always last. */
   other?: boolean
   mono?: boolean
+  /** A fixed colour (a CSS value) for a part that always means the same thing. */
+  color?: string
 }
 
 const props = withDefaults(
-  defineProps<{ parts: readonly StackPart[]; label: string; legend?: boolean }>(),
+  defineProps<{
+    parts: readonly StackPart[]
+    label: string
+    /** The legend: a list under the bar, `inline` for one line of swatches, or none. */
+    legend?: boolean | 'inline'
+  }>(),
   {
     legend: true,
   },
@@ -34,7 +41,7 @@ const items = computed(() => {
       const color: ChartColor = part.other
         ? STACK_OTHER
         : (STACK_RAMP[Math.min(step++, STACK_RAMP.length - 1)] ?? STACK_OTHER)
-      return { part, color: COLOR_VAR[color] }
+      return { part, color: part.color ?? COLOR_VAR[color] }
     })
 })
 </script>
@@ -49,7 +56,7 @@ const items = computed(() => {
         :style="{ flex: `${part.value} 1 0%`, background: color }"
       />
     </div>
-    <ul v-if="legend" class="list">
+    <ul v-if="legend" class="list" :class="{ inline: legend === 'inline' }">
       <li v-for="{ part, color } in items" :key="part.id" class="row">
         <i class="swatch" :style="{ background: color }" />
         <span class="name" :class="{ mono: part.mono }">{{ part.label }}</span>
@@ -94,6 +101,24 @@ const items = computed(() => {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+/* One line of swatches under the bar: name and amount side by side. */
+.list.inline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 4px var(--space-4);
+  color: var(--ink-3);
+  font-size: var(--text-11);
+}
+
+.list.inline .row {
+  gap: 6px;
+}
+
+.list.inline .amount {
+  margin-left: 0;
+  font-weight: inherit;
 }
 
 .swatch {

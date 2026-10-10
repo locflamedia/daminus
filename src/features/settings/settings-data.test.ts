@@ -92,6 +92,16 @@ describe('Settings › Data', () => {
     }
   })
 
+  it('draws the folder bar with fixed colours per kind and its legend on one line', async () => {
+    const { wrapper } = await mountData()
+    const card = wrapper.get('.storage')
+    const segs = card.findAll('.seg').map((s) => s.attributes('style') ?? '')
+    // Logs are the board's grey, whatever else is in the folder.
+    expect(segs.some((s) => s.includes('var(--ink-5)'))).toBe(true)
+    expect(segs.some((s) => s.includes('var(--accent)'))).toBe(true)
+    expect(card.get('.list').classes()).toContain('inline')
+  })
+
   it('says how a scan costs and where the folder levels off at the limit', async () => {
     await mountData()
     const text = document.body.textContent ?? ''

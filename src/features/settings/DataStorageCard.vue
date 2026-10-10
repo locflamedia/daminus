@@ -9,6 +9,7 @@ import { formatMeasure } from '@/lib/format'
 import { partsOf, totalBytes } from '@/lib/data-view'
 import { useDataStore } from '@/stores/data'
 import UiStackedBar, { type StackPart } from '@/ui/UiStackedBar.vue'
+import { COLOR_VAR } from '@/ui/chart-colors'
 import DataCard from './DataCard.vue'
 
 const { t } = useI18n()
@@ -22,20 +23,45 @@ const parts = computed<StackPart[]>(() => {
   if (!data.usage) return []
   const p = partsOf(data.usage)
   return [
-    { id: 'scans', label: t('settingsData.storage.scans'), value: p.scans, display: size(p.scans) },
-    { id: 'ai', label: t('settingsData.storage.ai'), value: p.ai, display: size(p.ai) },
-    { id: 'logs', label: t('settingsData.storage.logs'), value: p.logs, display: size(p.logs) },
+    // Each kind keeps its colour, as on the board: scans blue, AI replies lilac, logs grey.
+    {
+      id: 'scans',
+      label: t('settingsData.storage.scans'),
+      value: p.scans,
+      display: size(p.scans),
+      color: COLOR_VAR.accent,
+    },
+    {
+      id: 'ai',
+      label: t('settingsData.storage.ai'),
+      value: p.ai,
+      display: size(p.ai),
+      color: COLOR_VAR.lilac,
+    },
+    {
+      id: 'logs',
+      label: t('settingsData.storage.logs'),
+      value: p.logs,
+      display: size(p.logs),
+      color: 'var(--ink-5)',
+    },
   ]
 })
 </script>
 
 <template>
-  <DataCard :title="t('settingsData.storage.title')" icon="database" :aside="data.usage?.path" mono>
+  <DataCard
+    class="storage"
+    :title="t('settingsData.storage.title')"
+    icon="database"
+    :aside="data.usage?.path"
+    mono
+  >
     <div class="figure">
       <b class="total">{{ total }}</b>
       <span class="kind">{{ t('settingsData.storage.kind', { n: data.usage?.files ?? 0 }) }}</span>
     </div>
-    <UiStackedBar :parts="parts" :label="t('settingsData.storage.bar')" />
+    <UiStackedBar :parts="parts" :label="t('settingsData.storage.bar')" legend="inline" />
   </DataCard>
 </template>
 
