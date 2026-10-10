@@ -54,8 +54,8 @@ pub type ConfigHosts = Arc<dyn Fn() -> Option<KnownAliases> + Send + Sync>;
 #[derive(Clone)]
 pub struct ServiceOptions {
     pub host_budget: Duration,
-    /// When set, a host whose alias is not in the config is not run: it ends
-    /// as `NotInConfig` instead of a DNS failure on its alias.
+    /// When set, a host whose alias is not in the config and fails as a DNS
+    /// name ends as `NotInConfig` instead of unreachable.
     pub config_hosts: Option<ConfigHosts>,
 }
 
@@ -359,22 +359,22 @@ impl Job {
                 .clamp(1, MAX_CONNECT_TIMEOUT_S),
         ));
         let mut hosts = JoinSet::new();
-        let known = self
-            .shared
-            .options
-            .config_hosts
-            .as_ref()
-            .and_then(|read| read());
+        // Read off the runtime: the config and its includes are files.
+        let known = match self.shared.options.config_hosts.clone() {
+            Some(read) => tokio::task::spawn_blocking(move || read())
+                .await
+                .ok()
+                .flatten()
+                .map(Arc::new),
+            None => None,
+        };
         for host in &self.targets.hosts {
-            if known.as_ref().is_some_and(|k| !k.contains(host.as_str())) {
-                hosts.spawn(not_in_config(Arc::clone(&self.emitter), host.clone()));
-                continue;
-            }
             let task = HostTask {
                 shared: Arc::clone(&self.shared),
                 emitter: Arc::clone(&self.emitter),
                 cancel: self.cancel.clone(),
                 bundle: Arc::clone(&self.bundle),
+                known: known.clone(),
                 req: RunRequest {
                     host: host.clone(),
                     script: self
@@ -532,6 +532,8 @@ struct HostTask {
     emitter: Arc<Emitter>,
     cancel: CancellationToken,
     bundle: Arc<Bundle>,
+    /// The aliases the ssh config defines, when it could be read.
+    known: Option<Arc<KnownAliases>>,
     req: RunRequest,
 }
 
@@ -585,7 +587,11 @@ impl HostTask {
         }
         let output = parser.finish();
         let end = end.unwrap_or_default();
-        let outcome = decide(&output, &end, timed_out);
+        let outcome = not_in_config(
+            decide(&output, &end, timed_out),
+            self.known.as_deref(),
+            &self.req.host,
+        );
         let ms = millis(t0);
         tracing::info!(
             exit = ?end.exit,
@@ -631,32 +637,25 @@ impl HostTask {
     }
 }
 
-/// A host the config no longer defines: no ssh is run, so its alias is not
-/// looked up as a DNS name, and the scan says why instead of "unreachable".
-async fn not_in_config(emitter: Arc<Emitter>, host: HostAlias) -> Option<HostResult> {
-    let host_ref = HostRef::Alias(host.clone());
-    emitter
-        .emit(ScanEventBody::HostStarted {
-            host: host_ref.clone(),
-        })
-        .await;
-    tracing::info!(host = %host, "host not in the ssh config; not run");
-    let outcome = HostOutcome::NotInConfig;
-    emitter
-        .emit(ScanEventBody::HostFinished {
-            host: host_ref,
-            outcome: outcome.clone(),
-            ms: 0,
-            facts: 0,
-            dropped: 0,
-        })
-        .await;
-    Some(HostResult {
-        host,
+/// An alias the config no longer defines is looked up as a DNS name, and
+/// fails there: say it is not in the config rather than unreachable. ssh ran
+/// either way, so a host it reached without a `Host` line keeps its outcome.
+fn not_in_config(
+    outcome: HostOutcome,
+    known: Option<&KnownAliases>,
+    host: &HostAlias,
+) -> HostOutcome {
+    let dns = matches!(
         outcome,
-        output: HostOutput::default(),
-        ms: 0,
-    })
+        HostOutcome::Unreachable {
+            cause: NetCause::Dns
+        }
+    );
+    if dns && known.is_some_and(|k| !k.contains(host.as_str())) {
+        HostOutcome::NotInConfig
+    } else {
+        outcome
+    }
 }
 
 /// Every host failed with DNS/no route and every URL failed at the network
@@ -669,7 +668,7 @@ fn local_network_down(results: &[HostResult], local: Option<&LocalResult>, urls:
             r.outcome,
             HostOutcome::Unreachable {
                 cause: NetCause::Dns | NetCause::NoRoute
-            }
+            } | HostOutcome::NotInConfig
         )
     });
     let urls_down = local.is_none_or(|l| l.all_network);

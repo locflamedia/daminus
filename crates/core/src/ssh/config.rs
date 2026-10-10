@@ -53,16 +53,18 @@ pub struct KnownAliases {
 }
 
 impl KnownAliases {
-    /// From a listing. `None` when it cannot tell: a `Match` block may apply
-    /// to any alias. A missing config file defines none.
+    /// From a listing. `None` when it cannot tell: no config file was found,
+    /// or a `Match` block may apply to any alias.
     pub fn of(list: &HostList) -> Option<Self> {
-        if list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
+        if !list.config_found || list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
             return None;
         }
         let mut known = Self::default();
-        known
-            .names
-            .extend(list.hosts.iter().map(|h| h.alias.as_str().to_owned()));
+        known.names.extend(
+            list.hosts
+                .iter()
+                .map(|h| h.alias.as_str().to_ascii_lowercase()),
+        );
         for s in &list.skipped {
             match s.reason {
                 SkipReason::Wildcard if s.pattern != "*" && !s.pattern.starts_with('!') => {
@@ -70,42 +72,18 @@ impl KnownAliases {
                 }
                 SkipReason::Wildcard | SkipReason::Match => {}
                 SkipReason::NoHostName | SkipReason::InvalidAlias => {
-                    known.names.insert(s.pattern.clone());
+                    known.names.insert(s.pattern.to_ascii_lowercase());
                 }
             }
         }
         Some(known)
     }
 
+    /// Whether a `Host` line names the alias; like ssh, case does not matter.
     pub fn contains(&self, alias: &str) -> bool {
-        self.names.contains(alias) || self.patterns.iter().any(|p| glob(p, alias))
+        self.names.contains(&alias.to_ascii_lowercase())
+            || self.patterns.iter().any(|p| glob_match(p, alias, true))
     }
-}
-
-/// ssh's `*` and `?` patterns.
-fn glob(pattern: &str, text: &str) -> bool {
-    let (p, t): (Vec<char>, Vec<char>) = (pattern.chars().collect(), text.chars().collect());
-    let (mut pi, mut ti, mut star, mut mark) = (0, 0, None, 0);
-    while ti < t.len() {
-        if pi < p.len() && (p[pi] == '?' || p[pi] == t[ti]) {
-            pi += 1;
-            ti += 1;
-        } else if pi < p.len() && p[pi] == '*' {
-            star = Some(pi);
-            mark = ti;
-            pi += 1;
-        } else if let Some(s) = star {
-            pi = s + 1;
-            mark += 1;
-            ti = mark;
-        } else {
-            return false;
-        }
-    }
-    while pi < p.len() && p[pi] == '*' {
-        pi += 1;
-    }
-    pi == p.len()
 }
 
 /// A host the user can pick.

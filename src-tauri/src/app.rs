@@ -82,7 +82,7 @@ impl AppCore {
         let (tx, rx) = mpsc::channel(EVENT_BUFFER);
         let (setup_tx, setup_rx) = mpsc::channel(EVENT_BUFFER);
         // Each scan reads the ssh config's aliases once, so a host that is no
-        // longer in it is not run and reads "Not in ~/.ssh/config".
+        // longer in it reads "Not in ~/.ssh/config" rather than unreachable.
         let config_tools = tools.clone();
         let config_hosts: ConfigHosts = Arc::new(move || {
             let source = ConfigSource::for_tools(&config_tools)?;

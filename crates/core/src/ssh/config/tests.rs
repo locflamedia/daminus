@@ -616,3 +616,32 @@ fn known_aliases_name_hosts_and_patterns_but_not_the_catch_all() {
     };
     assert_eq!(KnownAliases::of(&with_match), None);
 }
+
+#[test]
+fn known_aliases_match_case_like_ssh_and_cannot_tell_without_a_config() {
+    let list = HostList {
+        config_found: true,
+        hosts: vec![ConfigHost {
+            alias: HostAlias::parse("Web").unwrap(),
+            file: "config".into(),
+            line: 1,
+        }],
+        skipped: vec![SkippedHost {
+            pattern: "VPS-*".into(),
+            file: "config".into(),
+            line: 4,
+            reason: SkipReason::Wildcard,
+        }],
+        empty: None,
+    };
+    let known = KnownAliases::of(&list).unwrap();
+    assert!(known.contains("web"));
+    assert!(known.contains("vps-1"));
+    let missing = HostList {
+        config_found: false,
+        hosts: Vec::new(),
+        skipped: Vec::new(),
+        empty: None,
+    };
+    assert_eq!(KnownAliases::of(&missing), None);
+}
