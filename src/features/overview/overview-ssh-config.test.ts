@@ -191,4 +191,13 @@ describe('Overview when ssh refuses the ssh config', () => {
     expect(useScanStore().error?.code.kind).toBe('ssh_config_invalid')
     expect(useSetupStore().error).not.toBeNull()
   })
+
+  it('says it as soon as the Overview opens on a config ssh refuses, before any scan', async () => {
+    const wrapper = await mountOverview()
+    await flushPromises()
+    expect(calls).toContain('hosts_list')
+    const banner = wrapper.get('.config-problem')
+    expect(banner.text()).toContain('ssh stops at line 9 of ~/.ssh/config')
+    expect(calls).not.toContain('scan_start')
+  })
 })

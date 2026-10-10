@@ -58,8 +58,11 @@ watch(
   },
   { immediate: true },
 )
-/** The banner with the quoted lines; without a listing to quote, the plain error says it. */
-const configBanner = computed(() => (configRefused.value ? setup.configProblem : null))
+/**
+ * The banner with the quoted lines, whenever ssh refuses the config: after a scan stopped, or as
+ * soon as the Overview opens on it. Without a listing to quote, the plain error says it.
+ */
+const configBanner = computed(() => setup.configProblem)
 
 const errorMessage = computed(() => {
   const error = (configBanner.value ? null : scan.error) ?? reports.error
@@ -105,7 +108,11 @@ function onKeydown(e: KeyboardEvent) {
     void scan.stop()
   }
 }
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  // A config ssh refuses is said here before any scan: read it once if nothing else has.
+  if (setup.listing === null && !setup.loading) void setup.load()
+})
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
