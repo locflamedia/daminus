@@ -113,6 +113,7 @@ describe('opening', () => {
   it('shows a saved project: title, id, URLs with their answer, parts and Remove', async () => {
     await open(edit())
     expect(text()).toContain('Edit project')
+    expect(document.querySelector('.layer')?.classList.contains('pinned')).toBe(true)
     expect(text()).toContain('tiemtra · 4 parts on 2 servers')
     expect(document.querySelectorAll<HTMLInputElement>('[data-sheet-field^="url:"]')).toHaveLength(
       2,

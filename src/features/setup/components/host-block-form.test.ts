@@ -191,6 +191,8 @@ describe('AddHostSheet', () => {
     expect(dialog?.textContent).toContain('Add a host by hand')
     expect(dialog?.textContent).toContain('Daminus never writes ~/.ssh/config.')
     expect(dialog?.querySelectorAll('input')).toHaveLength(5)
+    // A form sheet: pinned to the top, so an error line under a field moves nothing above it.
+    expect(document.body.querySelector('.layer')?.classList.contains('pinned')).toBe(true)
     wrapper.unmount()
   })
 

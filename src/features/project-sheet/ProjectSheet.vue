@@ -58,7 +58,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <UiSheet :open="store.isOpen" :title="title" @close="sheet.requestClose()">
+  <UiSheet pinned :open="store.isOpen" :title="title" @close="sheet.requestClose()">
     <template #header="{ titleId, close }">
       <SheetHeader :title-id="titleId" :title="title" @close="close" />
     </template>

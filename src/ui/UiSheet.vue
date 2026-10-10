@@ -11,6 +11,9 @@
   a form with unsaved changes can ask once before it goes; a press on the scrim does nothing,
   so a stray click never loses an edit. Focus moves in and stays in (Tab wraps) and returns to
   where it was. It fills the nearest positioned ancestor (mount it at the window root).
+  `pinned` is for a sheet with a form (Add host, Edit project): its top edge stays 64 px below
+  the window's top and it only grows down, so an error line appearing under a field never moves
+  what is above it; past 88 % of the window the body scrolls.
   200 ms: scale .98 and 8 px up with a fade; Reduce Motion keeps the fade.
 -->
 <script setup lang="ts">
@@ -32,8 +35,17 @@ const props = withDefaults(
     plain?: boolean
     /** Focus the panel itself on open, not the first control (no ring on a close control). */
     focusPanel?: boolean
+    /** A form sheet: pinned 64 px below the window's top instead of centred. */
+    pinned?: boolean
   }>(),
-  { context: undefined, width: '760px', closeLabel: undefined, plain: false, focusPanel: false },
+  {
+    context: undefined,
+    width: '760px',
+    closeLabel: undefined,
+    plain: false,
+    focusPanel: false,
+    pinned: false,
+  },
 )
 
 const emit = defineEmits<{ close: [] }>()
@@ -60,7 +72,7 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
 
 <template>
   <Transition name="sheet" appear>
-    <div v-if="open" class="layer" :class="{ plain }">
+    <div v-if="open" class="layer" :class="{ plain, pinned: pinned && !plain }">
       <div class="scrim" aria-hidden="true" />
       <div
         ref="panel"
@@ -131,6 +143,12 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
 
 .tray:focus-visible {
   box-shadow: var(--shadow-overlay);
+}
+
+/* Pinned (a form): the top edge stays put; the sheet grows down and scrolls past 88 %. */
+.layer.pinned {
+  align-items: flex-start;
+  padding-top: 64px;
 }
 
 /* Plain: one white card, radius 20, 36 px from the top and bottom of the window. */
