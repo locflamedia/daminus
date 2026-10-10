@@ -102,6 +102,9 @@
     }
   },
   "tray": {
+    "sshConfig": "Không đọc được cấu hình SSH của bạn",
+    "sshConfigAt": "ssh dừng ở dòng {line} của {file}",
+    "sshConfigFile": "ssh không đọc được {file}",
     "crit": "{n} nghiêm trọng",
     "warn": "{n} cảnh báo",
     "allClear": "Mọi thứ ổn · {n} dự án",

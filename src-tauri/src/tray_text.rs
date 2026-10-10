@@ -90,6 +90,8 @@ pub struct Inputs<'a> {
     pub projects: Result<&'a ProjectsFile, &'a AppError>,
     /// The scan that is running.
     pub scan: Option<&'a ScanRun>,
+    /// Why the last Scan now did not start: ssh refuses the ssh config.
+    pub ssh_config: Option<&'a AppError>,
     pub now: Timestamp,
     pub offset: UtcOffset,
 }
@@ -183,6 +185,19 @@ pub fn view(i: &Inputs<'_>, s: &Strings) -> TrayView {
             };
         }
     };
+
+    // ssh refuses the ssh config: the scan stopped before ssh. The window's
+    // banner words, the line, and Scan now to check again once it is fixed.
+    if i.scan.is_none()
+        && let Some(e) = i.ssh_config
+    {
+        return TrayView {
+            icon: TrayIcon::Mark,
+            title: None,
+            info: vec![s.t("sshConfig", &[]), ssh_config_line(e, s)],
+            items: vec![fix(), scan_now(true), quit()],
+        };
+    }
 
     // Scanning: no count, the mark breathes; Stop replaces Scan now.
     if let Some(run) = i.scan {
@@ -306,6 +321,27 @@ pub fn view(i: &Inputs<'_>, s: &Strings) -> TrayView {
 fn clock(at: Timestamp, offset: UtcOffset) -> String {
     let local = at.inner().to_offset(offset);
     format!("{:02}:{:02}", local.hour(), local.minute())
+}
+
+/// Where ssh stopped in the ssh config ("ssh stops at line 9 of ~/.ssh/config").
+fn ssh_config_line(e: &AppError, s: &Strings) -> String {
+    let tilde = |path: &str| match path.strip_prefix("/Users/").and_then(|p| p.split_once('/')) {
+        Some((_, rest)) => format!("~/{rest}"),
+        None => path.to_owned(),
+    };
+    match &e.code {
+        ErrorCode::SshConfigInvalid {
+            path,
+            line: Some(line),
+        } => s.t(
+            "sshConfigAt",
+            &[("file", &tilde(path)), ("line", &line.to_string())],
+        ),
+        ErrorCode::SshConfigInvalid { path, line: None } => {
+            s.t("sshConfigFile", &[("file", &tilde(path))])
+        }
+        _ => s.t("errOther", &[]),
+    }
 }
 
 /// One short grey line saying what went wrong ("settings.json is damaged").

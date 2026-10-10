@@ -46,12 +46,23 @@ struct Rig {
 /// An app core over a temp config folder, with the pump collecting events
 /// the way the app emits them to the webview.
 fn rig(transport: FakeTransport) -> Rig {
+    rig_with_config(
+        Arc::new(transport),
+        "Host vps-a\n    HostName 203.0.113.10\n\nHost vps-b\n    HostName 203.0.113.11\n",
+    )
+}
+
+/// The same, with `ssh_config` as the ssh config (passed to ssh with `-F`), so
+/// no test reads the ssh config of the machine it runs on.
+fn rig_with_config(transport: Arc<FakeTransport>, ssh_config: &str) -> Rig {
     let dir = TempDir::new().unwrap();
     let store = FsStore::new(dir.path());
     store.save_projects(&projects(), None).unwrap();
+    let config = dir.path().join("ssh_config");
+    std::fs::write(&config, ssh_config).unwrap();
     let (core, events) = AppCore::new(
-        Arc::new(transport),
-        SshTools::new(),
+        transport,
+        SshTools::new().with_config(&config),
         Arc::new(FakeProbe::new()),
         store,
     );
@@ -93,6 +104,35 @@ fn healthy() -> FakeHost {
     FakeHost::output(fixture_run("ubuntu-24.04").unwrap())
 }
 
+/// ssh refuses the ssh config: the scan does not start, ssh runs for no host,
+/// nothing is saved, and the error names the file and the line.
+#[tokio::test]
+async fn a_refused_ssh_config_stops_scan_start_before_ssh() {
+    if std::process::Command::new("ssh")
+        .arg("-V")
+        .output()
+        .is_err()
+    {
+        return;
+    }
+    let transport = Arc::new(
+        FakeTransport::new()
+            .host("vps-a", healthy())
+            .host("vps-b", healthy()),
+    );
+    let r = rig_with_config(
+        Arc::clone(&transport),
+        "Host vps-a\n    HostName 203.0.113.10\n\nHost vps-b\n    Port 99999\n",
+    );
+    let err = r.core.scan_start(&ScanScope::default()).await.unwrap_err();
+    let wire = serde_json::to_value(&err).unwrap();
+    assert_eq!(wire["code"]["kind"], "ssh_config_invalid");
+    assert_eq!(wire["code"]["line"], 5);
+    assert_eq!(transport.runs(), 0);
+    assert!(r.core.scan_status().is_none());
+    assert!(r.core.report_latest().unwrap().seq.is_none());
+}
+
 #[tokio::test]
 async fn scan_start_streams_events_saves_and_reports() {
     let mut r = rig(FakeTransport::new()
@@ -100,7 +140,7 @@ async fn scan_start_streams_events_saves_and_reports() {
         .host("vps-b", healthy()));
     assert!(r.core.report_latest().unwrap().seq.is_none());
 
-    let started = r.core.scan_start(&ScanScope::default()).unwrap();
+    let started = r.core.scan_start(&ScanScope::default()).await.unwrap();
     assert!(!started.joined);
     let events = r.wait_end().await;
 
@@ -139,9 +179,9 @@ async fn second_start_joins_status_hydrates_and_stop_saves_nothing() {
         .host("vps-a", slow.clone())
         .host("vps-b", slow));
 
-    let first = r.core.scan_start(&ScanScope::default()).unwrap();
+    let first = r.core.scan_start(&ScanScope::default()).await.unwrap();
     // Tray and window pressing Scan at once: one scan.
-    let second = r.core.scan_start(&ScanScope::default()).unwrap();
+    let second = r.core.scan_start(&ScanScope::default()).await.unwrap();
     assert!(second.joined);
     assert_eq!(second.scan_id, first.scan_id);
 
@@ -170,6 +210,7 @@ async fn errors_come_back_as_app_errors() {
             projects: vec!["nope".into()],
             hosts: vec![],
         })
+        .await
         .unwrap_err();
     assert_eq!(err.code, ErrorCode::NothingToScan);
     let wire = serde_json::to_value(&err).unwrap();
@@ -182,14 +223,16 @@ async fn shutdown_cancels_and_kills_ssh() {
     let dir = TempDir::new().unwrap();
     let store = FsStore::new(dir.path());
     store.save_projects(&projects(), None).unwrap();
+    let config = dir.path().join("ssh_config");
+    std::fs::write(&config, "Host vps-a\n    HostName 203.0.113.10\n").unwrap();
     let (core, events) = AppCore::new(
         transport.clone(),
-        SshTools::new(),
+        SshTools::new().with_config(&config),
         Arc::new(FakeProbe::new()),
         store,
     );
     let mut rx = events.scan;
-    core.scan_start(&ScanScope::default()).unwrap();
+    core.scan_start(&ScanScope::default()).await.unwrap();
     tokio::time::sleep(Duration::from_millis(50)).await;
     core.shutdown();
     let mut last = None;

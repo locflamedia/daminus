@@ -1008,3 +1008,119 @@ async fn each_host_is_sent_its_own_components_under_one_hash() {
         crate::ssh::fake::bundle_hash(b)
     );
 }
+
+/// A config check that always answers `problem`, counting its calls.
+fn config_check(
+    problem: Option<crate::ssh::config::SshConfigProblem>,
+    calls: Arc<std::sync::atomic::AtomicU32>,
+) -> ConfigCheck {
+    Arc::new(move || {
+        calls.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        let answer = problem.clone();
+        Box::pin(async move { answer })
+    })
+}
+
+fn refused_config() -> crate::ssh::config::SshConfigProblem {
+    crate::ssh::config::SshConfigProblem {
+        error: ErrorCode::SshConfigInvalid {
+            path: "/u/.ssh/config".into(),
+            line: Some(9),
+        }
+        .into(),
+        excerpt: Vec::new(),
+    }
+}
+
+/// ssh refuses the config, so every host would fail as unreachable and a
+/// Mac with several hosts would read offline: the scan stops before ssh,
+/// with the config error, and saves nothing.
+#[tokio::test(start_paused = true)]
+async fn a_refused_ssh_config_stops_the_scan_before_ssh_and_saves_nothing() {
+    let calls = Arc::new(std::sync::atomic::AtomicU32::new(0));
+    let mut r = rig_opts(
+        FakeTransport::new()
+            .host("a", healthy())
+            .host("b", healthy()),
+        FakeProbe::new(),
+        projects(&["a", "b"], &[]),
+        Settings::default(),
+        4096,
+        ServiceOptions {
+            config_check: Some(config_check(Some(refused_config()), Arc::clone(&calls))),
+            ..ServiceOptions::default()
+        },
+    );
+    let err = r
+        .service
+        .start_checked(&ScanScope::default())
+        .await
+        .unwrap_err();
+    assert_eq!(
+        err.code,
+        ErrorCode::SshConfigInvalid {
+            path: "/u/.ssh/config".into(),
+            line: Some(9)
+        }
+    );
+    assert!(!err.retryable);
+    assert_eq!(calls.load(std::sync::atomic::Ordering::Relaxed), 1);
+    assert_eq!(r.transport.runs(), 0);
+    assert!(r.service.status().is_none());
+    assert!(r.store.load_history(None).unwrap().is_empty());
+    assert!(r.rx.try_recv().is_err());
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_clean_ssh_config_lets_the_scan_run() {
+    let calls = Arc::new(std::sync::atomic::AtomicU32::new(0));
+    let mut r = rig_opts(
+        FakeTransport::new().host("a", healthy()),
+        FakeProbe::new(),
+        projects(&["a"], &[]),
+        Settings::default(),
+        4096,
+        ServiceOptions {
+            config_check: Some(config_check(None, Arc::clone(&calls))),
+            ..ServiceOptions::default()
+        },
+    );
+    let started = r
+        .service
+        .start_checked(&ScanScope::default())
+        .await
+        .unwrap();
+    assert!(!started.joined);
+    let events = drain(&mut r.rx).await;
+    assert!(matches!(
+        events.last().map(|e| &e.body),
+        Some(ScanEventBody::Done { .. })
+    ));
+    assert_eq!(r.transport.runs(), 1);
+
+    // A second press while one runs joins it without reading the config again.
+    let r2 = rig_opts(
+        FakeTransport::new().host("a", FakeHost::slow("x\n", Duration::from_secs(3600))),
+        FakeProbe::new(),
+        projects(&["a"], &[]),
+        Settings::default(),
+        4096,
+        ServiceOptions {
+            config_check: Some(config_check(None, Arc::clone(&calls))),
+            ..ServiceOptions::default()
+        },
+    );
+    let before = calls.load(std::sync::atomic::Ordering::Relaxed);
+    r2.service
+        .start_checked(&ScanScope::default())
+        .await
+        .unwrap();
+    let joined = r2
+        .service
+        .start_checked(&ScanScope::default())
+        .await
+        .unwrap();
+    assert!(joined.joined);
+    assert_eq!(calls.load(std::sync::atomic::Ordering::Relaxed), before + 1);
+    r2.service.cancel();
+}

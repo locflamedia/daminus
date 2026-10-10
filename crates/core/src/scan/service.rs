@@ -34,8 +34,8 @@ use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::snapshot::{HostOutcome, HostTiming, NetCause, Snapshot};
 use crate::probe::{ProbeChecks, UrlProbe};
-use crate::ssh::config::KnownAliases;
-use crate::ssh::{RunEnd, RunRequest, RunSignal, Transport, outcome_error, run_outcome};
+use crate::ssh::config::{KnownAliases, SshConfigProblem};
+use crate::ssh::{BoxFuture, RunEnd, RunRequest, RunSignal, Transport, outcome_error, run_outcome};
 use crate::store::FsStore;
 
 /// Time each reachable host has for its bundle, from its first byte of
@@ -50,6 +50,10 @@ pub(crate) const MAX_CONNECT_TIMEOUT_S: u32 = 120;
 /// file cannot tell (then every host runs, as before).
 pub type ConfigHosts = Arc<dyn Fn() -> Option<KnownAliases> + Send + Sync>;
 
+/// Whether ssh refuses the user's ssh config, asked once before a scan starts
+/// ([`ScanService::start_checked`]). `Some` stops the scan before ssh runs.
+pub type ConfigCheck = Arc<dyn Fn() -> BoxFuture<'static, Option<SshConfigProblem>> + Send + Sync>;
+
 /// Knobs that are not user settings. Tests shorten the budget.
 #[derive(Clone)]
 pub struct ServiceOptions {
@@ -57,6 +61,9 @@ pub struct ServiceOptions {
     /// When set, a host whose alias is not in the config and fails as a DNS
     /// name ends as `NotInConfig` instead of unreachable.
     pub config_hosts: Option<ConfigHosts>,
+    /// When set, [`ScanService::start_checked`] asks it first: a config ssh
+    /// refuses would fail every host as unreachable.
+    pub config_check: Option<ConfigCheck>,
 }
 
 impl std::fmt::Debug for ServiceOptions {
@@ -64,6 +71,7 @@ impl std::fmt::Debug for ServiceOptions {
         f.debug_struct("ServiceOptions")
             .field("host_budget", &self.host_budget)
             .field("config_hosts", &self.config_hosts.is_some())
+            .field("config_check", &self.config_check.is_some())
             .finish()
     }
 }
@@ -73,6 +81,7 @@ impl Default for ServiceOptions {
         Self {
             host_budget: HOST_BUDGET,
             config_hosts: None,
+            config_check: None,
         }
     }
 }
@@ -135,6 +144,27 @@ impl ScanService {
                 started: AtomicU32::new(0),
             }),
         }
+    }
+
+    /// [`Self::start`], after asking [`ServiceOptions::config_check`] whether
+    /// ssh refuses the user's ssh config. When it does, no host is run, no
+    /// snapshot is written, and the config error comes back
+    /// (`ssh_config_invalid`); the last results stay as they are. A scan
+    /// already running is joined without asking.
+    pub async fn start_checked(&self, scope: &ScanScope) -> Result<Started, AppError> {
+        if let Some(scan_id) = self.status().map(|run| run.scan_id) {
+            return Ok(Started {
+                scan_id,
+                joined: true,
+            });
+        }
+        if let Some(check) = self.shared.options.config_check.clone()
+            && let Some(problem) = check().await
+        {
+            tracing::warn!("scan not started: ssh refuses the ssh config");
+            return Err(problem.error);
+        }
+        self.start(scope)
     }
 
     /// Starts a scan of `scope`, or joins the one already running. Must be

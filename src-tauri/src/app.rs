@@ -22,7 +22,7 @@ use daminus_core::domain::settings::{
     AiSettings, AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
 };
 use daminus_core::probe::UrlProbe;
-use daminus_core::scan::{ConfigHosts, ServiceOptions};
+use daminus_core::scan::{ConfigCheck, ConfigHosts, ServiceOptions};
 use daminus_core::scan::{
     ExpectedDraft, HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started,
     add_rule, excluded_hosts, history_facts, history_view, latest_report, remove_rule, report_at,
@@ -33,7 +33,7 @@ use daminus_core::setup::{
     UrlCheck, check_url,
 };
 use daminus_core::ssh::config::HostListing;
-use daminus_core::ssh::config::{ConfigSource, KnownAliases, list_hosts};
+use daminus_core::ssh::config::{ConfigSource, KnownAliases, config_problem_of, list_hosts};
 use daminus_core::ssh::hostkey::HostKeyInfo;
 use daminus_core::ssh::{SshTools, Transport};
 use daminus_core::store::FsStore;
@@ -88,6 +88,13 @@ impl AppCore {
             let source = ConfigSource::for_tools(&config_tools)?;
             KnownAliases::of(&list_hosts(&source).ok()?)
         });
+        // A config ssh refuses would fail every host as unreachable: the scan
+        // stops before ssh instead, with the config error.
+        let check_tools = tools.clone();
+        let config_check: ConfigCheck = Arc::new(move || {
+            let tools = check_tools.clone();
+            Box::pin(async move { config_problem_of(&tools).await })
+        });
         let service = ScanService::with_options(
             Arc::clone(&transport),
             Arc::clone(&probe),
@@ -95,6 +102,7 @@ impl AppCore {
             tx,
             ServiceOptions {
                 config_hosts: Some(config_hosts),
+                config_check: Some(config_check),
                 ..ServiceOptions::default()
             },
         );
@@ -202,8 +210,10 @@ impl AppCore {
     }
 
     /// Starts a scan or joins the running one. Must run inside the Tokio runtime.
-    pub fn scan_start(&self, scope: &ScanScope) -> Result<Started, AppError> {
-        self.service.start(scope)
+    /// When ssh refuses the ssh config, no host is run and nothing is saved:
+    /// the error (`ssh_config_invalid`) says which file and line.
+    pub async fn scan_start(&self, scope: &ScanScope) -> Result<Started, AppError> {
+        self.service.start_checked(scope).await
     }
 
     /// Stops the running scan; nothing is saved. Returns whether one was running.

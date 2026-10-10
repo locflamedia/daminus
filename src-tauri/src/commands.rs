@@ -45,7 +45,18 @@ pub async fn scan_start<R: Runtime>(
     core: State<'_, AppCore>,
     scope: Option<ScanScope>,
 ) -> Result<Started, AppError> {
-    let started = core.scan_start(&scope.unwrap_or_default())?;
+    let result = core.scan_start(&scope.unwrap_or_default()).await;
+    tray::note_scan_start(&app, &result);
+    let started = match result {
+        Ok(started) => started,
+        Err(e) => {
+            // The menu bar says the same as the window's banner.
+            if matches!(e.code, ErrorCode::SshConfigInvalid { .. }) {
+                tray::refresh(&app);
+            }
+            return Err(e);
+        }
+    };
     if !started.joined {
         tray::refresh(&app);
     }

@@ -757,6 +757,18 @@ pub fn config_excerpt(file: &Path, line: u32) -> Vec<ConfigLine> {
         .collect()
 }
 
+/// Whether ssh refuses the user's ssh config, asked before a scan with one
+/// `ssh -G` for the first host of the file (ssh reads the whole file whatever
+/// the host). `None` when ssh takes it, or when the file names no host.
+pub async fn config_problem_of(tools: &SshTools) -> Option<SshConfigProblem> {
+    let source = ConfigSource::for_tools(tools)?;
+    let first = list_hosts(&source).ok()?.hosts.into_iter().next()?;
+    match resolve_checked(tools, &first.alias).await {
+        Err(Some(code)) => Some(config_problem(code)),
+        _ => None,
+    }
+}
+
 /// The listing's account of a config ssh refused.
 fn config_problem(code: ErrorCode) -> SshConfigProblem {
     let excerpt = match &code {
