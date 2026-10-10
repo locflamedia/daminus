@@ -135,7 +135,7 @@ function onClick(event: MouseEvent) {
 
 .cols {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1.3fr) 112px 150px 170px 200px 104px;
+  grid-template-columns: var(--pick-cols);
   gap: var(--space-4);
   align-items: center;
   padding: 0 var(--space-4);
@@ -315,6 +315,7 @@ function onClick(event: MouseEvent) {
   align-items: center;
   gap: var(--space-2);
   min-width: 0;
+  overflow: hidden;
   font-size: var(--text-12);
 }
 
@@ -322,7 +323,10 @@ function onClick(event: MouseEvent) {
   color: var(--ink-4);
 }
 
-.name {
+.name,
+.system .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

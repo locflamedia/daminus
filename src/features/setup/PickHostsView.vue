@@ -4,6 +4,7 @@
   blocks the others. The primary action counts the hosts that logged in.
 -->
 <script setup lang="ts">
+import { aliasWidthStyle } from '@/lib/alias-width'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -49,6 +50,11 @@ const opened = ref<string | null>(null)
 const focused = ref<string | null>(null)
 const toolbar = ref<InstanceType<typeof PickToolbar>>()
 
+/**
+ * The host column is as wide as the longest alias, up to 40% of the row; User, System and Key
+ * give way first, so an alias is cut only when the row truly has no room left (board 31).
+ */
+const aliasWidth = computed(() => aliasWidthStyle(rows.value.map((r) => r.alias)))
 const rows = computed(() =>
   buildRows(setup.entries, {
     isTicked: setup.isTicked,
@@ -201,7 +207,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       @reload="setup.reload()"
     />
 
-    <div class="table" role="table" :aria-busy="loadingRows || undefined">
+    <div class="table" role="table" :aria-busy="loadingRows || undefined" :style="aliasWidth">
       <div class="cols head" role="row">
         <span role="columnheader" class="all">
           <UiCheckbox
@@ -318,6 +324,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 <style scoped>
 .table {
+  /* The longest alias, in px; set from the rows. */
+  --alias: 0px;
+  /* One grid for the header, the placeholders and the rows (PickRow reads it too). */
+  --pick-cols: 16px minmax(min(var(--alias), 40%), 1fr) minmax(0, 112px) 150px minmax(0, 170px)
+    200px minmax(0, 104px);
+
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
@@ -326,14 +338,20 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 
 .cols {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1.3fr) 112px 150px 170px 200px 104px;
+  grid-template-columns: var(--pick-cols);
   gap: var(--space-4);
   align-items: center;
   padding: 0 var(--space-4);
 }
 
+.head > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .head {
   height: 24px;
+  white-space: nowrap;
   color: var(--ink-3);
   font-size: var(--text-11);
   font-weight: var(--weight-medium);

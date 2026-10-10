@@ -6,6 +6,7 @@
   below the rows. Everything shown is text from the config.
 -->
 <script setup lang="ts">
+import { aliasWidthStyle } from '@/lib/alias-width'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { prefersReducedMotion, vDraw, vEnter } from '@/lib/motion'
@@ -64,17 +65,11 @@ const chip = computed(() =>
     : { tone: 'info' as const, busy: true, label: t('empty.preview.reading') },
 )
 
-/** One character of an alias: Geist Mono at 13 px advances 0.6 em. */
-const ALIAS_CHAR_PX = 7.8
-
 /**
  * The alias column is as wide as the longest alias, up to half the row; HostName gives way
- * first when the panel is short, so an alias is cut only when needed. In px, not `ch`: the
- * header row is set smaller than the rows, and every row must get the same column.
+ * first when the panel is short, so an alias is cut only when needed.
  */
-const aliasWidth = computed(() => ({
-  '--alias': `${Math.ceil(Math.max(0, ...props.rows.map((r) => r.alias.length)) * ALIAS_CHAR_PX)}px`,
-}))
+const aliasWidth = computed(() => aliasWidthStyle(props.rows.map((r) => r.alias)))
 
 function skipText(s: PreviewSkip): string {
   return t(`empty.preview.skip.${s.kind}`, { name: s.name })

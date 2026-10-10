@@ -65,6 +65,14 @@ afterEach(() => {
 })
 
 describe('Pick hosts rows', () => {
+  it('gives the host column the width of the longest alias, shared by every row', async () => {
+    seed()
+    const { wrapper } = await mountPick()
+    const longest = Math.max(...SAMPLE_HOSTS.map((h) => h.alias.length))
+    const table = wrapper.get('[role="table"]')
+    expect(table.attributes('style')).toContain(`--alias: ${Math.ceil(longest * 7.8)}px`)
+  })
+
   it('lists each host with its user, port, route and key', async () => {
     seed()
     const { wrapper } = await mountPick()
