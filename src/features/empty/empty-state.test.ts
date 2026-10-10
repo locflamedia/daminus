@@ -150,8 +150,8 @@ describe('helpView', () => {
   })
 
   it('names the step left once the key is loaded and the config is still missing', () => {
-    const before = shownRows(input({ ...NO_CONFIG, agent: 'empty', termiusInstalled: true }), null)
-    const keyed = input({ ...NO_CONFIG, agent: 'keys', keys: 1, termiusInstalled: true })
+    const before = shownRows(input({ ...NO_CONFIG, agent: 'empty' }), null)
+    const keyed = input({ ...NO_CONFIG, agent: 'keys', keys: 1 })
     const v = helpView(keyed, shownRows(keyed, before))
     expect(v.headline).toBe('keyLoaded')
     expect(v.rows.agent).toBe(true)
@@ -161,7 +161,7 @@ describe('helpView', () => {
   })
 
   it('marks nothing done while every row is still missing', () => {
-    const v = view({ ...NO_CONFIG, agent: 'empty', keys: 0, termiusInstalled: true })
+    const v = view({ ...NO_CONFIG, agent: 'empty', keys: 0 })
     expect(v.done).toEqual({ key: false, agent: false, block: false })
     expect(v.stepsLeft).toBe(3)
   })

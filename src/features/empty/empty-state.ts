@@ -16,8 +16,7 @@ export type ConfigState = 'missing' | 'unusable' | 'ok'
  * Which words head the help screen. After Check again it updates in place: `keyLoaded` names the
  * step left once the agent has a key, `ready` says both rows are green (board 01b panel 10).
  */
-export type HelpHeadline =
-  'noConfig' | 'noUsableHosts' | 'agent' | 'keyLoaded' | 'ready'
+export type HelpHeadline = 'noConfig' | 'noUsableHosts' | 'agent' | 'keyLoaded' | 'ready'
 
 export interface EmptyInput {
   configFound: boolean

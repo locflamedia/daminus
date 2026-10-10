@@ -278,9 +278,9 @@ describe('the help screen', () => {
 
   it('says one step is left once the key is loaded, without leaving the screen', async () => {
     world.listing = emptyListing('no_config')
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
-    world.env = { agent: 'keys', keys: 1, termius_installed: true }
+    world.env = { agent: 'keys', keys: 1 }
     await wrapper
       .findAll('button')
       .find((b) => b.text().includes('Check again'))
