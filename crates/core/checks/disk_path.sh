@@ -4,7 +4,8 @@
 # any depth, a relative path matches as a suffix, an absolute one exactly)
 # are neither sized nor listed, so du stays fast and the lists show the
 # project's own data. Stays on the folder's filesystem (-x). Sizes are disk
-# usage in bytes; nothing is opened or changed.
+# usage in bytes and each large file carries the time it last changed
+# (find's %T@, whole seconds); nothing is opened or changed.
 
 mb=${DAMINUS_LARGE_FILE_MB-50}
 case $mb in '' | *[!0-9]*) mb=50 ;; esac
@@ -126,7 +127,7 @@ for path in ${DAMINUS_PATHS-}; do
 	left=$(group_left "$DISK_GROUP_S")
 	# Sized, but with no time left the large files are not listed.
 	[ "$left" -ge 2 ] || partial=true
-	[ "$left" -lt 2 ] || files=$(run_for "$left" find "$path" -xdev "$@" -type f -size "+${mb}M" -printf '%s\t%P\n' | awk '
+	[ "$left" -lt 2 ] || files=$(run_for "$left" find "$path" -xdev "$@" -type f -size "+${mb}M" -printf '%s\t%T@\t%P\n' | awk '
 		# A JSON string: control characters are dropped, a backslash and a
 		# quote are escaped (character by character: gsub escapes differ).
 		function jstr(s,    o, i, c) {
@@ -144,7 +145,13 @@ for path in ${DAMINUS_PATHS-}; do
 			if (!tab) next
 			b = substr($0, 1, tab - 1)
 			if (b !~ /^[0-9]+$/) next
-			n++; size[n] = b + 0; name[n] = substr($0, tab + 1)
+			rest = substr($0, tab + 1)
+			tab = index(rest, "\t")
+			if (!tab) next
+			# find prints %T@ as seconds.fraction; the file list needs seconds.
+			m = substr(rest, 1, tab - 1)
+			if (m !~ /^[0-9]+(\.[0-9]+)?$/) next
+			n++; size[n] = b + 0; mtime[n] = m + 0; name[n] = substr(rest, tab + 1)
 		}
 		END {
 			out = ""
@@ -153,7 +160,7 @@ for path in ${DAMINUS_PATHS-}; do
 				for (i = 1; i <= n; i++) if (!(i in taken) && (best == 0 || size[best] < size[i])) best = i
 				if (best == 0) break
 				taken[best] = 1
-				out = out (out == "" ? "" : ",") "[" jstr(name[best]) "," sprintf("%.0f", size[best]) "]"
+				out = out (out == "" ? "" : ",") "[" jstr(name[best]) "," sprintf("%.0f", size[best]) "," sprintf("%.0f", mtime[best]) "]"
 			}
 			printf "[%s]", out
 		}')

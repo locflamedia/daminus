@@ -33,6 +33,7 @@
       "memoryOnly": "Memory",
       "noLimit": "no limit",
       "restarts": "Restarts",
+      "restartsPort": "Restarts · port",
       "instances": "Instances",
       "since": "Started"
     },
@@ -45,6 +46,7 @@
       "no": "false",
       "code": "ExitCode",
       "started": "Started",
+      "exited": "Exited",
       "image": "image",
       "restarts": "restarts",
       "seeWhy": "See why, on the server",

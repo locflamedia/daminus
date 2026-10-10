@@ -124,6 +124,17 @@ describe('disk curve and files', () => {
     expect(files.map((f) => f.finding)).toEqual([false, true])
   })
 
+  it('carries when each file last changed, and none from an older scan', () => {
+    const item = pathItem()
+    const data = item.fact!.data as Record<string, unknown>
+    data.files = [
+      ['logs/a.log', 250, 1759000000],
+      ['uploads/b.mov', 400],
+    ]
+    const files = largeFiles([parseDiskPath(item)!], [])
+    expect(files.map((f) => f.changedAt)).toEqual([null, 1759000000])
+  })
+
   it('leaves out a large-log result that found nothing', () => {
     const none = {
       key: { host: 'h', check: 'logs.big', target: '' },

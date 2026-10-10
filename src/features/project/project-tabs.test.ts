@@ -63,6 +63,15 @@ describe('Disk tab', () => {
     expect(w.text()).toContain('node_modules, .next/cache, vendor')
   })
 
+  it('says when each large file last changed', async () => {
+    const w = await mountTab(ProjectDiskTab, 'results', 'tiemtra')
+    const rows = w.findAll('.rows .row')
+    const log = rows.find((r) => r.text().includes('laravel-2026-09-25.log'))
+    const video = rows.find((r) => r.text().includes('promo-video.mov'))
+    expect(log?.find('.age').exists()).toBe(true)
+    expect(video?.find('.age').text()).toMatch(/\d+\s*d/)
+  })
+
   it('shows the large-log finding with a copyable command', async () => {
     const w = await mountTab(ProjectDiskTab, 'tab-logs', 'tiemtra')
     expect(w.text()).toContain('Large log files')
@@ -123,6 +132,23 @@ describe('Containers tab', () => {
     const exit = w.find('.code').text()
     expect(exit).toMatch(/Started\s+.*\d{1,2}:\d{2}/)
     expect(exit).not.toMatch(/ago/)
+  })
+
+  it('shows the first published port and how many more, and none when there is none', async () => {
+    const w = await mountTab(ProjectContainersTab, 'results', 'tiemtra')
+    const cards = w.findAll('article')
+    const api = cards.find((c) => c.text().includes('tiemtra-api-api-1'))
+    const worker = cards.find((c) => c.text().includes('tiemtra-api-worker-1'))
+    expect(api?.text()).toContain('Restarts · port')
+    expect(api?.text()).toMatch(/:8000\s*\+1/)
+    expect(worker?.text()).toContain('Restarts')
+    expect(worker?.text()).not.toContain('Restarts · port')
+  })
+
+  it('says when the troubled service exited, next to when it started', async () => {
+    const w = await mountTab(ProjectContainersTab, 'results', 'tiemtra')
+    const exit = w.find('.code').text()
+    expect(exit).toMatch(/Exited\s+.*\d{1,2}:\d{2}/)
   })
 
   it('offers the permission steps when Docker needs permission', async () => {

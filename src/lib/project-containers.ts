@@ -24,6 +24,12 @@ export interface ServiceView {
   oom: boolean
   exit: number | null
   started: string | null
+  /** When the container last exited; `null` while it never has. */
+  exited: string | null
+  /** First published host port, e.g. `8000`; `null` when none is published. */
+  port: string | null
+  /** How many further host ports it publishes, for the "+N" after the first. */
+  portsMore: number
   image: string
   /** Memory against its limit, 0 to 100; `null` without a limit. */
   memPct: number | null
@@ -59,6 +65,9 @@ function service(raw: unknown): ServiceView | null {
     oom: bool(r.oom),
     exit: num(r.exit),
     started: str(r.started) || null,
+    exited: str(r.exited) || null,
+    port: str(r.port) || null,
+    portsMore: num(r.ports_more) ?? 0,
     image: str(r.image),
     memPct: mem !== null && limit !== null ? Math.min(100, (mem / limit) * 100) : null,
   }

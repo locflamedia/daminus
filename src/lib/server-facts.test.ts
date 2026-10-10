@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { server } from '@/testing/report-fixture'
 import { factSeries, item } from '@/testing/item-fixture'
-import { coresOf, failedOutcome, hostItems, hostSeries, hostState } from './server-facts'
+import {
+  coresOf,
+  failedOutcome,
+  hostItems,
+  hostSeries,
+  hostState,
+  osOf,
+  uptimeOf,
+} from './server-facts'
 
 describe('hostState', () => {
   it('tells a host the report does not know from one left out of the scan', () => {
@@ -28,6 +36,22 @@ describe('hostItems', () => {
     ]
     expect(hostItems({ items: list } as never, 'a')).toHaveLength(2)
     expect(hostItems(null, 'a')).toEqual([])
+  })
+})
+
+describe('osOf and uptimeOf', () => {
+  it('read the distribution and the seconds since boot of sys.load', () => {
+    const items = [
+      item({ check: 'sys.load', data: { cores: 4, uptime: 3542817, os: 'Ubuntu 24.04' } }),
+    ]
+    expect(osOf(items)).toBe('Ubuntu 24.04')
+    expect(uptimeOf(items)).toBe(3542817)
+  })
+
+  it('are null when an older scan did not read them', () => {
+    const items = [item({ check: 'sys.load', data: { cores: 4 } })]
+    expect(osOf(items)).toBeNull()
+    expect(uptimeOf(items)).toBeNull()
   })
 })
 

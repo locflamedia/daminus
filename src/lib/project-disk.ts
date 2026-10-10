@@ -26,8 +26,29 @@ export interface DiskPathView {
   total: number
   top: { name: string; bytes: number }[]
   other: number
-  files: { name: string; bytes: number }[]
+  files: LargeFileEntry[]
   partial: boolean
+}
+
+/** A large file as the script lists it: `[relative path, bytes, changed at]`. */
+export interface LargeFileEntry {
+  name: string
+  bytes: number
+  /** Unix seconds the file last changed; `null` from a scan made before v0.1. */
+  changedAt: number | null
+}
+
+/** `[name, bytes, mtime]` rows of a `files` list; the mtime may be absent. */
+function fileEntries(v: unknown): LargeFileEntry[] {
+  if (!Array.isArray(v)) return []
+  return v.flatMap((row) => {
+    if (!Array.isArray(row)) return []
+    const name = row[0]
+    const bytes = num(row[1])
+    if (typeof name !== 'string' || bytes === null) return []
+    const at = num(row[2])
+    return [{ name, bytes, changedAt: at !== null && at > 0 ? at : null }]
+  })
 }
 
 export function parseDiskPath(item: Item): DiskPathView | null {
@@ -40,7 +61,7 @@ export function parseDiskPath(item: Item): DiskPathView | null {
     total: num(item.fact.value) ?? 0,
     top: pairs(data.top),
     other: num(data.other) ?? 0,
-    files: pairs(data.files),
+    files: fileEntries(data.files),
     partial: bool(data.partial),
   }
 }
@@ -161,6 +182,8 @@ export interface LargeFile {
   host: string
   name: string
   bytes: number
+  /** Unix seconds the file last changed; `null` from a scan made before v0.1. */
+  changedAt: number | null
   /** A large-log finding names this very file. */
   finding: boolean
 }
@@ -175,6 +198,7 @@ export function largeFiles(views: readonly DiskPathView[], logs: readonly Item[]
         host: v.host,
         name: f.name,
         bytes: f.bytes,
+        changedAt: f.changedAt,
         finding: logged.has(`${v.host}:${v.path}/${f.name}`),
       })),
     )

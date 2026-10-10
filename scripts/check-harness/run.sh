@@ -178,7 +178,8 @@ check_odd_folder() { # distro file
 		| ([.[] | select(.check == "disk.path" and .target == $p)] | length) == 1
 		and ([.[] | select(.check == "disk.path" and .target == $p)][0]
 			| (.unknown | not) and .data.top[0][0] == "sub\\dir"
-			and (.data.files | map(. == ["sub\\dir/big.bin", 2097152]) | any))
+			and (.data.files | map(.[0] == "sub\\dir/big.bin" and .[1] == 2097152
+				and (.[2] | type) == "number" and .[2] > 0) | any))
 		and ([.[] | select(.check == "sec.upload_php" and .target == ($p + "/uploads/s\\h.php"))] | length) == 1'
 }
 

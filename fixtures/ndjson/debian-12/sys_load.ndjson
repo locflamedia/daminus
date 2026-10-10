@@ -1,4 +1,4 @@
 {"_":"begin","v":1,"bundle":"dce5ea9151ca632e"}
-{"check":"sys.load","target":"","value":0.51,"unit":"load","data":{"cores":4,"load1":1.50,"load15":0.18}}
+{"check":"sys.load","target":"","value":0.51,"unit":"load","data":{"cores":4,"load1":1.50,"load15":0.18,"uptime":1209611,"os":"Debian GNU/Linux 12"}}
 {"_":"step","group":"system","ms":2}
 {"_":"end"}

@@ -12,7 +12,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useFormat } from '@/composables/use-format'
 import { useNow } from '@/composables/use-now'
-import { coresOf, itemOf } from '@/lib/server-facts'
+import { coresOf, itemOf, osOf, uptimeOf } from '@/lib/server-facts'
 import { dataOf, num } from '@/lib/project-facts'
 import { staleDays } from '@/lib/staleness'
 import { useHistoryStore } from '@/stores/history'
@@ -62,15 +62,20 @@ const aged = computed(() => oldDays.value !== null)
 provideResultsAged(aged)
 const run = useResultScan(() => ({ host: host.value }))
 
-// "4 cores · 7.8 GB RAM · scan #12, 2.1 s": only what the checks read about the machine.
+// "Ubuntu 24.04 · 4 vCPU · 8 GB · up 41 d · scan #12, 2.1 s": only what the checks read about
+// the machine.
 const meta = computed(() => {
   const parts: string[] = []
+  const os = osOf(data.items.value)
+  if (os) parts.push(os)
   const cores = coresOf(data.items.value)
   if (cores !== null) parts.push(t('serverScreen.identity.cores', { n: cores }, cores))
   const total = num(dataOf(itemOf(data.items.value, 'sys.mem')?.fact).total)
   if (total !== null && total > 0) {
     parts.push(t('serverScreen.identity.memory', { size: fmt.measure(total, 'bytes').text }))
   }
+  const up = uptimeOf(data.items.value)
+  if (up !== null) parts.push(t('serverScreen.identity.uptime', { time: fmt.duration(up * 1000) }))
   const report = data.report.value
   if (report?.seq != null && report.scanned_at && data.state.value !== 'not-scanned') {
     const ms = history.view?.scans.find((s) => s.seq === report.seq)?.hosts[host.value]?.ms

@@ -121,6 +121,10 @@ const memoryLabel = computed(() =>
         <div>
           <span class="dim">{{ t('projectContainers.exit.started') }}</span>
           {{ time(service.started) }} ·
+          <template v-if="service.exited !== null">
+            <span class="dim">{{ t('projectContainers.exit.exited') }}</span>
+            {{ time(service.exited) }} ·
+          </template>
           <span class="dim">{{ t('projectContainers.exit.image') }}</span>
           {{ service.image || '—' }} ·
           <span class="dim">{{ t('projectContainers.exit.restarts') }}</span> {{ service.restarts }}

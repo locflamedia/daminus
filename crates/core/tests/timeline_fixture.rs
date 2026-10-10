@@ -171,15 +171,22 @@ fn projects() -> ProjectsFile {
     }
 }
 
+/// Seconds since boot at scan #1: scan #12 reads "up 41 d", as the board draws vps-sg-2.
+const UPTIME_AT_SCAN_1: u32 = 30 * 86_400 + 3_600;
+
 /// Server basics every reached host reports.
 fn basics(s: u32, cores: u32, load: f64, mem_free: f64, disk_pct: u32) -> Vec<CheckFact> {
     let jitter = f64::from(s % 3) * 0.1;
     vec![
         CheckFact::new("sys.load", "")
             .with_value(load + jitter, "load")
-            .with_data(
-                json!({ "cores": cores, "load1": load + jitter + 0.3, "load15": load * 0.7 }),
-            ),
+            .with_data(json!({
+                "cores": cores,
+                "load1": load + jitter + 0.3,
+                "load15": load * 0.7,
+                "uptime": UPTIME_AT_SCAN_1 + (s - 1) * 86_400,
+                "os": "Ubuntu 24.04",
+            })),
         CheckFact::new("sys.mem", "")
             .with_value(mem_free - jitter, "%")
             .with_data(json!({ "total": gb(f64::from(cores) * 2.0) })),
@@ -266,18 +273,23 @@ fn scan(s: u32) -> Snapshot {
             "services": [
                 {"name": "tiemtra-api-api-1", "svc": "api", "state": "running", "restarts": 0,
                  "mem": mb(380 + s * 3), "limit": mb(512), "cpu": cpu(3.2, s), "oom": false, "exit": 0,
-                 "started": "2026-09-20T09:12:03.412Z", "image": "tiemtra-api:1.5.0"},
+                 "started": "2026-09-20T09:12:03.412Z", "exited": "",
+                 "port": "8000", "ports_more": 1, "image": "tiemtra-api:1.5.0"},
                 {"name": "tiemtra-api-worker-1", "svc": "worker", "state": "running",
                  "restarts": if s >= 11 { 1 } else { 0 },
                  "mem": mb(120 + (s % 4) * 130), "limit": mb(512), "cpu": cpu(0.8, s),
                  "oom": s >= 11, "exit": if s >= 11 { 137 } else { 0 },
-                 "started": "2026-09-26T06:19:51.007Z", "image": "tiemtra-api:1.5.0"},
+                 "started": "2026-09-26T06:19:51.007Z",
+                 "exited": if s >= 11 { "2026-09-26T06:19:42.118Z" } else { "" },
+                 "port": "", "ports_more": 0, "image": "tiemtra-api:1.5.0"},
                 {"name": "tiemtra-api-db-1", "svc": "db", "state": "running", "restarts": 0,
                  "mem": mb(1200), "limit": mb(2048), "cpu": cpu(1.1, s), "oom": false, "exit": 0,
-                 "started": "2026-09-20T09:12:01.002Z", "image": "postgres:16.4"},
+                 "started": "2026-09-20T09:12:01.002Z", "exited": "",
+                 "port": "5432", "ports_more": 0, "image": "postgres:16.4"},
                 {"name": "tiemtra-api-redis-1", "svc": "redis", "state": "running", "restarts": 0,
                  "mem": mb(38), "limit": mb(256), "cpu": cpu(0.2, s), "oom": false, "exit": 0,
-                 "started": "2026-09-20T09:12:01.402Z", "image": "redis:7.2"},
+                 "started": "2026-09-20T09:12:01.402Z", "exited": "",
+                 "port": "", "ports_more": 0, "image": "redis:7.2"},
             ],
         })),
         CheckFact::new("db.size", "tiemtra")
@@ -301,7 +313,7 @@ fn scan(s: u32) -> Snapshot {
             .with_data(json!({
                 "top": [["storage", gb(3.9)], ["public", gb(1.4)], [".git", gb(0.4)]],
                 "other": gb(0.3),
-                "files": [["storage/app/backups/db-2026-09-01.sql.gz", mb(78)]],
+                "files": [["storage/app/backups/db-2026-09-01.sql.gz", mb(78), 1_788_307_200_u32]],
                 "partial": false,
             })),
         CheckFact::new("pm2.app", "booking-queue")
@@ -331,9 +343,9 @@ fn scan(s: u32) -> Snapshot {
                 ],
                 "other": gb(0.4),
                 "files": [
-                    ["storage/logs/laravel-2026-09-25.log", mb(640)],
-                    ["public/uploads/2026/07/promo-video.mov", mb(402)],
-                    ["public/uploads/2026/09/banner-4k.mp4", mb(96)],
+                    ["storage/logs/laravel-2026-09-25.log", mb(640), 1_790_402_400_u32],
+                    ["public/uploads/2026/07/promo-video.mov", mb(402), 1_784_006_400_u32],
+                    ["public/uploads/2026/09/banner-4k.mp4", mb(96), 1_788_912_000_u32],
                 ],
                 "partial": false,
             })),

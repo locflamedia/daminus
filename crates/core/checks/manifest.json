@@ -13,7 +13,9 @@
         "data": {
           "cores": "online CPUs (nproc)",
           "load1": "1-minute load average",
-          "load15": "15-minute load average"
+          "load15": "15-minute load average",
+          "uptime": "seconds since boot (/proc/uptime), when readable",
+          "os": "distribution name and version (NAME and VERSION_ID of /etc/os-release), when readable"
         }
       },
       "rule": {
@@ -203,7 +205,7 @@
         "data": {
           "top": "five largest subfolders, [name, bytes]",
           "other": "bytes outside the five",
-          "files": "largest files over the Settings floor (DAMINUS_LARGE_FILE_MB), [relative path, bytes], at most 10",
+          "files": "largest files over the Settings floor (DAMINUS_LARGE_FILE_MB), [relative path, bytes, changed at (unix seconds)], at most 10",
           "partial": "true when du could not read every subfolder"
         }
       },
@@ -246,7 +248,7 @@
           "not_running": "containers not running, except ones that exited 0 with restart policy 'no'",
           "restarts": "restart count, summed",
           "mem_pct": "highest container memory use, % of its limit, or of host memory for a container without a limit (docker stats MemPerc)",
-          "services": "per container {name, svc (compose service), state, restarts, mem (bytes), limit (bytes, 0: none), cpu (%), oom, exit, started, image}"
+          "services": "per container {name, svc (compose service), state, restarts, mem (bytes), limit (bytes, 0: none), cpu (%), oom, exit, started, exited (empty: never exited), port (first published host port, empty: none), ports_more (other published ports), image}"
         }
       },
       "rule": {

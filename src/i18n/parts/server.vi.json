@@ -3,6 +3,7 @@
     "identity": {
       "cores": "{n} vCPU",
       "memory": "{size}",
+      "uptime": "hoạt động {time}",
       "hostTime": "{time}"
     },
     "baseline": {

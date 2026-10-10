@@ -50,6 +50,29 @@ describe('compose reading', () => {
     expect(v?.services[1]?.memPct).toBeNull()
   })
 
+  it('reads the published port, the count of the others and the exit time', () => {
+    const v = parseCompose(
+      compose([
+        svc('p-api-1', { port: '3000', ports_more: 0 }),
+        svc('p-web-1', { port: '8000', ports_more: 2 }),
+        svc('p-db-1', { state: 'exited', exited: '2026-09-27T04:11:58.300Z' }),
+      ]),
+    )
+    expect(v?.services[0]).toMatchObject({ port: '3000', portsMore: 0, exited: null })
+    expect(v?.services[1]).toMatchObject({ port: '8000', portsMore: 2 })
+    expect(v?.services[2]?.exited).toBe('2026-09-27T04:11:58.300Z')
+  })
+
+  it('has no port and no exit time when the script sent none', () => {
+    const v = parseCompose(compose([svc('p-api-1', { port: '', ports_more: 0, exited: '' })]))
+    expect(v?.services[0]).toMatchObject({ port: null, portsMore: 0, exited: null })
+  })
+
+  it('reads a scan made before the ports were collected', () => {
+    const v = parseCompose(compose([svc('p-api-1')]))
+    expect(v?.services[0]).toMatchObject({ port: null, portsMore: 0, exited: null })
+  })
+
   it('has no view for a result that could not answer', () => {
     const item = {
       ...compose([]),

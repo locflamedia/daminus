@@ -147,7 +147,9 @@
         "data": {
           "cores": 2,
           "load1": 0.7,
-          "load15": 0.13999999999999999
+          "load15": 0.13999999999999999,
+          "os": "Ubuntu 24.04",
+          "uptime": 2682000
         }
       },
       {
@@ -229,7 +231,9 @@
         "data": {
           "cores": 1,
           "load1": 0.8,
-          "load15": 0.21
+          "load15": 0.21,
+          "os": "Ubuntu 24.04",
+          "uptime": 2682000
         }
       },
       {
@@ -291,7 +295,9 @@
         "data": {
           "cores": 2,
           "load1": 1.4000000000000001,
-          "load15": 0.63
+          "load15": 0.63,
+          "os": "Ubuntu 24.04",
+          "uptime": 2682000
         }
       },
       {
@@ -371,7 +377,9 @@
         "data": {
           "cores": 2,
           "load1": 0.9000000000000001,
-          "load15": 0.27999999999999997
+          "load15": 0.27999999999999997,
+          "os": "Ubuntu 24.04",
+          "uptime": 2682000
         }
       },
       {
@@ -432,15 +440,18 @@
           "files": [
             [
               "storage/logs/laravel-2026-09-25.log",
-              671088640.0
+              671088640.0,
+              1790402400
             ],
             [
               "public/uploads/2026/07/promo-video.mov",
-              421527552.0
+              421527552.0,
+              1784006400
             ],
             [
               "public/uploads/2026/09/banner-4k.mp4",
-              100663296.0
+              100663296.0,
+              1788912000
             ]
           ],
           "other": 429496730.0,
@@ -490,7 +501,9 @@
         "data": {
           "cores": 4,
           "load1": 1.9,
-          "load15": 0.9799999999999999
+          "load15": 0.9799999999999999,
+          "os": "Ubuntu 24.04",
+          "uptime": 2682000
         }
       },
       {
@@ -555,11 +568,14 @@
             {
               "cpu": 2.9,
               "exit": 0,
+              "exited": "",
               "image": "tiemtra-api:1.5.0",
               "limit": 536870912.0,
               "mem": 404750336.0,
               "name": "tiemtra-api-api-1",
               "oom": false,
+              "port": "8000",
+              "ports_more": 1,
               "restarts": 0,
               "started": "2026-09-20T09:12:03.412Z",
               "state": "running",
@@ -568,11 +584,14 @@
             {
               "cpu": 0.7,
               "exit": 0,
+              "exited": "",
               "image": "tiemtra-api:1.5.0",
               "limit": 536870912.0,
               "mem": 398458880.0,
               "name": "tiemtra-api-worker-1",
               "oom": false,
+              "port": "",
+              "ports_more": 0,
               "restarts": 0,
               "started": "2026-09-26T06:19:51.007Z",
               "state": "running",
@@ -581,11 +600,14 @@
             {
               "cpu": 1.0,
               "exit": 0,
+              "exited": "",
               "image": "postgres:16.4",
               "limit": 2147483648.0,
               "mem": 1258291200.0,
               "name": "tiemtra-api-db-1",
               "oom": false,
+              "port": "5432",
+              "ports_more": 0,
               "restarts": 0,
               "started": "2026-09-20T09:12:01.002Z",
               "state": "running",
@@ -594,11 +616,14 @@
             {
               "cpu": 0.2,
               "exit": 0,
+              "exited": "",
               "image": "redis:7.2",
               "limit": 268435456.0,
               "mem": 39845888.0,
               "name": "tiemtra-api-redis-1",
               "oom": false,
+              "port": "",
+              "ports_more": 0,
               "restarts": 0,
               "started": "2026-09-20T09:12:01.402Z",
               "state": "running",
@@ -681,7 +706,8 @@
           "files": [
             [
               "storage/app/backups/db-2026-09-01.sql.gz",
-              81788928.0
+              81788928.0,
+              1788307200
             ]
           ],
           "other": 322122547.0,
