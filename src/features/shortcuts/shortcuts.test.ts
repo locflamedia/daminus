@@ -28,12 +28,32 @@ function mountSheet(open = true) {
 }
 
 describe('the sheet', () => {
-  it('lists the 19 shortcuts of four groups', () => {
+  it('lists only the keys the app answers to, in three groups', () => {
     const w = mountSheet()
-    expect(SHORTCUT_COUNT).toBe(19)
-    expect(w.findAll('.group')).toHaveLength(4)
-    expect(w.findAll('.row')).toHaveLength(19)
-    expect(w.find('.count').text()).toBe('19 shortcuts')
+    // Keys the board draws that do nothing yet (list stepping, letters on a finding, tab
+    // stepping) wait for v0.2 and are not listed.
+    expect(SHORTCUT_GROUPS.map((g) => g.id)).toEqual(['anywhere', 'move', 'project'])
+    expect(SHORTCUT_GROUPS.flatMap((g) => g.rows.map((r) => r.id))).toEqual([
+      'search',
+      'scan',
+      'ask',
+      'settings',
+      'fold',
+      'sheet',
+      'overview',
+      'history',
+      'back',
+      'tabNumbers',
+    ])
+    expect(SHORTCUT_COUNT).toBe(10)
+    expect(w.findAll('.group')).toHaveLength(3)
+    expect(w.findAll('.row')).toHaveLength(10)
+    expect(w.find('.count').text()).toBe('10 shortcuts')
+  })
+
+  it('draws the project tabs as the keys that open them, ⌘1 to ⌘6', () => {
+    const tabs = SHORTCUT_GROUPS.flatMap((g) => g.rows).find((r) => r.id === 'tabNumbers')
+    expect(tabs?.keys).toEqual(['⌘', '1', '…', '6'])
   })
 
   it('draws nothing while closed and closes on Escape and on the scrim', async () => {
@@ -50,9 +70,9 @@ describe('the sheet', () => {
 
   it('dims rows that do not match and counts the matches', async () => {
     const w = mountSheet()
-    await w.find('input').setValue('expected')
+    await w.find('input').setValue('fold')
     expect(w.find('.count').text()).toBe('1 match')
-    expect(w.find('[data-shortcut="expected"]').classes()).toContain('hit')
+    expect(w.find('[data-shortcut="fold"]').classes()).toContain('hit')
     expect(w.find('[data-shortcut="scan"]').classes()).toContain('dim')
   })
 

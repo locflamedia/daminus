@@ -1,5 +1,7 @@
-// What the shortcuts sheet lists: four groups of rows, each a label key and the keys drawn as
-// caps. Labels translate; the keys never do. `filterGroups` marks the rows a query matches.
+// What the shortcuts sheet lists: groups of rows, each a label key and the keys drawn as caps.
+// Labels translate; the keys never do. `filterGroups` marks the rows a query matches. Only keys
+// the app answers to are listed; the board's list stepping, tab stepping and letters on a
+// finding wait for v0.2 (ScopeV02 #243).
 
 export interface ShortcutRow {
   id: string
@@ -10,7 +12,7 @@ export interface ShortcutRow {
 }
 
 export interface ShortcutGroup {
-  id: 'anywhere' | 'move' | 'project' | 'finding'
+  id: 'anywhere' | 'move' | 'project'
   rows: readonly ShortcutRow[]
 }
 
@@ -31,28 +33,13 @@ export const SHORTCUT_GROUPS: readonly ShortcutGroup[] = [
     rows: [
       { id: 'overview', label: 'overview', keys: ['⌘', '1'] },
       { id: 'history', label: 'history', keys: ['⌘', '2'] },
-      { id: 'step', label: 'step', keys: ['↓', '↑'] },
-      { id: 'open', label: 'open', keys: ['↵'] },
       { id: 'back', label: 'back', keys: ['esc'] },
     ],
   },
   {
     id: 'project',
-    rows: [
-      { id: 'tabs', label: 'tabs', keys: ['⌘', '[', ']'] },
-      { id: 'tabNumbers', label: 'tabNumbers', keys: ['1', '…', '6'] },
-      { id: 'copy', label: 'copy', keys: ['C'] },
-      { id: 'terminal', label: 'terminal', keys: ['T'] },
-    ],
-  },
-  {
-    id: 'finding',
-    rows: [
-      { id: 'expected', label: 'expected', keys: ['E'] },
-      { id: 'followUp', label: 'followUp', keys: ['A'] },
-      { id: 'useful', label: 'useful', keys: ['+', '−'] },
-      { id: 'evidence', label: 'evidence', keys: ['space'] },
-    ],
+    // On a project page ⌘1 to ⌘6 are its tabs (ProjectHeader).
+    rows: [{ id: 'tabNumbers', label: 'tabNumbers', keys: ['⌘', '1', '…', '6'] }],
   },
 ]
 
