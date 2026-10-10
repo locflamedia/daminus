@@ -24,6 +24,7 @@ function install() {
   const setup = new SetupMock('setup', 1000)
   mockCommands((cmd, args) => {
     calls.push({ cmd, args })
+    if (cmd === 'agent_status' && unresolved) return { present: true, has_keys: true, keys: 1 }
     if (cmd === 'hosts_list' && (configError || unresolved)) {
       const listing = setup.handle(cmd, args) as HostListing
       return {
@@ -204,10 +205,16 @@ describe('Settings › Hosts', () => {
     const wrapper = await mountView(SettingsHosts)
     const rows = wrapper.findAll('.fields dd')
     // HostName, User, Port, IdentityFile, ProxyJump: never the defaults (alias, port 22).
-    expect(rows.slice(0, 5).map((r) => r.text())).toEqual(Array(5).fill('Not read'))
+    expect(rows.slice(0, 5).map((r) => r.text().split(' · ')[0])).toEqual(Array(5).fill('Not read'))
     expect(rows.slice(0, 5).every((r) => r.classes('not-read'))).toBe(true)
     // Source comes from Daminus's own read of the file and stays.
     expect(rows[5]?.text()).toMatch(/config, line \d+/)
+    // What Daminus knows itself stays beside Not read: the agent's keys.
+    expect(rows[3]?.text()).toMatch(/^Not read · /)
+    // The list does not show the alias as if it were the address either.
+    const targets = wrapper.findAll('.target').map((t) => t.text())
+    expect(targets.length).toBeGreaterThan(0)
+    expect(targets.every((t) => t === 'Not read')).toBe(true)
   })
 
   it('says why an entry is left out when the list is opened', async () => {

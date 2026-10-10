@@ -151,7 +151,10 @@ const testLabel = computed(() => {
       <template v-else>
         <div v-for="name in UNREAD_FIELDS" :key="name" class="fld">
           <dt>{{ name }}</dt>
-          <dd class="not-read">{{ t('settingsHosts.detail.notRead') }}</dd>
+          <dd class="not-read">
+            {{ t('settingsHosts.detail.notRead')
+            }}<template v-if="name === 'IdentityFile' && agentText"> · {{ agentText }}</template>
+          </dd>
         </div>
       </template>
       <div class="fld">
