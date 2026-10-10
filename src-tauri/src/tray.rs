@@ -248,6 +248,13 @@ fn on_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
                 if let Some(core) = app.try_state::<AppCore>() {
                     let result = core.scan_start(&ScanScope::default()).await;
                     note_scan_start(&app, &result);
+                    // The window says it too, with the config banner.
+                    if let Err(e) = &result
+                        && matches!(e.code, ErrorCode::SshConfigInvalid { .. })
+                        && let Err(err) = app.emit(SCAN_REFUSED_EVENT, e)
+                    {
+                        tracing::warn!(error = %err, "tray: scan-refused event not sent");
+                    }
                     match result {
                         Ok(started) => {
                             tracing::info!(scan = %started.scan_id, joined = started.joined, "scan from menu bar")
@@ -305,6 +312,25 @@ pub fn note_scan_start<R: Runtime>(app: &AppHandle<R>, result: &Result<Started, 
         }
         Ok(_) => s.ssh_config = None,
         Err(_) => {}
+    }
+}
+
+/// The window's event for a menu bar scan that did not start.
+pub const SCAN_REFUSED_EVENT: &str = "scan://refused";
+
+/// Follows the ssh config as it was just listed: a config ssh takes again
+/// clears what the menu says about it, one it refuses sets it.
+pub fn note_ssh_config<R: Runtime>(app: &AppHandle<R>, refused: Option<&AppError>) {
+    let changed = app.try_state::<Arc<Tray<R>>>().is_some_and(|t| {
+        t.state.lock().is_ok_and(|mut s| {
+            let next = refused.cloned();
+            let changed = s.ssh_config != next;
+            s.ssh_config = next;
+            changed
+        })
+    });
+    if changed {
+        refresh(app);
     }
 }
 

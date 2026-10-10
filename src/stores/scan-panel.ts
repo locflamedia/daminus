@@ -45,6 +45,8 @@ export const useScanPanelStore = defineStore('scan-panel', () => {
     end.value = null
     open.value = true
     await scan.start(scope)
+    // Stopped before ssh: the Overview's config banner says why; an empty drawer would hide it.
+    if (scan.error?.code.kind === 'ssh_config_invalid') open.value = false
   }
 
   watch(

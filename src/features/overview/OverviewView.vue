@@ -50,19 +50,26 @@ const showEmpty = computed(() => projects.loaded && projects.details.length === 
  * with the quoted lines; the last results stay below it, as they are.
  */
 const configRefused = computed(() => scan.error?.code.kind === 'ssh_config_invalid')
-watch(configRefused, (now) => {
-  if (now) void setup.load()
-})
+// Read the config for its lines, also when the refusal came first (the menu bar, another screen).
+watch(
+  configRefused,
+  (now) => {
+    if (now) void setup.load()
+  },
+  { immediate: true },
+)
+/** The banner with the quoted lines; without a listing to quote, the plain error says it. */
+const configBanner = computed(() => (configRefused.value ? setup.configProblem : null))
 
 const errorMessage = computed(() => {
-  const error = (configRefused.value ? null : scan.error) ?? reports.error
+  const error = (configBanner.value ? null : scan.error) ?? reports.error
   return error ? errorText(error) : ''
 })
 
 /** Check again in the config banner: read the config; once ssh takes it, the banner goes. */
 async function recheckConfig() {
   await setup.load()
-  if (!setup.configProblem) scan.error = null
+  if (!setup.error && !setup.configProblem) scan.error = null
 }
 
 /** The saved projects are still being read (or the report is): bars of the final heights. */
@@ -114,8 +121,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
     />
 
     <SshConfigBanner
-      v-if="configRefused && setup.configProblem"
-      :problem="setup.configProblem"
+      v-if="configBanner"
+      :problem="configBanner"
       :busy="setup.loading"
       @recheck="recheckConfig"
     />

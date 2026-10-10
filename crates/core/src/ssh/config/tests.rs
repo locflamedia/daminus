@@ -461,6 +461,7 @@ fn a_bad_config_line_is_named_by_file_and_line() {
             "Can't open user config file /u/.ssh/config: Permission denied\n",
             None,
         ),
+        ("Bad owner or permissions on /u/.ssh/config\n", None),
     ];
     for (stderr, line) in cases {
         assert_eq!(
@@ -689,7 +690,14 @@ async fn the_config_problem_is_found_before_a_scan_with_one_ssh_call() {
 
     rig.write(".ssh/config", "Host vps-a\n    HostName 203.0.113.10\n");
     assert_eq!(config_problem_of(&tools).await, None);
-    // No host in the file: nothing to ask ssh about, nothing to stop.
+    // No host in the file: nothing to stop.
     rig.write(".ssh/config", "# empty\n");
     assert_eq!(config_problem_of(&tools).await, None);
+    // Only patterns, with a bad line: still refused, still found.
+    rig.write(".ssh/config", "Host *\n    Port 99999\n");
+    let problem = config_problem_of(&tools).await.expect("a problem");
+    assert!(matches!(
+        problem.error.code,
+        ErrorCode::SshConfigInvalid { line: Some(2), .. }
+    ));
 }

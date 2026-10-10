@@ -6,7 +6,8 @@ import type { AiStreamEvent } from './bindings/AiStreamEvent'
 import type { ScanEvent } from './bindings/ScanEvent'
 import type { SetupEvent } from './bindings/SetupEvent'
 import type { CommandName } from './commands'
-import { AI_EVENT, SCAN_EVENT, SETUP_EVENT } from './events'
+import type { AppError } from './bindings/AppError'
+import { AI_EVENT, SCAN_EVENT, SCAN_REFUSED_EVENT, SETUP_EVENT } from './events'
 
 export type CommandMock = (cmd: CommandName, args: Record<string, unknown>) => unknown
 
@@ -20,6 +21,11 @@ export function mockCommands(handler: CommandMock): void {
 /** Delivers `event` as Rust would. */
 export function emitScanEvent(event: ScanEvent): Promise<void> {
   return emit(SCAN_EVENT, event)
+}
+
+/** Delivers what Rust sends when the menu bar's Scan now did not start. */
+export function emitScanRefused(error: AppError): Promise<void> {
+  return emit(SCAN_REFUSED_EVENT, error)
 }
 
 /** Delivers a setup `event` as Rust would. */

@@ -7,13 +7,15 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import type { HostListing, Report } from '@/api'
-import { clearMocks, mockCommands } from '@/api/testing'
+import { clearMocks, emitScanRefused, mockCommands } from '@/api/testing'
 import { i18n, setI18nLocale } from '@/i18n'
 import timeline from '@/testing/fixtures/results.json'
 import type { ResultsBundle } from '@/testing/results-bundle'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
+import { useScanPanelStore } from '@/stores/scan-panel'
 import { useScanStore } from '@/stores/scan'
+import { useSetupStore } from '@/stores/setup'
 import OverviewView from './OverviewView.vue'
 
 const bundle = timeline as unknown as ResultsBundle
@@ -42,6 +44,8 @@ function listing(refused: boolean): HostListing {
 }
 
 let fixed = false
+/** `hosts_list` fails (a read that throws). */
+let listFails = false
 const calls: string[] = []
 const mounted: Array<{ unmount: () => void }> = []
 
@@ -52,7 +56,10 @@ async function mountOverview() {
       if (!fixed) throw REFUSED
       return { scan_id: 's2', joined: false }
     }
-    if (cmd === 'hosts_list') return listing(!fixed)
+    if (cmd === 'hosts_list') {
+      if (listFails) throw { code: { kind: 'internal' }, retryable: false }
+      return listing(!fixed)
+    }
     if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1 }
     if (cmd === 'history_list') return { ...bundle.history, bytes: 0 }
     if (cmd === 'rules_list') return bundle.rules
@@ -84,6 +91,7 @@ async function mountOverview() {
 
 beforeEach(() => {
   fixed = false
+  listFails = false
   calls.length = 0
   setActivePinia(createPinia())
   setI18nLocale('en')
@@ -136,5 +144,51 @@ describe('Overview when ssh refuses the ssh config', () => {
     await flushPromises()
     expect(wrapper.find('.config-problem').exists()).toBe(false)
     expect(useScanStore().error).toBeNull()
+  })
+
+  it('Scan all with ⌘R does not open an empty scan drawer over the banner', async () => {
+    const wrapper = await mountOverview()
+    await useScanPanelStore().start()
+    await flushPromises()
+    expect(useScanPanelStore().open).toBe(false)
+    expect(wrapper.find('.config-problem').exists()).toBe(true)
+  })
+
+  it('shows the banner for a refusal from the menu bar, and reads the config when it mounts', async () => {
+    // Refused while another screen was up: the Overview mounts with the error already there.
+    mockCommands(() => null)
+    const scan = useScanStore()
+    await scan.init()
+    await emitScanRefused(REFUSED)
+    await flushPromises()
+    expect(scan.error?.code.kind).toBe('ssh_config_invalid')
+    const wrapper = await mountOverview()
+    await flushPromises()
+    expect(wrapper.find('.config-problem').exists()).toBe(true)
+  })
+
+  it('still says something when the config cannot be listed', async () => {
+    listFails = true
+    const wrapper = await mountOverview()
+    await useScanStore().start()
+    await flushPromises()
+    expect(wrapper.find('.config-problem').exists()).toBe(false)
+    const alert = wrapper.get('[role="alert"]')
+    expect(alert.text()).toContain('ssh stops at line 9 of ~/.ssh/config')
+  })
+
+  it('Check again keeps the error when the config could not be read again', async () => {
+    const wrapper = await mountOverview()
+    await useScanStore().start()
+    await flushPromises()
+    listFails = true
+    const again = wrapper
+      .get('.config-problem')
+      .findAll('button')
+      .find((b) => b.text().includes('Check again'))
+    await again?.trigger('click')
+    await flushPromises()
+    expect(useScanStore().error?.code.kind).toBe('ssh_config_invalid')
+    expect(useSetupStore().error).not.toBeNull()
   })
 })

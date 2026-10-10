@@ -639,12 +639,19 @@ async fn resolve_checked(
 /// and `Can't open user config file <file>: ...` for a file it cannot read.
 pub fn ssh_config_problem(stderr: &str) -> Option<ErrorCode> {
     const CANT_OPEN: &str = "Can't open user config file ";
+    const BAD_OWNER: &str = "Bad owner or permissions on ";
     // Lines ssh named before giving up. Most errors end with
     // `<file>: terminating, ...`; then the last line named in that file is
     // the one. A few stop ssh at once with only `<file> line <n>: ...`.
     let mut named: Vec<(String, u32)> = Vec::new();
     for raw in stderr.lines() {
         let line = raw.trim_end();
+        if let Some(path) = line.strip_prefix(BAD_OWNER) {
+            return Some(ErrorCode::SshConfigInvalid {
+                path: path.trim().to_owned(),
+                line: None,
+            });
+        }
         if let Some((path, _)) = line
             .strip_prefix(CANT_OPEN)
             .and_then(|rest| rest.rsplit_once(": "))
@@ -757,13 +764,24 @@ pub fn config_excerpt(file: &Path, line: u32) -> Vec<ConfigLine> {
         .collect()
 }
 
+/// The host asked about when the file names none.
+const CHECK_ALIAS: &str = "daminus-config-check";
+
 /// Whether ssh refuses the user's ssh config, asked before a scan with one
 /// `ssh -G` for the first host of the file (ssh reads the whole file whatever
-/// the host). `None` when ssh takes it, or when the file names no host.
+/// the host). `None` when ssh takes it, or when there is no file.
 pub async fn config_problem_of(tools: &SshTools) -> Option<SshConfigProblem> {
     let source = ConfigSource::for_tools(tools)?;
-    let first = list_hosts(&source).ok()?.hosts.into_iter().next()?;
-    match resolve_checked(tools, &first.alias).await {
+    let listed = list_hosts(&source).ok()?;
+    if !listed.config_found {
+        return None;
+    }
+    // A file of patterns only (`Host *`) names no host; ssh still reads it all.
+    let alias = match listed.hosts.into_iter().next() {
+        Some(first) => first.alias,
+        None => HostAlias::parse(CHECK_ALIAS).ok()?,
+    };
+    match resolve_checked(tools, &alias).await {
         Err(Some(code)) => Some(config_problem(code)),
         _ => None,
     }
