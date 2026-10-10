@@ -71,6 +71,10 @@ const RUN_SUBSTITUTION = new RegExp(
   ].join('|'),
   'm',
 )
+// `eval "$(ssh-agent -s)"`: starts the agent and sets its two variables in this shell. The
+// substitution is ssh-agent's own output, not text from elsewhere, so this one form alone is
+// not counted as running made-up text; anything else in the command is still read.
+const START_SSH_AGENT = /\beval\s+(["']?)\$\(\s*ssh-agent(?:\s+-[sc])?\s*\)\1/g
 // `base64 -d`, `base64 --decode`, `base64 -D` (macOS), also behind other flags.
 const BASE64_DECODE = /\bbase64\b[^|;&]*?\s(?:-[a-zA-Z]*[dD][a-zA-Z]*|--decode)\b/
 // `rm` as a command word: first, after `;`, `&`, `|`, `(`, a backtick, `sudo` or `xargs`; also
@@ -105,7 +109,7 @@ export function commandRisks(command: string): CommandRisk[] {
   if (
     PIPE_TO_SHELL.test(command) ||
     PIPE_TO_INTERPRETER.test(command) ||
-    RUN_SUBSTITUTION.test(command)
+    RUN_SUBSTITUTION.test(command.replace(START_SSH_AGENT, ''))
   ) {
     risks.push('pipe-to-shell')
   }

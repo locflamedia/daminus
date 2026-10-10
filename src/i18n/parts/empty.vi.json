@@ -73,10 +73,12 @@
         "noConfig": "Chưa có cấu hình ssh. Hãy để ssh nhìn thấy máy chủ của bạn.",
         "noUsableHosts": "Cấu hình ssh của bạn chưa có host nào Daminus dùng được.",
         "agent": "ssh-agent của bạn chưa giữ khóa nào. Hãy nạp một khóa.",
+        "agentDown": "Không có ssh-agent nào đang chạy. Hãy khởi động nó, rồi nạp khóa của bạn.",
         "keyLoaded": "Đã nạp khóa. Còn một bước: mô tả các máy chủ của bạn.",
         "ready": "Sẵn sàng. Nhập {n} máy chủ."
       },
       "subtitle": "Daminus dùng cùng {ssh} với Terminal. Ba bước làm một lần, khoảng năm phút.",
+      "subtitleTwo": "Daminus dùng cùng {ssh} với Terminal. Hai bước làm một lần, khoảng hai phút.",
       "subtitleFew": "Daminus dùng cùng {ssh} với Terminal. {n} bước làm một lần. | Daminus dùng cùng {ssh} với Terminal. {n} bước làm một lần.",
       "found": {
         "title": "Daminus tìm thấy gì trên máy Mac này",

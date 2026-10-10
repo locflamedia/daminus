@@ -294,6 +294,28 @@ describe('the help screen', () => {
     expect(wrapper.get('.import').attributes('aria-disabled')).toBe('true')
   })
 
+  it('with no ssh-agent running, says so and starts it before loading the key', async () => {
+    world.env = { agent: 'unavailable', keys: 0 }
+    const { wrapper } = await mountScreen()
+    expect(wrapper.find('h2').text()).toBe('No ssh-agent is running. Start it, then load your key.')
+    expect(wrapper.find('.words p').text()).toContain('Two one-time steps, about two minutes.')
+    const commands = wrapper.findAll('.steps .text').map((c) => c.text())
+    expect(commands).toEqual([
+      'chmod 600 ~/.ssh/id_ed25519',
+      'eval "$(ssh-agent -s)"',
+      'ssh-add --apple-use-keychain ~/.ssh/id_ed25519',
+    ])
+    // Starting the agent runs nothing fetched, so no "Read before you run this" note.
+    expect(wrapper.text()).not.toContain('Read before you run this')
+  })
+
+  it('an agent that runs but holds no key needs no start command', async () => {
+    world.env = { agent: 'empty', keys: 0 }
+    const { wrapper } = await mountScreen()
+    expect(wrapper.find('h2').text()).toBe('Your ssh-agent holds no key yet. Let’s load one.')
+    expect(wrapper.text()).not.toContain('ssh-agent -s')
+  })
+
   it('counts the hosts on the Import button with the plural form', async () => {
     const host = (alias: string) => ({
       alias,

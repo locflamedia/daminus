@@ -16,7 +16,8 @@ const HOST_COMMANDS = /^(hosts_list|ssh_environment|setup_)/
  * The result screens read the twelve-scan timeline (`dev-mock-results.ts` lists the variants:
  * the default `results`, `stale`, `scanning`, `scan-live`, `loading`, `error`, `first-scan`,
  * `groups-off`, `states`). The setup screens: `?mock=empty` (nothing saved yet, the board's servers),
- * `empty-noconfig` and `empty-nousable` (the two reasons there is no host), `setup` (the whole
+ * `empty-noconfig` and `empty-nousable` (the two reasons there is no host), `empty-noagent` (hosts
+ * but no ssh-agent running), `setup` (the whole
  * flow against scripted servers; add `&speed=4` to run it faster) and `setup-saved` (the same
  * with a project already saved, so the second run meets "Already saved"). Failure screens:
  * `setup-failures` (every way a login test ends badly), `setup-empty-discover` (discover finds

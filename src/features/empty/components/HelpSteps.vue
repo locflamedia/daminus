@@ -20,6 +20,8 @@ const props = defineProps<{
   done: HelpView['done']
   /** The alias the test command and the Host block use. */
   alias: string
+  /** No ssh-agent is running: the agent step starts one before loading the key. */
+  agentDown?: boolean
 }>()
 
 const { t } = useI18n()
@@ -28,6 +30,7 @@ const { t } = useI18n()
 const KEY_FILE = '~/.ssh/id_ed25519'
 const LOCK_KEY = `chmod 600 ${KEY_FILE}`
 const ADD_KEY = `ssh-add --apple-use-keychain ${KEY_FILE}`
+const START_AGENT = 'eval "$(ssh-agent -s)"'
 
 const test = computed(() => `ssh ${shellQuote(props.alias)}`)
 function isDone(id: 'key' | 'agent' | 'describe' | 'add'): boolean {
@@ -61,7 +64,10 @@ const list = computed(() => {
             <span>{{ t('empty.help.step.key.body') }}</span>
             <UiCommandCopy :command="LOCK_KEY" />
           </template>
-          <UiCommandCopy v-else-if="id === 'agent'" :command="ADD_KEY" />
+          <template v-else-if="id === 'agent'">
+            <UiCommandCopy v-if="agentDown" :command="START_AGENT" />
+            <UiCommandCopy :command="ADD_KEY" />
+          </template>
           <I18nT v-else :keypath="`empty.help.step.${id}.body`" tag="span" scope="global">
             <template #config><span class="mono">~/.ssh/config</span></template>
             <template #test

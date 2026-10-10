@@ -34,6 +34,7 @@ const VARIANTS = [
   'empty',
   'empty-noconfig',
   'empty-nousable',
+  'empty-noagent',
   'setup',
   'setup-saved',
   'setup-failures',
@@ -166,7 +167,11 @@ export class SetupMock {
           ? emptyListing('no_usable_hosts')
           : sampleListing(this.hosts, SAMPLE_SKIPPED)
     this.env =
-      variant === 'empty-noconfig' ? { agent: 'empty', keys: 0 } : { agent: 'keys', keys: 2 }
+      variant === 'empty-noconfig'
+        ? { agent: 'empty', keys: 0 }
+        : variant === 'empty-noagent'
+          ? { agent: 'unavailable', keys: 0 }
+          : { agent: 'keys', keys: 2 }
   }
 
   savedProjects(): Project[] {

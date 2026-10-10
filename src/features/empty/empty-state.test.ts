@@ -122,10 +122,12 @@ describe('helpView', () => {
     expect(v.stepCount).toBe(2)
   })
 
-  it('draws the agent row and steps when no agent runs at all', () => {
+  it('draws the agent row and steps when no agent runs at all, under its own headline', () => {
     const v = view({ agent: 'unavailable', keys: 0 })
     expect(v.agent).toBe('unavailable')
+    expect(v.headline).toBe('agentDown')
     expect(v.rows.agent).toBe(true)
+    expect(v.stepsLeft).toBe(2)
   })
 
   it('turns Import on only when the config has a host and the agent a key', () => {
