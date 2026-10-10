@@ -179,6 +179,39 @@ describe('payload sheet', () => {
   })
 })
 
+describe('payload sheet, to read only', () => {
+  it('says it is a preview, has no Send, closes from Close and Enter sends nothing', async () => {
+    wrapper = mount(PayloadSheet, { global: { plugins: [i18n] }, attachTo: document.body })
+    const store = useAiPayloadStore()
+    await store.inspect({ scope: { kind: 'whole' } })
+    await flushPromises()
+    expect(document.querySelector('.title')?.textContent).toContain('Preview')
+    expect(document.querySelector('.code')?.textContent).toContain('DATA-4f1c9a2e7b')
+    expect(sendButton()).toBeUndefined()
+    ;(document.querySelector('.content') as HTMLElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }),
+    )
+    await flushPromises()
+    expect(calls.some((c) => c.cmd === 'ai_analyze')).toBe(false)
+    const close = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Close',
+    )
+    close?.click()
+    expect(store.open).toBe(false)
+  })
+
+  it('goes back to a sendable review the next time a question opens it', async () => {
+    wrapper = mount(PayloadSheet, { global: { plugins: [i18n] }, attachTo: document.body })
+    const store = useAiPayloadStore()
+    await store.inspect({ scope: { kind: 'whole' } })
+    store.close()
+    await store.review({ scope: { kind: 'whole' }, question: 'Why?' })
+    await flushPromises()
+    expect(store.readOnly).toBe(false)
+    expect(sendButton()).toBeDefined()
+  })
+})
+
 describe('payload sheet, as drawn on the board', () => {
   it('is a plain card, focuses the panel (not the esc key) and sets the model in mono', async () => {
     const store = await open()

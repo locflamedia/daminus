@@ -1,6 +1,6 @@
 <!--
-  The API key of a provider. A stored key is only a lock, "in Keychain" and Replace: the page
-  never receives it. Typing one goes into a password field that is cleared when it is sent,
+  The API key of a provider. A stored key is only a lock, the profile's known prefix ("sk-ant-")
+  and a mask, "in Keychain" and Replace: the page never receives any part of it. Typing one goes into a password field that is cleared when it is sent,
   whatever the answer, so no copy stays in the page.
 -->
 <script setup lang="ts">
@@ -41,7 +41,9 @@ function cancel() {
     <span class="lbl">{{ t('aiProviders.key.label') }}</span>
     <span class="well">
       <UiIcon name="lock" :size="16" class="lock" />
-      <span class="dots" aria-hidden="true">••••••••••••••••</span>
+      <span class="dots" aria-hidden="true"
+        >{{ entry.profile.key_hint ?? '' }}••••••••••••••••</span
+      >
       <span class="where">{{ t('aiProviders.key.inKeychain') }}</span>
       <UiButton variant="link" class="replace" @click="replacing = true">{{
         t('aiProviders.key.replace')

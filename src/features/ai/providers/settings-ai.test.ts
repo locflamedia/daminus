@@ -6,7 +6,10 @@ import { AiMock } from '@/api/dev-mock-ai'
 import { resetSettingsMock, settingsAnswer } from '@/api/dev-mock-settings'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n, setI18nLocale } from '@/i18n'
+import { useAiPayloadStore } from '@/stores/ai-payload'
 import { useAiProvidersStore } from '@/stores/ai-providers'
+import { useReportStore } from '@/stores/report'
+import type { Report } from '@/api'
 import SettingsAi from './SettingsAi.vue'
 import { checkBaseUrl } from './provider-state'
 
@@ -142,6 +145,54 @@ describe('Settings › AI providers: the key', () => {
     const replace = wrapper.findAll('button').find((b) => b.text() === 'Replace')
     await replace?.trigger('click')
     expect(wrapper.find('input[type="password"]').exists()).toBe(true)
+  })
+
+  it('draws a stored key as its known prefix and a mask, never any part of the key', async () => {
+    const wrapper = await mountAi()
+    await open(wrapper, 'anthropic')
+    expect(wrapper.get('.locked .dots').text()).toBe('sk-ant-••••••••••••••••')
+  })
+})
+
+describe('Settings › AI providers: model chips', () => {
+  it('says what each suggested model is for', async () => {
+    const wrapper = await mountAi()
+    await open(wrapper, 'anthropic')
+    const chips = wrapper
+      .findAll('.chips .chip')
+      .map((c) => [c.text().replace(c.find('.use').text(), ''), c.get('.use').text()])
+    expect(chips).toEqual([
+      ['claude-sonnet-5', 'balanced'],
+      ['claude-opus-5-5', 'deepest'],
+      ['claude-haiku-4-5', 'fastest'],
+    ])
+    await open(wrapper, 'openai')
+    expect(wrapper.findAll('.chips .use')).toHaveLength(0)
+  })
+})
+
+describe('Settings › AI providers: the full payload', () => {
+  it('stays off with a reason until there is a scan', async () => {
+    const wrapper = await mountAi()
+    await open(wrapper, 'anthropic')
+    const link = wrapper.get('.full')
+    expect(link.text()).toContain('See a full payload')
+    expect(link.attributes('disabled')).toBeDefined()
+    expect(link.attributes('title')).toBe('Run a scan first to see what would be sent.')
+  })
+
+  it('opens the payload of the whole last scan to read, with nothing to send', async () => {
+    const wrapper = await mountAi()
+    useReportStore().latest = { seq: 12 } as unknown as Report
+    await open(wrapper, 'anthropic')
+    await wrapper.get('.full').trigger('click')
+    const payload = useAiPayloadStore()
+    expect(payload.open).toBe(true)
+    expect(payload.readOnly).toBe(true)
+    expect(payload.scope).toEqual({ kind: 'whole' })
+    expect(payload.question).toBe('')
+    expect(await payload.send()).toBe(false)
+    expect(sent('ai_analyze')).toHaveLength(0)
   })
 })
 

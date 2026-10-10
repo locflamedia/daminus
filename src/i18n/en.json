@@ -361,6 +361,7 @@
   "ai": {
     "payload": {
       "title": "Review before sending to {provider}",
+      "preview": "Preview",
       "providerFallback": "the provider",
       "included": "Included",
       "rules": "Masking rules applied",

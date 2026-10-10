@@ -2,15 +2,30 @@
   The board's "What leaves this Mac" card, with what holds for every send: keys and tokens are
   always masked, and four things are never sent. The two switches of the board (mask IPs and
   hostnames, ask before every send) are not here: no setting stores them yet
-  (`ui-change-requests.md`).
+  (`ui-change-requests.md`). "See a full payload" opens the payload sheet on the whole last
+  scan to read only; with no scan yet there is nothing to show, so it is off and says why.
 -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useAiPayloadStore } from '@/stores/ai-payload'
+import { useReportStore } from '@/stores/report'
 import UiIcon from '@/ui/UiIcon.vue'
 import UiSwitch from '@/ui/UiSwitch.vue'
 
 const { t } = useI18n()
 const NEVER = ['neverEnv', 'neverSsh', 'neverFiles', 'neverUrl'] as const
+const reports = useReportStore()
+const payload = useAiPayloadStore()
+const lastSeq = computed(() => reports.latest?.seq ?? null)
+
+function seeFull() {
+  if (lastSeq.value === null) return
+  void payload.inspect({
+    scope: { kind: 'whole' },
+    context: `${t('aiProviders.privacy.fullContext')} · #${lastSeq.value}`,
+  })
+}
 </script>
 
 <template>
@@ -35,6 +50,15 @@ const NEVER = ['neverEnv', 'neverSsh', 'neverFiles', 'neverUrl'] as const
         {{ t(`aiProviders.privacy.${key}`) }}
       </span>
     </div>
+    <button
+      type="button"
+      class="full"
+      :disabled="lastSeq === null"
+      :title="lastSeq === null ? t('aiProviders.privacy.needScan') : undefined"
+      @click="seeFull"
+    >
+      {{ t('aiProviders.privacy.full') }}<UiIcon name="chevron-right" :size="12" />
+    </button>
   </section>
 </template>
 
@@ -115,5 +139,21 @@ const NEVER = ['neverEnv', 'neverSsh', 'neverFiles', 'neverUrl'] as const
   border-radius: 6px;
   background: var(--surface-1);
   color: var(--ink-3);
+}
+.full {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: var(--space-4);
+  color: var(--accent-ink);
+  font-size: var(--text-12);
+  font-weight: var(--weight-medium);
+}
+
+.full:disabled {
+  color: var(--ink-4);
+  cursor: default;
 }
 </style>

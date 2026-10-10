@@ -1,7 +1,8 @@
 <!--
   The model of a provider: the list the provider's own API gave (a dropdown with the first
   suggestion marked default), or, when the list could not be read, a field to type the name
-  into. The suggested models of the profile sit under it as chips either way.
+  into. The suggested models of the profile sit under it as chips either way, each with what
+  its family is for (balanced, deepest, fastest) when the name says so.
 -->
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
@@ -11,6 +12,7 @@ import { useAiProvidersStore } from '@/stores/ai-providers'
 import UiButton from '@/ui/UiButton.vue'
 import UiField from '@/ui/UiField.vue'
 import ProviderMark from './ProviderMark.vue'
+import { modelHint } from './provider-state'
 import UiSelect, { type SelectOption } from '@/ui/UiSelect.vue'
 
 const props = defineProps<{ entry: AiProviderEntry }>()
@@ -104,7 +106,10 @@ function useTyped() {
         :class="{ on: (chosen ?? first) === name }"
         @click="store.setModel(name)"
       >
-        {{ name }}
+        {{ name
+        }}<span v-if="modelHint(name)" class="use">
+          {{ t(`aiProviders.model.hint.${modelHint(name)}`) }}</span
+        >
       </button>
     </div>
   </div>
@@ -159,6 +164,9 @@ function useTyped() {
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   height: 24px;
   padding: 0 8px;
   border-radius: 6px;
@@ -167,6 +175,12 @@ function useTyped() {
   font-family: var(--font-mono);
   font-size: var(--text-11);
   font-weight: var(--weight-medium);
+}
+
+.use {
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-regular);
 }
 
 .chip.on {

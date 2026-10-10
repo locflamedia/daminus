@@ -361,6 +361,7 @@
   "ai": {
     "payload": {
       "title": "Xem lại trước khi gửi tới {provider}",
+      "preview": "Xem trước",
       "providerFallback": "nhà cung cấp",
       "included": "Được gửi",
       "rules": "Quy tắc che đã áp dụng",

@@ -6,7 +6,11 @@
     "retry": "Try again",
     "grid": "Providers",
     "active": "Active",
-    "tag": { "recommended": "Recommended", "free_local": "Free · local", "beta": "Beta" },
+    "tag": {
+      "recommended": "Recommended",
+      "free_local": "Free · local",
+      "beta": "Beta"
+    },
     "status": {
       "connected": "Connected",
       "keySaved": "Key saved",
@@ -47,7 +51,12 @@
       "placeholder": "Model name",
       "example": "e.g. llama-3.1-70b",
       "use": "Use",
-      "suggested": "Suggested"
+      "suggested": "Suggested",
+      "hint": {
+        "balanced": "balanced",
+        "deepest": "deepest",
+        "fastest": "fastest"
+      }
     },
     "test": {
       "button": "Test connection",
@@ -64,7 +73,10 @@
       "neverEnv": ".env values and database passwords",
       "neverSsh": "SSH keys, agents or known_hosts",
       "neverFiles": "File contents from your servers",
-      "neverUrl": "Anything from the exposed-URL check body"
+      "neverUrl": "Anything from the exposed-URL check body",
+      "full": "See a full payload",
+      "needScan": "Run a scan first to see what would be sent.",
+      "fullContext": "Whole last scan"
     }
   },
   "aiClaudeCode": {

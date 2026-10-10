@@ -6,7 +6,8 @@
   status of the redactor, Cancel and Send. Esc and Cancel close it without sending; Enter sends.
   Send carries the hash of the preview that is on screen: every change asks for a new preview
   first and Send waits for it. Mount it once at the window root; open it with
-  `useAiPayloadStore().review(...)`. Text from the data or the model is always text.
+  `useAiPayloadStore().review(...)`, or with `inspect(...)` to read only: then the title says
+  Preview, there is no Send, and Cancel is Close. Text from the data or the model is always text.
 -->
 <script setup lang="ts">
 import UiBrandMark from '@/ui/UiBrandMark.vue'
@@ -53,11 +54,17 @@ const contextParts = computed(() =>
 const contextLine = computed(() => contextParts.value.map((p) => p.text).join(' · '))
 /** "review n of 3": the send being reviewed now, known once a send has finished in this window. */
 const reviewNumber = computed(() => Math.min(payload.reviewedSends + 1, REVIEWS_BEFORE_OFFER))
-const showReview = computed(() => payload.reviewedSends > 0 && !payload.offerStopAsking)
+const showReview = computed(
+  () => !payload.readOnly && payload.reviewedSends > 0 && !payload.offerStopAsking,
+)
+/** The masking line, once the text on screen is final. */
+const checked = computed(
+  () => payload.sendable || (payload.readOnly && !payload.loading && preview.value !== null),
+)
 
 function onEnter(event: KeyboardEvent) {
   const target = event.target as HTMLElement | null
-  if (event.isComposing) return
+  if (event.isComposing || payload.readOnly) return
   // Enter on a switch, checkbox or field toggles or submits there; only the Send button (which
   // clicks itself) or the panel itself sends.
   if (target?.closest('button, a, input, textarea, select, [role="switch"], [role="checkbox"]'))
@@ -84,7 +91,10 @@ function onEnter(event: KeyboardEvent) {
             ><UiIcon name="spark" :size="20" /></UiBrandMark
         ></span>
         <div class="titles">
-          <h2 :id="titleId" class="title">{{ t('ai.payload.title', { provider }) }}</h2>
+          <h2 :id="titleId" class="title">
+            {{ t('ai.payload.title', { provider })
+            }}<span v-if="payload.readOnly" class="badge">{{ t('ai.payload.preview') }}</span>
+          </h2>
           <span class="context"
             ><template v-for="(p, i) in contextParts" :key="i"
               ><template v-if="i > 0"> · </template
@@ -139,7 +149,7 @@ function onEnter(event: KeyboardEvent) {
     </div>
 
     <template #footer-start>
-      <label v-if="payload.offerStopAsking" class="ask">
+      <label v-if="payload.offerStopAsking && !payload.readOnly" class="ask">
         <input v-model="payload.dontAskAgain" type="checkbox" />
         {{ t('ai.payload.dontAsk', { subject: payload.subject || t('ai.payload.thisScope') }) }}
       </label>
@@ -152,14 +162,23 @@ function onEnter(event: KeyboardEvent) {
         <template v-if="payload.loading">
           <UiSpinner :size="12" />{{ t('ai.payload.checking') }}
         </template>
-        <span v-else-if="payload.sendable" class="ready">
+        <span v-else-if="checked" class="ready">
           <UiIcon name="check" :size="12" />{{ t('ai.payload.ready', { n: masked }, masked) }}
         </span>
       </span>
-      <UiButton variant="ghost" size="medium" class="cancel" @click="payload.close()">{{
+      <UiButton
+        v-if="payload.readOnly"
+        variant="primary"
+        size="medium"
+        lifted
+        @click="payload.close()"
+        >{{ t('ui.close') }}</UiButton
+      >
+      <UiButton v-else variant="ghost" size="medium" class="cancel" @click="payload.close()">{{
         t('ui.cancel')
       }}</UiButton>
       <UiButton
+        v-if="!payload.readOnly"
         variant="primary"
         size="medium"
         lifted
@@ -202,10 +221,22 @@ function onEnter(event: KeyboardEvent) {
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   margin: 0;
   font-size: 20px;
   font-weight: var(--weight-medium);
   letter-spacing: -0.02em;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: var(--text-11);
+  letter-spacing: 0;
 }
 
 .context {

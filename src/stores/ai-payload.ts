@@ -45,8 +45,16 @@ export interface ReviewRequest {
   subject?: string
 }
 
+/** What "See a full payload" opens: the same sheet, to read only. */
+export interface InspectRequest {
+  scope: PreviewScope
+  context?: string
+}
+
 export const useAiPayloadStore = defineStore('ai-payload', () => {
   const open = ref(false)
+  /** Opened to read what would be sent, not to send: no question, no Send. */
+  const readOnly = ref(false)
   const scope = ref<PreviewScope>({ kind: 'whole' })
   const question = ref('')
   const context = ref('')
@@ -75,6 +83,7 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
   const sendable = computed(
     () =>
       open.value &&
+      !readOnly.value &&
       !loading.value &&
       error.value === null &&
       preview.value !== null &&
@@ -116,7 +125,17 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
   }
 
   /** Opens the sheet for `request` and previews it. */
-  async function review(request: ReviewRequest) {
+  function review(request: ReviewRequest) {
+    return show(request, false)
+  }
+
+  /** Opens the sheet to read what would be sent for `request`; nothing can be sent from it. */
+  function inspect(request: InspectRequest) {
+    return show({ ...request, question: '' }, true)
+  }
+
+  async function show(request: ReviewRequest, reading: boolean) {
+    readOnly.value = reading
     scope.value = request.scope
     question.value = request.question
     context.value = request.context ?? ''
@@ -170,6 +189,7 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
 
   return {
     open,
+    readOnly,
     scope,
     question,
     context,
@@ -186,6 +206,7 @@ export const useAiPayloadStore = defineStore('ai-payload', () => {
     dontAskAgain,
     sendable,
     review,
+    inspect,
     refresh,
     toggle,
     setQuestion,
