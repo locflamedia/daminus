@@ -106,6 +106,8 @@ export const useScanStore = defineStore('scan', () => {
       try {
         const status = await scanStatus()
         run.value = status && !ended.has(status.scan_id) ? status : null
+        // A scan runs (one the menu bar started once the line was fixed): the refusal is old.
+        if (run.value && error.value?.code.kind === 'ssh_config_invalid') error.value = null
       } catch (e) {
         fail(e)
       }

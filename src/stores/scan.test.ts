@@ -2,7 +2,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Report, ScanEvent, ScanEventBody, ScanRun } from '@/api'
-import { clearMocks, emitScanEvent, mockCommands } from '@/api/testing'
+import { clearMocks, emitScanEvent, emitScanRefused, mockCommands } from '@/api/testing'
 import { useReportStore } from './report'
 import { useScanStore } from './scan'
 
@@ -99,6 +99,25 @@ beforeEach(() => {
 })
 
 afterEach(() => clearMocks())
+
+describe('a refused ssh config', () => {
+  it('is said when the menu bar could not scan, and forgotten once a scan runs from there', async () => {
+    const store = useScanStore()
+    await store.init()
+    await emitScanRefused({
+      code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 9 },
+      retryable: false,
+    })
+    await flush()
+    expect(store.error?.code.kind).toBe('ssh_config_invalid')
+
+    // The line was fixed and the menu bar's Scan now started one: the window sees it run.
+    backend.status = queuedRun(backend.id, ['vps-a', 'vps-b'])
+    await backend.send({ kind: 'host_started', host: 'vps-a' })
+    expect(store.scanning).toBe(true)
+    expect(store.error).toBeNull()
+  })
+})
 
 describe('useScanStore', () => {
   it('replays a whole scan into the right state', async () => {
