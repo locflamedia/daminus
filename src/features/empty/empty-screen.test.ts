@@ -254,6 +254,15 @@ describe('the help screen', () => {
     expect(world.reads).toBe(2)
     // The screen stays, with the rows green and Import live.
     expect(wrapper.find('.help').exists()).toBe(true)
+    expect(wrapper.find('h2').text()).toBe('Ready. Import 1 host.')
+    // No step is left, so no subtitle counts any.
+    expect(wrapper.find('.words p').exists()).toBe(false)
+    const steps = wrapper.findAll('.step')
+    expect(steps.length).toBeGreaterThan(0)
+    for (const step of steps) {
+      expect(step.classes()).toContain('done')
+      expect(step.text()).toContain('Done')
+    }
     const rows = wrapper.findAll('.found .row').map((r) => r.text())
     expect(rows[0]).toContain('Found 1 Host block: vps-sg-1.')
     expect(rows[0]).toContain('1 host')
@@ -265,6 +274,24 @@ describe('the help screen', () => {
     await importButton.trigger('click')
     await flushPromises()
     expect(router.currentRoute.value.path).toBe('/setup')
+  })
+
+  it('says one step is left once the key is loaded, without leaving the screen', async () => {
+    world.listing = emptyListing('no_config')
+    world.env = { agent: 'empty', keys: 0 }
+    const { wrapper } = await mountScreen()
+    world.env = { agent: 'keys', keys: 1 }
+    await wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Check again'))
+      ?.trigger('click')
+    await flushPromises()
+    expect(wrapper.find('h2').text()).toBe('Key loaded. One step left: describe your servers.')
+    expect(wrapper.find('.words p').text()).toContain('1 one-time step.')
+    const done = wrapper.findAll('.step.done').map((s) => s.text())
+    expect(done).toHaveLength(2)
+    expect(wrapper.findAll('.step:not(.done)')).toHaveLength(1)
+    expect(wrapper.get('.import').attributes('aria-disabled')).toBe('true')
   })
 
   it('counts the hosts on the Import button with the plural form', async () => {

@@ -12,7 +12,11 @@ export type EmptyScreen = 'app' | 'help'
 export type ConfigState = 'missing' | 'unusable' | 'ok'
 
 /** Which words head the help screen. */
-export type HelpHeadline = 'noConfig' | 'noUsableHosts' | 'agent'
+/**
+ * Which words head the help screen. After Check again it updates in place: `keyLoaded` names the
+ * step left once the agent has a key, `ready` says both rows are green (board 01b panel 10).
+ */
+export type HelpHeadline = 'noConfig' | 'noUsableHosts' | 'agent' | 'keyLoaded' | 'ready'
 
 export interface EmptyInput {
   configFound: boolean
@@ -99,8 +103,12 @@ export interface HelpView {
     /** Describe a server: first Host block, or one with a HostName when the file has none usable. */
     block: 'describe' | 'add' | null
   }
+  /** Steps whose row is green now: drawn with a tick and Done, without their instructions. */
+  done: { key: boolean; agent: boolean; block: boolean }
   /** How many steps are drawn, numbered from 1 in the order above. */
   stepCount: number
+  /** Drawn steps not done yet: what the subtitle counts. */
+  stepsLeft: number
   /** Import turns live once the config has a usable host and the agent has a key. */
   canImport: boolean
 }
@@ -110,8 +118,15 @@ export function helpView(input: EmptyInput, shown: HelpShown): HelpView {
   const agent: AgentState = input.agent ?? 'keys'
   const block = shown.config ? (shown.headline === 'noUsableHosts' ? 'add' : 'describe') : null
   const steps = { key: shown.agent, agent: shown.agent, block } as const
+  // An agent that was not asked is not blamed, as for Import.
+  const agentDone = agent === 'keys'
+  const configDone = config === 'ok'
+  const canImport = configDone && agent === 'keys'
+  let headline = shown.headline
+  if (canImport) headline = 'ready'
+  else if (shown.agent && agentDone) headline = 'keyLoaded'
   return {
-    headline: shown.headline,
+    headline,
     config,
     agent,
     keys: input.keys,
@@ -120,8 +135,13 @@ export function helpView(input: EmptyInput, shown: HelpShown): HelpView {
     entries: input.skipped.length + input.hosts,
     rows: { config: shown.config, agent: shown.agent },
     steps,
+    done: { key: agentDone, agent: agentDone, block: configDone },
     stepCount: (steps.key ? 1 : 0) + (steps.agent ? 1 : 0) + (steps.block ? 1 : 0),
-    canImport: config === 'ok' && agent === 'keys',
+    stepsLeft:
+      (steps.key && !agentDone ? 1 : 0) +
+      (steps.agent && !agentDone ? 1 : 0) +
+      (steps.block && !configDone ? 1 : 0),
+    canImport,
   }
 }
 

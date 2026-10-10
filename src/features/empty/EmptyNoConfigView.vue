@@ -36,6 +36,8 @@ const alias = computed(() => {
 
 const names = computed(() => setup.entries.map((e) => e.host.alias))
 const stepCount = computed(() => props.view.stepCount)
+/** The subtitle counts what is left, so it never promises steps that are already done. */
+const stepsLeft = computed(() => props.view.stepsLeft)
 const agentStep = computed(() => (props.view.steps.agent ? (props.view.steps.key ? 2 : 1) : null))
 const importLabel = computed(() =>
   t('empty.help.importHosts', { n: props.view.hosts }, props.view.hosts),
@@ -54,26 +56,26 @@ const importLabel = computed(() =>
           />
         </span>
         <div class="words">
-          <h2>{{ t(`empty.help.headline.${view.headline}`) }}</h2>
-          <I18nT v-if="stepCount === 3" keypath="empty.help.subtitle" tag="p" scope="global">
+          <h2>{{ t(`empty.help.headline.${view.headline}`, { n: view.hosts }, view.hosts) }}</h2>
+          <I18nT v-if="stepsLeft === 3" keypath="empty.help.subtitle" tag="p" scope="global">
             <template #ssh><span class="mono">ssh</span></template>
           </I18nT>
           <I18nT
-            v-else-if="stepCount > 0"
+            v-else-if="stepsLeft > 0"
             keypath="empty.help.subtitleFew"
             tag="p"
             scope="global"
-            :plural="stepCount"
+            :plural="stepsLeft"
           >
             <template #ssh><span class="mono">ssh</span></template>
-            <template #n>{{ stepCount }}</template>
+            <template #n>{{ stepsLeft }}</template>
           </I18nT>
         </div>
       </header>
 
       <div v-enter="{ index: 1 }" class="cards">
         <HelpFound :view="view" :names="names" :busy="setup.loading" @recheck="$emit('recheck')" />
-        <HelpSteps v-if="stepCount > 0" :steps="view.steps" :alias="alias" />
+        <HelpSteps v-if="stepCount > 0" :steps="view.steps" :done="view.done" :alias="alias" />
         <HelpTest :alias="alias" :agent-step="agentStep" />
       </div>
     </div>
