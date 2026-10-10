@@ -58,6 +58,8 @@ export interface FindingsFooter {
   passed: number
   /** Results marked as expected. */
   expected: number
+  /** The projects those expected results belong to, each once, in the order first met. */
+  expectedProjects: string[]
   /** Servers the latest scan did not reach (or did not include). */
   unreachable: string[]
 }
@@ -69,6 +71,13 @@ export function footerRows(report: Report | null): FindingsFooter {
     passed: items.filter((i) => i.disposition.kind === 'active' && i.severity.level === 'ok')
       .length,
     expected: items.filter((i) => i.disposition.kind === 'expected').length,
+    expectedProjects: [
+      ...new Set(
+        items
+          .filter((i) => i.disposition.kind === 'expected' && i.owner.kind === 'project')
+          .map((i) => (i.owner.kind === 'project' ? i.owner.id : '')),
+      ),
+    ],
     unreachable: (report?.servers ?? [])
       .filter((s) => isUnreachable(s.outcome) || !s.included)
       .map((s) => s.host),

@@ -35,6 +35,7 @@
     "detail": "Details of finding {n}",
     "provenanceNoSize": "{model} · {time}",
     "passed": "{n} check passed | {n} checks passed",
+    "passedNote": "not sent in detail",
     "expectedCount": "{n} marked as expected",
     "notScanned": "{host} not scanned",
     "unreachableWord": "unreachable",
