@@ -208,6 +208,23 @@ mod tests {
         assert!(mode & 0o111 != 0, "{} is not executable", path.display());
     }
 
+    /// Why a spawn of `path` failed, in the kernel's own words. The production
+    /// code maps every spawn failure to one word, which on CI says only that
+    /// something went wrong; a test that is about to assert on the outcome can
+    /// say whether it was ETXTBSY, ENOEXEC, EACCES or something else. The
+    /// script is never run here: these scripts have side effects on disk, and
+    /// a second run would disturb the one the test is making.
+    fn spawn_error(path: &std::path::Path) -> String {
+        match Command::new(path)
+            .arg("--probe")
+            .stdin(Stdio::null())
+            .spawn()
+        {
+            Ok(_) => "spawn succeeded on the probe".to_owned(),
+            Err(e) => format!("{e:?} (raw os error {:?})", e.raw_os_error()),
+        }
+    }
+
     #[test]
     fn a_hanging_shell_is_killed_at_the_timeout() {
         let dir = tempfile::tempdir().unwrap();
@@ -234,9 +251,12 @@ mod tests {
         );
         let started = Instant::now();
         let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(500));
-        // `Err("spawn")` here would mean the script never ran, which says
-        // nothing about the behaviour under test.
-        assert_eq!(got, Err("timeout"), "the script did not run as written");
+        // `Err("spawn")` means the script never ran, which says nothing about
+        // the behaviour under test; name the kernel's reason when that happens.
+        if got == Err("spawn") {
+            panic!("{} did not run: {}", shell.display(), spawn_error(&shell));
+        }
+        assert_eq!(got, Err("timeout"));
         assert!(
             started.elapsed() < Duration::from_secs(2),
             "{:?}",
