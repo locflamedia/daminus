@@ -9,6 +9,9 @@ import { i18n } from '@/i18n'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useScanStore } from '@/stores/scan'
+import type { HostOutcome } from '@/api'
+import { useHostKeyStore } from '@/stores/host-key'
+import { useProjectSheetStore } from '@/stores/project-sheet'
 import type { ResultsBundle } from '@/testing/results-bundle'
 import raw from '@/testing/fixtures/results.json'
 import ProjectHistoryTab from '../history/ProjectHistoryTab.vue'
@@ -22,7 +25,12 @@ const bundle = raw as unknown as ResultsBundle
 
 type Tab = typeof ProjectDiskTab
 
-async function mountTab(tab: Tab, variant: string, id = 'tiemtra') {
+async function mountTab(
+  tab: Tab,
+  variant: string,
+  id = 'tiemtra',
+  edit?: (reports: ReturnType<typeof useReportStore>) => void,
+) {
   const mock = new ResultsMock(variant as ResultsVariant, bundle)
   const starts: unknown[] = []
   mockCommands((cmd, args) => {
@@ -39,6 +47,7 @@ async function mountTab(tab: Tab, variant: string, id = 'tiemtra') {
   const read = useReportStore().loadLatest()
   if (variant !== 'loading') await read
   await useProjectsStore().loadDetails()
+  edit?.(useReportStore())
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -49,7 +58,7 @@ async function mountTab(tab: Tab, variant: string, id = 'tiemtra') {
   })
   const wrapper = mount(tab, { props: { id }, global: { plugins: [i18n, router, pinia] } })
   await flushPromises()
-  return { wrapper, starts }
+  return { wrapper, starts, router }
 }
 
 function button(wrapper: Awaited<ReturnType<typeof mountTab>>['wrapper'], text: string) {
@@ -159,5 +168,76 @@ describe('Result screens, shared states (board 30)', () => {
     expect(error.wrapper.text()).toContain('Couldn’t load this tab')
     const first = await mountTab(ProjectHistoryTab, 'first-scan')
     expect(first.wrapper.text()).toContain('No result yet')
+  })
+
+  describe('a host that could not be scanned, by cause (board 30, #274)', () => {
+    /** The latest scan with vps-sg-2 failed as `outcome`, for the tiemtra project. */
+    function failVps(outcome: HostOutcome) {
+      return (reports: ReturnType<typeof useReportStore>) => {
+        const latest = reports.latest
+        if (!latest) return
+        reports.latest = {
+          ...latest,
+          servers: latest.servers.map((s) => (s.host === 'vps-sg-2' ? { ...s, outcome } : s)),
+          projects: latest.projects.map((p) =>
+            p.id === 'tiemtra' ? { ...p, unreachable_hosts: ['vps-sg-2'] } : p,
+          ),
+        }
+      }
+    }
+
+    it('retries only a network failure, timed out included', async () => {
+      const { wrapper } = await mountTab(
+        ProjectContainersTab,
+        'results',
+        'tiemtra',
+        failVps({ state: 'timeout' }),
+      )
+      expect(wrapper.text()).toContain('vps-sg-2 did not answer scan #12')
+      expect(button(wrapper, 'Retry vps-sg-2')).toBeDefined()
+    })
+
+    it('a refused key says so and opens Settings › Hosts on that host', async () => {
+      const { wrapper, router } = await mountTab(
+        ProjectContainersTab,
+        'results',
+        'tiemtra',
+        failVps({ state: 'auth_failed' }),
+      )
+      expect(wrapper.text()).toContain('vps-sg-2 refused your key.')
+      expect(wrapper.text()).toContain('Couldn’t reach it in this scan')
+      expect(button(wrapper, 'Retry vps-sg-2')).toBeUndefined()
+      await button(wrapper, 'Fix login')?.trigger('click')
+      await flushPromises()
+      expect(router.currentRoute.value.fullPath).toBe('/settings/hosts')
+    })
+
+    it('a changed host key says not to go on and opens the host key review', async () => {
+      const { wrapper } = await mountTab(
+        ProjectContainersTab,
+        'results',
+        'tiemtra',
+        failVps({ state: 'host_key_changed', fp: 'SHA256:abc' }),
+      )
+      expect(wrapper.text()).toContain(
+        'vps-sg-2 has a different host key. Do not continue until you know why.',
+      )
+      await button(wrapper, 'Review host key')?.trigger('click')
+      await flushPromises()
+      expect(useHostKeyStore().alias).toBe('vps-sg-2')
+    })
+
+    it('a host gone from ~/.ssh/config opens this project to edit', async () => {
+      const { wrapper } = await mountTab(
+        ProjectContainersTab,
+        'results',
+        'tiemtra',
+        failVps({ state: 'not_in_config' }),
+      )
+      expect(wrapper.text()).toContain('vps-sg-2 is no longer in ~/.ssh/config.')
+      await button(wrapper, 'Edit project')?.trigger('click')
+      await flushPromises()
+      expect(useProjectSheetStore().isOpen).toBe(true)
+    })
   })
 })

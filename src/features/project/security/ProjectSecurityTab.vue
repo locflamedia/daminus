@@ -116,6 +116,7 @@ function since(f: Parameters<typeof view.firstSeen>[0]): string {
         :old-days="view.oldDays.value"
         :seq="view.seq.value"
         :busy="run.busy.value"
+        :project="id"
         @scan="run.scanThis()"
         @retry="(hosts) => run.retry(hosts)"
       />
