@@ -158,6 +158,13 @@ const STEPS: { id: 'pick' | 'discover' | 'group'; icon: IconName }[] = [
   transform-origin: left;
 }
 
+/* At 1280 the cards are ~143 px wide: a little less padding keeps the time estimate on one line. */
+@media (max-width: 1360px) {
+  .step {
+    padding-inline: var(--space-3);
+  }
+}
+
 @media (hover: hover) {
   .step {
     transition:

@@ -86,7 +86,7 @@ function commit() {
     </span>
     <span class="src">
       <span class="k">{{ t(`setupGroup.source.${source.kind}`) }}</span>
-      <span class="mono">{{ name }}</span>
+      <span class="mono nm" :title="name">{{ name }}</span>
     </span>
     <span class="host mono">{{ part.host }}</span>
     <span class="state">
@@ -167,7 +167,19 @@ function commit() {
 }
 
 .k {
+  /* The kind word gives way first; the name keeps its room and ends in an ellipsis only if alone. */
+  flex: 0 100 auto;
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink-3);
+  text-overflow: ellipsis;
+}
+
+.nm {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .host {

@@ -6,6 +6,7 @@ import { i18n, setI18nLocale } from '@/i18n'
 import { vEnter } from '@/lib/motion'
 import { emptyDraft } from '@/lib/setup-model'
 import GroupCard from './GroupCard.vue'
+import GroupPartRow from './GroupPartRow.vue'
 
 function card(replaces: boolean) {
   const draft = { ...emptyDraft('blue'), id: 'shop', name: 'shop', urls: ['https://shop.example'] }
@@ -36,5 +37,26 @@ describe('the project card header', () => {
   it('carries the whole URL in a title so a cut one can still be read', () => {
     const chip = card(false).find('.url')
     expect(chip.attributes('title')).toBe('https://shop.example')
+  })
+})
+
+describe('a part row when the column is narrow', () => {
+  it('keeps the whole container name in a title and lets the kind word shrink first', () => {
+    const part = {
+      key: 'p1',
+      role: 'db' as const,
+      host: 'vps-sg-2',
+      kind: 'db' as const,
+      engine: 'postgres' as const,
+      database: '',
+      envFile: '/srv/tiemtra-api/.env',
+      container: 'tiemtra-api-db-1',
+    }
+    const wrapper = mount(GroupPartRow, {
+      props: { part, records: [], hasEnvFiles: true },
+      global: { plugins: [i18n, createPinia()] },
+    })
+    expect(wrapper.find('.nm').attributes('title')).toBe('tiemtra-api-db-1')
+    expect(wrapper.find('.src .k').exists()).toBe(true)
   })
 })
