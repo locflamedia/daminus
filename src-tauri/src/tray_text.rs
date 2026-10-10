@@ -142,12 +142,6 @@ impl Strings {
     }
 }
 
-/// Whether the icon holds still while scanning: the app's own animation
-/// switch is off, or the system asks for reduced motion.
-pub fn reduce_motion(app_animates: bool, os_reduces: bool) -> bool {
-    os_reduces || !app_animates
-}
-
 fn item(
     id: impl Into<String>,
     label: String,

@@ -4,8 +4,8 @@
 //! the wallpaper. Beside it, as plain text that takes the bar's colour too:
 //! the count of criticals (or of warnings when there is none), or "!" when no
 //! saved result can be read. While a scan runs the mark is at half opacity and
-//! breathes by swapping two template frames, still under Reduce Motion, with no
-//! count. Nothing scans in the background: the item only reflects scans the
+//! breathes by swapping two template frames, still under macOS Reduce Motion, with
+//! no count. Nothing scans in the background: the item only reflects scans the
 //! user started, and starts one when asked.
 
 use std::sync::{Arc, Mutex};
@@ -24,7 +24,7 @@ use time::UtcOffset;
 use crate::app::AppCore;
 use crate::tray_text::{
     Inputs, OPEN, OPEN_PROJECT, OPEN_TO_FIX, QUIT, SCAN_NOW, SET_UP, STOP, Strings, TRY_AGAIN,
-    TrayIcon as Icon, TrayView, reduce_motion, view,
+    TrayIcon as Icon, TrayView, view,
 };
 
 const MARK_2X: &[u8] = include_bytes!("../../assets/brand/menubar-template@2x.png");
@@ -138,15 +138,11 @@ impl<R: Runtime> Tray<R> {
         };
         let scan = core.scan_status();
         let projects = core.projects();
-        let settings = core.settings_get().ok();
         let language = core.language();
-        // Read each time, so a change applies from the next scan.
-        let still = reduce_motion(
-            settings
-                .as_ref()
-                .is_none_or(|s| s.appearance.animate_charts),
-            os_reduces_motion(app),
-        );
+        // Only macOS Reduce Motion holds the mark still; the app's Animate
+        // charts switch does not touch the menu bar. Read each time, so a
+        // change applies from the next scan.
+        let still = os_reduces_motion(app);
         let Ok(mut s) = self.state.lock() else {
             return;
         };

@@ -307,13 +307,6 @@ fn an_older_readable_result_keeps_its_icon_and_says_newer_ones_failed() {
 }
 
 #[test]
-fn reduce_motion_follows_either_switch() {
-    assert!(!reduce_motion(true, false));
-    assert!(reduce_motion(false, false));
-    assert!(reduce_motion(true, true));
-}
-
-#[test]
 fn every_tray_key_is_in_both_languages() {
     let keys = |src: &str| {
         let v: Value = serde_json::from_str(src).unwrap();
