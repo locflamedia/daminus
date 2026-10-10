@@ -237,6 +237,8 @@ fn scanning_counts_hosts_and_offers_stop() {
     };
     let v = view(&i, &en());
     assert_eq!((v.icon, v.title.as_deref()), (TrayIcon::Scanning, None));
+    // The count shown before the scan must be cleared, not left in place.
+    assert_eq!(v.title_text(), "");
     assert_eq!(v.info, ["Scanning 3 of 5 hosts…", "Started 13:58"]);
     assert_eq!(
         labels(&v),

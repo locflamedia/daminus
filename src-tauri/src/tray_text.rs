@@ -64,6 +64,13 @@ pub struct TrayView {
 }
 
 impl TrayView {
+    /// The text set beside the mark. Always a string: the menu bar keeps the
+    /// last title when it is given none, so an empty one is what clears the
+    /// count while scanning or when all is clear.
+    pub fn title_text(&self) -> &str {
+        self.title.as_deref().unwrap_or("")
+    }
+
     /// The hover text: the grey lines, one after the other.
     pub fn tooltip(&self) -> String {
         std::iter::once("Daminus")
