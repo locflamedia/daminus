@@ -16,7 +16,8 @@ export type ConfigState = 'missing' | 'unusable' | 'ok'
  * Which words head the help screen. After Check again it updates in place: `keyLoaded` names the
  * step left once the agent has a key, `ready` says both rows are green (board 01b panel 10).
  */
-export type HelpHeadline = 'noConfig' | 'noUsableHosts' | 'agent' | 'keyLoaded' | 'ready'
+export type HelpHeadline =
+  'noConfig' | 'noUsableHosts' | 'agent' | 'agentDown' | 'keyLoaded' | 'ready'
 
 export interface EmptyInput {
   configFound: boolean
@@ -58,7 +59,8 @@ function headlineOf(input: EmptyInput): HelpHeadline {
   const config = configState(input)
   if (config === 'missing') return 'noConfig'
   if (config === 'unusable') return 'noUsableHosts'
-  return 'agent'
+  // No agent at all is said apart from an agent with no key: it has to be started first.
+  return input.agent === 'unavailable' ? 'agentDown' : 'agent'
 }
 
 /**

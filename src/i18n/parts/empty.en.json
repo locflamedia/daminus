@@ -73,10 +73,12 @@
         "noConfig": "No ssh config yet. Let’s make your servers visible to ssh.",
         "noUsableHosts": "Your ssh config has no host Daminus can use yet.",
         "agent": "Your ssh-agent holds no key yet. Let’s load one.",
+        "agentDown": "No ssh-agent is running. Start it, then load your key.",
         "keyLoaded": "Key loaded. One step left: describe your servers.",
         "ready": "Ready. Import {n} host. | Ready. Import {n} hosts."
       },
       "subtitle": "Daminus uses the same {ssh} as Terminal. Three one-time steps, about five minutes.",
+      "subtitleTwo": "Daminus uses the same {ssh} as Terminal. Two one-time steps, about two minutes.",
       "subtitleFew": "Daminus uses the same {ssh} as Terminal. {n} one-time step. | Daminus uses the same {ssh} as Terminal. {n} one-time steps.",
       "found": {
         "title": "What Daminus found on this Mac",

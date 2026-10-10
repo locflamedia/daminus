@@ -61,6 +61,14 @@ const importLabel = computed(() =>
             <template #ssh><span class="mono">ssh</span></template>
           </I18nT>
           <I18nT
+            v-else-if="stepsLeft === 2"
+            keypath="empty.help.subtitleTwo"
+            tag="p"
+            scope="global"
+          >
+            <template #ssh><span class="mono">ssh</span></template>
+          </I18nT>
+          <I18nT
             v-else-if="stepsLeft > 0"
             keypath="empty.help.subtitleFew"
             tag="p"
@@ -75,7 +83,13 @@ const importLabel = computed(() =>
 
       <div v-enter="{ index: 1 }" class="cards">
         <HelpFound :view="view" :names="names" :busy="setup.loading" @recheck="$emit('recheck')" />
-        <HelpSteps v-if="stepCount > 0" :steps="view.steps" :done="view.done" :alias="alias" />
+        <HelpSteps
+          v-if="stepCount > 0"
+          :steps="view.steps"
+          :done="view.done"
+          :alias="alias"
+          :agent-down="view.agent === 'unavailable'"
+        />
         <HelpTest :alias="alias" :agent-step="agentStep" />
       </div>
     </div>
