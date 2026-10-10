@@ -12,6 +12,7 @@ import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import { errorText } from '@/lib/issue-text'
 import type { AiTurn } from '@/stores/ai-thread'
+import { useAiPayloadStore } from '@/stores/ai-payload'
 import { useOverviewStore } from '@/stores/overview'
 import { useReportStore } from '@/stores/report'
 import UiButton from '@/ui/UiButton.vue'
@@ -24,7 +25,7 @@ import { severityMix } from './use-ask-session'
 const props = defineProps<{ turn: AiTurn }>()
 const emit = defineEmits<{ stop: []; retry: [] }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const fmt = useFormat()
 const report = computed(() => useReportStore().latest)
 const baseline = computed(() => useOverviewStore().baselineSeq)
@@ -62,7 +63,12 @@ watch(
   },
   { immediate: true, flush: 'sync' },
 )
+/** The provider's own name ("Anthropic", "Claude Code"), or "The AI" before one is known. */
+const provider = computed(() => useAiPayloadStore().providerName || t('aiAsk.theAi'))
 const reading = computed(() => {
+  if (props.turn.seq !== null) {
+    return t('aiAsk.readingScan', { provider: provider.value, seq: props.turn.seq })
+  }
   const n = countInScope(report.value, props.turn.scope)
   return baseline.value === null
     ? t('aiAsk.reading', { n })
@@ -73,7 +79,16 @@ const took = computed(() =>
     ? t('aiAsk.answeredIn', { time: fmt.duration(props.turn.elapsedMs) })
     : null,
 )
-const failure = computed(() => (props.turn.error ? errorText(props.turn.error) : ''))
+// A refusal from the provider names it and the short reason with what to do ("Anthropic didn't
+// answer: rate limited. Try again in a minute."); any other error keeps its own sentence.
+const failure = computed(() => {
+  const error = props.turn.error
+  if (!error) return ''
+  const reason = `aiAsk.failure.${error.code.kind}`
+  return te(reason)
+    ? t('aiAsk.didNotAnswer', { provider: provider.value, reason: t(reason) })
+    : errorText(error)
+})
 </script>
 
 <template>
