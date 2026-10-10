@@ -120,7 +120,7 @@ impl AppCore {
         self.setup.list_resolved().await
     }
 
-    /// The SSH agent and Termius, for the empty-app screens.
+    /// The SSH agent, for the empty-app screens.
     pub async fn ssh_environment(&self) -> SshEnvironment {
         self.setup.environment().await
     }

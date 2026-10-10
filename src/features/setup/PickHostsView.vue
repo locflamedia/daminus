@@ -35,7 +35,6 @@ import LeftOut from './pick/LeftOut.vue'
 import PermissionPanel from './pick/PermissionPanel.vue'
 import PickRow from './pick/PickRow.vue'
 import PickToolbar from './pick/PickToolbar.vue'
-import TermiusTip from './pick/TermiusTip.vue'
 import TestRail from './pick/TestRail.vue'
 
 const { t } = useI18n()
@@ -196,8 +195,10 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       v-model:query="query"
       v-model:segment="segment"
       :counts="counts"
+      :busy="setup.loading"
       @select-ready="selectReady"
       @add-host="setup.addHostOpen = true"
+      @reload="setup.reload()"
     />
 
     <div class="table" role="table" :aria-busy="loadingRows || undefined">
@@ -269,7 +270,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </div>
 
     <LeftOut :skipped="setup.skipped" />
-    <TermiusTip :busy="setup.loading" @reload="setup.reload()" />
 
     <template #summary>
       <div class="counts">

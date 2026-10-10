@@ -18,6 +18,7 @@
       "failed": "Failed",
       "selectReady": "Select all ready",
       "addHost": "Add host",
+      "reload": "Reload",
       "none": "No host matches this filter."
     },
     "columns": {
@@ -73,14 +74,6 @@
     "fail": {
       "key_rejected": "The key in your config is not loaded in ssh-agent. Add it, then retry. Your other hosts keep going.",
       "key_rejected_nokey": "The keys ssh offered were not accepted. Check that the right key is loaded in ssh-agent, then retry. Your other hosts keep going.",
-      "termius": "Key only in Termius? Export it to {dir} first, then run the line above. {how}",
-      "termiusHow": "How",
-      "termiusSteps": {
-        "export": "In Termius, export the private key to a file in {dir}.",
-        "protect": "Make the file readable by you only:",
-        "load": "Load it into ssh-agent, then retry:"
-      },
-      "termiusNoLine": "Key only in Termius? Export it to {dir} first, then retry.",
       "unreachable": {
         "dns": "The address did not resolve. Check the address or VPN.",
         "refused": "The server refused the connection. Check the address or VPN.",
@@ -131,11 +124,6 @@
       "noHostName": "no HostName",
       "invalidAlias": "invalid alias",
       "note": "Wildcards set defaults, so they are read but never listed."
-    },
-    "termius": {
-      "title": "Hosts only in Termius?",
-      "body": "Termius keeps its own list. Export it once into {file}, then reload.",
-      "reload": "Reload"
     },
     "footer": {
       "ready": "{n} ready",

@@ -70,7 +70,6 @@
     },
     "help": {
       "headline": {
-        "termius": "Your servers live in Termius. Let’s make them visible to ssh.",
         "noConfig": "No ssh config yet. Let’s make your servers visible to ssh.",
         "noUsableHosts": "Your ssh config has no host Daminus can use yet.",
         "agent": "Your ssh-agent holds no key yet. Let’s load one."
@@ -98,15 +97,10 @@
         "ok": "{n} key loaded. | {n} keys loaded.",
         "okChip": "{n} key | {n} keys"
       },
-      "termius": {
-        "body": "Installed. Its hosts and keys stay private to it.",
-        "chip": "not read"
-      },
       "step": {
         "key": {
           "title": "Save your key as a file in ~/.ssh",
-          "body": "Export the private key you use in Termius, or the file you created it from. Then lock its permissions:",
-          "bodyPlain": "Keep the private key you use for your servers as a file in ~/.ssh. Then lock its permissions:"
+          "body": "Put the private key for your servers in ~/.ssh (or create one with ssh-keygen). Then lock its permissions:"
         },
         "agent": {
           "title": "Load it into ssh-agent, remembered by Keychain"
@@ -142,7 +136,7 @@
     },
     "hostBlock": {
       "title": "One Host block",
-      "hintTermius": "copy from Termius host settings",
+      "hint": "one per server",
       "alias": "Alias",
       "hostName": "HostName",
       "user": "User",
@@ -177,8 +171,8 @@
     },
     "sidebar": {
       "ghosts": "Projects and servers you add show up here, sorted by what needs a look.",
-      "termiusTitle": "Why not read Termius?",
-      "termiusBody": "Its vault is encrypted and private to Termius. Reading another app’s secrets would be fragile and wrong. Plain ssh files work with every tool, Termius included.",
+      "plainSshTitle": "Why plain ssh?",
+      "plainSshBody": "Daminus uses ~/.ssh/config and the ssh agent, exactly like Terminal. It never stores keys or passwords; set up ssh once and every tool can use it.",
       "ai": {
         "title": "AI is off",
         "optional": "Optional",

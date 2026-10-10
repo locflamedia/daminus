@@ -11,14 +11,6 @@
       "never": "never",
       "off": "not scanned"
     },
-    "termius": {
-      "title": "Hosts in Termius?",
-      "guide": "guide, 2 minutes",
-      "body": "Termius keeps hosts in its own vault. Copy each one into {file} once; Termius and your terminal keep working, and Daminus reads that file.",
-      "block": "Host block for ~/.ssh/config",
-      "show": "Show me how",
-      "copy": "Copy template"
-    },
     "leftOut": {
       "title": "Left out ({n})",
       "toggle": "Show or hide the entries left out",

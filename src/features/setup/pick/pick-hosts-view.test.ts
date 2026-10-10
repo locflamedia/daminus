@@ -285,18 +285,7 @@ describe('Failures stay inline', () => {
     const card = staging.find('.card')
     expect(card.text()).toContain('The key in your config is not loaded in ssh-agent.')
     expect(card.find('code').text()).toBe('$ ssh-add ~/.ssh/staging_ed25519')
-    expect(card.text()).toContain('Key only in Termius? Export it to ~/.ssh/ first')
-    expect(card.find('.steps').exists()).toBe(false)
-    const how = card.find('.how')
-    expect(how.text()).toBe('How')
-    expect(how.attributes('aria-expanded')).toBe('false')
-    await how.trigger('click')
-    const steps = row(wrapper, 'staging').find('.steps')
-    expect(row(wrapper, 'staging').find('.how').attributes('aria-expanded')).toBe('true')
-    expect(steps.findAll('code').map((c) => c.text())).toEqual([
-      '$ chmod 600 ~/.ssh/staging_ed25519',
-      '$ ssh-add ~/.ssh/staging_ed25519',
-    ])
+    expect(card.findAll('code')).toHaveLength(1)
     const retest = vi.spyOn(setup, 'retest').mockImplementation(() => undefined)
     const buttons = card.findAll('button').filter((b) => ['Skip host', 'Retry'].includes(b.text()))
     await buttons.find((b) => b.text() === 'Retry')!.trigger('click')
@@ -440,7 +429,7 @@ describe('Permission rows', () => {
   })
 })
 
-describe('Left out, Termius tip and rail', () => {
+describe('Left out, Reload and rail', () => {
   it('lists what was left out with the reason, and folds away', async () => {
     seed()
     const { wrapper } = await mountPick()
@@ -453,11 +442,15 @@ describe('Left out, Termius tip and rail', () => {
     expect(wrapper.find('.left .tag').exists()).toBe(false)
   })
 
-  it('reloads the config, keeping the ticks', async () => {
+  it('reloads the config from the filter bar, next to Add host, keeping the ticks', async () => {
     const setup = seed()
     const reload = vi.spyOn(setup, 'reload').mockResolvedValue(undefined)
     const { wrapper } = await mountPick()
-    await wrapper.find('.tip button').trigger('click')
+    const buttons = wrapper.findAll('.bar button').map((b) => b.text())
+    const add = buttons.findIndex((text) => text.includes('Add host'))
+    expect(buttons[add + 1]).toContain('Reload')
+    expect(buttons[add + 1]).toContain('⇧⌘R')
+    await wrapper.findAll('.bar button')[add + 1]!.trigger('click')
     expect(reload).toHaveBeenCalledOnce()
     expect(setup.ticked).toHaveLength(6)
   })

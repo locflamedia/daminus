@@ -14,7 +14,6 @@ import UiButton from '@/ui/UiButton.vue'
 import HostDetail from './HostDetail.vue'
 import HostsLeftOut from './HostsLeftOut.vue'
 import HostsList from './HostsList.vue'
-import HostsTermius from './HostsTermius.vue'
 
 const { t } = useI18n()
 const store = useHostsSettingsStore()
@@ -43,7 +42,6 @@ onMounted(() => {
     <div class="layout">
       <div class="column">
         <HostsList />
-        <HostsTermius />
         <HostsLeftOut />
       </div>
       <HostDetail />

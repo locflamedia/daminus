@@ -3,17 +3,16 @@
 ## Technology marks (`src/assets/logos/`)
 
 The SVG marks of Debian, Docker, Laravel, MariaDB, MongoDB, MySQL, NGINX, Node.js, PM2,
-PostgreSQL, Redis, Termius and Ubuntu (technologies) and of Anthropic, Claude, DeepSeek, Gemini, Ollama, OpenAI and OpenRouter (AI
+PostgreSQL, Redis and Ubuntu (technologies) and of Anthropic, Claude, DeepSeek, Gemini, Ollama, OpenAI and OpenRouter (AI
 providers) come from [`@thesvg/icons`](https://thesvg.org) 3.3.12 (the package is MIT licensed,
 Copyright (c) 2025 thesvg.org). The marks themselves are trademarks or logos of their owners.
 Daminus draws them only to name the technology a project part runs on (a compose project, a
 PM2 app, a database engine, a container image, the distribution a login test reported, the
-Termius app the user has installed, the stacks the empty app says it reads) or the AI provider
+stacks the empty app says it reads) or the AI provider
 the user chose, as a label,
 never to suggest endorsement. They are bundled with the app, never loaded from the network,
 and never recoloured: Anthropic, OpenAI, OpenRouter and Ollama ship the owner's own light and
-dark files (`*-dark.svg`), a mark too dark for the dark theme is only lifted in brightness, and
-the single-colour black Termius mark is drawn white on the dark theme.
+dark files (`*-dark.svg`), and a mark too dark for the dark theme is only lifted in brightness.
 
 | Mark | File | thesvg slug, variant | Licence stated by thesvg |
 |---|---|---|---|
@@ -26,7 +25,6 @@ the single-colour black Termius mark is drawn white on the dark theme.
 | Ollama | `ollama.svg`, `ollama-dark.svg` | `ollama`, light / dark | CC0-1.0 |
 | OpenAI | `openai.svg`, `openai-dark.svg` | `openai`, light / dark | MIT |
 | OpenRouter | `openrouter.svg`, `openrouter-dark.svg` | `openrouter`, light / dark | CC0-1.0 |
-| Termius | `termius.svg` | `termius`, default | CC0-1.0 |
 | Ubuntu | `ubuntu.svg` | `ubuntu`, default | CC0-1.0 |
 
 The Debian Open Use Logo is Copyright (c) 1999 Software in the Public Interest, Inc., and other

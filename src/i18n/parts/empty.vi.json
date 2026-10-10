@@ -70,7 +70,6 @@
     },
     "help": {
       "headline": {
-        "termius": "Máy chủ của bạn nằm trong Termius. Hãy để ssh nhìn thấy chúng.",
         "noConfig": "Chưa có cấu hình ssh. Hãy để ssh nhìn thấy máy chủ của bạn.",
         "noUsableHosts": "Cấu hình ssh của bạn chưa có host nào Daminus dùng được.",
         "agent": "ssh-agent của bạn chưa giữ khóa nào. Hãy nạp một khóa."
@@ -98,15 +97,10 @@
         "ok": "Đã nạp {n} khóa. | Đã nạp {n} khóa.",
         "okChip": "{n} khóa | {n} khóa"
       },
-      "termius": {
-        "body": "Đã cài. Host và khóa của nó chỉ riêng nó biết.",
-        "chip": "không đọc"
-      },
       "step": {
         "key": {
           "title": "Lưu khóa thành một tệp trong ~/.ssh",
-          "body": "Xuất khóa riêng bạn dùng trong Termius, hoặc tệp bạn đã tạo ra nó. Rồi khóa quyền truy cập của tệp:",
-          "bodyPlain": "Giữ khóa riêng bạn dùng cho máy chủ thành một tệp trong ~/.ssh. Rồi khóa quyền truy cập của tệp:"
+          "body": "Đặt khóa riêng cho máy chủ của bạn vào ~/.ssh (hoặc tạo một khóa bằng ssh-keygen). Rồi khóa quyền truy cập của tệp:"
         },
         "agent": {
           "title": "Nạp khóa vào ssh-agent, để Keychain ghi nhớ"
@@ -142,7 +136,7 @@
     },
     "hostBlock": {
       "title": "Một khối Host",
-      "hintTermius": "chép từ phần cài đặt host của Termius",
+      "hint": "mỗi máy chủ một khối",
       "alias": "Bí danh",
       "hostName": "HostName",
       "user": "User",
@@ -177,8 +171,8 @@
     },
     "sidebar": {
       "ghosts": "Dự án và máy chủ bạn thêm sẽ hiện ở đây, xếp theo mức cần xem.",
-      "termiusTitle": "Sao không đọc Termius?",
-      "termiusBody": "Kho của Termius được mã hóa và chỉ riêng nó biết. Đọc bí mật của ứng dụng khác vừa dễ hỏng vừa không đúng. Tệp ssh thông thường chạy với mọi công cụ, kể cả Termius.",
+      "plainSshTitle": "Sao lại là ssh thông thường?",
+      "plainSshBody": "Daminus dùng ~/.ssh/config và ssh agent, giống hệt Terminal. Nó không bao giờ lưu khóa hay mật khẩu; thiết lập ssh một lần là mọi công cụ đều dùng được.",
       "ai": {
         "title": "AI đang tắt",
         "optional": "Tùy chọn",

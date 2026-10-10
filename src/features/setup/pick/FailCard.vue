@@ -5,12 +5,11 @@
   available to the app, only the outcome, so the sentence is the reason.
 -->
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { HostKeyInfo, HostOutcome } from '@/api'
 import { CONNECT_TIMEOUT_S, type CardKind, type HostRowModel, netReason } from '@/lib/host-rows'
-import { addKeyCommand, protectKeyCommand, shellQuote } from '@/lib/host-test'
-import UiBrandMark from '@/ui/UiBrandMark.vue'
+import { addKeyCommand, shellQuote } from '@/lib/host-test'
 import UiButton from '@/ui/UiButton.vue'
 import CopyLine from './CopyLine.vue'
 
@@ -23,9 +22,6 @@ const props = defineProps<{
 const emit = defineEmits<{ skip: []; retry: [] }>()
 
 const { t } = useI18n()
-
-const howOpen = ref(false)
-const protectCommand = computed(() => protectKeyCommand(props.row.identityFiles))
 
 const warn = computed(() => props.kind === 'host_key_unknown')
 const keyCommand = computed(() => addKeyCommand(props.row.identityFiles))
@@ -80,43 +76,6 @@ const command = computed(() => {
       </template>
       <span class="reason">{{ sentence }}</span>
       <CopyLine v-if="command" :command="command" />
-      <span v-if="kind === 'key_rejected'" class="termius">
-        <UiBrandMark name="termius" :size="12" />
-        <i18n-t
-          scope="global"
-          :keypath="keyCommand ? 'setupPick.fail.termius' : 'setupPick.fail.termiusNoLine'"
-          tag="span"
-        >
-          <template #dir><span class="mono">~/.ssh/</span></template>
-          <template #how>
-            <button
-              v-if="keyCommand"
-              type="button"
-              class="how"
-              :aria-expanded="howOpen"
-              :aria-controls="`${row.alias}-termius-steps`"
-              @click="howOpen = !howOpen"
-            >
-              {{ t('setupPick.fail.termiusHow') }}
-            </button>
-          </template>
-        </i18n-t>
-      </span>
-      <ol v-if="howOpen && keyCommand" :id="`${row.alias}-termius-steps`" class="steps">
-        <li>
-          <i18n-t scope="global" keypath="setupPick.fail.termiusSteps.export" tag="span">
-            <template #dir><span class="mono">~/.ssh/</span></template>
-          </i18n-t>
-        </li>
-        <li v-if="protectCommand">
-          <span>{{ t('setupPick.fail.termiusSteps.protect') }}</span>
-          <CopyLine :command="protectCommand" />
-        </li>
-        <li>
-          <span>{{ t('setupPick.fail.termiusSteps.load') }}</span>
-          <CopyLine :command="keyCommand" />
-        </li>
-      </ol>
     </div>
     <div class="actions">
       <UiButton class="skip" @click="emit('skip')">{{ t('setupPick.fail.skip') }}</UiButton>
@@ -166,46 +125,6 @@ const command = computed(() => {
   color: var(--ink-2);
   font-size: var(--text-12);
   line-height: 1.45;
-}
-
-.termius {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ink-2);
-  font-size: var(--text-11);
-}
-
-.how {
-  padding: 0;
-  color: var(--accent-ink);
-  font: inherit;
-  font-weight: var(--weight-medium);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.how:focus-visible {
-  border-radius: 4px;
-  box-shadow: var(--focus-ring);
-}
-
-.steps {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin: 0;
-  padding-left: var(--space-4);
-  list-style: decimal;
-  color: var(--ink-2);
-  font-size: var(--text-11);
-}
-
-.steps li {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--space-1);
 }
 
 .skip {

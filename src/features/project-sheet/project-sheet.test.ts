@@ -48,7 +48,7 @@ function core() {
       case 'hosts_list':
         return { list: { config_found: true, hosts: [], skipped: [], empty: null }, entries: [] }
       case 'ssh_environment':
-        return { agent: 'keys', keys: 1, termius_installed: false }
+        return { agent: 'keys', keys: 1 }
       default:
         throw new Error(`unexpected command ${cmd}`)
     }

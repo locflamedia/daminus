@@ -170,7 +170,7 @@ pub async fn hosts_list(core: State<'_, AppCore>) -> Result<HostListing, AppErro
     core.hosts_list().await
 }
 
-/// Whether the SSH agent holds keys and Termius is installed.
+/// Whether the SSH agent holds keys, and how many.
 #[tauri::command]
 pub async fn ssh_environment(core: State<'_, AppCore>) -> Result<SshEnvironment, AppError> {
     Ok(core.ssh_environment().await)

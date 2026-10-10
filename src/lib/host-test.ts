@@ -226,9 +226,3 @@ export function addKeyCommand(identityFiles: readonly string[]): string | null {
   const path = keyPathArg(identityFiles)
   return path === null ? null : `ssh-add ${path}`
 }
-
-/** The line that makes an exported private key readable by its owner only (ssh refuses it else). */
-export function protectKeyCommand(identityFiles: readonly string[]): string | null {
-  const path = keyPathArg(identityFiles)
-  return path === null ? null : `chmod 600 ${path}`
-}

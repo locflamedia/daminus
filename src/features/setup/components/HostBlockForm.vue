@@ -3,7 +3,7 @@
   they make, typed live into a dark panel the person copies and pastes into `~/.ssh/config`
   themselves. Daminus never writes that file. The block only copies once every field passed its
   check (see lib/host-block), so a typed value can never add a line to it. `sheet` is the same
-  form without its title and the Termius hint, for the "Add a host by hand" sheet.
+  form without its title, for the "Add a host by hand" sheet.
 -->
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
@@ -21,9 +21,8 @@ import { useToastStore } from '@/stores/toasts'
 import UiCard from '@/ui/UiCard.vue'
 import UiField from '@/ui/UiField.vue'
 
-const props = withDefaults(defineProps<{ variant?: 'page' | 'sheet'; termius?: boolean }>(), {
+const props = withDefaults(defineProps<{ variant?: 'page' | 'sheet' }>(), {
   variant: 'page',
-  termius: false,
 })
 
 const fields = defineModel<HostBlockFields>({ required: true })
@@ -84,7 +83,7 @@ const ORDER: { field: HostBlockField; wide?: boolean }[] = [
     <UiCard class="fields" as="section" :aria-label="t('empty.hostBlock.title')">
       <div v-if="variant === 'page'" class="head">
         <h3>{{ t('empty.hostBlock.title') }}</h3>
-        <span v-if="termius">{{ t('empty.hostBlock.hintTermius') }}</span>
+        <span>{{ t('empty.hostBlock.hint') }}</span>
       </div>
       <div class="grid">
         <div

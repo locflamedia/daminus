@@ -26,7 +26,6 @@ function input(over: Partial<EmptyInput> = {}): EmptyInput {
     skipped: [],
     agent: 'keys',
     keys: 2,
-    termiusInstalled: false,
     ...over,
   }
 }
@@ -84,23 +83,18 @@ describe('helpView', () => {
     return helpView(i, shownRows(i, before))
   }
 
-  it('cause A with an empty agent and Termius: all three rows and steps, the Termius headline', () => {
-    const v = view({ ...NO_CONFIG, agent: 'empty', keys: 0, termiusInstalled: true })
-    expect(v.headline).toBe('termius')
-    expect(v.rows).toEqual({ config: true, agent: true, termius: true })
+  it('cause A with an empty agent: both rows and all three steps, the no-config headline', () => {
+    const v = view({ ...NO_CONFIG, agent: 'empty', keys: 0 })
+    expect(v.headline).toBe('noConfig')
+    expect(v.rows).toEqual({ config: true, agent: true })
     expect(v.steps).toEqual({ key: true, agent: true, block: 'describe' })
     expect(v.stepCount).toBe(3)
     expect(v.leftOut).toEqual([])
     expect(v.canImport).toBe(false)
   })
 
-  it('names Termius in the headline only when it is installed', () => {
-    expect(view({ ...NO_CONFIG, agent: 'empty' }).headline).toBe('noConfig')
-    expect(view({ ...NO_CONFIG, agent: 'empty' }).rows.termius).toBe(false)
-  })
-
   it('cause B says no host is usable, lists what was left out and asks for a Host block with a HostName', () => {
-    const v = view({ ...NO_USABLE, agent: 'empty', keys: 0, termiusInstalled: true })
+    const v = view({ ...NO_USABLE, agent: 'empty', keys: 0 })
     expect(v.headline).toBe('noUsableHosts')
     expect(v.config).toBe('unusable')
     expect(v.entries).toBe(4)
@@ -115,15 +109,15 @@ describe('helpView', () => {
 
   it('only the config is missing: its row and its step, not the agent ones', () => {
     const v = view(NO_CONFIG)
-    expect(v.rows).toEqual({ config: true, agent: false, termius: false })
+    expect(v.rows).toEqual({ config: true, agent: false })
     expect(v.steps).toEqual({ key: false, agent: false, block: 'describe' })
     expect(v.stepCount).toBe(1)
   })
 
   it('only the agent is empty: its row and its two steps, not the Host block', () => {
-    const v = view({ agent: 'empty', keys: 0, termiusInstalled: true })
+    const v = view({ agent: 'empty', keys: 0 })
     expect(v.headline).toBe('agent')
-    expect(v.rows).toEqual({ config: false, agent: true, termius: true })
+    expect(v.rows).toEqual({ config: false, agent: true })
     expect(v.steps).toEqual({ key: true, agent: true, block: null })
     expect(v.stepCount).toBe(2)
   })
@@ -134,13 +128,6 @@ describe('helpView', () => {
     expect(v.rows.agent).toBe(true)
   })
 
-  it('shows the Termius row whenever it is installed and never otherwise', () => {
-    for (const termiusInstalled of [true, false]) {
-      expect(view({ ...NO_CONFIG, termiusInstalled }).rows.termius).toBe(termiusInstalled)
-      expect(view({ agent: 'empty', termiusInstalled }).rows.termius).toBe(termiusInstalled)
-    }
-  })
-
   it('turns Import on only when the config has a host and the agent a key', () => {
     expect(view({ ...NO_CONFIG, agent: 'empty' }).canImport).toBe(false)
     expect(view({ agent: 'empty' }).canImport).toBe(false)
@@ -149,19 +136,19 @@ describe('helpView', () => {
   })
 
   it('keeps a row that was missing once Check again finds it, now green', () => {
-    const before = shownRows(input({ ...NO_CONFIG, agent: 'empty', termiusInstalled: true }), null)
-    const found = input({ hosts: 1, agent: 'keys', keys: 1, termiusInstalled: true })
+    const before = shownRows(input({ ...NO_CONFIG, agent: 'empty' }), null)
+    const found = input({ hosts: 1, agent: 'keys', keys: 1 })
     const v = helpView(found, shownRows(found, before))
-    expect(v.rows).toEqual({ config: true, agent: true, termius: true })
+    expect(v.rows).toEqual({ config: true, agent: true })
     expect(v.config).toBe('ok')
     expect(v.agent).toBe('keys')
-    expect(v.headline).toBe('termius')
+    expect(v.headline).toBe('noConfig')
     expect(v.canImport).toBe(true)
   })
 
   it('moves the headline from cause A to cause B while the config is still the problem', () => {
-    const before = shownRows(input({ ...NO_CONFIG, termiusInstalled: true }), null)
-    const next = input({ ...NO_USABLE, termiusInstalled: true })
+    const before = shownRows(input(NO_CONFIG), null)
+    const next = input(NO_USABLE)
     expect(shownRows(next, before).headline).toBe('noUsableHosts')
   })
 })

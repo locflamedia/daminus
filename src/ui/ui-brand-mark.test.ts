@@ -26,13 +26,11 @@ describe('brand marks', () => {
     expect(brandOfDistro(null)).toBeNull()
   })
 
-  it('turns a black single-colour mark white on dark, and lifts a dark coloured one', () => {
-    const termius = mount(UiBrandMark, { props: { name: 'termius' } })
-    expect(termius.classes()).toContain('brand-invert')
-    expect(termius.classes()).not.toContain('brand-lift')
+  it('lifts a dark coloured mark on dark and leaves the others as drawn', () => {
     const mysql = mount(UiBrandMark, { props: { name: 'mysql' } })
     expect(mysql.classes()).toContain('brand-lift')
-    expect(mysql.classes()).not.toContain('brand-invert')
+    const redis = mount(UiBrandMark, { props: { name: 'redis' } })
+    expect(redis.classes()).not.toContain('brand-lift')
   })
 
   it('draws the image when named and the fallback otherwise', () => {

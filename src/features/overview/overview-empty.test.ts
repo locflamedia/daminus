@@ -20,7 +20,6 @@ async function mountOverview() {
       return {
         agent: noConfig ? 'empty' : 'keys',
         keys: noConfig ? 0 : 2,
-        termius_installed: noConfig,
       }
     }
     if (cmd === 'rules_list') return []
@@ -63,7 +62,7 @@ describe('Overview with no project', () => {
     noConfig = true
     useProjectsStore().loaded = true
     const wrapper = await mountOverview()
-    expect(wrapper.text()).toContain('Let’s make them visible to ssh.')
+    expect(wrapper.text()).toContain('No ssh config yet. Let’s make your servers visible to ssh.')
     expect(wrapper.text()).not.toContain('Check every server in one pass.')
   })
 

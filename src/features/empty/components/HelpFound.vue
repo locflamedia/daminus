@@ -1,9 +1,8 @@
 <!--
-  "What Daminus found on this Mac": the ssh config, the ssh-agent and Termius, each in a row
-  that says what exists. Only the rows that were missing are drawn (the Termius row only when
-  Termius is installed), and "Check again" reads all of them again. Termius reads "not read" in
-  neutral grey. When the config is there but nothing in it is usable, the entries that were left
-  out are listed under its row.
+  "What Daminus found on this Mac": the ssh config and the ssh-agent, each in a row that says
+  what exists. Only the rows that were missing are drawn, and "Check again" reads both of them
+  again. When the config is there but nothing in it is usable, the entries that were left out
+  are listed under its row.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -81,15 +80,6 @@ const agent = computed(() => {
     <ul class="rows">
       <HelpRow v-if="view.rows.config" icon="file" name="~/.ssh/config" v-bind="config" />
       <HelpRow v-if="view.rows.agent" icon="lock" name="ssh-agent" v-bind="agent" />
-      <HelpRow
-        v-if="view.rows.termius"
-        icon="terminal"
-        brand="termius"
-        name="Termius"
-        :sub="t('empty.help.termius.body')"
-        :chip="t('empty.help.termius.chip')"
-        tone="neutral"
-      />
     </ul>
     <HelpLeftOut
       v-if="view.leftOut.length > 0"

@@ -149,7 +149,6 @@ describe('Settings › Hosts', () => {
     const wrapper = await mountView(SettingsHosts)
     const text = wrapper.text()
     expect(text).toContain('vps-sg-2')
-    expect(text).toContain('Hosts in Termius?')
     expect(text).toContain('Left out (')
     expect(text).toContain('Include in scans')
     expect(text).toContain('HostName')

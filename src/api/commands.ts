@@ -180,7 +180,7 @@ export function hostsList(): Promise<HostListing> {
   return invoke<HostListing>('hosts_list')
 }
 
-/** Whether the SSH agent holds keys and Termius is installed. */
+/** Whether the SSH agent holds keys, and how many. */
 export function sshEnvironment(): Promise<SshEnvironment> {
   return invoke<SshEnvironment>('ssh_environment')
 }

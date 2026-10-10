@@ -715,13 +715,12 @@ mod ipc {
     }
 
     #[test]
-    fn ssh_environment_has_the_agent_and_termius_but_no_key_material() {
+    fn ssh_environment_has_the_agent_but_no_key_material() {
         let app = mock_app(FakeTransport::new());
         let env = app.invoke("ssh_environment", json!({})).unwrap();
         assert!(env["agent"].is_string());
         assert!(env["keys"].is_u64());
-        assert!(env["termius_installed"].is_boolean());
-        assert_eq!(env.as_object().map(serde_json::Map::len), Some(3));
+        assert_eq!(env.as_object().map(serde_json::Map::len), Some(2));
     }
 
     #[test]

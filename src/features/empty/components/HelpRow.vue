@@ -1,24 +1,20 @@
 <!--
   One line of "What Daminus found on this Mac": a tile, the name in mono, what it found in a
   sentence, and one chip. A row that was a problem and is now fine flashes green once and its
-  chip changes with it; the Termius row is neutral grey, a promise and not a problem.
+  chip changes with it.
 -->
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
-import type { BrandName } from '@/ui/brand-marks'
-import UiBrandMark from '@/ui/UiBrandMark.vue'
 import UiChip from '@/ui/UiChip.vue'
 import UiIcon from '@/ui/UiIcon.vue'
 import type { IconName } from '@/ui/icon-paths'
 
 const props = defineProps<{
   icon: IconName
-  /** The owner's mark, drawn in place of the icon when the row names an app (Termius). */
-  brand?: BrandName
   name: string
   sub: string
   chip: string
-  tone: 'ok' | 'warn' | 'neutral'
+  tone: 'ok' | 'warn'
 }>()
 
 /** Long enough for the green wash and the chip to read as one change. */
@@ -41,7 +37,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
 <template>
   <li class="row" :class="{ flash: flashing }">
     <span class="tile">
-      <UiBrandMark :name="brand ?? null" :size="14"><UiIcon :name="icon" :size="14" /></UiBrandMark>
+      <UiIcon :name="icon" :size="14" />
     </span>
     <div class="text">
       <span class="mono name">{{ name }}</span>

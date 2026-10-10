@@ -5,8 +5,4 @@ export type SshEnvironment = { agent: AgentState,
 /**
  * Keys the agent holds (their count only, never their names or contents).
  */
-keys: number, 
-/**
- * `Termius.app` is installed.
- */
-termius_installed: boolean, };
+keys: number, };

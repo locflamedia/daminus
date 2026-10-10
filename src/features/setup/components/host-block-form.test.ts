@@ -145,16 +145,14 @@ describe('HostBlockForm', () => {
     expect(wrapper.get('.snippet').text()).not.toContain('evil')
   })
 
-  it('says Daminus never writes the file, and keeps the Termius hint to Termius users', () => {
+  it('says Daminus never writes the file, and one block per server', () => {
     const { wrapper } = mountForm()
     expect(wrapper.get('.snippet').text()).toContain('Daminus never writes this file.')
-    expect(wrapper.text()).not.toContain('copy from Termius host settings')
-    const withTermius = mountForm({ termius: true })
-    expect(withTermius.wrapper.text()).toContain('copy from Termius host settings')
+    expect(wrapper.get('.head span').text()).toBe('one per server')
   })
 
   it('has no title and no hint in the sheet form', () => {
-    const { wrapper } = mountForm({ variant: 'sheet', termius: true })
+    const { wrapper } = mountForm({ variant: 'sheet' })
     expect(wrapper.find('.head').exists()).toBe(false)
   })
 })
@@ -169,7 +167,7 @@ describe('AddHostSheet', () => {
             entries: [],
           }
         )
-      if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1, termius_installed: false }
+      if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1 }
       return null
     })
     const wrapper = mount(AddHostSheet, {

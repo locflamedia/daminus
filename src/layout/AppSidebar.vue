@@ -7,7 +7,7 @@ import { useNow } from '@/composables/use-now'
 import StreakBadge from '@/features/delight/StreakBadge.vue'
 import SidebarAiCard from '@/features/empty/components/SidebarAiCard.vue'
 import SidebarGhosts from '@/features/empty/components/SidebarGhosts.vue'
-import SidebarTermius from '@/features/empty/components/SidebarTermius.vue'
+import SidebarPlainSsh from '@/features/empty/components/SidebarPlainSsh.vue'
 import { useEmptyStore } from '@/features/empty/empty-store'
 import { usePaletteStore } from '@/features/palette/palette-store'
 import { diskTone, isUnreachable, issueCount } from '@/lib/rollups'
@@ -118,7 +118,7 @@ const serverRows = computed(() =>
           <h3 class="group">{{ t('nav.servers') }} <span>0</span></h3>
         </section>
         <SidebarGhosts v-else />
-        <SidebarTermius v-if="helpScreen && empty.input.termiusInstalled" />
+        <SidebarPlainSsh v-if="helpScreen" />
       </template>
 
       <section v-if="!firstLaunch && projects.projects.length" class="list">
