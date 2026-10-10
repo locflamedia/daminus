@@ -45,7 +45,7 @@ const command = computed(() => `ssh ${shellQuote(props.alias)} 'echo ok'`)
 <style scoped>
 .test {
   display: flex;
-  flex: 1 1 auto;
+  flex: none;
   flex-direction: column;
   gap: 10px;
   padding: var(--space-4);

@@ -2,8 +2,8 @@
   The read-only preview of `~/.ssh/config` on the first screen: parsed here, before any
   connection, with no checkboxes and no second button (choosing happens in step 1). The chip
   says "Reading…", then the rows land 260 ms apart and tick themselves, and the chip turns into
-  the count once, after the last one. Hosts that were named but cannot be used are explained
-  below the rows. Everything shown is text from the config.
+  the count once, after the last one. Hosts that were named but cannot be used close the list
+  as faded, unticked rows marked Skipped, and are explained below it. Everything shown is text from the config.
 -->
 <script setup lang="ts">
 import { aliasWidthStyle } from '@/lib/alias-width'
@@ -128,6 +128,18 @@ function skipText(s: PreviewSkip): string {
         <span class="mono dim">{{ r.hostName }}</span>
         <span class="mono dim">{{ r.user ?? '' }}</span>
         <span class="key">{{ r.key ?? t('empty.preview.agentKey') }}</span>
+      </li>
+      <li
+        v-for="(s, i) in skips"
+        :key="`skip-${s.name}`"
+        v-enter="{ index: rowDelay(rows.length + i) / 80 }"
+        class="host skipped"
+      >
+        <span class="cb ring" aria-hidden="true" />
+        <UiIcon :name="s.kind === 'gitRemote' ? 'external' : 'server'" class="glyph" />
+        <span class="mono alias">{{ s.name }}</span>
+        <span /><span />
+        <span class="key">{{ t('empty.preview.skipped') }}</span>
       </li>
     </ul>
 
@@ -256,6 +268,24 @@ function skipText(s: PreviewSkip): string {
 
 .glyph {
   color: var(--ink-2);
+}
+
+/* A host that is named but cannot be used: faded, never ticked, its key cell says Skipped. */
+.skipped {
+  opacity: 0.55;
+}
+
+.cb.ring {
+  background: var(--surface-0);
+  box-shadow: inset 0 0 0 1.5px var(--ink-4);
+}
+
+.skipped .glyph {
+  color: var(--ink-5);
+}
+
+.skipped .key {
+  color: var(--warn-ink);
 }
 
 .mono {

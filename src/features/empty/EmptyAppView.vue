@@ -53,7 +53,9 @@ const skips = computed(() => previewSkips(setup.skipped))
 .body,
 .foot {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 520px;
+  /* The preview keeps 520 at 1440 and gives way down to 480 at 1280, so the two buttons and
+     the step cards keep the board's row (board 01). */
+  grid-template-columns: minmax(0, 1fr) clamp(480px, 50%, 520px);
   gap: var(--space-10);
 }
 

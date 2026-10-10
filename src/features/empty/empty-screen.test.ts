@@ -66,8 +66,11 @@ describe('the first screen', () => {
   it('pitches one way forward and previews the hosts of the config', async () => {
     const { wrapper } = await mountScreen()
     expect(wrapper.text()).toContain('Check every server in one pass.')
-    const rows = wrapper.findAll('.host')
+    const rows = wrapper.findAll('.host:not(.skipped)')
     expect(rows).toHaveLength(6)
+    // A host that cannot be used closes the list, faded and marked Skipped (board 01).
+    const skipped = wrapper.findAll('.host.skipped')
+    expect(skipped.map((r) => r.text())).toEqual(['github.comSkipped'])
     expect(rows[0]?.text()).toContain('vps-sg-1')
     expect(rows[0]?.text()).toContain('203.0.113.14')
     expect(rows[0]?.text()).toContain('id_ed25519')
@@ -94,7 +97,7 @@ describe('the first screen', () => {
     const alert = wrapper.get('[role="alert"]')
     expect(alert.text()).toContain('Could not read your SSH config')
     expect(alert.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
-    expect(wrapper.findAll('.host')).toHaveLength(6)
+    expect(wrapper.findAll('.host:not(.skipped)')).toHaveLength(6)
   })
 
   it('says why a skipped git remote is left out and keeps patterns quiet', async () => {
