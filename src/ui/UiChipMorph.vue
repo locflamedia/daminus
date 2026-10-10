@@ -6,7 +6,7 @@
   fade but drops the width change. A hidden copy of the label measures the natural width.
 -->
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import UiIcon from './UiIcon.vue'
 import UiSpinner from './UiSpinner.vue'
 import type { ChipTone } from './UiChip.vue'
@@ -37,11 +37,22 @@ function measure() {
   if (w) width.value = w
 }
 
+let watcher: ResizeObserver | undefined
+
 onMounted(async () => {
   measure()
+  // The label is measured again when its size changes without the label changing: the web
+  // font arriving after the first draw widens the word, and a width taken from the fallback
+  // font would cut it ("2 critic…").
+  if (sizer.value && typeof ResizeObserver !== 'undefined') {
+    watcher = new ResizeObserver(measure)
+    watcher.observe(sizer.value)
+  }
   await nextTick()
   ready.value = true
 })
+
+onBeforeUnmount(() => watcher?.disconnect())
 
 watch(
   () => [props.label, props.icon, props.busy, props.dot],
@@ -104,8 +115,17 @@ watch(
 .sizer {
   position: absolute;
   left: 0;
+  width: max-content;
+  max-width: none;
   visibility: hidden;
   pointer-events: none;
+  white-space: nowrap;
+}
+
+/* The measuring copy is never squeezed: it reports the whole word. */
+.sizer .word {
+  overflow: visible;
+  text-overflow: clip;
 }
 
 /* A chip squeezed by its row (the card head) cuts the word, not the dot. */

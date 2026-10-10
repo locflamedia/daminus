@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { mount } from '@vue/test-utils'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import UiChip from './UiChip.vue'
 import UiChipMorph from './UiChipMorph.vue'
 import UiTag from './UiTag.vue'
@@ -75,5 +75,42 @@ describe('UiChipMorph', () => {
     })
     const words = wrapper.findAll('.word')
     expect(words.map((w) => w.text())).toEqual(['Không có trong config', 'Không có trong config'])
+  })
+})
+
+describe('UiChipMorph width', () => {
+  it('measures the whole word again when its size changes, and stops when it goes', async () => {
+    const observed: Element[] = []
+    let disconnected = false
+    let notify: () => void = () => {}
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(cb: () => void) {
+          notify = cb
+        }
+        observe(el: Element) {
+          observed.push(el)
+        }
+        disconnect() {
+          disconnected = true
+        }
+      },
+    )
+    const wrapper = mount(UiChipMorph, {
+      props: { label: '2 critical', tone: 'crit', dot: true, large: true },
+    })
+    const sizer = wrapper.find('.sizer').element as HTMLElement
+    expect(observed).toEqual([sizer])
+    expect(wrapper.find('.sizer').text()).toBe('2 critical')
+
+    Object.defineProperty(sizer, 'offsetWidth', { value: 88, configurable: true })
+    notify()
+    await wrapper.vm.$nextTick()
+    expect((wrapper.element as HTMLElement).style.width).toBe('88px')
+
+    wrapper.unmount()
+    expect(disconnected).toBe(true)
+    vi.unstubAllGlobals()
   })
 })
