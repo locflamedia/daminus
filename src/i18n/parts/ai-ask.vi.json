@@ -39,6 +39,18 @@
       "warn": "CẢNH BÁO",
       "info": "GHI CHÚ"
     },
-    "button": "Hỏi AI"
+    "button": "Hỏi AI",
+    "theAi": "AI",
+    "readingScan": "{provider} đang đọc lần quét #{seq}…",
+    "didNotAnswer": "{provider} không trả lời: {reason}",
+    "failure": {
+      "provider_rate_limit": "bị giới hạn số yêu cầu. Thử lại sau một phút.",
+      "provider_auth": "khoá bị từ chối. Kiểm tra lại ở Cài đặt › Nhà cung cấp AI.",
+      "provider_unavailable": "hiện không kết nối được. Thử lại sau giây lát.",
+      "claude_cli_not_found": "không có lệnh claude trên máy Mac này. Cài Claude Code rồi thử lại.",
+      "claude_cli_not_logged_in": "chưa đăng nhập. Đăng nhập bằng lệnh claude trong Terminal rồi thử lại.",
+      "claude_cli_quota": "gói của bạn đã hết lượt dùng. Thử lại sau.",
+      "timeout": "không trả lời kịp. Thử lại."
+    }
   }
 }

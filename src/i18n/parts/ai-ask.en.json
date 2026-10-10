@@ -39,6 +39,18 @@
       "warn": "WARN",
       "info": "INFO"
     },
-    "button": "Ask AI"
+    "button": "Ask AI",
+    "theAi": "The AI",
+    "readingScan": "{provider} is reading scan #{seq}…",
+    "didNotAnswer": "{provider} didn’t answer: {reason}",
+    "failure": {
+      "provider_rate_limit": "rate limited. Try again in a minute.",
+      "provider_auth": "the key was refused. Check it in Settings › AI providers.",
+      "provider_unavailable": "not reachable right now. Try again in a moment.",
+      "claude_cli_not_found": "the claude command is not on this Mac. Install Claude Code, then try again.",
+      "claude_cli_not_logged_in": "not signed in. Sign in with the claude command in Terminal, then try again.",
+      "claude_cli_quota": "your plan’s usage limit is reached. Try again later.",
+      "timeout": "no answer in time. Try again."
+    }
   }
 }

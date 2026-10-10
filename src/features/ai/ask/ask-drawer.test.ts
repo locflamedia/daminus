@@ -160,7 +160,9 @@ describe('Ask drawer', () => {
     const view = await open()
     await sendFromSheet('What now?')
     await emit(0, { kind: 'error', error: { kind: 'provider_auth' } })
-    expect(view.find('[role="alert"]').text()).toContain('rejected the key')
+    expect(view.find('[role="alert"] .why').text()).toMatch(
+      /^.+ didn’t answer: the key was refused\. Check it in Settings › AI providers\.$/,
+    )
     const retry = view.findAll('button').find((b) => b.text() === 'Try again')
     expect(retry).toBeDefined()
     await retry?.trigger('click')
@@ -169,6 +171,23 @@ describe('Ask drawer', () => {
     expect(payload.open).toBe(true)
     expect(payload.question).toBe('What now?')
     expect(calls.filter((c) => c === 'ai_analyze')).toHaveLength(1)
+  })
+
+  it('names the provider and the short reason when it refuses, as board 30 draws it', async () => {
+    const view = await open()
+    await sendFromSheet()
+    useAiPayloadStore().providerName = 'Anthropic'
+    await emit(0, { kind: 'error', error: { kind: 'provider_rate_limit' } })
+    expect(view.find('[role="alert"] .why').text()).toBe(
+      'Anthropic didn’t answer: rate limited. Try again in a minute.',
+    )
+  })
+
+  it('names the provider and the scan it reads while the answer is awaited', async () => {
+    const view = await open()
+    useAiPayloadStore().providerName = 'Anthropic'
+    await sendFromSheet()
+    expect(view.find('.think .reading').text()).toMatch(/^Anthropic is reading scan #\d+…$/)
   })
 
   it('stops a running answer and says so without alarm', async () => {
