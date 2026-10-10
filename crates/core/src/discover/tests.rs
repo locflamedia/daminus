@@ -85,3 +85,46 @@ fn records_sort_into_their_hosts_lists() {
     assert_eq!(login.login, None);
     assert_eq!(login.paths.len(), 1);
 }
+
+/// A database inside a container is found through its container; the host
+/// also sees its processes, which must not be listed a second time.
+#[test]
+fn a_database_process_inside_a_container_is_not_listed_again_as_a_process() {
+    let tmp = tempfile::tempdir().unwrap();
+    let proc = tmp.path().join("proc");
+    for (pid, comm, cgroup) in [
+        (
+            "100",
+            "postgres",
+            "0::/system.slice/docker-83ec0cf0c63e.scope",
+        ),
+        ("101", "postgres", "0::/kubepods/burstable/pod1/abc"),
+        ("200", "mariadbd", "0::/system.slice/mariadb.service"),
+    ] {
+        let dir = proc.join(pid);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(dir.join("comm"), format!("{comm}\n")).unwrap();
+        std::fs::write(dir.join("cgroup"), format!("{cgroup}\n")).unwrap();
+    }
+    let b = discover_bundle(&ScanSettings::default(), false).unwrap();
+    let mut child = std::process::Command::new("sh")
+        .arg("-s")
+        .env_clear()
+        .env("PATH", "/usr/bin:/bin")
+        .env("HOME", tmp.path())
+        .env("DAMINUS_PROC", &proc)
+        .env("DAMINUS_NGINX_CONF", tmp.path().join("none.conf"))
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .spawn()
+        .unwrap();
+    std::io::Write::write_all(child.stdin.as_mut().unwrap(), b.text.as_bytes()).unwrap();
+    let out = child.wait_with_output().unwrap();
+    let text = String::from_utf8_lossy(&out.stdout);
+    let dbs: Vec<&str> = text
+        .lines()
+        .filter(|l| l.contains("\"rec\":\"db\"") && l.contains("\"origin\":\"process\""))
+        .collect();
+    assert_eq!(dbs.len(), 1, "{dbs:?}");
+    assert!(dbs[0].contains("\"engine\":\"mysql\""), "{dbs:?}");
+}

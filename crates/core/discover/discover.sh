@@ -359,7 +359,8 @@ disc_pm2() {
 # ------------------------------------------------------------------ database
 
 # Database servers running here as processes, by the name the kernel keeps
-# in /proc/PID/comm (never the command line).
+# in /proc/PID/comm (never the command line). A process in a container's
+# cgroup is skipped: the host sees it, but the container already lists it.
 disc_db() {
 	_proc=${DAMINUS_PROC:-/proc}
 	_found=" "
@@ -373,6 +374,11 @@ disc_db() {
 		postgres | postmaster) _e=postgres ;;
 		*) continue ;;
 		esac
+		_cg=""
+		if [ -r "$_d/cgroup" ]; then
+			while IFS= read -r _l; do _cg="$_cg $_l"; done <"$_d/cgroup"
+		fi
+		case $_cg in *docker* | *containerd* | *kubepods* | *libpod* | */lxc/*) continue ;; esac
 		case $_found in *" $_e "*) continue ;; esac
 		_found="$_found$_e "
 		printf '{"rec":"db","engine":"%s","origin":"process","name":%s}\n' "$_e" "$(json_str "$_n")"
