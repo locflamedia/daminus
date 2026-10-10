@@ -86,6 +86,7 @@
       "cellNone": "#{seq} · no answer",
       "today": "today",
       "slow": "{n} scan was not healthy; the slowest was #{seq} at {ms}. | {n} scans were not healthy; the slowest was #{seq} at {ms}.",
+      "slowNoAnswer": "{n} scan was not healthy; #{seq} got no answer. | {n} scans were not healthy; #{seq} got no answer.",
       "allGood": "Every scan answered in time.",
       "answered": "{status} · {ms}",
       "failed": "no answer · {why}",

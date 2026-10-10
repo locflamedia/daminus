@@ -115,6 +115,7 @@
       "title": "Thay đổi so với #{seq}",
       "titleScanning": "Thay đổi ở #{seq} · lần quét này vẫn đang chạy",
       "titleOld": "Thay đổi ở #{seq}, {ago}",
+      "titleFirst": "Thay đổi ở #{seq}",
       "history": "Lịch sử",
       "empty": "Không có gì đổi so với #{seq}.",
       "noBaseline": "Chưa có lần quét trước để so sánh.",

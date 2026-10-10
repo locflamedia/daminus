@@ -27,7 +27,8 @@ const title = computed(() => {
     const ago = t('time.daysAgoLong', { n: props.oldDays }, props.oldDays)
     return t('overviewScreen.changes.titleOld', { seq, ago })
   }
-  return t('overviewScreen.changes.title', { seq: props.baseline ?? 0 })
+  if (props.baseline === null) return t('overviewScreen.changes.titleFirst', { seq })
+  return t('overviewScreen.changes.title', { seq: props.baseline })
 })
 
 const empty = computed(() =>

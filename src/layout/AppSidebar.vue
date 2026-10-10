@@ -99,14 +99,16 @@ const serverRows = computed(() =>
           <span v-else-if="oldDays !== null" class="count old">
             {{ t('nav.stale', { n: oldDays }) }}
           </span>
-          <span v-else-if="report.latest && projects.issues > 0" class="count">
+          <span v-else-if="!firstLaunch && report.latest && projects.issues > 0" class="count">
             {{ t('nav.issues', { n: projects.issues }, projects.issues) }}
           </span>
         </RouterLink>
         <RouterLink to="/history" class="item" active-class="on">
           <UiIcon name="clock" />
           {{ t('nav.history') }}
-          <span v-if="report.latest?.seq != null" class="count">{{ report.latest.seq }}</span>
+          <span v-if="!firstLaunch && report.latest?.seq != null" class="count">{{
+            report.latest.seq
+          }}</span>
         </RouterLink>
       </div>
 
@@ -119,7 +121,7 @@ const serverRows = computed(() =>
         <SidebarTermius v-if="helpScreen && empty.input.termiusInstalled" />
       </template>
 
-      <section v-if="projects.projects.length" class="list">
+      <section v-if="!firstLaunch && projects.projects.length" class="list">
         <h3 class="group">
           {{ t('nav.projects') }} <span>{{ projects.projects.length }}</span>
         </h3>
@@ -147,7 +149,8 @@ const serverRows = computed(() =>
         </RouterLink>
       </section>
 
-      <section v-if="serverRows.length" class="list">
+      <!-- Scans can outlive projects.json: with no project the empty sidebar is the only list. -->
+      <section v-if="!firstLaunch && serverRows.length" class="list">
         <h3 class="group">
           {{ t('nav.servers') }} <span>{{ serverRows.length }}</span>
         </h3>

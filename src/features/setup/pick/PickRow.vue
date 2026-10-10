@@ -68,7 +68,7 @@ function onClick(event: MouseEvent) {
       </span>
       <span role="cell" class="host">
         <b class="mono alias">{{ row.alias }}</b>
-        <span class="mono addr">{{ row.address }}</span>
+        <span class="mono addr" :title="row.address">{{ row.address }}</span>
       </span>
       <span role="cell" class="mono user"
         >{{ row.user ?? '·'
@@ -263,8 +263,11 @@ function onClick(event: MouseEvent) {
 }
 
 .addr {
+  overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text-11);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user {

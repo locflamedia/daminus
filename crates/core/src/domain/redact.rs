@@ -15,6 +15,8 @@ pub const PEM: &str = "[redacted:pem]";
 pub const KEY: &str = "[redacted:key]";
 pub const TOKEN: &str = "[redacted:token]";
 
+/// Base64 characters of an OpenSSH SHA256 key fingerprint, without padding.
+const FINGERPRINT_LEN: usize = 43;
 /// Shortest run treated as a possible random secret.
 const ENTROPY_MIN_LEN: usize = 20;
 /// Bits per character above which an upper+lower+digit token is treated as random.
@@ -63,10 +65,16 @@ pub fn redact_secrets(text: &str) -> String {
         out = p.re.replace_all(&out, p.replacement).into_owned();
     }
     if let Some(re) = CANDIDATE.as_ref() {
+        let haystack = out.clone();
         out = re
-            .replace_all(&out, |c: &regex::Captures<'_>| {
+            .replace_all(&haystack, |c: &regex::Captures<'_>| {
                 let token = &c[0];
-                if looks_random(token) {
+                let start = c.get(0).map_or(0, |m| m.start());
+                // An OpenSSH key fingerprint (`SHA256:<base64>`) is public and needed to compare keys.
+                let fingerprint = haystack[..start].ends_with("SHA256:")
+                    && token.len() == FINGERPRINT_LEN
+                    && !token.contains('=');
+                if looks_random(token) && !fingerprint {
                     TOKEN.to_owned()
                 } else {
                     token.to_owned()
@@ -344,6 +352,12 @@ mod tests {
     }
 
     #[test]
+    fn only_a_fingerprint_sized_value_after_sha256_is_kept() {
+        let secret = "SECRET=SHA256:Zx8kQ2mVb7rT4pL9wN3cY6hJ1sD5fG8kQ2mVb7rT4pL9wN3cY6hJ1sD5";
+        assert_eq!(redact_secrets(secret), "SECRET=SHA256:[redacted:token]");
+    }
+
+    #[test]
     fn false_positives_stay() {
         let keep = [
             "commit 9fceb02d0ae598e95dc970b74767f19372d61af8",
@@ -354,6 +368,8 @@ mod tests {
             "container tiemtra-api-db-1 restarted",
             "disk.fs /var/lib/docker 87%",
             "SHA256:q3VfAbCdEfGh1234",
+            "ED25519 SHA256:QKt7DKMd0JdnYdbP3oGwMdG17/aTKNc3K8CIDhpS4ZM",
+            "host key SHA256:8dkDGfsfQDQlK+l5p6HtYJlA4YXTzeytFcTlIiqvnFM changed",
             "node_modules_cache_directory_name",
             "sk-short",
             "src/Http/Controllers/Api/V1/UserController",

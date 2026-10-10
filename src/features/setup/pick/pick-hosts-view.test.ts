@@ -221,6 +221,13 @@ describe('Filter and selection', () => {
     expect(wrapper.findAll('.item').map((r) => r.find('.alias').text())).toEqual(['staging'])
   })
 
+  it('keeps a long address on one line and shows it in full on hover', async () => {
+    seed()
+    const { wrapper } = await mountPick()
+    const addr = wrapper.find('.item .addr')
+    expect(addr.attributes('title')).toBe(addr.text())
+  })
+
   it('says so when the filter keeps no host', async () => {
     seed()
     const { wrapper } = await mountPick()
