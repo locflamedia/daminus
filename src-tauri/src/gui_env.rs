@@ -188,13 +188,48 @@ mod tests {
         assert!(vars.iter().any(|(k, _)| k == "PATH"));
     }
 
+    /// Writes an executable script and does not return until the file is
+    /// closed and marked runnable. On Linux a freshly written file can refuse
+    /// to exec with `ETXTBSY` while a writer still holds it, which on a loaded
+    /// runner made these tests fail with `Err("spawn")` rather than with what
+    /// they assert. Writing through an owned handle that is flushed, synced
+    /// and dropped before the mode is set closes that window; the script
+    /// itself is never run here, since each test needs its own first run.
+    fn executable_script(path: &std::path::Path, body: &str) {
+        use std::io::Write as _;
+        use std::os::unix::fs::PermissionsExt as _;
+        {
+            let mut file = std::fs::File::create(path).unwrap();
+            file.write_all(body.as_bytes()).unwrap();
+            file.sync_all().unwrap();
+        }
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let mode = std::fs::metadata(path).unwrap().permissions().mode();
+        assert!(mode & 0o111 != 0, "{} is not executable", path.display());
+    }
+
+    /// Why a spawn of `path` failed, in the kernel's own words. The production
+    /// code maps every spawn failure to one word, which on CI says only that
+    /// something went wrong; a test that is about to assert on the outcome can
+    /// say whether it was ETXTBSY, ENOEXEC, EACCES or something else. The
+    /// script is never run here: these scripts have side effects on disk, and
+    /// a second run would disturb the one the test is making.
+    fn spawn_error(path: &std::path::Path) -> String {
+        match Command::new(path)
+            .arg("--probe")
+            .stdin(Stdio::null())
+            .spawn()
+        {
+            Ok(_) => "spawn succeeded on the probe".to_owned(),
+            Err(e) => format!("{e:?} (raw os error {:?})", e.raw_os_error()),
+        }
+    }
+
     #[test]
     fn a_hanging_shell_is_killed_at_the_timeout() {
         let dir = tempfile::tempdir().unwrap();
         let shell = dir.path().join("slow-sh");
-        std::fs::write(&shell, "#!/bin/sh\nsleep 30\n").unwrap();
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).unwrap();
+        executable_script(&shell, "#!/bin/sh\nsleep 30\n");
         let started = Instant::now();
         let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(300));
         assert_eq!(got, Err("timeout"));
@@ -207,18 +242,20 @@ mod tests {
         let shell = dir.path().join("daemon-sh");
         // Exits as soon as its child has moved to a new process group (out
         // of reach of killpg), leaving that child holding stdout for 30 s.
-        std::fs::write(
+        executable_script(
             &shell,
             "#!/bin/sh\n\
              /usr/bin/perl -e 'setpgrp(0,0); open(F, \">\", $ARGV[0]); close(F); sleep 30' \"$0.ready\" &\n\
              while [ ! -e \"$0.ready\" ]; do sleep 0.02; done\n\
              exit 0\n",
-        )
-        .unwrap();
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).unwrap();
+        );
         let started = Instant::now();
         let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(500));
+        // `Err("spawn")` means the script never ran, which says nothing about
+        // the behaviour under test; name the kernel's reason when that happens.
+        if got == Err("spawn") {
+            panic!("{} did not run: {}", shell.display(), spawn_error(&shell));
+        }
         assert_eq!(got, Err("timeout"));
         assert!(
             started.elapsed() < Duration::from_secs(2),
