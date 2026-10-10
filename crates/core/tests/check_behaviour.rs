@@ -422,10 +422,12 @@ fn disk_path_sizes_folders_without_skip_paths() {
     let top = f.data["top"].as_array().unwrap();
     assert_eq!(top[0][0], "public");
     assert!(top.iter().all(|t| t[0] != "node_modules"), "{top:?}");
-    assert_eq!(
-        f.data["files"],
-        serde_json::json!([["public/uploads/big.bin", 2 << 20]])
-    );
+    // [path, bytes, changed at]: the time is this run's, so only its shape is checked.
+    let files = f.data["files"].as_array().unwrap();
+    assert_eq!(files.len(), 1, "{files:?}");
+    assert_eq!(files[0][0], "public/uploads/big.bin");
+    assert_eq!(files[0][1], 2 << 20);
+    assert!(files[0][2].as_u64().is_some_and(|t| t > 0), "{files:?}");
     assert!(
         f.value.unwrap() < f64::from(3 << 20),
         "node_modules not counted"
@@ -2106,10 +2108,9 @@ fn checks_handle_backslash_and_quote_in_project_folder_names() {
         "{f:?}"
     );
     assert!(
-        f.data["files"]
-            .as_array()
-            .unwrap()
-            .contains(&serde_json::json!(["sub\\dir/big.bin", 2 << 20])),
+        f.data["files"].as_array().unwrap().iter().any(|e| {
+            e[0] == "sub\\dir/big.bin" && e[1] == 2 << 20 && e[2].as_u64().is_some_and(|t| t > 0)
+        }),
         "{f:?}"
     );
 
