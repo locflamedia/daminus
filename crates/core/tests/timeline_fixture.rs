@@ -171,15 +171,22 @@ fn projects() -> ProjectsFile {
     }
 }
 
+/// Seconds since boot at scan #1: scan #12 reads "up 41 d", as the board draws vps-sg-2.
+const UPTIME_AT_SCAN_1: u32 = 30 * 86_400 + 3_600;
+
 /// Server basics every reached host reports.
 fn basics(s: u32, cores: u32, load: f64, mem_free: f64, disk_pct: u32) -> Vec<CheckFact> {
     let jitter = f64::from(s % 3) * 0.1;
     vec![
         CheckFact::new("sys.load", "")
             .with_value(load + jitter, "load")
-            .with_data(
-                json!({ "cores": cores, "load1": load + jitter + 0.3, "load15": load * 0.7 }),
-            ),
+            .with_data(json!({
+                "cores": cores,
+                "load1": load + jitter + 0.3,
+                "load15": load * 0.7,
+                "uptime": UPTIME_AT_SCAN_1 + (s - 1) * 86_400,
+                "os": "Ubuntu 24.04",
+            })),
         CheckFact::new("sys.mem", "")
             .with_value(mem_free - jitter, "%")
             .with_data(json!({ "total": gb(f64::from(cores) * 2.0) })),

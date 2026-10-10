@@ -13,7 +13,9 @@
         "data": {
           "cores": "online CPUs (nproc)",
           "load1": "1-minute load average",
-          "load15": "15-minute load average"
+          "load15": "15-minute load average",
+          "uptime": "seconds since boot (/proc/uptime), when readable",
+          "os": "distribution name and version (NAME and VERSION_ID of /etc/os-release), when readable"
         }
       },
       "rule": {

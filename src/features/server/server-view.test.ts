@@ -75,7 +75,7 @@ describe('Server page', () => {
   it('names the machine and its disk in bytes as the board does', async () => {
     freshClock()
     const { wrapper } = await mountServer('vps-sg-2')
-    expect(wrapper.text()).toContain('4 vCPU · 8 GB')
+    expect(wrapper.text()).toContain('Ubuntu 24.04 · 4 vCPU · 8 GB · up 41 d · scan #12')
     expect(wrapper.text()).toContain('82.6 of 95 GB · 12.4 GB free')
     expect(wrapper.findAll('.kpi')[2]?.find('.delta').text()).toMatch(/3 pts · \+2\.\d GB/)
   })

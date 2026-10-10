@@ -40,6 +40,18 @@ export function coresOf(items: readonly Item[]): number | null {
   return cores !== null && cores > 0 ? cores : null
 }
 
+/** The distribution the load check read ("Ubuntu 24.04"); `null` when it could not. */
+export function osOf(items: readonly Item[]): string | null {
+  const os = dataOf(itemOf(items, 'sys.load')?.fact).os
+  return typeof os === 'string' && os.trim() !== '' ? os.trim() : null
+}
+
+/** Seconds since boot, as the load check read them; `null` when it could not. */
+export function uptimeOf(items: readonly Item[]): number | null {
+  const up = num(dataOf(itemOf(items, 'sys.load')?.fact).uptime)
+  return up !== null && up >= 0 ? up : null
+}
+
 /** One check on one host across the scans the facts cover, as value points, oldest first. */
 export function hostSeries(
   facts: readonly ScanFact[],
