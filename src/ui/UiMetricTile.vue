@@ -248,7 +248,16 @@ const noteClass = computed(() => {
 
 /* Reading: the value blurs in place and the shape holds. */
 .tile-note {
+  container-type: inline-size;
   padding: var(--space-2) 10px;
+}
+
+/* A narrow tile (three cards in a row at 1280) drops the label's glyph before it cuts the word:
+   "Database" and its lag clock stay whole. */
+@container (max-width: 100px) {
+  .tile-note .label .icon {
+    display: none;
+  }
 }
 
 .value.muted {

@@ -26,30 +26,52 @@ const level = computed(() => props.finding.level)
 </script>
 
 <template>
-  <div class="head">
-    <span class="sev" :class="level">{{ t(`projectSecurity.sev.${level}`) }}</span>
-    <b class="title" :class="{ large }">{{ title }}</b>
-    <span class="id">{{ finding.check }}</span>
-    <span v-if="finding.standing === 'expected'" class="chip expected">{{
-      t('projectSecurity.card.expected')
-    }}</span>
-    <span v-if="finding.standing === 'stale' && finding.staleSince !== null" class="chip stale">{{
-      t('projectSecurity.card.staleSince', { seq: finding.staleSince })
-    }}</span>
-    <span class="grow" />
-    <slot name="end"
-      ><span v-if="since" class="since">{{ since }}</span></slot
-    >
-    <slot name="actions" />
+  <div class="head-box">
+    <div class="head">
+      <span class="sev" :class="level">{{ t(`projectSecurity.sev.${level}`) }}</span>
+      <b class="title" :class="{ large }" :title="title">{{ title }}</b>
+      <!-- In a narrow card the check id and the meta move under the title, which stays on one line. -->
+      <span class="break" aria-hidden="true" />
+      <span class="id">{{ finding.check }}</span>
+      <span v-if="finding.standing === 'expected'" class="chip expected">{{
+        t('projectSecurity.card.expected')
+      }}</span>
+      <span v-if="finding.standing === 'stale' && finding.staleSince !== null" class="chip stale">{{
+        t('projectSecurity.card.staleSince', { seq: finding.staleSince })
+      }}</span>
+      <span class="grow" />
+      <slot name="end"
+        ><span v-if="since" class="since">{{ since }}</span></slot
+      >
+      <slot name="actions" />
+    </div>
   </div>
 </template>
 
 <style scoped>
+.head-box {
+  container-type: inline-size;
+  min-width: 0;
+}
+
 .head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 2px 10px;
   min-width: 0;
+}
+
+.break {
+  display: none;
+  flex-basis: 100%;
+  height: 0;
+}
+
+@container (max-width: 720px) {
+  .break {
+    display: block;
+  }
 }
 
 .sev {
@@ -82,8 +104,11 @@ const level = computed(() => props.finding.level)
 .title {
   flex: 0 1 auto;
   min-width: 0;
+  overflow: hidden;
   font-size: var(--text-13);
   font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .title.large {

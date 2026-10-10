@@ -94,7 +94,9 @@
       "notExposed": "không bị lộ",
       "exposed": "bị phục vụ",
       "exposureUnknown": "chưa kiểm tra",
-      "certificate": "Chứng chỉ · {host}",
+      "certificate": "Chứng chỉ",
+      "certificateOf": "Chứng chỉ · {host}",
+      "certDays": "{n} ngày",
       "noUrls": "Dự án này không có URL để kiểm tra.",
       "error": {
         "dns": "không tìm thấy tên",

@@ -23,8 +23,12 @@ const { t } = useI18n()
 const fmt = useFormat()
 const range = useLayoutRange()
 
-/** Geometry of the diagram, as the board draws it: one band per server, nodes stacked in it. */
-const BAND_MAX = 216
+/**
+ * Geometry of the diagram, as the board draws it: one band per server, nodes stacked in it. The
+ * bands share the whole card before a node name is cut; one band alone stops at BAND_MAX so a
+ * single server does not become a long empty strip.
+ */
+const BAND_MAX = 320
 const BAND_MIN = 176
 const BAND_GAP = 8
 const NODE_PAD = 10
@@ -39,7 +43,7 @@ const ICON: Record<WireNode['kind'], IconName> = {
   db: 'database',
 }
 
-/** The bands share the card's width: as the board draws them, or narrower when more servers. */
+/** The bands share the card's width: wider than the board's 216 when the card has room. */
 const box = ref<HTMLElement | null>(null)
 const avail = ref(0)
 let watcher: ResizeObserver | null = null

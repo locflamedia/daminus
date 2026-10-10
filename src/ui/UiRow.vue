@@ -106,8 +106,9 @@ const flat = computed(() => props.header || props.tone !== 'neutral')
       </slot>
       <span class="text">
         <slot>
-          <span v-if="title" class="title" :class="{ mono }">{{ title }}</span>
-          <span v-if="meta" class="meta" :class="{ mono }">{{ meta }}</span>
+          <!-- One line each, cut at the end; the tooltip holds the whole text. -->
+          <span v-if="title" class="title" :class="{ mono }" :title="title">{{ title }}</span>
+          <span v-if="meta" class="meta" :class="{ mono }" :title="meta">{{ meta }}</span>
         </slot>
       </span>
       <span v-if="$slots.trailing || $slots.actions" class="trailing">

@@ -94,7 +94,9 @@
       "notExposed": "not exposed",
       "exposed": "served",
       "exposureUnknown": "not checked",
-      "certificate": "Certificate · {host}",
+      "certificate": "Certificate",
+      "certificateOf": "Certificate · {host}",
+      "certDays": "{n} day | {n} days",
       "noUrls": "This project has no URL to check.",
       "error": {
         "dns": "name not found",

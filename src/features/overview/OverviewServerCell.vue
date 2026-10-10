@@ -129,10 +129,12 @@ const detail = computed(() => {
           <button
             v-else-if="down && fix === 'retry'"
             type="button"
-            class="tag action"
+            class="tag action retry"
+            :aria-label="t('overviewScreen.servers.retry')"
             @click="emit('retry')"
           >
-            {{ t('overviewScreen.servers.retry') }}
+            <UiIcon name="refresh" :size="12" class="glyph" />
+            <span class="word">{{ t('overviewScreen.servers.retry') }}</span>
           </button>
           <button
             v-else-if="down && fix !== 'retry' && fixes.can(fix, cell.host)"
@@ -286,6 +288,7 @@ const detail = computed(() => {
 }
 
 .sub {
+  container-type: inline-size;
   color: var(--ink-3);
   font-size: var(--text-11);
   white-space: nowrap;
@@ -298,6 +301,8 @@ const detail = computed(() => {
 }
 
 .end {
+  display: inline-flex;
+  min-width: 0;
   margin-left: auto;
 }
 
@@ -318,10 +323,34 @@ const detail = computed(() => {
   color: var(--accent-ink);
 }
 
-/* Retry sits above the cell's link. */
+/* Retry sits above the cell's link. When the row is short the button gives way before the
+   cause does: Retry folds to its glyph, any other fix cuts its own word. */
 .tag.action {
   position: relative;
   z-index: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.retry .glyph {
+  display: none;
+}
+
+@container (max-width: 128px) {
+  .retry {
+    width: 20px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .retry .glyph {
+    display: block;
+  }
+
+  .retry .word {
+    display: none;
+  }
 }
 
 .tag.action:focus-visible {

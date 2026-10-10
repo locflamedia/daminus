@@ -46,7 +46,7 @@ const mem = (r: PartRow) => (r.mem === null ? '—' : bytes(r.mem))
             ><UiIcon :name="ICON[r.kind]" :size="16" /></UiBrandMark
         ></span>
         <span class="muted">{{ source(r) }}</span>
-        <span class="name mono">{{ r.name }}</span>
+        <span class="name mono" :title="r.name">{{ r.name }}</span>
         <span class="muted mono">{{ r.host }}</span>
         <span class="state" :class="r.tone"
           >{{ cell(r)
@@ -71,13 +71,24 @@ const mem = (r: PartRow) => (r.mem === null ? '—' : bytes(r.mem))
 
 .row {
   display: grid;
-  grid-template-columns: 52px 20px 64px minmax(0, 1fr) 72px minmax(72px, 112px) 48px 60px;
+  /* The name keeps at least 128 px; source, host and state give way first (board 17, Parts). */
+  grid-template-columns:
+    52px 20px minmax(48px, 64px) minmax(128px, 1fr) minmax(56px, 72px) minmax(56px, 112px)
+    48px 60px;
   align-items: center;
   gap: var(--space-2);
   min-height: 36px;
   padding: 0 10px;
   border-radius: var(--radius-sm);
   font-size: var(--text-12);
+}
+
+/* Every cell keeps to its column: one line, cut at the end, never over its neighbour. */
+.row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .row:nth-child(odd) {

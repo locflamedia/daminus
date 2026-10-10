@@ -115,6 +115,9 @@ const props = withDefaults(
 const emit = defineEmits<{ open: []; action: []; 'open-domain': [url: string] }>()
 defineSlots<{ 'status-chip'?: () => unknown }>()
 
+/** The domain and the servers as one line, for the tooltip of the cut subtitle. */
+const whereText = computed(() => [props.domain, props.where].filter(Boolean).join(' · '))
+
 const fmt = useFormat()
 
 const CHIP_TONE = {
@@ -150,7 +153,7 @@ function onCardClick(event: MouseEvent) {
       <UiMonogram :name="name" :icon="icon" :tint="tint" :size="40" />
       <span class="names">
         <b class="name" :title="name">{{ name }}</b>
-        <span v-if="domain || where" class="where">
+        <span v-if="domain || where" class="where" :title="whereText">
           <UiDomainLink v-if="domain" bare :domain="domain" @open="emit('open-domain', $event)" />
           <template v-if="domain && where"> · </template>{{ where }}
         </span>
@@ -342,15 +345,6 @@ function onCardClick(event: MouseEvent) {
 }
 
 /* The main issue keeps its verb: two lines at most, then the other issues on one line. */
-.status :deep(.title) {
-  display: -webkit-box;
-  white-space: normal;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
-}
 
 /* The status row's one action is a word, in the band's own ink. */
 .action {

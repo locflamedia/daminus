@@ -27,12 +27,13 @@ const rollup = computed(() => projects.project(id.value))
 
 const meta = computed(() => {
   const hosts = projects.servers.filter((s) => s.used_by.includes(id.value)).map((s) => s.host)
+  return [projects.domain(id.value), hosts.join(' + ')].filter(Boolean).join(' · ')
+})
+const scan = computed(() => {
   const report = reports.latest
-  const scanned =
-    report?.seq != null && report.scanned_at
-      ? t('project.scanMeta', { seq: report.seq, time: fmt.clock(report.scanned_at) })
-      : ''
-  return [projects.domain(id.value), hosts.join(' + '), scanned].filter(Boolean).join(' · ')
+  return report?.seq != null && report.scanned_at
+    ? t('project.scanMeta', { seq: report.seq, time: fmt.clock(report.scanned_at) })
+    : ''
 })
 
 const levels = computed(() => tabLevels(reports.latest?.items ?? [], id.value))
@@ -42,6 +43,7 @@ const levels = computed(() => tabLevels(reports.latest?.items ?? [], id.value))
   <ProjectHeader
     :id="id"
     :meta="meta"
+    :scan="scan"
     :tab="tab"
     :level="rollup?.level"
     :tab-levels="levels"
