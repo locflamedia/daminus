@@ -236,18 +236,38 @@ fn run_args(req: &AiRequest) -> Vec<String> {
 }
 
 /// The only variables `claude` gets: where to find programs, where its login
-/// lives, and a language. Nothing from `ANTHROPIC_*` or `CLAUDE_CODE_*`, so no
-/// API key is used behind the user's back.
+/// lives (`HOME`, and `USER`/`LOGNAME`: on macOS Claude Code finds its sign-in
+/// in the Keychain by user name, and reads as signed out without it), and a
+/// language. Nothing from `ANTHROPIC_*` or `CLAUDE_CODE_*`, so no API key is
+/// used behind the user's back.
 fn scrubbed_env(
     path_var: &str,
     home: Option<String>,
     lang: Option<String>,
+    user: Option<String>,
 ) -> Vec<(&'static str, String)> {
     let mut env = vec![("PATH", path_var.to_owned())];
     env.extend(home.filter(|h| !h.is_empty()).map(|h| ("HOME", h)));
     let lang = lang.filter(|l| !l.is_empty());
     env.push(("LANG", lang.unwrap_or_else(|| "en_US.UTF-8".to_owned())));
+    if let Some(user) = user.filter(|u| !u.is_empty()) {
+        env.push(("USER", user.clone()));
+        env.push(("LOGNAME", user));
+    }
     env
+}
+
+/// The login name: `USER`, else `LOGNAME`, else the passwd entry of this
+/// process's user (an app started from Finder can lack both variables).
+fn user_name(user: Option<String>, logname: Option<String>) -> Option<String> {
+    user.filter(|u| !u.is_empty())
+        .or_else(|| logname.filter(|u| !u.is_empty()))
+        .or_else(|| {
+            nix::unistd::User::from_uid(nix::unistd::Uid::current())
+                .ok()
+                .flatten()
+                .map(|u| u.name)
+        })
 }
 
 fn command(bin: &Path, path_var: &str, cwd: &Path) -> Command {
@@ -257,6 +277,7 @@ fn command(bin: &Path, path_var: &str, cwd: &Path) -> Command {
             path_var,
             std::env::var("HOME").ok(),
             std::env::var("LANG").ok(),
+            user_name(std::env::var("USER").ok(), std::env::var("LOGNAME").ok()),
         ))
         .current_dir(cwd)
         .process_group(0)
@@ -762,7 +783,10 @@ END
         for line in env.lines() {
             let name = line.split('=').next().unwrap_or_default();
             assert!(
-                ["PATH", "HOME", "LANG", "PWD", "SHLVL", "_", "OLDPWD"].contains(&name),
+                [
+                    "PATH", "HOME", "LANG", "USER", "LOGNAME", "PWD", "SHLVL", "_", "OLDPWD"
+                ]
+                .contains(&name),
                 "unexpected variable {name}"
             );
         }
@@ -771,16 +795,33 @@ END
 
     #[test]
     fn env_is_minimal() {
-        let env = scrubbed_env("/a:/b", Some("/home/x".into()), None);
+        let env = scrubbed_env("/a:/b", Some("/home/x".into()), None, Some("ann".into()));
         assert_eq!(
             env,
             [
                 ("PATH", "/a:/b".to_owned()),
                 ("HOME", "/home/x".to_owned()),
-                ("LANG", "en_US.UTF-8".to_owned())
+                ("LANG", "en_US.UTF-8".to_owned()),
+                ("USER", "ann".to_owned()),
+                ("LOGNAME", "ann".to_owned())
             ]
         );
-        assert_eq!(scrubbed_env("/a", None, Some("C".into())).len(), 2);
+        assert_eq!(scrubbed_env("/a", None, Some("C".into()), None).len(), 2);
+    }
+
+    #[test]
+    fn the_user_name_is_filled_in_when_the_environment_lacks_it() {
+        assert_eq!(
+            user_name(Some("ann".into()), Some("bob".into())).as_deref(),
+            Some("ann")
+        );
+        assert_eq!(user_name(None, Some("bob".into())).as_deref(), Some("bob"));
+        let own = nix::unistd::User::from_uid(nix::unistd::Uid::current())
+            .unwrap()
+            .unwrap()
+            .name;
+        assert_eq!(user_name(None, None), Some(own.clone()));
+        assert_eq!(user_name(Some(String::new()), None), Some(own));
     }
 
     #[tokio::test]
