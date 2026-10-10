@@ -6,19 +6,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import { vEnter } from '@/lib/motion'
 import { useLayoutRange } from '@/lib/viewport'
-import { useScanPanelStore } from '@/stores/scan-panel'
 import UiProjectCard from '@/ui/UiProjectCard.vue'
 import UiTlsChip from '@/ui/UiTlsChip.vue'
 import { nodeStateWords, type CardView } from './overview-card-text'
+import { useCardAction } from './use-card-action'
 
 const props = defineProps<{ cards: readonly CardView[]; old: boolean }>()
 
 const { t } = useI18n()
-const router = useRouter()
-const panel = useScanPanelStore()
+const { open, act } = useCardAction()
 
 const states = nodeStateWords()
 const range = useLayoutRange()
@@ -28,16 +26,6 @@ const range = useLayoutRange()
  * narrow window board draws. Otherwise the servers sit below the grid, full width.
  */
 const tailInCell = computed(() => range.value === 'narrow' && props.cards.length % 2 === 1)
-
-function open(card: CardView, tab?: string) {
-  void router.push({ name: 'project', params: { id: card.id, ...(tab ? { tab } : {}) } })
-}
-
-function act(card: CardView) {
-  if (card.action === 'retry') void panel.start({ projects: [], hosts: card.retryHosts })
-  else if (card.action === 'tab' && card.tab) open(card, card.tab)
-  else open(card)
-}
 </script>
 
 <template>

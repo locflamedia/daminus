@@ -8,7 +8,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PanelHost } from './scan-panel-model'
-import { useHostKeyReview } from '@/features/host-key/use-host-key-review'
+import { hostFixIcon, hostFixLabel, hostFixOf, useHostFix } from '@/features/overview/use-host-fix'
 import ScanPanelMark, { type MarkState } from './ScanPanelMark.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -22,7 +22,9 @@ const props = defineProps<{
 const emit = defineEmits<{ retry: [host: string] }>()
 
 const { t } = useI18n()
-const keys = useHostKeyReview()
+const fixes = useHostFix()
+/** The one step a failed host offers: Retry only for the network. */
+const fix = computed(() => hostFixOf(props.host.outcome))
 
 const mark = computed<MarkState>(() => {
   const s = props.host.segment
@@ -65,15 +67,15 @@ function stepState(s: { state: string }): MarkState {
         <span class="sub" :class="{ bad: host.segment === 'failed' }">{{ sub }}</span>
       </div>
       <UiButton
-        v-if="host.segment === 'failed' && keys.has(host.outcome)"
+        v-if="host.segment === 'failed' && fix !== 'retry' && fixes.can(fix, host.host)"
         size="small"
-        icon="shield"
-        @click="keys.review(host.host, host.outcome)"
+        :icon="hostFixIcon(fix)"
+        @click="fixes.run(fix, host.host, host.outcome)"
       >
-        {{ t('hostKey.review') }}
+        {{ hostFixLabel(fix) }}
       </UiButton>
       <UiButton
-        v-else-if="host.segment === 'failed'"
+        v-else-if="host.segment === 'failed' && fix === 'retry'"
         size="small"
         icon="refresh"
         :disabled="!canRetry"

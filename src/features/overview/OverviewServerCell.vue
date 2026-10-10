@@ -5,13 +5,13 @@
   runs a server being read has a turning ring and says what is happening in words.
 -->
 <script setup lang="ts">
+import { hostFixLabel, hostFixOf, useHostFix } from './use-host-fix'
 import { outcomeKey } from '@/lib/outcome-label'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
 import type { ServerScan } from '@/lib/overview-scan'
 import type { ServerCell } from '@/lib/overview-servers'
-import { useHostKeyReview } from '@/features/host-key/use-host-key-review'
 import UiIcon from '@/ui/UiIcon.vue'
 
 const props = defineProps<{
@@ -24,7 +24,9 @@ const props = defineProps<{
 const emit = defineEmits<{ retry: [] }>()
 
 const { t } = useI18n()
-const keys = useHostKeyReview()
+const fixes = useHostFix()
+/** The one step a failed host offers: Retry only for the network. */
+const fix = computed(() => hostFixOf(props.cell.outcome))
 const fmt = useFormat()
 
 const CIRCUMFERENCE = 106.8
@@ -124,16 +126,23 @@ const detail = computed(() => {
           <span v-else-if="scan === 'queued'" class="tag">{{ t('scanChip.queued') }}</span>
           <span v-else-if="scan === 'done'" class="done">✓ {{ t('scanChip.done') }}</span>
           <button
-            v-else-if="down && keys.has(cell.outcome)"
+            v-else-if="down && fix === 'retry'"
             type="button"
             class="tag action"
-            :aria-label="t('hostKey.reviewFor', { host: cell.host })"
-            @click="keys.review(cell.host, cell.outcome)"
+            @click="emit('retry')"
           >
-            {{ t('hostKey.review') }}
-          </button>
-          <button v-else-if="down" type="button" class="tag action" @click="emit('retry')">
             {{ t('overviewScreen.servers.retry') }}
+          </button>
+          <button
+            v-else-if="down && fix !== 'retry' && fixes.can(fix, cell.host)"
+            type="button"
+            class="tag action"
+            :aria-label="
+              fix === 'host-key' ? t('hostKey.reviewFor', { host: cell.host }) : undefined
+            "
+            @click="fixes.run(fix, cell.host, cell.outcome)"
+          >
+            {{ hostFixLabel(fix) }}
           </button>
         </span>
       </span>

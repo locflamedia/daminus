@@ -8,6 +8,7 @@ import type {
   ExpectedRule,
   Item,
   Level,
+  HostOutcome,
   MainIssue,
   Project,
   ProjectRollup,
@@ -76,6 +77,8 @@ export interface ProjectCardData {
   topology: TopologyInput[]
   hosts: string[]
   unreachableHosts: string[]
+  /** How the first of them failed, for the sentence and the step that can fix it. */
+  unreachableOutcome: HostOutcome | null
   uptime: UptimeCell
   disk: DiskCell
   db: DbCell
@@ -322,6 +325,8 @@ export function buildProjectCard(input: CardInput): ProjectCardData {
     topology: topologyOf(project, mine),
     hosts: [...new Set(project.components.map((c) => c.host))],
     unreachableHosts: rollup?.unreachable_hosts ?? [],
+    unreachableOutcome:
+      report.servers.find((s) => s.host === rollup?.unreachable_hosts[0])?.outcome ?? null,
     uptime: uptimeOf(project, mine, before, off('uptime')),
     disk: disk.cell,
     db: db.cell.kind === 'value' ? { ...db.cell, engine: db.engine } : db.cell,

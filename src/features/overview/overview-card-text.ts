@@ -1,11 +1,13 @@
 // The words and numbers of an Overview project card: everything `UiProjectCard` takes, built
 // from the card facts (`lib/overview-cards`), the running scan and how old the results are.
 // Severity is the core's; a state here only picks which sentence to show.
-import type { Item } from '@/api'
+import type { HostOutcome, Item } from '@/api'
 import { currentLocale, i18n } from '@/i18n'
 import { formatDelta, formatDuration, formatMeasure, formatWeekdayDateTime } from '@/lib/format'
 import { brandOfEngine, brandOfKind, type BrandName } from '@/ui/brand-marks'
 import { checkName, issueText } from '@/lib/issue-text'
+import { outcomeKey, outcomeTone } from '@/lib/outcome-label'
+import { hostFixLabel, hostFixOf } from './use-host-fix'
 import {
   needsLook,
   type DbCell,
@@ -59,9 +61,11 @@ export interface CardView {
   status: ProjectCardStatus
   actionLabel?: string
   /** What the status row's action does. */
-  action: 'retry' | 'tab' | 'open' | null
+  action: 'retry' | 'tab' | 'open' | 'login' | 'host-key' | 'edit' | null
   tab: ProjectTab | null
   retryHosts: string[]
+  /** How the first host that could not be scanned failed. */
+  outcome: HostOutcome | null
   tls: Item | null
   metrics: ProjectCardMetric[]
   checkedAt?: string
@@ -95,7 +99,9 @@ function stateOf(data: ProjectCardData, ctx: CardContext): [ProjectCardState, st
   }
   if (data.state === 'crit') return ['crit', t('overview.crit', { n: data.crit })]
   if (data.state === 'warn') return ['warn', t('overview.warn', { n: data.warn }, data.warn)]
-  if (data.state === 'unreachable') return ['unreachable', t('nav.unreachable')]
+  if (data.state === 'unreachable') {
+    return ['unreachable', t(`outcome.${outcomeKey(data.unreachableOutcome)}`)]
+  }
   if (partlyRead(data)) return ['partial', t('overviewScreen.card.partial')]
   return ['ok', t('severity.ok')]
 }
@@ -206,10 +212,15 @@ function statusOf(data: ProjectCardData, ctx: CardContext): ProjectCardStatus {
   }
   if (data.state === 'unreachable') {
     const host = data.unreachableHosts[0] ?? ''
+    const cause = outcomeKey(data.unreachableOutcome)
+    const tone = outcomeTone(data.unreachableOutcome)
     return {
-      tone: 'neutral',
-      icon: 'unreachable',
-      title: t('overviewScreen.status.silent', { host }),
+      tone: tone === 'quiet' ? 'neutral' : tone,
+      icon: tone === 'crit' ? 'critical' : tone === 'warn' ? 'warn' : 'unreachable',
+      title:
+        cause === 'unreachable'
+          ? t('overviewScreen.status.silent', { host })
+          : t(`overviewScreen.status.cause.${cause}`, { host }),
       meta: t('overviewScreen.status.silentMeta'),
     }
   }
@@ -409,9 +420,7 @@ function actionOf(
   if (ctx.first || state === 'scanning' || ctx.oldDays !== null) {
     return { action: null, tab: null }
   }
-  if (state === 'unreachable') {
-    return { actionLabel: t('overviewScreen.card.retry'), action: 'retry', tab: null }
-  }
+  if (state === 'unreachable') return causeAction(data.unreachableOutcome)
   if (state === 'crit') {
     const tab =
       data.mainGroup && data.mainGroup in TAB_OF_GROUP
@@ -423,6 +432,14 @@ function actionOf(
     return { actionLabel: `${t('overviewScreen.card.open')} ›`, action: 'open', tab: null }
   }
   return { action: null, tab: null }
+}
+
+/** The one step that can fix a host that could not be scanned: only the network is retried. */
+function causeAction(
+  outcome: HostOutcome | null,
+): Pick<CardView, 'actionLabel' | 'action' | 'tab'> {
+  const fix = hostFixOf(outcome)
+  return { actionLabel: hostFixLabel(fix), action: fix, tab: null }
 }
 
 /** Everything `UiProjectCard` needs for one project. */
@@ -442,6 +459,7 @@ export function cardView(data: ProjectCardData, ctx: CardContext): CardView {
     status: statusOf(data, ctx),
     ...actionOf(data, state, ctx),
     retryHosts: data.unreachableHosts,
+    outcome: data.state === 'unreachable' ? data.unreachableOutcome : null,
     tls: settled && data.state !== 'unreachable' ? data.tlsItem : null,
     metrics: metricsOf(data, ctx),
     checkedAt: settled && ctx.scannedAt ? ctx.scannedAt : undefined,
