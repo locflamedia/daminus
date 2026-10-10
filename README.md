@@ -23,7 +23,7 @@
 Daminus is a Mac app that checks the servers behind your web projects over plain SSH. It installs nothing on them and only reads. Results are grouped by project (frontend, backend, database, worker) instead of by machine.
 
 > [!NOTE]
-> Daminus is close to v0.1.0. Builds go out as pre-releases (`v0.1.0-rc.N`) on the [Releases](https://github.com/locflamedia/daminus/releases) page. It has had little testing on real servers so far, so expect rough edges, and please report them.
+> Daminus is close to v0.1.0. Builds are published as pre-releases (`v0.1.0-rc.N`) on the [Releases](https://github.com/locflamedia/daminus/releases) page, starting with the first tag. It has had little testing on real servers so far, so expect rough edges, and please report them.
 
 ## Why
 
@@ -64,7 +64,7 @@ I run a few VPSes for a few web projects. Most monitoring tools want an agent on
 
 ## v0.1 features
 
-- [x] Setup: pick hosts from `~/.ssh/config` (or Termius), auto-discover compose projects, pm2 apps, nginx sites and databases, and group them into projects
+- [x] Setup: pick hosts from `~/.ssh/config`, auto-discover compose projects, pm2 apps, nginx sites and databases, and group them into projects
 - [x] 21 read-only checks:
   - system: load, memory, swap, pressure, OOM kills;
   - disk: filesystems, big folders, big logs, Docker usage;
@@ -104,7 +104,7 @@ Or remove the quarantine flag in a terminal: `xattr -d com.apple.quarantine /App
 
 On macOS 15, right-click › Open no longer gets around Gatekeeper for apps like this (see Apple's [notes on runtime protection](https://developer.apple.com/news/?id=saqachfa)); older versions still allowed it.
 
-Because of the ad hoc signature, every new version looks like a new app to macOS. After an update it asks again before Daminus can read the AI key from your Keychain. Choose Always Allow, or enter the key again in Settings › AI.
+Because of the ad hoc signature, every new version looks like a new app to macOS. After an update it asks again before Daminus can read the AI key from your Keychain. Choose Always Allow, or enter the key again in Settings › AI providers.
 
 ## Limits
 
