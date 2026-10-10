@@ -41,6 +41,13 @@ async function make(width: number) {
 }
 
 describe('ProjectHeader tabs', () => {
+  it('keeps the scan number apart from the servers, so only the servers are cut', async () => {
+    await make(1280)
+    await wrapper!.setProps({ meta: 'tiemtra.vn · vps-sg-1 + vps-sg-2', scan: 'scan #12, 13:42' })
+    expect(wrapper!.get('.meta').attributes('title')).toBe('tiemtra.vn · vps-sg-1 + vps-sg-2')
+    expect(wrapper!.get('.scan').text()).toBe('· scan #12, 13:42')
+  })
+
   it('is a tab strip from 960 px up', async () => {
     await make(960)
     expect(wrapper!.findAll('[role="tab"]')).toHaveLength(6)

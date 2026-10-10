@@ -16,8 +16,10 @@ import { PROJECT_TABS, type ProjectTab } from './project-tabs'
 
 const props = defineProps<{
   id: string
-  /** Where it lives and when it was last read, e.g. `tiemtra.vn · vps-sg-1 · scan #12, 13:42`. */
+  /** Where it lives, e.g. `tiemtra.vn · vps-sg-1 + vps-sg-2`; cut first when the row is short. */
   meta?: string
+  /** When it was last read, e.g. `scan #12, 13:42`; always shown whole. */
+  scan?: string
   tab: ProjectTab
   level?: Level
   /** The project's own colour, `#rrggbb`, already checked. */
@@ -86,7 +88,8 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       </RouterLink>
       <span class="line">
         <b class="name">{{ id }}</b>
-        <span v-if="meta" class="meta">{{ meta }}</span>
+        <span v-if="meta" class="meta" :title="meta">{{ meta }}</span>
+        <span v-if="scan" class="scan">{{ meta ? `· ${scan}` : scan }}</span>
       </span>
     </div>
     <span class="grow" />
@@ -192,6 +195,14 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
   color: var(--ink-3);
   font-size: var(--text-12);
   text-overflow: ellipsis;
+}
+
+/* The scan number and time never give way; the servers before them do. */
+.scan {
+  flex: none;
+  margin-left: calc(-1 * var(--space-1));
+  color: var(--ink-3);
+  font-size: var(--text-12);
 }
 
 .grow {

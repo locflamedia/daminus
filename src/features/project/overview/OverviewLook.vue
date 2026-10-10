@@ -52,7 +52,7 @@ const sub = (r: LookRow) => `${r.issue.key.check} · ${r.issue.key.target || r.i
           ><UiIcon :name="r.level === 'unknown' ? 'lock' : 'warn'" :size="14"
         /></span>
         <div class="words">
-          <b class="title">{{ title(r) }}</b>
+          <b class="title" :title="title(r)">{{ title(r) }}</b>
           <span class="sub">{{ sub(r) }}</span>
         </div>
         <RouterLink v-if="to(r)" class="link" :to="to(r)!">{{ linkText(r) }} ›</RouterLink>
@@ -128,6 +128,18 @@ const sub = (r: LookRow) => `${r.issue.key.check} · ${r.issue.key.target || r.i
   white-space: nowrap;
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
+}
+
+/* A finding's title runs to a second line rather than being cut: the column is as wide as the
+   board's, and real titles are longer than its sample. */
+.rows .title {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .sub {

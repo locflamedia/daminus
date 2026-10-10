@@ -111,7 +111,7 @@ const rows = computed(() =>
       points,
       drawn,
       value: last ? split(last.value, s.unit) : null,
-      sub: subOf(s.id),
+      sub: subOf(s.id, last?.value ?? null),
       delta: delta
         ? {
             text: fmt.delta(delta.change, s.unit).text,
@@ -122,7 +122,8 @@ const rows = computed(() =>
   }),
 )
 
-function subOf(id: SeriesId): string {
+/** The line under a chart's number; `total` is that number, to word a part of it as the board does. */
+function subOf(id: SeriesId, total: number | null = null): string {
   const pair = props.pair
   if (id === 'response') {
     const url = props.project?.urls[0]
@@ -144,9 +145,12 @@ function subOf(id: SeriesId): string {
   const lead = leadingEntry(after, before)
   if (!lead) return ''
   if (id === 'disk') {
+    // "storage/logs is 0.9 of it": in the unit of the total above it, the unit is not repeated.
+    const part = fmt.measure(lead.bytes, 'bytes')
+    const whole = total === null ? null : fmt.measure(total, 'bytes')
     return t('projectHistory.chart.folderSub', {
       name: lead.name,
-      size: fmt.measure(lead.bytes, 'bytes').text,
+      size: whole !== null && whole.unit === part.unit ? part.value : part.text,
     })
   }
   return lead.growth !== null && lead.growth > 0
@@ -268,7 +272,7 @@ const cursorLeft = computed(() => (cursor.value === null ? null : tipLeft(cursor
           >{{ row.value.value }}<span class="unit">&nbsp;{{ row.value.unit }}</span></span
         >
         <span v-else class="none">{{ t('projectHistory.chart.noData') }}</span>
-        <span class="sub">{{ row.sub }}</span>
+        <span class="sub" :title="row.sub">{{ row.sub }}</span>
       </div>
       <div
         :ref="
@@ -418,6 +422,13 @@ const cursorLeft = computed(() => (cursor.value === null ? null : tipLeft(cursor
 .sub {
   color: var(--ink-3);
   font-size: var(--text-11);
+}
+
+/* One line under the number, cut at the end, never broken across the column. */
+.sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plot {

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { Item } from '@/api'
+import { tlsState, wholeDays } from '@/lib/tls-state'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
@@ -62,6 +64,14 @@ const host = (url: string) => {
   }
 }
 const secure = computed(() => props.urls.filter((u) => u.tls))
+/**
+ * A certificate that is fine reads as the board draws it, "74 days" in plain words; any other
+ * state keeps its chip (expired, untrusted, wrong name, not checked).
+ */
+function fineDays(item: Item | null | undefined): number | null {
+  const s = tlsState(item ?? undefined)
+  return s.tone === 'ok' && s.flags.length === 0 && s.days !== null ? wholeDays(s.days) : null
+}
 </script>
 
 <template>
@@ -114,8 +124,15 @@ const secure = computed(() => props.urls.filter((u) => u.tls))
         </span>
       </li>
       <li v-for="u in secure" :key="`tls-${u.url}`" class="row">
-        <span>{{ t('projectOverview.response.certificate', { host: host(u.url) }) }}</span>
-        <UiTlsChip :item="u.tls" />
+        <span>{{
+          secure.length > 1
+            ? t('projectOverview.response.certificateOf', { host: host(u.url) })
+            : t('projectOverview.response.certificate')
+        }}</span>
+        <span v-if="fineDays(u.tls) !== null" class="cert-days">{{
+          t('projectOverview.response.certDays', { n: fineDays(u.tls) }, fineDays(u.tls) ?? 0)
+        }}</span>
+        <UiTlsChip v-else :item="u.tls" />
       </li>
     </ul>
     <p v-else class="note">{{ t('projectOverview.response.noUrls') }}</p>
@@ -123,6 +140,11 @@ const secure = computed(() => props.urls.filter((u) => u.tls))
 </template>
 
 <style scoped>
+.cert-days {
+  color: var(--ok-ink);
+  font-weight: var(--weight-medium);
+}
+
 .strip {
   display: flex;
   gap: 3px;
