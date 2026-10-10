@@ -51,8 +51,11 @@ impl ClientFactory for Fixed {
         key: Option<SecretString>,
         _claude_code_ack: bool,
     ) -> Result<Arc<dyn AiClient>, AppError> {
+        // The same refusal the real builder gives, so the codes stay in step.
         if profile.needs_key && key.is_none() {
-            return Err(ErrorCode::ProviderAuth.into());
+            return Err(
+                AppError::from(ErrorCode::ProviderKeyMissing).with_param("provider", &profile.name)
+            );
         }
         *self.key_seen.lock().unwrap() = key.map(|k| k.expose().to_owned());
         Ok(Arc::clone(&self.client))
@@ -297,10 +300,19 @@ async fn a_send_needs_a_selected_provider_and_its_key() {
         .await
         .unwrap();
     let e = r.core.ai_analyze("a", &preview.hash).await.unwrap_err();
-    assert_eq!(e.code, ErrorCode::ProviderAuth, "no provider selected");
+    assert_eq!(
+        e.code,
+        ErrorCode::ProviderNotConfigured,
+        "no provider selected"
+    );
     select(&r.core, "anthropic").await;
     let e = r.core.ai_analyze("a", &preview.hash).await.unwrap_err();
-    assert_eq!(e.code, ErrorCode::ProviderAuth, "no key stored");
+    assert_eq!(e.code, ErrorCode::ProviderKeyMissing, "no key stored");
+    assert_eq!(
+        e.params.get("provider").map(String::as_str),
+        Some("Anthropic"),
+        "the message names the provider that needs the key"
+    );
     assert!(client.requests().is_empty());
 }
 
@@ -507,7 +519,7 @@ async fn a_test_uses_the_stored_key_and_reports_failure_as_data() {
     let (r, _client) = rig(FakeReply::Deltas(vec![]));
     let no_key = r.core.ai_test("anthropic").await.unwrap();
     assert!(!no_key.ok);
-    assert_eq!(no_key.error, Some(ErrorCode::ProviderAuth));
+    assert_eq!(no_key.error, Some(ErrorCode::ProviderKeyMissing));
     r.core
         .ai_set_key("anthropic", Some(CANARY.to_owned()))
         .await

@@ -25,6 +25,7 @@
     "unmatched": "Không khớp kết quả nào của lần quét này",
     "stop": "Dừng",
     "tryAgain": "Thử lại",
+    "providers": "Nhà cung cấp AI",
     "askAgain": "Hỏi lại",
     "stopped": "Đã dừng. Không nhận thêm nội dung nào nữa.",
     "failed": "Chưa có câu trả lời",
@@ -50,7 +51,15 @@
       "claude_cli_not_found": "không có lệnh claude trên máy Mac này. Cài Claude Code rồi thử lại.",
       "claude_cli_not_logged_in": "chưa đăng nhập. Đăng nhập bằng lệnh claude trong Terminal rồi thử lại.",
       "claude_cli_quota": "gói của bạn đã hết lượt dùng. Thử lại sau.",
-      "timeout": "không trả lời kịp. Thử lại."
+      "timeout": "không trả lời kịp. Thử lại.",
+      "provider_not_configured": "chưa chọn nhà cung cấp. Chọn một nhà cung cấp trong Cài đặt › Nhà cung cấp AI.",
+      "provider_key_missing": "chưa có API key. Thêm key trong Cài đặt › Nhà cung cấp AI.",
+      "claude_code_not_acknowledged": "Claude Code đang tắt cho tới khi bạn cho phép trong Cài đặt › Nhà cung cấp AI.",
+      "provider_model_not_found": "không có model tên đó. Chọn model khác trong Cài đặt › Nhà cung cấp AI.",
+      "provider_billing": "tài khoản đã hết tiền.",
+      "payload_too_large": "câu hỏi quá lớn với model. Hãy hỏi về một project.",
+      "overloaded": "đang quá tải. Thử lại sau một phút.",
+      "content_policy": "từ chối trả lời yêu cầu này."
     }
   }
 }

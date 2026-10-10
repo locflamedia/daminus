@@ -348,8 +348,16 @@
     "provider_auth": "Nhà cung cấp AI từ chối khoá. Kiểm tra lại trong Cài đặt.",
     "provider_rate_limit": "Nhà cung cấp AI đang giới hạn yêu cầu. Thử lại sau một phút.",
     "provider_unavailable": "Hiện chưa kết nối được nhà cung cấp AI.",
+    "provider_not_configured": "Chưa thiết lập AI. Chọn nhà cung cấp trong Cài đặt › Nhà cung cấp AI.",
+    "provider_key_missing": "{provider} chưa có API key. Thêm key trong Cài đặt › Nhà cung cấp AI.",
+    "provider_model_not_found": "{provider} không có model {model}. Chọn model khác trong Cài đặt › Nhà cung cấp AI.",
+    "provider_billing": "{provider} từ chối yêu cầu: tài khoản đã hết tiền.",
+    "payload_too_large": "Lần quét này quá lớn với {model}. Hỏi về một project, hoặc chọn model có ngữ cảnh lớn hơn.",
+    "overloaded": "{provider} đang quá tải. Thử lại sau một phút.",
+    "content_policy": "{provider} từ chối trả lời yêu cầu này.",
     "schema_invalid": "Câu trả lời của AI không đúng định dạng mong đợi.",
     "claude_cli_not_found": "Daminus không tìm thấy lệnh Claude Code trên máy Mac này.",
+    "claude_code_not_acknowledged": "Claude Code đang tắt cho tới khi bạn cho phép trong Cài đặt › Nhà cung cấp AI.",
     "claude_cli_not_logged_in": "Claude Code chưa đăng nhập. Hãy đăng nhập bằng lệnh claude trong Terminal.",
     "claude_cli_quota": "Gói Claude của bạn đã hết hạn mức sử dụng. Thử lại sau.",
     "cancelled": "Đã dừng.",
@@ -363,6 +371,7 @@
       "title": "Xem lại trước khi gửi tới {provider}",
       "preview": "Xem trước",
       "providerFallback": "nhà cung cấp",
+      "modelFallback": "model",
       "included": "Được gửi",
       "rules": "Quy tắc che đã áp dụng",
       "size": "Dung lượng",
@@ -421,7 +430,10 @@
           "lead": "Giải mã base64",
           "rest": "nội dung thật bị ẩn; hãy giải mã và đọc trước"
         },
-        "remove": { "lead": "Chạy rm", "rest": "xoá tệp; kiểm tra đường dẫn" },
+        "remove": {
+          "lead": "Chạy rm",
+          "rest": "xoá tệp; kiểm tra đường dẫn"
+        },
         "destructive": {
           "lead": "Ghi đè một ổ đĩa hoặc cả một thư mục",
           "rest": "có thể ghi vào thiết bị hoặc đổi chủ sở hữu và quyền trên cả cây thư mục; kiểm tra đối tượng"

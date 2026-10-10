@@ -156,6 +156,24 @@ describe('Ask drawer', () => {
     expect(view.find('.summary').text()).toBe('safetxtok')
   })
 
+  it('offers Settings for a failure the person must fix there, and not for a busy provider', async () => {
+    const view = await open()
+    await sendFromSheet('What now?')
+    await emit(0, { kind: 'error', error: { kind: 'provider_key_missing' } })
+    const labels = () => view.findAll('[role="alert"] button').map((b) => b.text())
+    expect(labels()).toContain('AI providers')
+    expect(labels()).toContain('Try again')
+  })
+
+  it('offers only "try again" for a provider that is merely busy', async () => {
+    const view = await open()
+    await sendFromSheet('What now?')
+    await emit(0, { kind: 'error', error: { kind: 'overloaded' } })
+    const labels = view.findAll('[role="alert"] button').map((b) => b.text())
+    expect(labels).toContain('Try again')
+    expect(labels).not.toContain('AI providers')
+  })
+
   it('says why it failed in words and tries again through the review sheet', async () => {
     const view = await open()
     await sendFromSheet('What now?')

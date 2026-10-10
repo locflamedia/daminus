@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { useFormat } from '@/composables/use-format'
 import { errorText } from '@/lib/issue-text'
 import type { AiTurn } from '@/stores/ai-thread'
@@ -79,6 +80,16 @@ const took = computed(() =>
     ? t('aiAsk.answeredIn', { time: fmt.duration(props.turn.elapsedMs) })
     : null,
 )
+// The failures the person fixes in Settings › AI providers: those errors
+// offer a way straight there, beside the usual "try again" for once it is
+// fixed. Being busy or throttled is not one of them: waiting is the fix.
+const SETTINGS_CODES = [
+  'provider_not_configured',
+  'provider_key_missing',
+  'provider_auth',
+  'provider_model_not_found',
+  'claude_code_not_acknowledged',
+]
 // A refusal from the provider names it and the short reason with what to do ("Anthropic didn't
 // answer: rate limited. Try again in a minute."); any other error keeps its own sentence.
 const failure = computed(() => {
@@ -89,6 +100,10 @@ const failure = computed(() => {
     ? t('aiAsk.didNotAnswer', { provider: provider.value, reason: t(reason) })
     : errorText(error)
 })
+const router = useRouter()
+const toSettings = computed(
+  () => props.turn.error !== null && SETTINGS_CODES.includes(props.turn.error.code.kind),
+)
 </script>
 
 <template>
@@ -132,7 +147,14 @@ const failure = computed(() => {
     </div>
     <div v-else-if="turn.status === 'error'" class="state" role="alert">
       <span class="why">{{ failure }}</span>
-      <UiButton variant="secondary" size="small" @click="emit('retry')">{{
+      <UiButton
+        v-if="toSettings"
+        variant="secondary"
+        size="small"
+        @click="router.push({ name: 'settings', params: { section: 'ai' } })"
+        >{{ t('aiAsk.providers') }}</UiButton
+      >
+      <UiButton :variant="toSettings ? 'ghost' : 'secondary'" size="small" @click="emit('retry')">{{
         t('aiAsk.tryAgain')
       }}</UiButton>
     </div>

@@ -36,7 +36,7 @@ const MAX_OUTPUT_BYTES: usize = 8 * 1024 * 1024;
 /// Most stderr kept, for the log and for telling a login problem apart.
 const MAX_STDERR_BYTES: usize = 16 * 1024;
 /// How long a reply may take.
-pub const RUN_TIMEOUT: Duration = Duration::from_secs(120);
+pub const RUN_TIMEOUT: Duration = Duration::from_secs(600);
 /// How long `claude --version` and `claude auth status` may take.
 const DETECT_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -140,7 +140,7 @@ impl ClaudeCliClient {
         if self.ack {
             Ok(())
         } else {
-            Err(ErrorCode::ProviderAuth.into())
+            Err(ErrorCode::ClaudeCodeNotAcknowledged.into())
         }
     }
 }
@@ -723,6 +723,12 @@ fn classify(text: &str) -> ErrorCode {
         "quota",
     ]) {
         ErrorCode::ClaudeCliQuota
+    } else if has(&["model_not_found", "no such model", "unknown model"]) {
+        ErrorCode::ProviderModelNotFound
+    } else if has(&["context length", "context_length", "prompt is too long"]) {
+        ErrorCode::PayloadTooLarge
+    } else if has(&["overloaded"]) {
+        ErrorCode::Overloaded
     } else {
         ErrorCode::ProviderUnavailable
     }
@@ -970,7 +976,7 @@ END
     }
 
     #[tokio::test]
-    async fn signed_out_quota_and_overload_map_to_their_codes() {
+    async fn what_claude_says_went_wrong_becomes_its_own_code() {
         let cases = [
             (
                 r#"{"type":"result","subtype":"success","is_error":true,"result":"Invalid API key · Please run /login","usage":{}}"#,
@@ -986,6 +992,18 @@ END
             ),
             (
                 r#"{"type":"result","is_error":true,"result":"API Error: 529 overloaded_error","usage":{}}"#,
+                ErrorCode::Overloaded,
+            ),
+            (
+                r#"{"type":"result","is_error":true,"result":"no such model: opus-9","usage":{}}"#,
+                ErrorCode::ProviderModelNotFound,
+            ),
+            (
+                r#"{"type":"result","is_error":true,"result":"prompt is too long: 402000 tokens","usage":{}}"#,
+                ErrorCode::PayloadTooLarge,
+            ),
+            (
+                r#"{"type":"result","is_error":true,"result":"the moon is wrong","usage":{}}"#,
                 ErrorCode::ProviderUnavailable,
             ),
             (
@@ -1033,11 +1051,14 @@ END
             .stream(req("q"), CancellationToken::new())
             .await
             .unwrap_err();
-        assert_eq!(e.code, ErrorCode::ProviderAuth);
-        assert_eq!(off.test().await.unwrap_err().code, ErrorCode::ProviderAuth);
+        assert_eq!(e.code, ErrorCode::ClaudeCodeNotAcknowledged);
+        assert_eq!(
+            off.test().await.unwrap_err().code,
+            ErrorCode::ClaudeCodeNotAcknowledged
+        );
         assert_eq!(
             off.list_models().await.unwrap_err().code,
-            ErrorCode::ProviderAuth
+            ErrorCode::ClaudeCodeNotAcknowledged
         );
 
         let c = client(bin);

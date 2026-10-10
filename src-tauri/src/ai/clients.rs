@@ -52,7 +52,8 @@ impl ClientFactory for RealClients {
         match profile.kind {
             ProviderKind::GenaiAdapter => {
                 if profile.needs_key && key.is_none() {
-                    return Err(ErrorCode::ProviderAuth.into());
+                    return Err(AppError::from(ErrorCode::ProviderKeyMissing)
+                        .with_param("provider", &profile.name));
                 }
                 Ok(Arc::new(GenaiClient::new(profile, base_url, key)?))
             }
