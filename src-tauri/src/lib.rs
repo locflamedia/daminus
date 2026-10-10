@@ -114,6 +114,13 @@ pub fn forward_events<R: Runtime>(app: &AppHandle<R>, events: AppEvents) {
         if is_final(&event) {
             let h = handle.clone();
             tauri::async_runtime::spawn(async move { tray::reload(&h) });
+        } else if matches!(
+            event.body,
+            daminus_core::scan::ScanEventBody::HostFinished { .. }
+        ) {
+            // "Scanning 3 of 5 hosts…" counts up as each host ends.
+            let h = handle.clone();
+            tauri::async_runtime::spawn(async move { tray::refresh(&h) });
         }
     }));
 }
