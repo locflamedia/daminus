@@ -4,7 +4,8 @@
   and Run again; "In short", the model's paragraph; the ranked list beside the chosen finding.
   The order is the AI's; every severity is the check's. Without an answer the same list is built
   from the checks, unranked, with a quiet link to the AI providers. A finding's command is for
-  copying: no part of this screen runs anything.
+  copying: no part of this screen runs anything. The board's "see payload" link is left out: the
+  text that was sent is not kept, and a link here must never re-run a review.
 -->
 <script setup lang="ts">
 import { useAiModelMark } from '@/layout/use-ai-provider-name'
@@ -117,10 +118,7 @@ if (providers.view === null) void providers.load()
       <div class="titles">
         <b class="title">{{ title }}</b>
         <span v-if="provenance" class="sub"
-          ><UiBrandMark :name="modelMark" :size="12" />{{ provenance }} ·
-          <button type="button" class="link" @click="again">
-            {{ t('aiFindings.seePayload') }}
-          </button></span
+          ><UiBrandMark :name="modelMark" :size="12" />{{ provenance }}</span
         >
       </div>
       <span class="grow" />
@@ -289,16 +287,6 @@ if (providers.view === null) void providers.load()
   gap: 6px;
   color: var(--ink-3);
   font-size: var(--text-12);
-}
-
-.link {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent-ink);
-  font: inherit;
-  font-weight: var(--weight-medium);
-  cursor: default;
 }
 
 .grow {
