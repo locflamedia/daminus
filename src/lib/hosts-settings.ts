@@ -39,12 +39,12 @@ function stateOf(outcome: HostOutcome | null | undefined): HostState {
   return outcome.state === 'reached' || outcome.state === 'partial' ? 'reached' : 'failed'
 }
 
-/** One row per listed host, in the order of the ssh config. */
 /** The chip of a host whose latest scan failed: its cause, as the login test would say it. */
 export function failedChip(outcome: HostOutcome | null | undefined): TestChip {
   return outcome ? chipOfOutcome(outcome, null) : 'unreachable'
 }
 
+/** One row per listed host, in the order of the ssh config. */
 export function hostsRows(
   entries: readonly HostEntry[],
   servers: readonly ServerRollup[],

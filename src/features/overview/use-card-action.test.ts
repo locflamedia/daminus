@@ -10,6 +10,7 @@ import { useHostKeyStore } from '@/stores/host-key'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useProjectSheetStore } from '@/stores/project-sheet'
 import { useProjectsStore } from '@/stores/projects'
+import { useScanPanelStore } from '@/stores/scan-panel'
 import type { CardView } from './overview-card-text'
 import { useCardAction } from './use-card-action'
 
@@ -47,8 +48,11 @@ beforeEach(async () => {
 afterEach(() => clearMocks())
 
 describe('the button of a card whose host could not be scanned', () => {
-  it('Fix login opens Settings › Hosts on that host', async () => {
+  it('Fix login opens Settings › Hosts on that host, above no scan panel', async () => {
+    const panel = useScanPanelStore()
+    panel.show()
     act(card('login', { state: 'auth_failed' }))
+    expect(panel.open).toBe(false)
     await flushPromises()
     expect(router.currentRoute.value.fullPath).toBe('/settings/hosts')
     expect(useHostsSettingsStore().selected).toBe('db-main')
@@ -64,7 +68,10 @@ describe('the button of a card whose host could not be scanned', () => {
     useProjectsStore().details = [
       { id: 'booking', name: 'booking', color: '#9a7bea', urls: [], components: [] },
     ]
+    const panel = useScanPanelStore()
+    panel.show()
     act(card('edit', { state: 'not_in_config' }))
+    expect(panel.open).toBe(false)
     const sheet = useProjectSheetStore()
     expect(sheet.isOpen).toBe(true)
     expect(sheet.request?.mode).toBe('saved')

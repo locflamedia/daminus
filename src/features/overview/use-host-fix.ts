@@ -11,6 +11,7 @@ import { draftFromProject } from '@/lib/setup-model'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useProjectSheetStore } from '@/stores/project-sheet'
 import { useProjectsStore } from '@/stores/projects'
+import { useScanPanelStore } from '@/stores/scan-panel'
 import type { IconName } from '@/ui/icon-paths'
 
 export type HostFix = 'retry' | 'login' | 'host-key' | 'edit'
@@ -57,6 +58,7 @@ export function useHostFix() {
   const keys = useHostKeyReview()
   const sheet = useProjectSheetStore()
   const projects = useProjectsStore()
+  const panel = useScanPanelStore()
 
   /** The saved project to edit for `host`: `project` when given, else the first that uses it. */
   function projectFor(host: string, project?: string) {
@@ -72,6 +74,8 @@ export function useHostFix() {
 
   /** Runs the fix; a retry belongs to the caller's scan, so it does nothing here. */
   function run(fix: HostFix, host: string, outcome: HostOutcome | null, project?: string) {
+    // Settings and the project sheet open under the scan panel's drawer: close it first.
+    if (fix === 'login' || fix === 'edit') panel.close()
     if (fix === 'login') {
       hosts.select(host)
       void router.push({ name: 'settings', params: { section: 'hosts' } })
