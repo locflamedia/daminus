@@ -93,7 +93,7 @@
       "addEnv": "thêm .env",
       "off": "đang tắt trong Cài đặt",
       "since": "từ #{seq}",
-      "noAnswer": "không phản hồi",
+      "noAnswer": "không trả lời",
       "mysqlLag": "MySQL cập nhật dung lượng bảng khoảng một lần mỗi ngày"
     },
     "servers": {

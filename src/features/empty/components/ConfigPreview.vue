@@ -64,13 +64,25 @@ const chip = computed(() =>
     : { tone: 'info' as const, busy: true, label: t('empty.preview.reading') },
 )
 
+/** One character of an alias: Geist Mono at 13 px advances 0.6 em. */
+const ALIAS_CHAR_PX = 7.8
+
+/**
+ * The alias column is as wide as the longest alias, up to half the row; HostName gives way
+ * first when the panel is short, so an alias is cut only when needed. In px, not `ch`: the
+ * header row is set smaller than the rows, and every row must get the same column.
+ */
+const aliasWidth = computed(() => ({
+  '--alias': `${Math.ceil(Math.max(0, ...props.rows.map((r) => r.alias.length)) * ALIAS_CHAR_PX)}px`,
+}))
+
 function skipText(s: PreviewSkip): string {
   return t(`empty.preview.skip.${s.kind}`, { name: s.name })
 }
 </script>
 
 <template>
-  <UiCard tray class="preview">
+  <UiCard tray class="preview" :style="aliasWidth">
     <header class="head">
       <span class="tile"><UiIcon name="terminal" /></span>
       <div class="titles">
@@ -143,6 +155,9 @@ function skipText(s: PreviewSkip): string {
 
 <style scoped>
 .preview {
+  /* The longest alias, in px; set from the rows. */
+  --alias: 0px;
+
   --card-gap: var(--space-3);
 }
 
@@ -191,7 +206,9 @@ function skipText(s: PreviewSkip): string {
 .cols,
 .host {
   display: grid;
-  grid-template-columns: 20px 16px minmax(0, 1fr) 128px 64px 88px;
+  grid-template-columns:
+    20px 16px minmax(min(var(--alias), 50%), 1fr) minmax(0, 128px)
+    64px 88px;
   gap: var(--space-3);
   padding: 0 var(--space-3);
 }
