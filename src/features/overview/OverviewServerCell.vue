@@ -23,7 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ retry: [] }>()
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const fixes = useHostFix()
 /** The one step a failed host offers: Retry only for the network. */
 const fix = computed(() => hostFixOf(props.cell.outcome))
@@ -55,7 +55,8 @@ const detail = computed(() => {
     return t(`outcome.${cause}`)
   }
   if (props.cell.state === 'unreachable') {
-    return props.cell.silentDays === null
+    // Vietnamese drops the day count: "Mất kết nối" alone fits the cell (board rule #253).
+    return props.cell.silentDays === null || locale.value === 'vi'
       ? t('overviewScreen.servers.unreachable')
       : t('overviewScreen.servers.unreachableFor', { n: props.cell.silentDays })
   }
