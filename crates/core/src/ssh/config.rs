@@ -54,9 +54,10 @@ pub struct KnownAliases {
 
 impl KnownAliases {
     /// From a listing. `None` when it cannot tell: a `Match` block may apply
-    /// to any alias. A missing config file defines none.
+    /// to any alias, or a `HostName` applies to every alias. A missing config
+    /// file defines none.
     pub fn of(list: &HostList) -> Option<Self> {
-        if list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
+        if list.host_name_for_all || list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
             return None;
         }
         let mut known = Self::default();
@@ -122,6 +123,11 @@ pub enum EmptyReason {
 pub struct HostList {
     /// The config file exists.
     pub config_found: bool,
+    /// A `HostName` applies to any alias (one set before any block, or under
+    /// `Host *`): every alias resolves through it, so none is "not in" it.
+    #[serde(skip)]
+    #[cfg_attr(feature = "ts", ts(skip))]
+    pub host_name_for_all: bool,
     pub hosts: Vec<ConfigHost>,
     pub skipped: Vec<SkippedHost>,
     /// Set when `hosts` is empty: the setup screen's empty state.
@@ -402,8 +408,13 @@ impl Parser<'_> {
                 });
             }
         }
+        let host_name_for_all = self.global_host_name
+            || self.blocks.iter().any(|b| {
+                b.kind == BlockKind::Host && b.host_name && b.patterns.iter().any(|p| p == "*")
+            });
         HostList {
             config_found: found,
+            host_name_for_all,
             hosts,
             skipped,
             empty: None,

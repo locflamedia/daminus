@@ -595,6 +595,7 @@ fn known_aliases_name_hosts_and_patterns_but_not_the_catch_all() {
     };
     let list = HostList {
         config_found: true,
+        host_name_for_all: false,
         hosts: vec![host("apollo-test")],
         skipped: vec![
             skip("*", SkipReason::Wildcard),
@@ -621,6 +622,7 @@ fn known_aliases_name_hosts_and_patterns_but_not_the_catch_all() {
 fn known_aliases_match_case_like_ssh_and_a_missing_config_defines_none() {
     let list = HostList {
         config_found: true,
+        host_name_for_all: false,
         hosts: vec![ConfigHost {
             alias: HostAlias::parse("Web").unwrap(),
             file: "config".into(),
@@ -639,10 +641,22 @@ fn known_aliases_match_case_like_ssh_and_a_missing_config_defines_none() {
     assert!(known.contains("vps-1"));
     let missing = HostList {
         config_found: false,
+        host_name_for_all: false,
         hosts: Vec::new(),
         skipped: Vec::new(),
         empty: None,
     };
     let none = KnownAliases::of(&missing).unwrap();
     assert!(!none.contains("web"));
+}
+
+#[test]
+fn known_aliases_cannot_tell_when_a_host_name_applies_to_every_alias() {
+    let template =
+        Rig::new("Host web\n  HostName 10.0.0.1\n\nHost *\n  HostName %h.corp.example\n");
+    assert_eq!(KnownAliases::of(&template.list()), None);
+    let global = Rig::new("HostName %h.corp.example\n\nHost web\n  User deploy\n");
+    assert_eq!(KnownAliases::of(&global.list()), None);
+    let defaults = Rig::new("Host web\n  HostName 10.0.0.1\n\nHost *\n  ServerAliveInterval 30\n");
+    assert!(KnownAliases::of(&defaults.list()).is_some());
 }

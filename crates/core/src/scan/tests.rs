@@ -473,6 +473,7 @@ fn rig_knowing(
     };
     let list = HostList {
         config_found: found,
+        host_name_for_all: false,
         hosts,
         skipped: Vec::new(),
         empty: None,
@@ -583,6 +584,54 @@ async fn with_no_ssh_config_the_hosts_read_not_in_config_not_offline() {
     let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
     assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::NotInConfig));
     assert_eq!(snap.hosts.get(&alias("b")), Some(&HostOutcome::NotInConfig));
+}
+
+/// An alias that is itself a DNS name (or an address) names the server, not a
+/// config entry: when its lookup fails, it stays a DNS failure.
+#[tokio::test(start_paused = true)]
+async fn a_dns_name_outside_the_config_stays_a_dns_failure() {
+    let mut r = rig_knowing_b(
+        FakeTransport::new()
+            .host(
+                "db.example.com",
+                FakeHost::fail(Failure::Unreachable(NetCause::Dns)),
+            )
+            .host("b", healthy()),
+        FakeProbe::new(),
+        &["db.example.com", "b"],
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(
+        snap.hosts.get(&alias("db.example.com")),
+        Some(&HostOutcome::Unreachable {
+            cause: NetCause::Dns
+        })
+    );
+}
+
+/// One alias gone from the config and one URL failing on DNS is one network
+/// failure, not two: the scan is saved.
+#[tokio::test(start_paused = true)]
+async fn a_gone_alias_and_one_failing_url_do_not_read_as_offline() {
+    let mut r = rig_knowing(
+        FakeTransport::new().host("a", FakeHost::fail(Failure::Unreachable(NetCause::Dns))),
+        FakeProbe::new().error("https://shop.example", ProbeError::Dns),
+        &["a"],
+        &["https://shop.example"],
+        true,
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::NotInConfig));
 }
 
 #[tokio::test(start_paused = true)]

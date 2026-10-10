@@ -361,11 +361,13 @@ impl Job {
         let mut hosts = JoinSet::new();
         // Read off the runtime: the config and its includes are files.
         let known = match self.shared.options.config_hosts.clone() {
-            Some(read) => tokio::task::spawn_blocking(move || read())
-                .await
-                .ok()
-                .flatten()
-                .map(Arc::new),
+            Some(read) => match tokio::task::spawn_blocking(move || read()).await {
+                Ok(known) => known.map(Arc::new),
+                Err(e) => {
+                    tracing::warn!(error = %e, "reading the ssh config's aliases failed");
+                    None
+                }
+            },
             None => None,
         };
         for host in &self.targets.hosts {
@@ -651,7 +653,9 @@ fn not_in_config(
             cause: NetCause::Dns
         }
     );
-    if dns && known.is_some_and(|k| !k.contains(host.as_str())) {
+    // A DNS name or an address names the server itself, not a config entry.
+    let named = host.as_str().contains('.') || host.as_str().parse::<std::net::IpAddr>().is_ok();
+    if dns && !named && known.is_some_and(|k| !k.contains(host.as_str())) {
         HostOutcome::NotInConfig
     } else {
         outcome
