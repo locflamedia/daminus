@@ -6,6 +6,7 @@
 use std::time::Duration;
 
 use crate::ssh::SshTools;
+use crate::ssh::config::ResolvedHost;
 use crate::ssh::hostkey::expand;
 
 /// How long one `ssh-add -l` or `ssh-keygen -l` may take.
@@ -35,10 +36,21 @@ pub(super) fn key_in_agent(agent: &[String], files: &[String], any_file: bool) -
     !any_file && !agent.is_empty()
 }
 
-/// Asks the agent and `ssh-keygen` about `identity_files` (as `ssh -G` lists
-/// them). `None` when a tool could not answer, so the caller keeps the
+/// Whether the agent the app can ask is the one ssh used, and every key file
+/// can be found: not with an `IdentityAgent` of its own, nor with `%` tokens
+/// in an `IdentityFile` (they would read as "no file on disk").
+pub(super) fn can_tell(host: &ResolvedHost) -> bool {
+    host.identity_agent.is_none() && !host.identity_files.iter().any(|f| f.contains('%'))
+}
+
+/// Asks the agent and `ssh-keygen` about the host's identity files (as `ssh
+/// -G` lists them). `None` when it cannot tell, so the caller keeps the
 /// generic sentence.
-pub(super) async fn check(tools: &SshTools, identity_files: &[String]) -> Option<bool> {
+pub(super) async fn check(tools: &SshTools, host: &ResolvedHost) -> Option<bool> {
+    if !can_tell(host) {
+        return None;
+    }
+    let identity_files = &host.identity_files;
     let mut cmd = tools.command(tools.ssh_add());
     cmd.args(["-l", "-E", "sha256"]);
     let out = tools.capture(cmd, b"", LOOKUP_TIMEOUT).await?;
@@ -85,6 +97,32 @@ mod tests {
         let agent = vec!["SHA256:a".to_owned()];
         assert!(key_in_agent(&agent, &["SHA256:a".to_owned()], true));
         assert!(!key_in_agent(&agent, &["SHA256:b".to_owned()], true));
+    }
+
+    #[test]
+    fn cannot_tell_for_an_agent_of_its_own_or_a_tokenised_key_path() {
+        let plain = ResolvedHost {
+            hostname: "h".into(),
+            user: None,
+            port: 22,
+            identity_files: vec!["~/.ssh/id_rsa".into()],
+            proxy_jump: None,
+            proxy_command: false,
+            known_hosts_files: Vec::new(),
+            host_key_alias: None,
+            identity_agent: None,
+        };
+        assert!(can_tell(&plain));
+        let agent = ResolvedHost {
+            identity_agent: Some("~/Library/1Password/agent.sock".into()),
+            ..plain.clone()
+        };
+        assert!(!can_tell(&agent));
+        let token = ResolvedHost {
+            identity_files: vec!["~/.ssh/%h".into()],
+            ..plain
+        };
+        assert!(!can_tell(&token));
     }
 
     #[test]

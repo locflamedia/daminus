@@ -638,7 +638,7 @@ impl HostTask {
             (HostOutcome::AuthFailed, Some(r)) => tokio::select! {
                 biased;
                 _ = self.cancel.cancelled() => return None,
-                k = agent_keys::check(tools, &r.identity_files) => k,
+                k = agent_keys::check(tools, r) => k,
             },
             _ => None,
         };
