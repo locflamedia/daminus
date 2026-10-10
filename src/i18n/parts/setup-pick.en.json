@@ -70,7 +70,8 @@
       "host_key_changed": "Stops this host. The key differs from the one on record.",
       "key_rejected": "Auth failed. The ssh-add fix is in the card below.",
       "unreachable": "DNS, no route or refused. Check the address or VPN.",
-      "timed_out": "No answer in {n} s. Retry, or raise it in Settings › Scan."
+      "timed_out": "No answer in {n} s. Retry, or raise it in Settings › Scan.",
+      "untested": "Tick this host to test its login."
     },
     "fail": {
       "key_rejected": "The key in your config is not loaded in ssh-agent. Add it, then retry. Your other hosts keep going.",

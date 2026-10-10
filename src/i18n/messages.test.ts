@@ -97,6 +97,7 @@ describe('locale files', () => {
     // A Record over the type: a new chip cannot reach the screen without its words.
     const chips: Record<TestChip, true> = {
       not_checked: true,
+      untested: true,
       queued: true,
       connecting: true,
       agent_wait: true,

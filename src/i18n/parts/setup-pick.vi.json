@@ -70,7 +70,8 @@
       "host_key_changed": "Dừng host này. Khóa khác với khóa đã lưu.",
       "key_rejected": "Xác thực thất bại. Cách sửa bằng ssh-add nằm ở thẻ bên dưới.",
       "unreachable": "DNS, không có đường đi hoặc bị từ chối. Kiểm tra địa chỉ hoặc VPN.",
-      "timed_out": "Không có phản hồi sau {n} s. Thử lại, hoặc tăng thời gian ở Cài đặt › Quét."
+      "timed_out": "Không có phản hồi sau {n} s. Thử lại, hoặc tăng thời gian ở Cài đặt › Quét.",
+      "untested": "Tick host này để thử đăng nhập."
     },
     "fail": {
       "key_rejected": "Khóa trong cấu hình của bạn chưa được nạp vào ssh-agent. Hãy thêm khóa rồi thử lại. Các host khác vẫn tiếp tục.",
