@@ -188,13 +188,31 @@ mod tests {
         assert!(vars.iter().any(|(k, _)| k == "PATH"));
     }
 
+    /// Writes an executable script and does not return until the file is
+    /// closed and marked runnable. On Linux a freshly written file can refuse
+    /// to exec with `ETXTBSY` while a writer still holds it, which on a loaded
+    /// runner made these tests fail with `Err("spawn")` rather than with what
+    /// they assert. Writing through an owned handle that is flushed, synced
+    /// and dropped before the mode is set closes that window; the script
+    /// itself is never run here, since each test needs its own first run.
+    fn executable_script(path: &std::path::Path, body: &str) {
+        use std::io::Write as _;
+        use std::os::unix::fs::PermissionsExt as _;
+        {
+            let mut file = std::fs::File::create(path).unwrap();
+            file.write_all(body.as_bytes()).unwrap();
+            file.sync_all().unwrap();
+        }
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let mode = std::fs::metadata(path).unwrap().permissions().mode();
+        assert!(mode & 0o111 != 0, "{} is not executable", path.display());
+    }
+
     #[test]
     fn a_hanging_shell_is_killed_at_the_timeout() {
         let dir = tempfile::tempdir().unwrap();
         let shell = dir.path().join("slow-sh");
-        std::fs::write(&shell, "#!/bin/sh\nsleep 30\n").unwrap();
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).unwrap();
+        executable_script(&shell, "#!/bin/sh\nsleep 30\n");
         let started = Instant::now();
         let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(300));
         assert_eq!(got, Err("timeout"));
@@ -207,19 +225,18 @@ mod tests {
         let shell = dir.path().join("daemon-sh");
         // Exits as soon as its child has moved to a new process group (out
         // of reach of killpg), leaving that child holding stdout for 30 s.
-        std::fs::write(
+        executable_script(
             &shell,
             "#!/bin/sh\n\
              /usr/bin/perl -e 'setpgrp(0,0); open(F, \">\", $ARGV[0]); close(F); sleep 30' \"$0.ready\" &\n\
              while [ ! -e \"$0.ready\" ]; do sleep 0.02; done\n\
              exit 0\n",
-        )
-        .unwrap();
-        use std::os::unix::fs::PermissionsExt as _;
-        std::fs::set_permissions(&shell, std::fs::Permissions::from_mode(0o755)).unwrap();
+        );
         let started = Instant::now();
         let got = login_shell_env(shell.to_str().unwrap(), Duration::from_millis(500));
-        assert_eq!(got, Err("timeout"));
+        // `Err("spawn")` here would mean the script never ran, which says
+        // nothing about the behaviour under test.
+        assert_eq!(got, Err("timeout"), "the script did not run as written");
         assert!(
             started.elapsed() < Duration::from_secs(2),
             "{:?}",
