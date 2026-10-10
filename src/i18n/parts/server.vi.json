@@ -108,20 +108,8 @@
       "none": "chưa có kết quả"
     },
     "state": {
-      "unreachable": "{host} không phản hồi",
-      "unreachableText": "Lần quét gần nhất không đọc được máy chủ này ({cause}). Dữ liệu hiển thị là của lần quét #{seq}, {when}.",
-      "neverReached": "Lần quét gần nhất không đọc được máy chủ này ({cause}) và chưa lần quét nào trước đó đọc được.",
       "notScanned": "{host} bị bỏ qua ở lần quét gần nhất",
-      "notScannedText": "Máy chủ đang tắt trong Cài đặt hoặc không nằm trong lần quét bạn chạy. Hãy quét để đọc ngay.",
-      "missing": "Daminus không biết máy chủ nào tên {host}",
-      "missingText": "Có thể nó đã bị xoá khỏi các dự án hoặc khỏi cấu hình SSH.",
-      "back": "Về Tổng quan",
-      "stale": "Kết quả đã cũ {n} ngày | Kết quả đã cũ {n} ngày",
-      "staleText": "Hãy quét máy chủ này để xem hiện giờ ra sao.",
-      "loadFailed": "Không đọc được kết quả",
-      "retry": "Thử lại",
-      "noScan": "Chưa có lần quét nào",
-      "noScanText": "Hãy quét máy chủ này để đọc lần đầu."
+      "notScannedText": "Máy chủ đang tắt trong Cài đặt hoặc không nằm trong lần quét bạn chạy. Hãy quét để đọc ngay."
     },
     "loading": "Đang đọc {host}"
   }

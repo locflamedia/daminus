@@ -4,6 +4,7 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
 import { type AppError, type Report, isAppError, reportLatest } from '@/api'
+import { crossFade } from '@/lib/cross-fade'
 
 const KEEP = 24
 
@@ -43,7 +44,8 @@ export const useReportStore = defineStore('report', () => {
   /**
    * Reads the latest report from Rust; on failure the last good one stays. When reads overlap
    * (the first load at start-up and the one a finished scan asks for) only the one started
-   * last may set `latest`, so a slow older answer cannot replace a newer report.
+   * last may set `latest`, so a slow older answer cannot replace a newer report. A newer scan
+   * replacing the one on screen cross-fades, so the values that changed fade into place.
    */
   async function loadLatest() {
     const mine = ++requests
@@ -51,7 +53,9 @@ export const useReportStore = defineStore('report', () => {
       const report = await reportLatest()
       remember(report)
       if (mine !== requests) return
-      latest.value = report
+      const before = latest.value
+      if (before !== null && before.seq !== report.seq) crossFade(() => (latest.value = report))
+      else latest.value = report
       error.value = null
     } catch (e) {
       if (mine !== requests) return

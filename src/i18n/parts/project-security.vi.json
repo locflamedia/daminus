@@ -1,18 +1,7 @@
 {
   "projectSecurity": {
     "state": {
-      "loading": "Đang đọc các kiểm tra bảo mật",
-      "emptyTitle": "Chưa có kết quả bảo mật",
-      "emptyText": "Bấm Quét tất cả để Daminus chạy chín kiểm tra cho dự án này.",
-      "errorTitle": "Không đọc được kết quả mới nhất",
-      "retry": "Thử lại",
-      "staleTitle": "Kết quả này đã {n} ngày tuổi",
-      "staleText": "Lần quét #{seq} là lần cuối được lưu. Chưa có gì ở đây được kiểm tra lại.",
-      "unreachableTitle": "{hosts} không trả lời lần quét #{seq}",
-      "unreachableText": "Kết quả của máy này là lần cuối Daminus đọc được; mỗi dòng ghi rõ từ lần quét nào.",
-      "allOffTitle": "Các kiểm tra bảo mật đang tắt trong Cài đặt",
-      "allOffText": "Các nhóm đứng sau chín kiểm tra này đã tắt nên chưa có gì được chạy.",
-      "openSettings": "Mở Cài đặt"
+      "loading": "Đang đọc các kiểm tra bảo mật"
     },
     "sev": {
       "crit": "Nghiêm trọng",

@@ -108,20 +108,8 @@
       "none": "no result"
     },
     "state": {
-      "unreachable": "{host} did not answer",
-      "unreachableText": "The last scan could not read this server ({cause}). What is shown is from scan #{seq}, {when}.",
-      "neverReached": "The last scan could not read this server ({cause}), and no earlier scan reached it.",
       "notScanned": "{host} was left out of the last scan",
-      "notScannedText": "It is switched off in Settings or was not part of the scan you ran. Scan it to read it now.",
-      "missing": "Daminus does not know a server called {host}",
-      "missingText": "It may have been removed from your projects or from your SSH config.",
-      "back": "Back to Overview",
-      "stale": "These results are {n} day old | These results are {n} days old",
-      "staleText": "Scan this server to see where it stands now.",
-      "loadFailed": "Could not read the results",
-      "retry": "Try again",
-      "noScan": "No scan has run yet",
-      "noScanText": "Scan this server to read it for the first time."
+      "notScannedText": "It is switched off in Settings or was not part of the scan you ran. Scan it to read it now."
     },
     "loading": "Reading {host}"
   }

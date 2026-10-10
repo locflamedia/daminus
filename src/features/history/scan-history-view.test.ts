@@ -7,6 +7,7 @@ import type { Report } from '@/api'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n } from '@/i18n'
 import { useReportStore } from '@/stores/report'
+import { useScanStore } from '@/stores/scan'
 import bundle from '@/testing/fixtures/results.json'
 import ScanHistoryView from './ScanHistoryView.vue'
 
@@ -92,6 +93,37 @@ describe('Scan history', () => {
     const wrapper = await mountView({ scans: [], keep: null, bytes: 0 })
     expect(wrapper.text()).toContain('No scans yet')
     expect(wrapper.find('button.row').exists()).toBe(false)
+  })
+
+  it('adds a hatched column for the scan that is running, after the saved ones', async () => {
+    const wrapper = await mountView()
+    expect(wrapper.find('.column.live').exists()).toBe(false)
+    useScanStore().run = {
+      scan_id: 's1',
+      started_at: '2026-09-26T07:00:00Z',
+      next_seq: 13,
+      hosts: {},
+    }
+    await flushPromises()
+    const columns = wrapper.findAll('.column')
+    expect(columns[columns.length - 1]?.classes()).toContain('live')
+    expect(columns[columns.length - 1]?.text()).toBe('#13 · running')
+  })
+
+  it('says the saved scans could not be read and tries again', async () => {
+    mockCommands(() => {
+      throw { code: { kind: 'store_busy' }, retryable: true }
+    })
+    setActivePinia(createPinia())
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/', component: { template: '<div />' } }],
+    })
+    const wrapper = mount(ScanHistoryView, { global: { plugins: [i18n, router] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Couldn’t load this tab')
+    expect(wrapper.text()).toContain('(store busy)')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Try again')).toBe(true)
   })
 
   it('does not draw an export button, since nothing can write one', async () => {

@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { useResultsAged } from '../common/results-aged'
 import { vEnter } from '@/lib/motion'
 import type { DbSection } from './use-database-model'
 import MysqlNote from './MysqlNote.vue'
@@ -21,6 +22,7 @@ const where = computed(() =>
     ? t('projectDatabase.engine.container', { name: props.section.part.container })
     : t('projectDatabase.engine.host', { host: props.section.item.key.host }),
 )
+const aged = useResultsAged()
 const grew = computed(() => (props.section.delta ?? 0) > 0)
 </script>
 
@@ -34,7 +36,7 @@ const grew = computed(() => (props.section.delta ?? 0) > 0)
     <div v-enter class="card" :style="{ '--d': '60ms' }">
       <span class="label">{{ t('projectDatabase.size.label') }}</span>
       <b class="value">{{ view.size === null ? '—' : fmt.measure(view.size, 'bytes').text }}</b>
-      <span class="sub" :class="{ warn: grew }">
+      <span v-if="!aged" class="sub" :class="{ warn: grew }">
         {{
           section.delta !== null && section.prevSeq !== null
             ? t('projectDatabase.size.since', {

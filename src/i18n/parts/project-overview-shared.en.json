@@ -1,18 +1,27 @@
 {
   "projectShared": {
     "group": {
+      "system": "System checks",
       "disk": "Disk checks",
       "containers": "Container checks",
       "databases": "Database checks",
-      "uptime": "URL checks"
+      "uptime": "URL checks",
+      "security": "Security checks"
     },
     "waiting": {
       "title": "No result yet",
-      "text": "Scan to read this project. The numbers appear here when a scan has finished."
+      "text": "This tab fills after the first scan of {name}.",
+      "scan": "Scan {name}"
     },
     "error": {
-      "title": "Could not read the results",
-      "text": "The last scan could not be loaded from this Mac.",
+      "title": "Couldn’t load this tab",
+      "text": "The saved scan could not be read. Nothing on the server changed.",
+      "textWhy": "The saved scan could not be read ({reason}). Nothing on the server changed.",
+      "reason": {
+        "store_busy": "store busy",
+        "io": "file not readable",
+        "config_from_newer_version": "saved by a newer Daminus"
+      },
       "retry": "Try again"
     },
     "off": {
@@ -21,21 +30,34 @@
       "open": "Open Settings › Scan"
     },
     "unreachable": {
-      "title": "{hosts} did not answer",
-      "text": "Scan #{seq} could not reach it, so there is nothing to show yet.",
-      "kept": "Its parts show nothing until a scan reaches it again."
+      "title": "{hosts} not re-checked since #{seq}",
+      "noneTitle": "{hosts} did not answer scan #{seq}",
+      "kept": "Couldn’t reach it in this scan; the values below are from #{seq} and keep their colour.",
+      "none": "Couldn’t reach it in this scan, so there is nothing to show yet.",
+      "retry": "Retry {hosts}"
     },
     "stale": {
       "title": "Not re-checked since #{seq}",
       "text": "These results are what scan #{seq} saw. The next scan that reaches the host refreshes them."
     },
     "old": {
-      "title": "These results are {n} day old | These results are {n} days old",
-      "text": "Scan again to see how things are now."
+      "title": "From scan #{seq} · {n} day ago | From scan #{seq} · {n} days ago",
+      "text": "Values stay, deltas and severity colours are hidden until a fresh scan.",
+      "scan": "Scan now"
     },
     "delta": {
       "since": "since #{seq}",
       "same": "no change"
-    }
+    },
+    "scanning": {
+      "title": "Scanning {host}…",
+      "text": "Last values stay in place; a value that changes cross-fades when it lands."
+    },
+    "notFound": {
+      "title": "Server not found",
+      "text": "{host} is no longer in your projects or ~/.ssh/config.",
+      "back": "Back to Overview"
+    },
+    "running": "#{seq} · running"
   }
 }

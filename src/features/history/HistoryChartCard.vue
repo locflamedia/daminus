@@ -20,6 +20,8 @@ const props = defineProps<{
   filter: ProjectFilter
   compared: readonly number[]
   scope: string
+  /** The number the running scan will be saved as; `null` when none runs. */
+  running?: number | null
 }>()
 
 const { t } = useI18n()
@@ -65,6 +67,7 @@ const legend = computed(() => [
       :compared="compared.map(String)"
       :label="t('historyScreen.chart.label', { n: scans.length })"
       :once="`${scope}:columns`"
+      :live="running == null ? null : t('projectShared.running', { seq: running })"
     />
   </section>
 </template>

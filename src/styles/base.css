@@ -148,3 +148,22 @@ html.cross-fading *::after {
 .code-scroll::-webkit-scrollbar-thumb {
   background-color: var(--code-thumb);
 }
+
+/*
+ * Results over a day old keep their values but lose their severity colours until a fresh scan
+ * (board 30, "Stale · over a day old"): under this class the ok, warn and crit tokens read as
+ * plain ink and surface, in both themes. The result screens put it on their body only, so the
+ * notes above it keep their tone.
+ */
+.results-aged {
+  --ok-ink: var(--ink-3);
+  --ok-solid: var(--ink-5);
+  --ok-soft: var(--surface-2);
+  --warn-ink: var(--ink-3);
+  --warn-solid: var(--ink-5);
+  --warn-soft: var(--surface-2);
+  --crit-ink: var(--ink-3);
+  --crit-solid: var(--ink-5);
+  --crit-soft: var(--surface-2);
+  --crit-halo: transparent;
+}

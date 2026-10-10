@@ -1,11 +1,7 @@
 {
   "projectHistory": {
     "state": {
-      "loading": "Reading the saved scans",
-      "emptyTitle": "No scans yet",
-      "emptyText": "History fills as you scan. Press Scan all to save the first one.",
-      "errorTitle": "Couldn't read the saved scans",
-      "retry": "Try again"
+      "loading": "Reading the saved scans"
     },
     "range": {
       "label": "Window",

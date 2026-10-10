@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { useResultsAged } from '../common/results-aged'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
 import ProjectCard from '../common/ProjectCard.vue'
 import ProjectCurve from '../common/ProjectCurve.vue'
@@ -10,6 +11,7 @@ import type { DbSection } from './use-database-model'
 const props = defineProps<{ section: DbSection; loading: boolean }>()
 const { t } = useI18n()
 const fmt = useFormat()
+const aged = useResultsAged()
 
 const values = computed(() => props.section.series.map((p) => p.value))
 const n = computed(() => props.section.series.length)
@@ -35,7 +37,7 @@ const sentence = computed(() =>
   <ProjectCard
     icon="trend"
     :title="t('projectDatabase.curve.title', { n })"
-    :meta="section.change === null ? '' : fmt.delta(section.change, 'bytes').text"
+    :meta="section.change === null || aged ? '' : fmt.delta(section.change, 'bytes').text"
     :gap="8"
   >
     <UiSkeleton v-if="loading" height="120px" radius="12px" tone="soft" />
@@ -47,7 +49,7 @@ const sentence = computed(() =>
       :label="label"
       :once="`database-curve-${section.item.key.host}-${section.item.key.target}`"
     />
-    <span class="note">{{ sentence }}</span>
+    <span v-if="!aged" class="note">{{ sentence }}</span>
   </ProjectCard>
 </template>
 

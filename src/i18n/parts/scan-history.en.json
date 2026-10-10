@@ -69,10 +69,6 @@
       "title": "No scans yet",
       "text": "Run a scan and every scan after it is kept here, so you can see what changed.",
       "scan": "Scan all"
-    },
-    "failed": {
-      "title": "Could not read the scan history",
-      "retry": "Try again"
     }
   }
 }
