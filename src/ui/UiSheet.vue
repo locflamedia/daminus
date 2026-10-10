@@ -13,7 +13,7 @@
   where it was. It fills the nearest positioned ancestor (mount it at the window root).
   `pinned` is for a sheet with a form (Add host, Edit project): its top edge stays 64 px below
   the window's top and it only grows down, so an error line appearing under a field never moves
-  what is above it; past 88 % of the window the body scrolls.
+  what is above it; past 88 % of the space below that edge the body scrolls.
   200 ms: scale .98 and 8 px up with a fade; Reduce Motion keeps the fade.
 -->
 <script setup lang="ts">
@@ -145,7 +145,8 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
   box-shadow: var(--shadow-overlay);
 }
 
-/* Pinned (a form): the top edge stays put; the sheet grows down and scrolls past 88 %. */
+/* Pinned (a form): the top edge stays put; the sheet grows down and its body scrolls past
+   88 % of the height below that edge (the tray's max-height resolves against it). */
 .layer.pinned {
   align-items: flex-start;
   padding-top: 64px;
