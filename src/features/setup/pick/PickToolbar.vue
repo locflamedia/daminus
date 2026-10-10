@@ -1,19 +1,21 @@
 <!--
   The bar above the table: the filter field (the slash key focuses it), the segments by login
-  result with their counts, "Select all ready" and "Add host".
+  result with their counts, "Select all ready", "Add host" and "Reload", which reads the config
+  again and keeps the ticks.
 -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Segment } from '@/lib/host-rows'
 import UiButton from '@/ui/UiButton.vue'
+import UiKbd from '@/ui/UiKbd.vue'
 import UiSearchField from '@/ui/UiSearchField.vue'
 import UiSeg from '@/ui/UiSeg.vue'
 
-const props = defineProps<{ counts: Record<Segment, number> }>()
+const props = defineProps<{ counts: Record<Segment, number>; busy: boolean }>()
 const query = defineModel<string>('query', { required: true })
 const segment = defineModel<Segment>('segment', { required: true })
-const emit = defineEmits<{ selectReady: []; addHost: [] }>()
+const emit = defineEmits<{ selectReady: []; addHost: []; reload: [] }>()
 
 const { t } = useI18n()
 const search = ref<InstanceType<typeof UiSearchField>>()
@@ -45,6 +47,9 @@ defineExpose({ focusSearch: () => search.value?.focus() })
       {{ t('setupPick.filter.selectReady') }}
     </UiButton>
     <UiButton icon="plus" @click="emit('addHost')">{{ t('setupPick.filter.addHost') }}</UiButton>
+    <UiButton icon="refresh" :busy="busy" @click="emit('reload')">
+      {{ t('setupPick.filter.reload') }}<UiKbd>⇧⌘R</UiKbd>
+    </UiButton>
   </div>
 </template>
 

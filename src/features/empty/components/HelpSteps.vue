@@ -14,8 +14,6 @@ import type { HelpView } from '../empty-state'
 
 const props = defineProps<{
   steps: HelpView['steps']
-  /** Termius is installed: the first step speaks of exporting from it. */
-  termius: boolean
   /** The alias the test command and the Host block use. */
   alias: string
 }>()
@@ -45,9 +43,7 @@ const list = computed(() => {
         <div class="body">
           <b>{{ t(`empty.help.step.${id}.title`) }}</b>
           <template v-if="id === 'key'">
-            <span>{{
-              termius ? t('empty.help.step.key.body') : t('empty.help.step.key.bodyPlain')
-            }}</span>
+            <span>{{ t('empty.help.step.key.body') }}</span>
             <UiCommandCopy :command="LOCK_KEY" />
           </template>
           <UiCommandCopy v-else-if="id === 'agent'" :command="ADD_KEY" />

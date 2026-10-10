@@ -1,6 +1,5 @@
 //! What the setup screens say about this Mac before any server is touched:
-//! whether the SSH agent holds keys, and whether Termius is installed (it keeps
-//! its own host list, which Daminus never reads).
+//! whether the SSH agent holds keys.
 
 use std::path::PathBuf;
 use std::time::Duration;
@@ -32,8 +31,6 @@ pub struct SshEnvironment {
     pub agent: AgentState,
     /// Keys the agent holds (their count only, never their names or contents).
     pub keys: u32,
-    /// `Termius.app` is installed.
-    pub termius_installed: bool,
 }
 
 /// What `ssh-add -l` says about the agent, for Settings › About and the
@@ -93,15 +90,10 @@ impl SetupService {
             .filter(|dir| dir.is_dir())
     }
 
-    /// The agent and Termius, for the empty-app screens.
+    /// The agent, for the empty-app screens.
     pub async fn environment(&self) -> SshEnvironment {
-        let tools = &self.shared.tools;
-        let (agent, keys) = ask_agent(tools).await;
-        SshEnvironment {
-            agent,
-            keys,
-            termius_installed: termius_paths(tools.home()).iter().any(|p| p.is_dir()),
-        }
+        let (agent, keys) = ask_agent(&self.shared.tools).await;
+        SshEnvironment { agent, keys }
     }
 
     /// Whether the agent the app would use answers, and how many keys it holds.
@@ -119,14 +111,6 @@ async fn ask_agent(tools: &SshTools) -> (AgentState, u32) {
         Some(out) => read_agent(out.code, &out.stdout),
         None => (AgentState::Unavailable, 0),
     }
-}
-
-fn termius_paths(home: Option<PathBuf>) -> Vec<PathBuf> {
-    let mut paths = vec![PathBuf::from("/Applications/Termius.app")];
-    if let Some(home) = home {
-        paths.push(home.join("Applications/Termius.app"));
-    }
-    paths
 }
 
 #[cfg(test)]
@@ -186,9 +170,15 @@ mod tests {
     }
 
     #[test]
-    fn termius_is_looked_for_in_both_application_folders() {
-        let paths = termius_paths(Some(PathBuf::from("/Users/a")));
-        assert_eq!(paths.len(), 2);
-        assert!(paths[1].ends_with("Applications/Termius.app"));
+    fn an_older_environment_with_a_field_since_removed_still_reads() {
+        let old = r#"{"agent":"empty","keys":0,"termius_installed":true}"#;
+        let env: SshEnvironment = serde_json::from_str(old).unwrap();
+        assert_eq!(
+            env,
+            SshEnvironment {
+                agent: AgentState::Empty,
+                keys: 0
+            }
+        );
     }
 }

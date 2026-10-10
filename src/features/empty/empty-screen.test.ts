@@ -20,7 +20,7 @@ interface World {
   reads: number
 }
 
-const KEYS: SshEnvironment = { agent: 'keys', keys: 2, termius_installed: false }
+const KEYS: SshEnvironment = { agent: 'keys', keys: 2 }
 let world: World
 const mounted: VueWrapper[] = []
 
@@ -150,28 +150,26 @@ describe('the first screen', () => {
 })
 
 describe('the help screen', () => {
-  it('cause A: names the missing file, with the Termius row and the three steps', async () => {
+  it('cause A: names the missing file, with the two rows and the three steps', async () => {
     world.listing = emptyListing('no_config')
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
     expect(wrapper.find('h2').text()).toBe(
-      'Your servers live in Termius. Let’s make them visible to ssh.',
+      'No ssh config yet. Let’s make your servers visible to ssh.',
     )
     const rows = wrapper.findAll('.found .row').map((r) => r.text())
-    expect(rows).toHaveLength(3)
+    expect(rows).toHaveLength(2)
     expect(rows[0]).toContain('No file yet. Daminus reads Host blocks from here.')
     expect(rows[0]).toContain('not found')
     expect(rows[1]).toContain('Running, but holds no keys.')
     expect(rows[1]).toContain('0 keys')
-    expect(rows[2]).toContain('Termius')
-    expect(rows[2]).toContain('not read')
     expect(wrapper.findAll('.steps .step')).toHaveLength(3)
     expect(wrapper.find('.left-out').exists()).toBe(false)
   })
 
   it('cause B: says the config has no usable host and lists what was left out, with where', async () => {
     world.listing = emptyListing('no_usable_hosts')
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
     expect(wrapper.find('h2').text()).toBe('Your ssh config has no host Daminus can use yet.')
     expect(wrapper.get('.found').text()).toContain('4 entries, 0 usable')
@@ -201,7 +199,7 @@ describe('the help screen', () => {
   })
 
   it('shows only the agent row and its steps when the config is fine', async () => {
-    world.env = { agent: 'empty', keys: 0, termius_installed: false }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
     expect(wrapper.find('h2').text()).toBe('Your ssh-agent holds no key yet. Let’s load one.')
     expect(wrapper.findAll('.found .row')).toHaveLength(1)
@@ -210,20 +208,18 @@ describe('the help screen', () => {
     expect(wrapper.find('.fields').exists()).toBe(false)
   })
 
-  it('leaves the Termius row out when Termius is not installed', async () => {
+  it('tells to put the key in ~/.ssh, or create one, in the first step', async () => {
     world.listing = emptyListing('no_config')
-    world.env = { agent: 'empty', keys: 0, termius_installed: false }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
-    expect(wrapper.get('.found').text()).not.toContain('Termius')
-    expect(wrapper.find('h2').text()).toBe(
-      'No ssh config yet. Let’s make your servers visible to ssh.',
+    expect(wrapper.get('.steps .step').text()).toContain(
+      'Put the private key for your servers in ~/.ssh (or create one with ssh-keygen).',
     )
-    expect(wrapper.text()).toContain('Keep the private key you use for your servers')
   })
 
   it('keeps Import off until the config has a host and the agent a key', async () => {
     world.listing = emptyListing('no_config')
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
     const button = () => wrapper.get('.import')
     expect(button().attributes('aria-disabled')).toBe('true')
@@ -234,7 +230,7 @@ describe('the help screen', () => {
 
   it('Check again reads the config and the agent again, and the rows turn green in place', async () => {
     world.listing = emptyListing('no_config')
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper, router } = await mountScreen()
     expect(world.reads).toBe(1)
 
@@ -250,7 +246,7 @@ describe('the help screen', () => {
         delay: 0,
       },
     ])
-    world.env = { agent: 'keys', keys: 1, termius_installed: true }
+    world.env = { agent: 'keys', keys: 1 }
     const check = wrapper.findAll('button').find((b) => b.text().includes('Check again'))
     await check?.trigger('click')
     await flushPromises()
@@ -283,7 +279,7 @@ describe('the help screen', () => {
       delay: 0,
     })
     world.listing = sampleListing([host('a'), host('b')])
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
     expect(wrapper.get('.import').text()).toContain('Import 2 hosts')
   })
@@ -299,7 +295,7 @@ describe('the help screen', () => {
 
   it('follows what is typed in the form: the block, and the alias in the test line', async () => {
     world.listing = emptyListing('no_config')
-    world.env = { agent: 'empty', keys: 0, termius_installed: true }
+    world.env = { agent: 'empty', keys: 0 }
     const { wrapper } = await mountScreen()
     const inputs = wrapper.findAll('.fields input')
     await inputs[0]?.setValue('db-main')

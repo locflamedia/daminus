@@ -32,7 +32,6 @@ export const useEmptyStore = defineStore('empty', () => {
     skipped: setup.skipped,
     agent: setup.environment?.agent ?? null,
     keys: setup.environment?.keys ?? 0,
-    termiusInstalled: setup.environment?.termius_installed ?? false,
   }))
 
   const shown = ref<HelpShown | null>(null)

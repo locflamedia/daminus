@@ -18,6 +18,7 @@
       "failed": "Lỗi",
       "selectReady": "Chọn tất cả host sẵn sàng",
       "addHost": "Thêm host",
+      "reload": "Tải lại",
       "none": "Không có host nào khớp bộ lọc."
     },
     "columns": {
@@ -73,14 +74,6 @@
     "fail": {
       "key_rejected": "Khóa trong cấu hình của bạn chưa được nạp vào ssh-agent. Hãy thêm khóa rồi thử lại. Các host khác vẫn tiếp tục.",
       "key_rejected_nokey": "Các khóa mà ssh đưa ra đều không được chấp nhận. Hãy kiểm tra đúng khóa đã nạp vào ssh-agent rồi thử lại. Các host khác vẫn tiếp tục.",
-      "termius": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi chạy dòng lệnh ở trên. {how}",
-      "termiusHow": "Cách làm",
-      "termiusSteps": {
-        "export": "Trong Termius, xuất khóa riêng tư ra một tệp trong {dir}.",
-        "protect": "Chỉ cho phép mình bạn đọc tệp đó:",
-        "load": "Nạp nó vào ssh-agent, rồi thử lại:"
-      },
-      "termiusNoLine": "Khóa chỉ có trong Termius? Hãy xuất nó ra {dir} trước, rồi thử lại.",
       "unreachable": {
         "dns": "Không phân giải được địa chỉ. Kiểm tra địa chỉ hoặc VPN.",
         "refused": "Máy chủ từ chối kết nối. Kiểm tra địa chỉ hoặc VPN.",
@@ -131,11 +124,6 @@
       "noHostName": "thiếu HostName",
       "invalidAlias": "alias không hợp lệ",
       "note": "Ký tự đại diện chỉ đặt giá trị mặc định, nên được đọc nhưng không bao giờ liệt kê."
-    },
-    "termius": {
-      "title": "Host chỉ có trong Termius?",
-      "body": "Termius giữ danh sách riêng. Hãy xuất nó một lần vào {file}, rồi tải lại.",
-      "reload": "Tải lại"
     },
     "footer": {
       "ready": "{n} sẵn sàng",

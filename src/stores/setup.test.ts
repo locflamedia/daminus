@@ -65,7 +65,7 @@ class FakeBackend {
       case 'hosts_list':
         return listing(['vps-a', 'vps-b', 'vps-c'])
       case 'ssh_environment':
-        return { agent: 'keys', keys: 2, termius_installed: false }
+        return { agent: 'keys', keys: 2 }
       case 'setup_status':
         return this.status && structuredClone(this.status)
       case 'setup_result':

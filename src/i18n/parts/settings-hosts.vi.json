@@ -11,14 +11,6 @@
       "never": "chưa bao giờ",
       "off": "không quét"
     },
-    "termius": {
-      "title": "Máy chủ nằm trong Termius?",
-      "guide": "hướng dẫn, 2 phút",
-      "body": "Termius giữ máy chủ trong kho riêng của nó. Chép từng máy vào {file} một lần; Termius và terminal của bạn vẫn dùng bình thường, còn Daminus đọc tệp đó.",
-      "block": "Khối Host cho ~/.ssh/config",
-      "show": "Chỉ tôi cách làm",
-      "copy": "Sao chép mẫu"
-    },
     "leftOut": {
       "title": "Đã bỏ qua ({n})",
       "toggle": "Hiện hoặc ẩn các mục đã bỏ qua",

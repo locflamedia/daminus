@@ -115,14 +115,6 @@ export function includedFiles(
   return files.size
 }
 
-/** The Host block the Termius card offers to copy. */
-export const TERMIUS_TEMPLATE = [
-  'Host vps-sg-2',
-  '  HostName 203.0.113.12',
-  '  User deploy',
-  '  IdentityFile ~/.ssh/id_ed25519',
-].join('\n')
-
 /** A connect or test time in seconds with one decimal: `0.4 s`. */
 export function formatSeconds(ms: number, locale: Locale): string {
   const n = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })

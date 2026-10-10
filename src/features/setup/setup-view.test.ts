@@ -13,7 +13,7 @@ beforeEach(() => {
   setActivePinia(createPinia())
   mockCommands((cmd) => {
     if (cmd === 'hosts_list') return sampleListing()
-    if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1, termius_installed: false }
+    if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1 }
     return null
   })
 })

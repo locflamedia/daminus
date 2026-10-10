@@ -3,7 +3,7 @@
 // keys, empty, or not there). Pure, so every combination can be tested without a window.
 //
 // The first screen (first launch, a config with hosts and an agent with keys) is replaced by the
-// second (the Termius / no-config help) when the config has no usable host or the agent holds no
+// second (the no-config help) when the config has no usable host or the agent holds no
 // key. When only one of the two is missing, only that row and its step are drawn.
 import type { AgentState, EmptyReason, HostEntry, SkippedHost, SkipReason } from '@/api'
 import { keyName } from '@/lib/host-test'
@@ -12,7 +12,7 @@ export type EmptyScreen = 'app' | 'help'
 export type ConfigState = 'missing' | 'unusable' | 'ok'
 
 /** Which words head the help screen. */
-export type HelpHeadline = 'termius' | 'noConfig' | 'noUsableHosts' | 'agent'
+export type HelpHeadline = 'noConfig' | 'noUsableHosts' | 'agent'
 
 export interface EmptyInput {
   configFound: boolean
@@ -23,7 +23,6 @@ export interface EmptyInput {
   /** `null` while the agent has not been asked (or asking failed). */
   agent: AgentState | null
   keys: number
-  termiusInstalled: boolean
 }
 
 export function configState(
@@ -53,7 +52,7 @@ export interface HelpShown {
 
 function headlineOf(input: EmptyInput): HelpHeadline {
   const config = configState(input)
-  if (config === 'missing') return input.termiusInstalled ? 'termius' : 'noConfig'
+  if (config === 'missing') return 'noConfig'
   if (config === 'unusable') return 'noUsableHosts'
   return 'agent'
 }
@@ -92,7 +91,7 @@ export interface HelpView {
   leftOut: LeftOutRow[]
   /** How many entries the config had, all of them left out. */
   entries: number
-  rows: { config: boolean; agent: boolean; termius: boolean }
+  rows: { config: boolean; agent: boolean }
   steps: {
     /** Save the key as a file, then load it into the agent. */
     key: boolean
@@ -119,7 +118,7 @@ export function helpView(input: EmptyInput, shown: HelpShown): HelpView {
     hosts: input.hosts,
     leftOut: config === 'unusable' ? input.skipped.map(leftOut) : [],
     entries: input.skipped.length + input.hosts,
-    rows: { config: shown.config, agent: shown.agent, termius: input.termiusInstalled },
+    rows: { config: shown.config, agent: shown.agent },
     steps,
     stepCount: (steps.key ? 1 : 0) + (steps.agent ? 1 : 0) + (steps.block ? 1 : 0),
     canImport: config === 'ok' && agent === 'keys',

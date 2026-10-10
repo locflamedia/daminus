@@ -1,18 +1,18 @@
 <!--
-  "Why not read Termius?", said once, in the sidebar of the help screen: its vault is private
-  and encrypted, and plain ssh files work with every tool. Shown only when Termius is installed.
+  "Why plain ssh?", said once, in the sidebar of the help screen: Daminus uses the same ssh files
+  as Terminal and never stores keys, so ssh set up once works with every tool.
 -->
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import UiBrandMark from '@/ui/UiBrandMark.vue'
+import UiIcon from '@/ui/UiIcon.vue'
 
 const { t } = useI18n()
 </script>
 
 <template>
   <aside class="why">
-    <b><UiBrandMark name="termius" :size="14" />{{ t('empty.sidebar.termiusTitle') }}</b>
-    <span>{{ t('empty.sidebar.termiusBody') }}</span>
+    <b><UiIcon name="key" :size="14" />{{ t('empty.sidebar.plainSshTitle') }}</b>
+    <span>{{ t('empty.sidebar.plainSshBody') }}</span>
   </aside>
 </template>
 
@@ -32,6 +32,10 @@ b {
   gap: var(--space-2);
   font-size: var(--text-12);
   font-weight: var(--weight-medium);
+}
+
+b :deep(svg) {
+  color: var(--ink-3);
 }
 
 span {

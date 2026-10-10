@@ -23,7 +23,6 @@ import openrouterDark from '@/assets/logos/openrouter-dark.svg'
 import pm2 from '@/assets/logos/pm2.svg'
 import postgresql from '@/assets/logos/postgresql.svg'
 import redis from '@/assets/logos/redis.svg'
-import termius from '@/assets/logos/termius.svg'
 import ubuntu from '@/assets/logos/ubuntu.svg'
 
 export const BRAND_FILES = {
@@ -45,7 +44,6 @@ export const BRAND_FILES = {
   pm2,
   postgresql,
   redis,
-  termius,
   ubuntu,
 } as const
 
@@ -82,7 +80,6 @@ export const BRAND_TITLES: Record<BrandName, string> = {
   pm2: 'PM2',
   postgresql: 'PostgreSQL',
   redis: 'Redis',
-  termius: 'Termius',
   ubuntu: 'Ubuntu',
 }
 

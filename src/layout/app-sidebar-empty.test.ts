@@ -46,7 +46,7 @@ afterEach(() => document.body.replaceChildren())
 describe('AppSidebar with no project', () => {
   it('draws the ghost slots, zero counts and the hint on a first launch', async () => {
     useProjectsStore().loaded = true
-    know(useSetupStore(), { agent: 'keys', keys: 2, termius_installed: false })
+    know(useSetupStore(), { agent: 'keys', keys: 2 })
     const wrapper = await mountSidebar()
     const groups = wrapper.findAll('.group').map((g) => g.text())
     expect(groups).toEqual(['Projects 0', 'Servers 0'])
@@ -55,7 +55,7 @@ describe('AppSidebar with no project', () => {
       'Projects and servers you add show up here, sorted by what needs a look.',
     )
     expect(wrapper.find('.search').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Why not read Termius?')
+    expect(wrapper.text()).not.toContain('Why plain ssh?')
   })
 
   it('reads 0, never blank, before the config was read', async () => {
@@ -64,29 +64,15 @@ describe('AppSidebar with no project', () => {
     expect(wrapper.findAll('.group').map((g) => g.text())).toEqual(['Projects 0', 'Servers 0'])
   })
 
-  it('on the help screen drops the search and the ghosts, and explains Termius when it is installed', async () => {
+  it('on the help screen drops the search and the ghosts, and explains plain ssh', async () => {
     useProjectsStore().loaded = true
-    know(
-      useSetupStore(),
-      { agent: 'empty', keys: 0, termius_installed: true },
-      emptyListing('no_config'),
-    )
+    know(useSetupStore(), { agent: 'empty', keys: 0 }, emptyListing('no_config'))
     const wrapper = await mountSidebar()
     expect(wrapper.find('.search').exists()).toBe(false)
     expect(wrapper.findAll('.slot')).toHaveLength(0)
     expect(wrapper.findAll('.group').map((g) => g.text())).toEqual(['Projects 0', 'Servers 0'])
-    expect(wrapper.get('.why').text()).toContain('Why not read Termius?')
-  })
-
-  it('does not explain Termius when it is not installed', async () => {
-    useProjectsStore().loaded = true
-    know(
-      useSetupStore(),
-      { agent: 'empty', keys: 0, termius_installed: false },
-      emptyListing('no_config'),
-    )
-    const wrapper = await mountSidebar()
-    expect(wrapper.find('.why').exists()).toBe(false)
+    expect(wrapper.get('.why').text()).toContain('Why plain ssh?')
+    expect(wrapper.get('.why').text()).toContain('It never stores keys or passwords')
   })
 
   it('keeps its usual rows once a project exists', async () => {
@@ -102,7 +88,7 @@ describe('AppSidebar with no project', () => {
   it('keeps one Servers group and no issue count when scans outlived projects.json', async () => {
     useProjectsStore().loaded = true
     useReportStore().latest = shellReport()
-    know(useSetupStore(), { agent: 'keys', keys: 2, termius_installed: false })
+    know(useSetupStore(), { agent: 'keys', keys: 2 })
     const wrapper = await mountSidebar()
     expect(wrapper.findAll('.group').map((g) => g.text())).toEqual(['Projects 0', 'Servers 0'])
     expect(wrapper.find('.item.server').exists()).toBe(false)

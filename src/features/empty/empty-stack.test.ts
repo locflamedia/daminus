@@ -34,18 +34,16 @@ describe('Recognises out of the box', () => {
 })
 
 describe('What Daminus found on this Mac', () => {
-  it('draws the owner mark of a named app and keeps the glyph for the rest', () => {
+  it('draws the glyph of the row in its tile', () => {
     const props = {
-      icon: 'terminal',
-      name: 'Termius',
+      icon: 'file',
+      name: '~/.ssh/config',
       sub: 'x',
-      chip: 'not read',
-      tone: 'neutral',
+      chip: 'not found',
+      tone: 'warn',
     } as const
-    const termius = mount(HelpRow, { props: { ...props, brand: 'termius' } })
-    expect(termius.find('.tile img').exists()).toBe(true)
-    const plain = mount(HelpRow, { props: { ...props, icon: 'file', name: '~/.ssh/config' } })
-    expect(plain.find('.tile img').exists()).toBe(false)
-    expect(plain.find('.tile svg').exists()).toBe(true)
+    const row = mount(HelpRow, { props })
+    expect(row.find('.tile img').exists()).toBe(false)
+    expect(row.find('.tile svg').exists()).toBe(true)
   })
 })

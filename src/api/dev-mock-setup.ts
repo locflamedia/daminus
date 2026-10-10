@@ -166,9 +166,7 @@ export class SetupMock {
           ? emptyListing('no_usable_hosts')
           : sampleListing(this.hosts, SAMPLE_SKIPPED)
     this.env =
-      variant === 'empty-noconfig'
-        ? { agent: 'empty', keys: 0, termius_installed: true }
-        : { agent: 'keys', keys: 2, termius_installed: false }
+      variant === 'empty-noconfig' ? { agent: 'empty', keys: 0 } : { agent: 'keys', keys: 2 }
   }
 
   savedProjects(): Project[] {
