@@ -492,6 +492,24 @@ describe('Loading, errors and no hosts', () => {
     expect(load).toHaveBeenCalledOnce()
   })
 
+  it('says which line ssh refused when the config does not parse', async () => {
+    const setup = seed()
+    setup.listing = {
+      ...setup.listing!,
+      config_error: {
+        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+        retryable: false,
+      },
+    }
+    const load = vi.spyOn(setup, 'load').mockResolvedValue(undefined)
+    const { wrapper } = await mountPick()
+    const banner = wrapper.find('[role="alert"]')
+    expect(banner.text()).toContain('Could not read your SSH config')
+    expect(banner.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
+    await banner.find('button').trigger('click')
+    expect(load).toHaveBeenCalledOnce()
+  })
+
   it('goes to the empty app when the config has no host at all', async () => {
     const setup = useSetupStore()
     setup.listing = emptyListing('no_config')

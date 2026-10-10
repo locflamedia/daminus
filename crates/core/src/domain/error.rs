@@ -29,6 +29,13 @@ pub enum ErrorCode {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         line: Option<u32>,
     },
+    /// `ssh` refused the user's ssh config (a bad line in `path`, or the file
+    /// cannot be opened). Every host of the file fails until it is fixed.
+    SshConfigInvalid {
+        path: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        line: Option<u32>,
+    },
     /// A config file was written by a newer Daminus; it is read-only here.
     ConfigFromNewerVersion {
         path: String,

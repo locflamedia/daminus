@@ -53,7 +53,7 @@ use crate::domain::project::{Project, ProjectsFile};
 use crate::domain::snapshot::HostOutcome;
 use crate::scan::{MAX_CONNECT_TIMEOUT_S, concurrency};
 use crate::ssh::config::{
-    ConfigSource, HostList, HostListing, ResolvedHost, list_hosts, resolve, resolve_all,
+    ConfigSource, HostList, HostListing, ResolvedHost, list_hosts, resolve, resolve_listing,
 };
 use crate::ssh::hostkey::{self, HostKeyInfo, HostKeyState};
 use crate::ssh::{RunEnd, RunRequest, RunSignal, SshTools, Transport, run_outcome};
@@ -176,8 +176,7 @@ impl SetupService {
         let list = tokio::task::spawn_blocking(move || this.list_hosts())
             .await
             .map_err(|_| AppError::from(ErrorCode::Internal))??;
-        let entries = resolve_all(&self.shared.tools, &list).await;
-        Ok(HostListing { list, entries })
+        Ok(resolve_listing(&self.shared.tools, list).await)
     }
 
     /// Looks at the key of `host` without logging in: what is recorded and

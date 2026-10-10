@@ -160,13 +160,15 @@ describe('HostBlockForm', () => {
 })
 
 describe('AddHostSheet', () => {
-  function mountSheet() {
+  function mountSheet(listing?: () => unknown) {
     mockCommands((cmd) => {
       if (cmd === 'hosts_list')
-        return {
-          list: { config_found: false, hosts: [], skipped: [], empty: 'no_config' },
-          entries: [],
-        }
+        return (
+          listing?.() ?? {
+            list: { config_found: false, hosts: [], skipped: [], empty: 'no_config' },
+            entries: [],
+          }
+        )
       if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1, termius_installed: false }
       return null
     })
@@ -208,5 +210,45 @@ describe('AddHostSheet', () => {
     buttons.find((b) => b.textContent?.includes('Close'))?.click()
     await flushPromises()
     expect(wrapper.props('modelValue')).toBe(false)
+  })
+
+  it('says which line ssh refused after Check again, inside the sheet', async () => {
+    let broken = false
+    const host = { alias: 'vps-a', file: '/u/.ssh/config', line: 1 }
+    const wrapper = mountSheet(() => ({
+      list: { config_found: true, hosts: [host], skipped: [] },
+      entries: [{ host, resolved: null }],
+      ...(broken && {
+        config_error: {
+          code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+          retryable: false,
+        },
+      }),
+    }))
+    await flushPromises()
+    const dialog = () => document.body.querySelector('[role="dialog"]')
+    expect(dialog()?.querySelector('[role="alert"]')).toBeNull()
+
+    broken = true
+    const check = [
+      ...document.body.querySelectorAll<HTMLButtonElement>('[role="dialog"] footer button'),
+    ].find((b) => b.textContent?.includes('Check again'))
+    check?.click()
+    await flushPromises()
+    const alert = dialog()?.querySelector('[role="alert"]')
+    expect(alert?.textContent).toContain('Could not read your SSH config')
+    expect(alert?.textContent).toContain('ssh stops at line 6 of /u/.ssh/config')
+    wrapper.unmount()
+  })
+})
+
+describe('host fields', () => {
+  it('leave ssh values as typed: no autocorrect, capitals or spell check', () => {
+    const { wrapper } = mountForm()
+    for (const input of wrapper.findAll('input')) {
+      expect(input.attributes('autocorrect')).toBe('off')
+      expect(input.attributes('autocapitalize')).toBe('off')
+      expect(input.attributes('spellcheck')).toBe('false')
+    }
   })
 })

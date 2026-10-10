@@ -183,6 +183,27 @@ describe('the host list', () => {
     await setup.reload()
     expect(setup.ticked).toEqual(['vps-a'])
   })
+
+  it('keeps the hosts and says which line ssh refused when the config does not parse', async () => {
+    const broken = listing(['vps-a', 'vps-b'])
+    broken.config_error = {
+      code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+      retryable: false,
+    }
+    mockCommands((cmd, args) => (cmd === 'hosts_list' ? broken : backend.handler(cmd, args)))
+    const setup = await ready()
+    expect(setup.entries.map((e) => e.host.alias)).toEqual(['vps-a', 'vps-b'])
+    expect(setup.error).toBeNull()
+    expect(setup.problem?.code).toEqual({
+      kind: 'ssh_config_invalid',
+      path: '/u/.ssh/config',
+      line: 6,
+    })
+
+    mockCommands(backend.handler)
+    await setup.reload()
+    expect(setup.problem).toBeNull()
+  })
 })
 
 describe('the login test', () => {

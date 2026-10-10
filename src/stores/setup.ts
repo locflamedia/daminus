@@ -119,6 +119,10 @@ export const useSetupStore = defineStore('setup', () => {
   /** Why there is no host to pick: no file, or a file with nothing usable. */
   const emptyReason = computed<EmptyReason | null>(() => listing.value?.list.empty ?? null)
   const agent = computed<AgentState | null>(() => environment.value?.agent ?? null)
+  /** ssh refused the config itself (a bad line): every host fails until it is fixed. */
+  const configError = computed<AppError | null>(() => listing.value?.config_error ?? null)
+  /** What the screens say about the config: a failed read, else a config ssh refused. */
+  const problem = computed<AppError | null>(() => error.value ?? configError.value)
 
   function fail(e: unknown) {
     error.value = isAppError(e) ? e : null
@@ -503,6 +507,8 @@ export const useSetupStore = defineStore('setup', () => {
     environment,
     loading,
     addHostOpen,
+    configError,
+    problem,
     error,
     entries,
     skipped,

@@ -170,12 +170,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
     </template>
 
     <UiBanner
-      v-if="setup.error"
+      v-if="setup.problem"
       tone="crit"
       icon="critical"
       alert
       :title="t('setupPick.error.title')"
-      :text="errorText(setup.error)"
+      :text="errorText(setup.problem)"
     >
       <template #trailing>
         <UiButton icon="refresh" :busy="setup.loading" @click="setup.load()">

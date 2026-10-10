@@ -4,7 +4,8 @@
   below in the same 12 px line. Focus lifts the fill to white with a 2 px accent ring; an
   error tints the field and names itself in text (never colour alone); `mono` is for values
   you could paste into a terminal. Hover and focus can be pinned with `data-force` on the
-  field (it falls through to the root) for the gallery.
+  field (it falls through to the root) for the gallery. Every field holds a host, a path, a key
+  or a search, so macOS never autocorrects, capitalises or spell-checks what is typed.
 -->
 <script setup lang="ts">
 import { computed, useId } from 'vue'
@@ -64,6 +65,9 @@ function onInput(event: Event) {
         class="input"
         :type="type"
         :autocomplete="type === 'password' ? 'off' : undefined"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"

@@ -170,53 +170,98 @@ impl SshTools {
     /// never read.
     pub(crate) async fn capture(
         &self,
-        mut cmd: Command,
+        cmd: Command,
         stdin: &[u8],
         limit: Duration,
     ) -> Option<Captured> {
-        let mut child = spawn_retrying(&mut cmd).ok()?;
-        let pgid = child.id().and_then(|id| i32::try_from(id).ok());
-        let mut input = child.stdin.take()?;
-        let mut output = child.stdout.take()?;
-        let data = stdin.to_vec();
-        let run = async {
-            // A program that ignores its input closes the pipe; not an error.
-            let write = async {
-                let _ = input.write_all(&data).await;
-                drop(input);
-            };
-            let mut buf = Vec::new();
-            let read = async {
-                let mut chunk = [0u8; 8192];
-                loop {
-                    match output.read(&mut chunk).await {
-                        Ok(0) | Err(_) => break,
-                        Ok(n) => {
-                            if buf.len() < MAX_CAPTURE {
-                                buf.extend_from_slice(&chunk[..n.min(MAX_CAPTURE - buf.len())]);
-                            }
-                        }
-                    }
+        run_captured(cmd, stdin, limit, false)
+            .await
+            .map(|(out, _)| out)
+    }
+
+    /// [`Self::capture`], also keeping the first [`STDERR_KEPT`] bytes of
+    /// stderr. Only for a caller that turns them into a verdict at once; the
+    /// text itself must not be stored, logged or sent anywhere.
+    pub(crate) async fn capture_with_stderr(
+        &self,
+        cmd: Command,
+        stdin: &[u8],
+        limit: Duration,
+    ) -> Option<(Captured, String)> {
+        run_captured(cmd, stdin, limit, true)
+            .await
+            .map(|(out, err)| (out, String::from_utf8_lossy(&err).into_owned()))
+    }
+}
+
+/// Most stderr kept by [`SshTools::capture_with_stderr`].
+pub(crate) const STDERR_KEPT: usize = 4 * 1024;
+
+/// Reads `reader` to its end, keeping at most `max` bytes.
+async fn read_capped(reader: &mut (impl tokio::io::AsyncRead + Unpin), max: usize) -> Vec<u8> {
+    let mut buf = Vec::new();
+    let mut chunk = [0u8; 8192];
+    loop {
+        match reader.read(&mut chunk).await {
+            Ok(0) | Err(_) => break,
+            Ok(n) => {
+                if buf.len() < max {
+                    buf.extend_from_slice(&chunk[..n.min(max - buf.len())]);
                 }
-            };
-            tokio::join!(write, read);
-            let status = child.wait().await.ok();
-            (buf, status)
-        };
-        // Dropped while the program has not been reaped (a timeout, or the
-        // caller giving up on this future), the guard stops its group.
-        let mut guard = KillGroup(pgid);
-        let done = tokio::time::timeout(limit, run).await;
-        if done.is_ok() {
-            // Reaped: the group id may be another group's by now.
-            guard.0 = None;
+            }
         }
-        let (buf, status) = done.ok()?;
-        Some(Captured {
+    }
+    buf
+}
+
+async fn run_captured(
+    mut cmd: Command,
+    stdin: &[u8],
+    limit: Duration,
+    keep_stderr: bool,
+) -> Option<(Captured, Vec<u8>)> {
+    if keep_stderr {
+        cmd.stderr(Stdio::piped());
+    }
+    let mut child = spawn_retrying(&mut cmd).ok()?;
+    let pgid = child.id().and_then(|id| i32::try_from(id).ok());
+    let mut input = child.stdin.take()?;
+    let mut output = child.stdout.take()?;
+    let mut errors = child.stderr.take();
+    let data = stdin.to_vec();
+    let run = async {
+        // A program that ignores its input closes the pipe; not an error.
+        let write = async {
+            let _ = input.write_all(&data).await;
+            drop(input);
+        };
+        let read = read_capped(&mut output, MAX_CAPTURE);
+        let read_err = async {
+            match errors.as_mut() {
+                Some(e) => read_capped(e, STDERR_KEPT).await,
+                None => Vec::new(),
+            }
+        };
+        let ((), buf, err) = tokio::join!(write, read, read_err);
+        let status = child.wait().await.ok();
+        (buf, err, status)
+    };
+    // Dropped while the program has not been reaped (a timeout, or the
+    // caller giving up on this future), the guard stops its group.
+    let mut guard = KillGroup(pgid);
+    let done = tokio::time::timeout(limit, run).await;
+    if done.is_ok() {
+        // Reaped: the group id may be another group's by now.
+        guard.0 = None;
+    }
+    let (buf, err, status) = done.ok()?;
+    Some((
+        Captured {
             stdout: String::from_utf8_lossy(&buf).into_owned(),
             code: status.and_then(|s| s.code()),
-        })
-    }
+        },
+        err,
+    ))
 }
 
 /// Spawns `cmd`. A program file that was just written can be briefly busy

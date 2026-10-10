@@ -27,6 +27,23 @@ describe('errorText', () => {
       errorText(err({ kind: 'config_from_newer_version', path: 'a.json', version: 3 }), 'vi'),
     ).toContain('phiên bản 3')
   })
+
+  it('says ssh stopped at a line of the ssh config, and what to do next', () => {
+    const at = err({ kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 })
+    expect(errorText(at, 'en')).toBe(
+      'ssh stops at line 6 of /u/.ssh/config, so no server can connect. Fix that line, then check again.',
+    )
+    expect(errorText(at, 'vi')).toBe(
+      'ssh dừng ở dòng 6 của /u/.ssh/config, nên chưa máy chủ nào kết nối được. Sửa dòng đó rồi kiểm tra lại.',
+    )
+    const file = err({ kind: 'ssh_config_invalid', path: '/u/.ssh/config' })
+    expect(errorText(file, 'en')).toBe(
+      'ssh can’t read /u/.ssh/config, so no server can connect. Fix the file, then check again.',
+    )
+    expect(errorText(file, 'vi')).toBe(
+      'ssh không đọc được /u/.ssh/config, nên chưa máy chủ nào kết nối được. Sửa file rồi kiểm tra lại.',
+    )
+  })
 })
 
 describe('issueText', () => {

@@ -318,6 +318,8 @@
     "scan_not_found": "Lần quét đó không còn được giữ. Cài đặt › Dữ liệu quyết định số lần quét được giữ.",
     "config_invalid": "Không đọc được {path}. Hãy sửa file hoặc dời nó đi.",
     "config_invalid_at": "Không đọc được {path} ở dòng {line}. Hãy sửa file hoặc dời nó đi.",
+    "ssh_config_invalid": "ssh không đọc được {path}, nên chưa máy chủ nào kết nối được. Sửa file rồi kiểm tra lại.",
+    "ssh_config_invalid_at": "ssh dừng ở dòng {line} của {path}, nên chưa máy chủ nào kết nối được. Sửa dòng đó rồi kiểm tra lại.",
     "config_from_newer_version": "{path} do bản Daminus mới hơn ghi (phiên bản {version}). Hãy cập nhật Daminus để sửa.",
     "config_changed_on_disk": "{path} đã đổi trên đĩa. Hãy tải lại trước khi lưu.",
     "store_busy": "Daminus đang bận với thao tác khác. Thử lại sau giây lát.",

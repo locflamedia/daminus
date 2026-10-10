@@ -1,14 +1,18 @@
 <!--
   "Add a host by hand": the Host block form in a sheet, without the teaching of the empty
   screen. Daminus never writes `~/.ssh/config`; the person fills the fields, copies the block,
-  pastes it there and presses Check again, which reads the config again. Opened and closed by
-  the setup store's `addHostOpen` (bind it with v-model).
+  pastes it there and presses Check again, which reads the config again. When ssh then refuses
+  the config (a bad line in the pasted block), the sheet says which file and line, so the answer
+  to Check again is never silent. Opened and closed by the setup store's `addHostOpen` (bind it
+  with v-model).
 -->
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { emptyFields, type HostBlockFields } from '@/lib/host-block'
+import { errorText } from '@/lib/issue-text'
 import { useSetupStore } from '@/stores/setup'
+import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiSheet from '@/ui/UiSheet.vue'
 import HostBlockForm from './HostBlockForm.vue'
@@ -44,7 +48,17 @@ async function checkAgain() {
     width="560px"
     @close="open = false"
   >
-    <HostBlockForm v-model="fields" variant="sheet" class="body" />
+    <div class="body">
+      <UiBanner
+        v-if="setup.problem"
+        tone="crit"
+        icon="critical"
+        alert
+        :title="t('setupPick.error.title')"
+        :text="errorText(setup.problem)"
+      />
+      <HostBlockForm v-model="fields" variant="sheet" />
+    </div>
     <template #footer-end>
       <UiButton @click="open = false">{{ t('empty.addHost.close') }}</UiButton>
       <UiButton variant="primary" :busy="checking" @click="checkAgain">
@@ -56,6 +70,9 @@ async function checkAgain() {
 
 <style scoped>
 .body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
   padding: var(--space-4);
 }
 </style>
