@@ -328,8 +328,9 @@ function onCardClick(event: MouseEvent) {
 }
 
 .head .state {
+  /* The count is worth more than the subtitle: the names give way first, never the chip. */
   min-width: 0;
-  flex-shrink: 1;
+  flex-shrink: 0;
   margin-left: auto;
 }
 

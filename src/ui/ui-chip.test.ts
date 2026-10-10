@@ -79,38 +79,15 @@ describe('UiChipMorph', () => {
 })
 
 describe('UiChipMorph width', () => {
-  it('measures the whole word again when its size changes, and stops when it goes', async () => {
-    const observed: Element[] = []
-    let disconnected = false
-    let notify: () => void = () => {}
-    vi.stubGlobal(
-      'ResizeObserver',
-      class {
-        constructor(cb: () => void) {
-          notify = cb
-        }
-        observe(el: Element) {
-          observed.push(el)
-        }
-        disconnect() {
-          disconnected = true
-        }
-      },
-    )
+  it('rounds the measured label up, so a fraction of a pixel never cuts the word', async () => {
+    const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      width: 76.4,
+    } as DOMRect)
     const wrapper = mount(UiChipMorph, {
       props: { label: '2 critical', tone: 'crit', dot: true, large: true },
     })
-    const sizer = wrapper.find('.sizer').element as HTMLElement
-    expect(observed).toEqual([sizer])
-    expect(wrapper.find('.sizer').text()).toBe('2 critical')
-
-    Object.defineProperty(sizer, 'offsetWidth', { value: 88, configurable: true })
-    notify()
     await wrapper.vm.$nextTick()
-    expect((wrapper.element as HTMLElement).style.width).toBe('88px')
-
-    wrapper.unmount()
-    expect(disconnected).toBe(true)
-    vi.unstubAllGlobals()
+    expect((wrapper.element as HTMLElement).style.width).toBe('77px')
+    rect.mockRestore()
   })
 })

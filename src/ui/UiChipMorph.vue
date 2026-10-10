@@ -32,18 +32,22 @@ const sizer = ref<HTMLElement>()
 const width = ref<number>()
 const ready = ref(false)
 
+/**
+ * The width of the label with its padding, rounded UP. `offsetWidth` rounds to the nearest
+ * pixel, so a label 76.4 px wide was given 76: the face then overflowed by 0.4 px and the word
+ * lost its last letters to the ellipsis ("2 critic…").
+ */
 function measure() {
-  const w = sizer.value?.offsetWidth
-  if (w) width.value = w
+  const w = sizer.value?.getBoundingClientRect().width
+  if (w) width.value = Math.ceil(w)
 }
 
 let watcher: ResizeObserver | undefined
 
 onMounted(async () => {
   measure()
-  // The label is measured again when its size changes without the label changing: the web
-  // font arriving after the first draw widens the word, and a width taken from the fallback
-  // font would cut it ("2 critic…").
+  // The first draw can use a fallback font: the copy is measured again when its size changes
+  // (in Chromium the card chip was first 79 px, then 76.4 once Geist arrived).
   if (sizer.value && typeof ResizeObserver !== 'undefined') {
     watcher = new ResizeObserver(measure)
     watcher.observe(sizer.value)
