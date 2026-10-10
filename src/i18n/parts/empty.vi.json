@@ -1,14 +1,14 @@
 {
   "empty": {
     "scanOff": "Hãy thêm dự án trước",
-    "agentChip": "ssh-agent · đã nạp {n} khóa | ssh-agent · đã nạp {n} khóa",
+    "agentChip": "ssh-agent · đã nạp {n} khoá | ssh-agent · đã nạp {n} khoá",
     "loadFailed": "Không đọc được cấu hình ssh của bạn.",
     "welcome": "Chào mừng đến với Daminus",
     "title": "Kiểm tra mọi máy chủ trong một lượt.",
     "lead": "Thêm máy chủ của bạn một lần. Daminus đọc ổ đĩa, thời gian chạy, cơ sở dữ liệu và bảo mật qua SSH, chỉ ra chỗ cần xem, rồi ngắt kết nối. Không cài gì lên máy chủ.",
     "import": "Nhập từ ~/.ssh/config",
     "byHand": "Thêm host thủ công",
-    "agentNote": "Dùng ssh-agent đang chạy của bạn. Khóa riêng không bao giờ rời khỏi máy Mac này.",
+    "agentNote": "Dùng ssh-agent đang chạy của bạn. Khoá riêng không bao giờ rời khỏi máy Mac này.",
     "steps": {
       "title": "Thiết lập mất khoảng 3 phút",
       "progress": "{done} trên {total}",
@@ -36,7 +36,7 @@
       "alias": "Bí danh",
       "hostName": "HostName",
       "user": "User",
-      "key": "Khóa",
+      "key": "Khoá",
       "agentKey": "agent",
       "skipped": "Bỏ qua",
       "found": "máy chủ được tìm thấy · bạn chọn máy nào ở bước sau | máy chủ được tìm thấy · bạn chọn máy nào ở bước sau",
@@ -59,7 +59,7 @@
       },
       "secrets": {
         "title": "Bí mật ở nguyên chỗ",
-        "body": "Khóa nằm trong ssh-agent. Mật khẩu DB được đọc từ .env ngay trên máy chủ."
+        "body": "Khoá nằm trong ssh-agent. Mật khẩu DB được đọc từ .env ngay trên máy chủ."
       }
     },
     "stack": "Nhận diện sẵn",
@@ -72,9 +72,9 @@
       "headline": {
         "noConfig": "Chưa có cấu hình ssh. Hãy để ssh nhìn thấy máy chủ của bạn.",
         "noUsableHosts": "Cấu hình ssh của bạn chưa có host nào Daminus dùng được.",
-        "agent": "ssh-agent của bạn chưa giữ khóa nào. Hãy nạp một khóa.",
-        "agentDown": "Không có ssh-agent nào đang chạy. Hãy khởi động nó, rồi nạp khóa của bạn.",
-        "keyLoaded": "Đã nạp khóa. Còn một bước: mô tả các máy chủ của bạn.",
+        "agent": "ssh-agent của bạn chưa giữ khoá nào. Hãy nạp một khoá.",
+        "agentDown": "Không có ssh-agent nào đang chạy. Hãy khởi động nó, rồi nạp khoá của bạn.",
+        "keyLoaded": "Đã nạp khoá. Còn một bước: mô tả các máy chủ của bạn.",
         "ready": "Sẵn sàng. Nhập {n} máy chủ."
       },
       "subtitle": "Daminus dùng cùng {ssh} với Terminal. Ba bước làm một lần, khoảng năm phút.",
@@ -94,21 +94,21 @@
         "okChip": "{n} host | {n} host"
       },
       "agent": {
-        "empty": "Đang chạy nhưng chưa giữ khóa nào.",
-        "emptyChip": "0 khóa",
+        "empty": "Đang chạy nhưng chưa giữ khoá nào.",
+        "emptyChip": "0 khoá",
         "unavailable": "Không có ssh-agent nào đang chạy.",
         "unavailableChip": "không có agent",
-        "ok": "Đã nạp {n} khóa. | Đã nạp {n} khóa.",
-        "okChip": "{n} khóa | {n} khóa"
+        "ok": "Đã nạp {n} khoá. | Đã nạp {n} khoá.",
+        "okChip": "{n} khoá | {n} khoá"
       },
       "step": {
         "done": "Xong",
         "key": {
-          "title": "Lưu khóa thành một tệp trong ~/.ssh",
-          "body": "Đặt khóa riêng cho máy chủ của bạn vào ~/.ssh (hoặc tạo một khóa bằng ssh-keygen). Rồi khóa quyền truy cập của tệp:"
+          "title": "Lưu khoá thành một tệp trong ~/.ssh",
+          "body": "Đặt khoá riêng cho máy chủ của bạn vào ~/.ssh (hoặc tạo một khoá bằng ssh-keygen). Rồi khoá quyền truy cập của tệp:"
         },
         "agent": {
-          "title": "Nạp khóa vào ssh-agent, để Keychain ghi nhớ"
+          "title": "Nạp khoá vào ssh-agent, để Keychain ghi nhớ"
         },
         "describe": {
           "title": "Mô tả mỗi máy chủ một lần, ở bên phải",
@@ -123,8 +123,8 @@
         "title": "Thử, rồi sửa các lỗi hay gặp",
         "ok": "ok",
         "permission": "Permission denied (publickey)",
-        "permissionFix": "Khóa chưa có trong agent hoặc chưa đúng trong IdentityFile. Làm lại bước {n}.",
-        "permissionFixPlain": "Khóa chưa có trong agent hoặc chưa đúng trong IdentityFile.",
+        "permissionFix": "Khoá chưa có trong agent hoặc chưa đúng trong IdentityFile. Làm lại bước {n}.",
+        "permissionFixPlain": "Khoá chưa có trong agent hoặc chưa đúng trong IdentityFile.",
         "hostKey": "Host key verification failed",
         "hostKeyFix": "Lần kết nối đầu: chạy lệnh thử một lần trong Terminal rồi trả lời yes."
       },
@@ -137,7 +137,7 @@
         "invalid_alias": "bí danh không dùng được"
       },
       "importHosts": "Nhập {n} host | Nhập {n} host",
-      "importOff": "Hãy kiểm tra lại khi cấu hình đã có host và agent đã có khóa."
+      "importOff": "Hãy kiểm tra lại khi cấu hình đã có host và agent đã có khoá."
     },
     "hostBlock": {
       "title": "Một khối Host",
@@ -182,7 +182,7 @@
     "sidebar": {
       "ghosts": "Dự án và máy chủ bạn thêm sẽ hiện ở đây, xếp theo mức cần xem.",
       "plainSshTitle": "Sao lại là ssh thông thường?",
-      "plainSshBody": "Daminus dùng ~/.ssh/config và ssh agent, giống hệt Terminal. Nó không bao giờ lưu khóa hay mật khẩu; thiết lập ssh một lần là mọi công cụ đều dùng được.",
+      "plainSshBody": "Daminus dùng ~/.ssh/config và ssh agent, giống hệt Terminal. Nó không bao giờ lưu khoá hay mật khẩu; thiết lập ssh một lần là mọi công cụ đều dùng được.",
       "ai": {
         "title": "AI đang tắt",
         "optional": "Tùy chọn",

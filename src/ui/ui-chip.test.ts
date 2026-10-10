@@ -2,6 +2,7 @@
 import { mount } from '@vue/test-utils'
 import { describe, expect, it } from 'vitest'
 import UiChip from './UiChip.vue'
+import UiChipMorph from './UiChipMorph.vue'
 import UiTag from './UiTag.vue'
 
 describe('UiChip', () => {
@@ -64,5 +65,15 @@ describe('UiTag', () => {
   it('renders text as text', () => {
     const wrapper = mount(UiTag, { slots: { default: () => '<img src=x onerror=alert(1)>' } })
     expect(wrapper.find('img').exists()).toBe(false)
+  })
+})
+
+describe('UiChipMorph', () => {
+  it('keeps the word in its own box, so a squeezed chip cuts it with an ellipsis', () => {
+    const wrapper = mount(UiChipMorph, {
+      props: { label: 'Không có trong config', tone: 'neutral' },
+    })
+    const words = wrapper.findAll('.word')
+    expect(words.map((w) => w.text())).toEqual(['Không có trong config', 'Không có trong config'])
   })
 })
