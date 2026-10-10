@@ -24,6 +24,7 @@ import {
   type SetupRun,
   type SetupStep,
   type SkippedHost,
+  type SshConfigProblem,
   type SshEnvironment,
   type EmptyReason,
   hostsList,
@@ -119,6 +120,9 @@ export const useSetupStore = defineStore('setup', () => {
   /** Why there is no host to pick: no file, or a file with nothing usable. */
   const emptyReason = computed<EmptyReason | null>(() => listing.value?.list.empty ?? null)
   const agent = computed<AgentState | null>(() => environment.value?.agent ?? null)
+  /** ssh refused the config itself (a bad line): every host fails until it is fixed. */
+  const configProblem = computed<SshConfigProblem | null>(() => listing.value?.config_error ?? null)
+  const configError = computed<AppError | null>(() => configProblem.value?.error ?? null)
 
   function fail(e: unknown) {
     error.value = isAppError(e) ? e : null
@@ -135,6 +139,12 @@ export const useSetupStore = defineStore('setup', () => {
       error.value = null
       const known = new Set(hosts.entries.map((h) => h.host.alias))
       ticked.value = ticked.value.filter((a) => known.has(a))
+      if (!hosts.config_error) {
+        // Ticked while ssh refused the config: tested now that it reads again.
+        const waiting = ticked.value.filter((h) => !queue.value.includes(h) && needsTest(h))
+        queue.value = [...queue.value, ...waiting]
+        void startQueued()
+      }
     } catch (e) {
       fail(e)
     } finally {
@@ -168,7 +178,11 @@ export const useSetupStore = defineStore('setup', () => {
 
   /** The chip of a host's login test, live while a run is going. */
   function chip(host: string): TestChip {
-    return chipOf(progressOf(host), logins.value[host]?.login ?? null)
+    const progress = progressOf(host)
+    if (configProblem.value && (progress === null || progress.state === 'queued')) {
+      return 'not_checked'
+    }
+    return chipOf(progress, logins.value[host]?.login ?? null)
   }
 
   function isTicked(host: string): boolean {
@@ -194,12 +208,13 @@ export const useSetupStore = defineStore('setup', () => {
   }
 
   function needsTest(host: string): boolean {
-    const c = chip(host)
+    const c = chipOf(progressOf(host), logins.value[host]?.login ?? null)
     return c === 'queued' && !queue.value.includes(host) && answers.value[host]?.outcome == null
   }
 
   async function startQueued() {
-    if (run.value || queue.value.length === 0) return
+    // ssh refuses the config: every test would fail; they start once it is fixed.
+    if (configProblem.value || run.value || queue.value.length === 0) return
     const hosts = [...queue.value]
     const paths = [...new Set(hosts.flatMap(pathsFor))]
     try {
@@ -223,6 +238,8 @@ export const useSetupStore = defineStore('setup', () => {
       }
     } else {
       ticked.value = ticked.value.filter((h) => h !== host)
+      // Still waiting for its test (a run in progress, or a config ssh refuses): not tested.
+      queue.value = queue.value.filter((h) => h !== host)
     }
   }
 
@@ -503,6 +520,8 @@ export const useSetupStore = defineStore('setup', () => {
     environment,
     loading,
     addHostOpen,
+    configError,
+    configProblem,
     error,
     entries,
     skipped,

@@ -14,10 +14,16 @@ import SettingsScan from './SettingsScan.vue'
 
 const calls: { cmd: string; args: Record<string, unknown> }[] = []
 
+/** Set to make `hosts_list` say ssh refused the config. */
+let configError: unknown = null
+
 function install() {
   const setup = new SetupMock('setup', 1000)
   mockCommands((cmd, args) => {
     calls.push({ cmd, args })
+    if (cmd === 'hosts_list' && configError) {
+      return { ...(setup.handle(cmd, args) as object), config_error: configError }
+    }
     return (
       settingsAnswer(cmd, args) ??
       setup.handle(cmd, args) ??
@@ -43,6 +49,7 @@ async function mountView(view: typeof SettingsScan | typeof SettingsHosts) {
 
 beforeEach(() => {
   resetSettingsMock()
+  configError = null
   calls.length = 0
   localStorage.clear()
   setI18nLocale('en')
@@ -156,6 +163,22 @@ describe('Settings › Hosts', () => {
     buttons.find((b) => b.textContent?.includes('Reload config'))?.click()
     await flushPromises()
     expect(calls.filter((c) => c.cmd === 'hosts_list').length).toBeGreaterThan(before)
+  })
+
+  it('says which line of the ssh config ssh refused', async () => {
+    configError = {
+      error: {
+        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+        retryable: false,
+      },
+      excerpt: [{ number: 6, text: '  Port 99999' }],
+    }
+    const wrapper = await mountView(SettingsHosts)
+    const alert = wrapper.get('[role="alert"]')
+    expect(alert.text()).toContain('Could not read your SSH config')
+    expect(alert.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
+    expect(alert.text()).toContain('Port 99999')
+    expect(wrapper.text()).toContain('vps-sg-2')
   })
 
   it('says why an entry is left out when the list is opened', async () => {

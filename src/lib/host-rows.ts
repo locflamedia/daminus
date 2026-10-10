@@ -124,6 +124,8 @@ export interface TestCounts {
   testing: number
   /** Ended, with or without an answer. */
   tested: number
+  /** Held: ssh refuses the config, so their tests have not run. */
+  notChecked: number
 }
 
 export function testCounts(rows: readonly HostRowModel[]): TestCounts {
@@ -131,7 +133,8 @@ export function testCounts(rows: readonly HostRowModel[]): TestCounts {
   const ready = ticked.filter((r) => isReady(r.chip)).length
   const failed = ticked.filter((r) => isFailed(r.chip)).length
   const testing = ticked.filter((r) => isRunning(r.chip) || r.chip === 'queued').length
-  return { ticked: ticked.length, ready, failed, testing, tested: ready + failed }
+  const notChecked = ticked.filter((r) => r.chip === 'not_checked').length
+  return { ticked: ticked.length, ready, failed, testing, tested: ready + failed, notChecked }
 }
 
 /** How far the test is, for the bar: tested over ticked, never over what is listed. */
@@ -146,7 +149,10 @@ export type HeaderStatus =
 
 /** The chip at the top right: how many tests are still going, then that all ended. */
 export function headerStatus(counts: TestCounts): HeaderStatus {
-  if (counts.ticked === 0) return { kind: 'idle' }
+  // Nothing ran while ssh refuses the config: the banner says why, the chip says nothing.
+  if (counts.ticked === 0 || (counts.notChecked > 0 && counts.testing === 0)) {
+    return { kind: 'idle' }
+  }
   if (counts.testing > 0) return { kind: 'testing', pending: counts.testing, total: counts.ticked }
   return { kind: 'done', total: counts.ticked }
 }

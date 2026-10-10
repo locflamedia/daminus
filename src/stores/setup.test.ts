@@ -183,6 +183,78 @@ describe('the host list', () => {
     await setup.reload()
     expect(setup.ticked).toEqual(['vps-a'])
   })
+
+  it('keeps the hosts and says which line ssh refused when the config does not parse', async () => {
+    const broken = listing(['vps-a', 'vps-b'])
+    broken.config_error = {
+      error: {
+        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+        retryable: false,
+      },
+      excerpt: [{ number: 6, text: '  Port 99999' }],
+    }
+    mockCommands((cmd, args) => (cmd === 'hosts_list' ? broken : backend.handler(cmd, args)))
+    const setup = await ready()
+    expect(setup.entries.map((e) => e.host.alias)).toEqual(['vps-a', 'vps-b'])
+    expect(setup.error).toBeNull()
+    expect(setup.configError?.code).toEqual({
+      kind: 'ssh_config_invalid',
+      path: '/u/.ssh/config',
+      line: 6,
+    })
+    expect(setup.configProblem?.excerpt).toEqual([{ number: 6, text: '  Port 99999' }])
+
+    mockCommands(backend.handler)
+    await setup.reload()
+    expect(setup.configProblem).toBeNull()
+  })
+})
+
+describe('a config ssh refuses', () => {
+  function brokenListing() {
+    const broken = listing(['vps-a', 'vps-b'])
+    broken.config_error = {
+      error: {
+        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+        retryable: false,
+      },
+      excerpt: [],
+    }
+    return broken
+  }
+
+  it('tests nothing and reads Not checked, then tests the ticked hosts once it is fixed', async () => {
+    let fixed = false
+    mockCommands((cmd, args) =>
+      cmd === 'hosts_list' && !fixed ? brokenListing() : backend.handler(cmd, args),
+    )
+    const setup = await ready()
+    setup.tickAll(true)
+    await settle()
+    expect(backend.starts).toEqual([])
+    expect(setup.chip('vps-a')).toBe('not_checked')
+
+    fixed = true
+    await setup.reload()
+    await settle()
+    expect(setup.configProblem).toBeNull()
+    expect(backend.starts).toEqual([{ step: 'test', hosts: ['vps-a', 'vps-b'], paths: [] }])
+    expect(setup.chip('vps-a')).toBe('queued')
+  })
+
+  it('does not test a host that was unticked while it waited', async () => {
+    let fixed = false
+    mockCommands((cmd, args) =>
+      cmd === 'hosts_list' && !fixed ? brokenListing() : backend.handler(cmd, args),
+    )
+    const setup = await ready()
+    setup.tickAll(true)
+    setup.tick('vps-b', false)
+    fixed = true
+    await setup.reload()
+    await settle()
+    expect(backend.starts).toEqual([{ step: 'test', hosts: ['vps-a'], paths: [] }])
+  })
 })
 
 describe('the login test', () => {

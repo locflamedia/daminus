@@ -544,17 +544,79 @@ impl ResolvedHost {
 /// Asks `ssh -G` what the connection to `alias` uses. `None` when ssh cannot
 /// say (not installed, the config does not parse).
 pub async fn resolve(tools: &SshTools, alias: &HostAlias) -> Option<ResolvedHost> {
+    resolve_checked(tools, alias).await.ok()
+}
+
+/// [`resolve`], saying why it failed when `ssh` refused the config itself.
+/// `Err(None)`: no answer for another reason (no `ssh`, a timeout, output
+/// that is not `ssh -G`'s).
+async fn resolve_checked(
+    tools: &SshTools,
+    alias: &HostAlias,
+) -> Result<ResolvedHost, Option<ErrorCode>> {
     let mut cmd = tools.command(&tools.ssh);
     cmd.arg("-G");
     if let Some(cfg) = tools.config() {
         cmd.arg("-F").arg(cfg);
     }
     cmd.arg("--").arg(alias.as_str());
-    let out = tools.capture(cmd, b"", RESOLVE_TIMEOUT).await?;
+    let (out, stderr) = tools
+        .capture_with_stderr(cmd, b"", RESOLVE_TIMEOUT)
+        .await
+        .ok_or(None)?;
     if !out.ok() {
-        return None;
+        // Only the file and the line leave here; the message is dropped.
+        return Err(ssh_config_problem(&stderr));
     }
-    ResolvedHost::parse(&out.stdout)
+    ResolvedHost::parse(&out.stdout).ok_or(None)
+}
+
+/// The config problem `ssh` reported on stderr, if any: which file, and the
+/// line when ssh names one. OpenSSH prints `<file> line <n>: <why>` (or
+/// `<file>: line <n>: ...`) for a bad line, then `<file>: terminating, ...`,
+/// and `Can't open user config file <file>: ...` for a file it cannot read.
+pub fn ssh_config_problem(stderr: &str) -> Option<ErrorCode> {
+    const CANT_OPEN: &str = "Can't open user config file ";
+    // Lines ssh named before giving up. Most errors end with
+    // `<file>: terminating, ...`; then the last line named in that file is
+    // the one. A few stop ssh at once with only `<file> line <n>: ...`.
+    let mut named: Vec<(String, u32)> = Vec::new();
+    for raw in stderr.lines() {
+        let line = raw.trim_end();
+        if let Some((path, _)) = line
+            .strip_prefix(CANT_OPEN)
+            .and_then(|rest| rest.rsplit_once(": "))
+        {
+            return Some(ErrorCode::SshConfigInvalid {
+                path: path.to_owned(),
+                line: None,
+            });
+        }
+        if let Some((path, _)) = line.split_once(": terminating, ") {
+            let line = named.iter().rev().find(|(p, _)| p == path).map(|(_, n)| *n);
+            return Some(ErrorCode::SshConfigInvalid {
+                path: path.to_owned(),
+                line,
+            });
+        }
+        if let Some(found) = bad_line(line) {
+            named.push(found);
+        }
+    }
+    named.pop().map(|(path, line)| ErrorCode::SshConfigInvalid {
+        path,
+        line: Some(line),
+    })
+}
+
+/// `<file> line <n>: ...` or `<file>: line <n>: ...`.
+fn bad_line(line: &str) -> Option<(String, u32)> {
+    let at = line.find(" line ")?;
+    let path = line[..at].trim_end_matches(':');
+    let rest = &line[at + " line ".len()..];
+    let (digits, _) = rest.split_once(':')?;
+    let number = digits.parse().ok()?;
+    (!path.is_empty()).then(|| (path.to_owned(), number))
 }
 
 /// A listed host with what ssh resolves for it.
@@ -572,23 +634,105 @@ pub struct HostListing {
     pub list: HostList,
     /// One entry per listed host, in list order.
     pub entries: Vec<HostEntry>,
+    /// `ssh` refused the config itself: no listed host can connect until the
+    /// named file (and line) is fixed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[cfg_attr(feature = "ts", ts(optional))]
+    pub config_error: Option<SshConfigProblem>,
 }
 
-/// Resolves every host of `list` (a few at a time), in list order.
-pub async fn resolve_all(tools: &SshTools, list: &HostList) -> Vec<HostEntry> {
-    let mut out = Vec::with_capacity(list.hosts.len());
+/// A config `ssh` refused, with the refused line quoted so the person sees
+/// what to fix.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct SshConfigProblem {
+    /// `ssh_config_invalid`, with the file and the line when ssh named one.
+    pub error: AppError,
+    /// The refused line and one line each side, in file order. Empty when
+    /// ssh named no line or the file cannot be read; nothing else of the file
+    /// is ever sent.
+    #[serde(default)]
+    pub excerpt: Vec<ConfigLine>,
+}
+
+/// One line of a config file, numbered from 1 as ssh numbers it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
+pub struct ConfigLine {
+    pub number: u32,
+    pub text: String,
+}
+
+/// Most characters of a quoted config line; a longer one is cut.
+pub const EXCERPT_LINE_CHARS: usize = 200;
+
+/// Largest config file read for an excerpt.
+const EXCERPT_MAX_FILE: u64 = 1024 * 1024;
+
+/// Line `line` of `file` with one line each side. Empty when the file cannot
+/// be read, is too large, or has no such line.
+pub fn config_excerpt(file: &Path, line: u32) -> Vec<ConfigLine> {
+    let readable =
+        std::fs::metadata(file).is_ok_and(|m| m.is_file() && m.len() <= EXCERPT_MAX_FILE);
+    let Some(text) = readable.then(|| std::fs::read(file).ok()).flatten() else {
+        return Vec::new();
+    };
+    let text = String::from_utf8_lossy(&text);
+    let lines: Vec<&str> = text.lines().collect();
+    let Ok(at) = usize::try_from(line) else {
+        return Vec::new();
+    };
+    if at == 0 || at > lines.len() {
+        return Vec::new();
+    }
+    (at.saturating_sub(1).max(1)..=(at + 1).min(lines.len()))
+        .filter_map(|n| {
+            Some(ConfigLine {
+                number: u32::try_from(n).ok()?,
+                text: lines[n - 1].chars().take(EXCERPT_LINE_CHARS).collect(),
+            })
+        })
+        .collect()
+}
+
+/// The listing's account of a config ssh refused.
+fn config_problem(code: ErrorCode) -> SshConfigProblem {
+    let excerpt = match &code {
+        ErrorCode::SshConfigInvalid {
+            path,
+            line: Some(line),
+        } => config_excerpt(Path::new(path), *line),
+        _ => Vec::new(),
+    };
+    SshConfigProblem {
+        error: AppError::from(code),
+        excerpt,
+    }
+}
+
+/// Resolves every listed host with `ssh -G`, a few at a time, in list order,
+/// and reports a config `ssh` refused (every host fails with it then).
+pub async fn resolve_listing(tools: &SshTools, list: HostList) -> HostListing {
+    let mut entries = Vec::with_capacity(list.hosts.len());
+    let mut config_error = None;
     for chunk in list.hosts.chunks(RESOLVE_AT_ONCE) {
         let mut set = tokio::task::JoinSet::new();
         for (i, host) in chunk.iter().enumerate() {
             let tools = tools.clone();
             let alias = host.alias.clone();
-            set.spawn(async move { (i, resolve(&tools, &alias).await) });
+            set.spawn(async move { (i, resolve_checked(&tools, &alias).await) });
         }
         let mut resolved: Vec<Option<ResolvedHost>> = vec![None; chunk.len()];
         while let Some(Ok((i, r))) = set.join_next().await {
-            resolved[i] = r;
+            match r {
+                Ok(host) => resolved[i] = Some(host),
+                Err(Some(code)) => {
+                    config_error.get_or_insert(code);
+                }
+                Err(None) => {}
+            }
         }
-        out.extend(
+        entries.extend(
             chunk
                 .iter()
                 .cloned()
@@ -596,7 +740,11 @@ pub async fn resolve_all(tools: &SshTools, list: &HostList) -> Vec<HostEntry> {
                 .map(|(host, resolved)| HostEntry { host, resolved }),
         );
     }
-    out
+    HostListing {
+        list,
+        entries,
+        config_error: config_error.map(config_problem),
+    }
 }
 
 #[cfg(test)]

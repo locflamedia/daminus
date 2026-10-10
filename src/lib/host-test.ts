@@ -3,8 +3,12 @@
 // Pure functions over the generated types; words come from the screen's messages.
 import type { DockerAccess, HostOutcome, LoginReport, LoginResult, PathState } from '@/api'
 
-/** The ten chips of "Login test, every state". */
+/**
+ * The ten chips of "Login test, every state", and Not checked: ssh refuses the config, so no
+ * test runs until it is fixed (board 01b panel 10).
+ */
 export type TestChip =
+  | 'not_checked'
   | 'queued'
   | 'connecting'
   | 'agent_wait'

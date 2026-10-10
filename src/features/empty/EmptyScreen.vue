@@ -9,6 +9,7 @@ import { onBeforeUnmount, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import AddHostSheet from '@/features/setup/components/AddHostSheet.vue'
+import SshConfigBanner from '@/features/setup/components/SshConfigBanner.vue'
 import { errorText } from '@/lib/issue-text'
 import { useSetupStore } from '@/stores/setup'
 import UiBanner from '@/ui/UiBanner.vue'
@@ -74,8 +75,14 @@ onBeforeUnmount(() => {
 <template>
   <div class="empty-screen">
     <EmptyToolbar :keys="empty.screen === 'app' ? empty.input.keys : 0" />
+    <SshConfigBanner
+      v-if="setup.configProblem"
+      :problem="setup.configProblem"
+      :busy="setup.loading"
+      @recheck="recheck"
+    />
     <UiBanner
-      v-if="setup.error && !empty.known"
+      v-else-if="setup.error && !empty.known"
       tone="warn"
       icon="warn"
       alert

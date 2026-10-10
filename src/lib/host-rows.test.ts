@@ -159,7 +159,14 @@ describe('footer and header counts', () => {
 
   it('counts ready, failed and testing among the ticked, queued ones as testing', () => {
     const counts = testCounts(make(['reached', 'reached', 'unreachable', 'testing', 'queued']))
-    expect(counts).toEqual({ ticked: 5, ready: 2, failed: 1, testing: 2, tested: 3 })
+    expect(counts).toEqual({
+      ticked: 5,
+      ready: 2,
+      failed: 1,
+      testing: 2,
+      tested: 3,
+      notChecked: 0,
+    })
     expect(testProgress(counts)).toBeCloseTo(0.6)
   })
 
@@ -178,6 +185,12 @@ describe('footer and header counts', () => {
       total: 2,
     })
     expect(headerStatus(testCounts([]))).toEqual({ kind: 'idle' })
+  })
+
+  it('never says all were tested while ssh refuses the config and nothing ran', () => {
+    const counts = testCounts(make(['not_checked', 'not_checked']))
+    expect(counts).toMatchObject({ ticked: 2, testing: 0, tested: 0, notChecked: 2 })
+    expect(headerStatus(counts)).toEqual({ kind: 'idle' })
   })
 })
 

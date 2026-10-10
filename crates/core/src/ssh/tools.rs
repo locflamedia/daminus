@@ -170,53 +170,139 @@ impl SshTools {
     /// never read.
     pub(crate) async fn capture(
         &self,
-        mut cmd: Command,
+        cmd: Command,
         stdin: &[u8],
         limit: Duration,
     ) -> Option<Captured> {
-        let mut child = spawn_retrying(&mut cmd).ok()?;
-        let pgid = child.id().and_then(|id| i32::try_from(id).ok());
-        let mut input = child.stdin.take()?;
-        let mut output = child.stdout.take()?;
-        let data = stdin.to_vec();
-        let run = async {
+        run_captured(cmd, stdin, limit, false)
+            .await
+            .map(|(out, _)| out)
+    }
+
+    /// [`Self::capture`], also keeping the first [`STDERR_KEPT`] bytes of
+    /// stderr. Only for a caller that turns them into a verdict at once; the
+    /// text itself must not be stored, logged or sent anywhere.
+    pub(crate) async fn capture_with_stderr(
+        &self,
+        cmd: Command,
+        stdin: &[u8],
+        limit: Duration,
+    ) -> Option<(Captured, String)> {
+        run_captured(cmd, stdin, limit, true)
+            .await
+            .map(|(out, err)| (out, String::from_utf8_lossy(&err).into_owned()))
+    }
+}
+
+/// Most stderr kept by [`SshTools::capture_with_stderr`].
+pub(crate) const STDERR_KEPT: usize = 4 * 1024;
+
+/// Reads `reader` to its end, keeping at most `max` bytes.
+async fn read_capped(reader: &mut (impl tokio::io::AsyncRead + Unpin), max: usize) -> Vec<u8> {
+    let mut buf = Vec::new();
+    let mut chunk = [0u8; 8192];
+    loop {
+        match reader.read(&mut chunk).await {
+            Ok(0) | Err(_) => break,
+            Ok(n) => {
+                if buf.len() < max {
+                    buf.extend_from_slice(&chunk[..n.min(max - buf.len())]);
+                }
+            }
+        }
+    }
+    buf
+}
+
+/// How long stderr is still read once the program has exited: a background
+/// process it started (a `Match exec` helper) may hold the pipe open for good.
+const STDERR_GRACE: Duration = Duration::from_millis(200);
+
+/// Reads what `stderr` has into `buf` (at most [`STDERR_KEPT`]); false at its end.
+async fn read_stderr_chunk(
+    stderr: &mut tokio::process::ChildStderr,
+    chunk: &mut [u8],
+    buf: &mut Vec<u8>,
+) -> bool {
+    match stderr.read(chunk).await {
+        Ok(0) | Err(_) => false,
+        Ok(n) => {
+            if buf.len() < STDERR_KEPT {
+                buf.extend_from_slice(&chunk[..n.min(STDERR_KEPT - buf.len())]);
+            }
+            true
+        }
+    }
+}
+
+async fn run_captured(
+    mut cmd: Command,
+    stdin: &[u8],
+    limit: Duration,
+    keep_stderr: bool,
+) -> Option<(Captured, Vec<u8>)> {
+    if keep_stderr {
+        cmd.stderr(Stdio::piped());
+    }
+    let mut child = spawn_retrying(&mut cmd).ok()?;
+    let pgid = child.id().and_then(|id| i32::try_from(id).ok());
+    let mut input = child.stdin.take()?;
+    let mut output = child.stdout.take()?;
+    let mut errors = child.stderr.take();
+    let data = stdin.to_vec();
+    let run = async {
+        let main = async {
             // A program that ignores its input closes the pipe; not an error.
             let write = async {
                 let _ = input.write_all(&data).await;
                 drop(input);
             };
-            let mut buf = Vec::new();
-            let read = async {
-                let mut chunk = [0u8; 8192];
-                loop {
-                    match output.read(&mut chunk).await {
-                        Ok(0) | Err(_) => break,
-                        Ok(n) => {
-                            if buf.len() < MAX_CAPTURE {
-                                buf.extend_from_slice(&chunk[..n.min(MAX_CAPTURE - buf.len())]);
-                            }
-                        }
-                    }
-                }
-            };
-            tokio::join!(write, read);
+            let ((), buf) = tokio::join!(write, read_capped(&mut output, MAX_CAPTURE));
             let status = child.wait().await.ok();
             (buf, status)
         };
-        // Dropped while the program has not been reaped (a timeout, or the
-        // caller giving up on this future), the guard stops its group.
-        let mut guard = KillGroup(pgid);
-        let done = tokio::time::timeout(limit, run).await;
-        if done.is_ok() {
-            // Reaped: the group id may be another group's by now.
-            guard.0 = None;
+        tokio::pin!(main);
+        let mut err = Vec::new();
+        let mut chunk = [0u8; 4096];
+        // Stderr is read while the program runs, so a chatty one never blocks
+        // on a full pipe; its end is not waited for.
+        let (buf, status) = loop {
+            let Some(stderr) = errors.as_mut() else {
+                break (&mut main).await;
+            };
+            tokio::select! {
+                done = &mut main => break done,
+                more = read_stderr_chunk(stderr, &mut chunk, &mut err) => {
+                    if !more {
+                        errors = None;
+                    }
+                }
+            }
+        };
+        if let Some(stderr) = errors.as_mut() {
+            let _ = tokio::time::timeout(STDERR_GRACE, async {
+                while read_stderr_chunk(stderr, &mut chunk, &mut err).await {}
+            })
+            .await;
         }
-        let (buf, status) = done.ok()?;
-        Some(Captured {
+        (buf, err, status)
+    };
+    // Dropped while the program has not been reaped (a timeout, or the
+    // caller giving up on this future), the guard stops its group.
+    let mut guard = KillGroup(pgid);
+    let done = tokio::time::timeout(limit, run).await;
+    if done.is_ok() {
+        // Reaped: the group id may be another group's by now.
+        guard.0 = None;
+    }
+    let (buf, err, status) = done.ok()?;
+    Some((
+        Captured {
             stdout: String::from_utf8_lossy(&buf).into_owned(),
             code: status.and_then(|s| s.code()),
-        })
-    }
+        },
+        err,
+    ))
 }
 
 /// Spawns `cmd`. A program file that was just written can be briefly busy
@@ -261,6 +347,47 @@ mod tests {
         assert_eq!(got.stdout, "hello\n");
         assert_eq!(got.code, Some(3));
         assert!(!got.ok());
+    }
+
+    /// A `Match exec` helper can leave a background process holding ssh's
+    /// stderr after ssh itself has exited; the capture must not wait for it.
+    #[tokio::test]
+    async fn stderr_kept_by_a_background_process_does_not_hold_the_capture() {
+        let tools = SshTools::new();
+        let started = std::time::Instant::now();
+        let (got, stderr) = tools
+            .capture_with_stderr(
+                sh(
+                    &tools,
+                    "echo 'cfg line 3: Bad port' >&2; (sleep 5 </dev/null >/dev/null &); exit 255",
+                ),
+                b"",
+                Duration::from_secs(10),
+            )
+            .await
+            .unwrap();
+        assert!(
+            started.elapsed() < Duration::from_secs(3),
+            "{:?}",
+            started.elapsed()
+        );
+        assert_eq!(got.code, Some(255));
+        assert_eq!(stderr, "cfg line 3: Bad port\n");
+    }
+
+    #[tokio::test]
+    async fn stderr_is_capped() {
+        let tools = SshTools::new();
+        let (got, stderr) = tools
+            .capture_with_stderr(
+                sh(&tools, "head -c 20000 /dev/zero | tr '\\0' x >&2; echo out"),
+                b"",
+                Duration::from_secs(10),
+            )
+            .await
+            .unwrap();
+        assert_eq!(got.stdout, "out\n");
+        assert_eq!(stderr.len(), STDERR_KEPT);
     }
 
     #[tokio::test]

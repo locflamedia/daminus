@@ -7,6 +7,7 @@
 import { onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AddHostSheet from '@/features/setup/components/AddHostSheet.vue'
+import SshConfigBanner from '@/features/setup/components/SshConfigBanner.vue'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useSetupStore } from '@/stores/setup'
 import UiButton from '@/ui/UiButton.vue'
@@ -32,6 +33,13 @@ onMounted(() => {
     <UiButton icon="plus" @click="setup.addHostOpen = true">{{ t('settingsHosts.add') }}</UiButton>
   </Teleport>
   <div class="hosts">
+    <SshConfigBanner
+      v-if="setup.configProblem"
+      class="problem"
+      :problem="setup.configProblem"
+      :busy="store.loading"
+      @recheck="store.load()"
+    />
     <div class="layout">
       <div class="column">
         <HostsList />
@@ -48,6 +56,10 @@ onMounted(() => {
 .hosts {
   container-type: inline-size;
   min-width: 0;
+}
+
+.problem {
+  margin-bottom: var(--space-4);
 }
 
 .layout {

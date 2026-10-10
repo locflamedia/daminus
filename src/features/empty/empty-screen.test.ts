@@ -75,6 +75,28 @@ describe('the first screen', () => {
     expect(wrapper.find('.help').exists()).toBe(false)
   })
 
+  it('says which line of the ssh config ssh refused, above the hosts it read', async () => {
+    world.listing = {
+      ...sampleListing(),
+      config_error: {
+        error: {
+          code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+          retryable: false,
+        },
+        excerpt: [
+          { number: 5, text: 'Host apollo-2' },
+          { number: 6, text: '  Port 99999' },
+          { number: 7, text: '  User root' },
+        ],
+      },
+    }
+    const { wrapper } = await mountScreen()
+    const alert = wrapper.get('[role="alert"]')
+    expect(alert.text()).toContain('Could not read your SSH config')
+    expect(alert.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
+    expect(wrapper.findAll('.host')).toHaveLength(6)
+  })
+
   it('says why a skipped git remote is left out and keeps patterns quiet', async () => {
     const { wrapper } = await mountScreen()
     const skips = wrapper.findAll('.skip').map((s) => s.text())

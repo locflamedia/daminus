@@ -41,6 +41,7 @@
       "eolTip": "No longer gets security updates."
     },
     "chip": {
+      "not_checked": "Not checked",
       "queued": "Queued",
       "connecting": "Connecting",
       "agent_wait": "Waiting for SSH agent",
@@ -57,6 +58,7 @@
       "kept": "kept · retries on first scan"
     },
     "tip": {
+      "not_checked": "ssh refuses ~/.ssh/config, so this host is not tested yet. Fix the line in the banner, then check again.",
       "queued": "Waits for a free slot (Hosts at once).",
       "connecting": "Handshake, up to the {n} s connect timeout.",
       "agent_wait": "The SSH agent asks you to approve. Not counted in the timeout.",
@@ -151,7 +153,9 @@
     },
     "error": {
       "title": "Could not read your SSH config",
-      "retry": "Try again"
+      "retry": "Try again",
+      "reveal": "Reveal in Finder",
+      "checkAgain": "Check again"
     }
   }
 }

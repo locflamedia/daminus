@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AppError } from '@/api'
 import { checkManifest } from '@/lib/check-manifest'
+import type { TestChip } from '@/lib/host-test'
 import { DEFAULT_LOCALE, LOCALES, localeFromTag } from './index'
 import { messages as bundled, withParts } from './messages'
 
@@ -92,6 +93,28 @@ describe('locale files', () => {
     }
   })
 
+  it('word every login chip, with its tooltip, in both languages', () => {
+    // A Record over the type: a new chip cannot reach the screen without its words.
+    const chips: Record<TestChip, true> = {
+      not_checked: true,
+      queued: true,
+      connecting: true,
+      agent_wait: true,
+      testing: true,
+      reached: true,
+      host_key_unknown: true,
+      host_key_changed: true,
+      key_rejected: true,
+      unreachable: true,
+      timed_out: true,
+    }
+    for (const locale of LOCALES) {
+      for (const chip of Object.keys(chips)) {
+        expect(messages[locale].get(`setupPick.tip.${chip}`), `${locale}:tip.${chip}`).toBeTruthy()
+      }
+    }
+  })
+
   it('word every error code the core can send', () => {
     // A Record over the generated type: the build fails when the core gains a code that is
     // missing here, so a new code cannot reach the UI without a sentence in both languages.
@@ -106,6 +129,7 @@ describe('locale files', () => {
       local_network_down: true,
       scan_not_found: true,
       config_invalid: true,
+      ssh_config_invalid: true,
       config_from_newer_version: true,
       config_changed_on_disk: true,
       store_busy: true,

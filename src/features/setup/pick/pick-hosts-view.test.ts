@@ -499,6 +499,35 @@ describe('Loading, errors and no hosts', () => {
     expect(load).toHaveBeenCalledOnce()
   })
 
+  it('says which line ssh refused when the config does not parse', async () => {
+    const setup = seed({ answered: [] })
+    setup.listing = {
+      ...setup.listing!,
+      config_error: {
+        error: {
+          code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+          retryable: false,
+        },
+        excerpt: [
+          { number: 5, text: 'Host apollo-2' },
+          { number: 6, text: '  Port 99999' },
+          { number: 7, text: '  User root' },
+        ],
+      },
+    }
+    const load = vi.spyOn(setup, 'load').mockResolvedValue(undefined)
+    const { wrapper } = await mountPick()
+    const banner = wrapper.find('[role="alert"]')
+    expect(banner.text()).toContain('Could not read your SSH config')
+    expect(banner.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
+    expect(banner.text()).toContain('Port 99999')
+    expect(row(wrapper, 'vps-sg-1').find('.login').text()).toContain('Not checked')
+    expect(wrapper.text()).not.toContain('Unreachable')
+    const again = banner.findAll('button').find((b) => b.text().includes('Check again'))
+    await again?.trigger('click')
+    expect(load).toHaveBeenCalledOnce()
+  })
+
   it('goes to the empty app when the config has no host at all', async () => {
     const setup = useSetupStore()
     setup.listing = emptyListing('no_config')

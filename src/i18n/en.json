@@ -333,6 +333,8 @@
     "scan_not_found": "That scan is no longer kept. Settings › Data decides how many scans are kept.",
     "config_invalid": "Couldn’t read {path}. Fix the file or move it aside.",
     "config_invalid_at": "Couldn’t read {path} at line {line}. Fix the file or move it aside.",
+    "ssh_config_invalid": "ssh can’t read {path}, so no server can connect. Fix the file, then check again.",
+    "ssh_config_invalid_at": "ssh stops at line {line} of {path}, so no server can connect. Fix that line, then check again.",
     "config_from_newer_version": "{path} was written by a newer Daminus (version {version}). Update Daminus to edit it.",
     "config_changed_on_disk": "{path} changed on disk. Reload it before saving.",
     "store_busy": "Daminus is busy with another operation. Try again in a moment.",
