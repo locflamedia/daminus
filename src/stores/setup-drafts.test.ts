@@ -143,6 +143,37 @@ describe('not in a project', () => {
     ])
   })
 
+  it('names the catch-all server block "Default site" with its root, never "_"', () => {
+    const setup = useSetupStore()
+    setup.result = {
+      hosts: [],
+      proposal: {
+        ...proposal,
+        unassigned: [
+          {
+            host: 'vps-sg-1',
+            item: {
+              rec: 'vhost',
+              file: '/etc/nginx/sites-enabled/default',
+              names: ['_'],
+              root: '/var/www/html',
+              ssl: false,
+              php: false,
+              listen: [80],
+            },
+          },
+        ],
+      },
+    }
+    const drafts = useSetupDraftsStore()
+    drafts.sync()
+    expect(drafts.loose[0]).toMatchObject({
+      kind: 'vhost',
+      defaultSite: true,
+      detail: { code: 'root', text: '/var/www/html' },
+    })
+  })
+
   it('moves a find into a project as a part, with the role its name suggests', () => {
     const { drafts } = stores()
     const target = drafts.drafts[1]

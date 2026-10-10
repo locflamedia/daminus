@@ -20,6 +20,10 @@ const props = defineProps<{ items: readonly LooseItem[]; drafts: readonly DraftP
 const emit = defineEmits<{ add: [item: LooseItem, draftKey: string]; create: [item: LooseItem] }>()
 
 const { t } = useI18n()
+
+/** The catch-all server block reads "Default site", never its `_` name. */
+const shown = (item: LooseItem) =>
+  item.defaultSite ? t('setupGroup.loose.defaultSite') : item.name
 const drag = useLooseDrag()
 
 const groups = computed(() => groupLoose(props.items))
@@ -68,15 +72,15 @@ function onPick(item: LooseItem, id: string) {
       >
         <span class="handle" aria-hidden="true"><UiIcon name="drag" :size="14" /></span>
         <span class="kind">{{ t(`setupGroup.loose.kind.${item.kind}`) }}</span>
-        <span class="name mono">{{ item.name }}</span>
+        <span class="name" :class="{ mono: !item.defaultSite }">{{ shown(item) }}</span>
         <span class="detail">{{
           t(looseDetail(item).key, looseDetail(item).params, looseDetail(item).n ?? 0)
         }}</span>
         <UiMenu
           :open="open === item.key"
           :items="menuFor()"
-          :label="t('setupGroup.loose.addTo', { name: item.name })"
-          :heading="t('setupGroup.loose.addTo', { name: item.name })"
+          :label="t('setupGroup.loose.addTo', { name: shown(item) })"
+          :heading="t('setupGroup.loose.addTo', { name: shown(item) })"
           placement="bottom-end"
           @update:open="(v) => (open = v ? item.key : null)"
           @select="(id) => onPick(item, id)"
@@ -87,7 +91,7 @@ function onPick(item: LooseItem, id: string) {
               size="small"
               icon="plus"
               trailing-icon="chevron-down"
-              :aria-label="`${t('setupGroup.loose.add')}: ${item.name}`"
+              :aria-label="`${t('setupGroup.loose.add')}: ${shown(item)}`"
               data-testid="loose-add"
               @click="toggle"
               >{{ t('setupGroup.loose.add') }}</UiButton

@@ -279,6 +279,8 @@ export function looseDetail(item: LooseItem): Words {
       return words('loose.noSite', { n: n ?? 0 }, n ?? 0)
     case 'runs_from':
       return words('loose.runsFrom', { dir: text ?? '' })
+    case 'root':
+      return words('loose.root', { dir: text ?? '' })
     case 'container':
       return words('loose.container', { name: text ?? '' })
     default:

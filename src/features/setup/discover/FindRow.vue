@@ -85,7 +85,7 @@ const detail = computed(() => {
     </span>
     <div class="text">
       <span class="nm">
-        {{ find.title }}
+        {{ find.defaultSite ? t('setupDiscover.find.defaultSite') : find.title }}
         <span v-if="fresh" class="new">{{ t('setupDiscover.find.new') }}</span>
       </span>
       <span class="dt">
