@@ -21,6 +21,7 @@ import UiKbd from '@/ui/UiKbd.vue'
 import DiskRing from './DiskRing.vue'
 import ProjectDot from './ProjectDot.vue'
 import SidebarAiChip from './SidebarAiChip.vue'
+import { useAiProviderName } from './use-ai-provider-name'
 import SidebarSnapshots from './SidebarSnapshots.vue'
 
 const { t } = useI18n()
@@ -37,6 +38,8 @@ const onProjectHistory = computed(() => route.name === 'project' && route.params
 /** No project yet: the sidebar draws its empty form, by the screen Overview shows. */
 const firstLaunch = computed(() => empty.active)
 const helpScreen = computed(() => firstLaunch.value && empty.screen === 'help')
+/** The chosen provider's model name; '' while AI is off. */
+const aiName = useAiProviderName()
 
 /** Results over a day old: Overview reads "4 d old" and nothing is coloured by severity. */
 const clock = useNow()
@@ -189,9 +192,11 @@ const serverRows = computed(() =>
     </div>
 
     <div class="foot">
-      <SidebarAiCard v-if="firstLaunch && !helpScreen" />
-      <StreakBadge />
-      <SidebarAiChip />
+      <!-- Before the first scan (boards 01, 01b): no streak; the empty app shows "AI is off", or
+           the provider once one is chosen (#260e); the help screen keeps only Settings. -->
+      <SidebarAiCard v-if="firstLaunch && !helpScreen && !aiName" />
+      <StreakBadge v-if="!firstLaunch" />
+      <SidebarAiChip v-if="!helpScreen" />
       <RouterLink to="/settings" class="item" active-class="on">
         <UiIcon name="settings" />
         {{ t('nav.settings') }}

@@ -8,8 +8,8 @@
     },
     "hosts": {
       "title": "Host",
-      "count": "{n} host",
-      "list": "Các host đang được đọc"
+      "list": "Các host đang được đọc",
+      "atOnce": "{n} máy cùng lúc"
     },
     "lane": {
       "found": "{n} mục",

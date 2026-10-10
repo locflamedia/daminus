@@ -274,6 +274,14 @@ function onDrop() {
   padding: 0 var(--space-1) var(--space-1);
 }
 
+/* At 1280 the card is too narrow for one row: the hosts and the menu drop to a second line, so the
+   address chips are not cut to "https:…". A lone long address still ends in an ellipsis. */
+@media (max-width: 1360px) {
+  .head {
+    flex-wrap: wrap;
+  }
+}
+
 .dot {
   flex: none;
   width: 10px;
@@ -322,6 +330,7 @@ function onDrop() {
   display: inline-flex;
   flex: 0 1 auto;
   max-width: 100%;
+
   min-width: 0;
   overflow: hidden;
   align-items: center;

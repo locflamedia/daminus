@@ -18,6 +18,7 @@ import {
   pairsOf,
 } from '@/lib/discover-view'
 import { vEnter } from '@/lib/motion'
+import { useScanSettingsStore } from '@/stores/scan-settings'
 import { useSetupDraftsStore } from '@/stores/setup-drafts'
 import { useSetupStore } from '@/stores/setup'
 import { useToastStore } from '@/stores/toasts'
@@ -35,6 +36,9 @@ import PairStrip from './discover/PairStrip.vue'
 import { useArrivals } from './discover/use-arrivals'
 import { useDiscoverLanes } from './discover/use-discover-lanes'
 import SetupFrame from './SetupFrame.vue'
+
+/** `MAX_HOSTS_AT_ONCE` of the core (scan/service.rs). */
+const MAX_HOSTS_AT_ONCE = 8
 
 const { t } = useI18n()
 const { duration } = useFormat()
@@ -69,6 +73,12 @@ const arrived = useArrivals(() => [
 const newKeys = computed<ReadonlySet<string>>(() => (running.value ? arrived.value : new Set()))
 
 const total = computed(() => setup.discovering.length)
+const scanSettings = useScanSettingsStore()
+/** How many hosts are read at once, as the core runs them: Settings › Scan, or one per host on
+ *  Auto, at most 8. */
+const atOnce = computed(() =>
+  Math.max(1, Math.min(scanSettings.scan.hosts_at_once ?? total.value, MAX_HOSTS_AT_ONCE)),
+)
 const done = computed(() => setup.discovering.filter((h) => setup.lanes[h]).length)
 const canContinue = computed(() => done.value > 0)
 const fraction = computed(() => (total.value === 0 ? 0 : done.value / total.value))
@@ -131,6 +141,7 @@ function onKey(e: KeyboardEvent) {
 }
 
 onMounted(() => {
+  if (!scanSettings.synced) void scanSettings.load()
   window.addEventListener('keydown', onKey)
   if (setup.discovering.length === 0 && setup.ready.length === 0) void router.replace('/setup')
 })
@@ -156,7 +167,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       <div v-enter="{ index: 2 }" class="lanes-col">
         <header class="sec">
           <b>{{ t('setupDiscover.hosts.title') }}</b>
-          <span class="ct">{{ t('setupDiscover.hosts.count', { n: total }, total) }}</span>
+          <span class="ct">{{ t('setupDiscover.hosts.atOnce', { n: atOnce }) }}</span>
         </header>
         <ul class="lanes" :aria-label="t('setupDiscover.hosts.list')">
           <DiscoverLane

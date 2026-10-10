@@ -8,8 +8,8 @@
     },
     "hosts": {
       "title": "Hosts",
-      "count": "{n} host | {n} hosts",
-      "list": "Hosts being read"
+      "list": "Hosts being read",
+      "atOnce": "{n} at a time"
     },
     "lane": {
       "found": "{n} found",
