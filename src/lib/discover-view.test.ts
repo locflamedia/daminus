@@ -13,6 +13,7 @@ import {
   proxyTarget,
   readingFraction,
   readingSource,
+  isDefaultSite,
   siteName,
   type HostRecords,
 } from './discover-view'
@@ -156,6 +157,32 @@ describe('projects', () => {
     const process = sample('db-main')[0]
     expect(container && projectOf(proposal, 'vps-sg-2', container)).toMatchObject({ id: 'tiemtra' })
     expect(process && projectOf(proposal, 'db-main', process)).toMatchObject({ id: 'booking' })
+  })
+
+  it('knows the catch-all server block, which the screens call the default site', () => {
+    expect(isDefaultSite({ names: ['_'] })).toBe(true)
+    expect(isDefaultSite({ names: ['_', 'shop.vn'] })).toBe(false)
+    expect(isDefaultSite({ names: [] })).toBe(false)
+    const cols = findColumns(
+      [
+        {
+          host: 'h',
+          records: [
+            {
+              rec: 'vhost',
+              file: '/etc/nginx/sites-enabled/default',
+              names: ['_'],
+              root: '/var/www/html',
+              ssl: false,
+              php: false,
+              listen: [80],
+            },
+          ],
+        },
+      ],
+      null,
+    )
+    expect(cols.sites[0]?.defaultSite).toBe(true)
   })
 
   it('names a site by its first public name, not www and not a catch-all', () => {

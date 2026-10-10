@@ -109,7 +109,8 @@
       "inContainer": "trong {name}",
       "process": "tiến trình {name}",
       "envFound": "có .env",
-      "stopped": "đã dừng"
+      "stopped": "đã dừng",
+      "defaultSite": "Site mặc định"
     },
     "listening": {
       "public": "công khai trên {host}",

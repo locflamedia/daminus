@@ -56,7 +56,8 @@
       "key_rejected": "Khóa bị từ chối",
       "unreachable": "Không tới được",
       "timed_out": "Hết thời gian",
-      "kept": "giữ lại · thử lại ở lần quét đầu"
+      "kept": "giữ lại · thử lại ở lần quét đầu",
+      "untested": "Chưa thử"
     },
     "tip": {
       "not_checked": "ssh không đọc được ~/.ssh/config nên host này chưa được kiểm tra. Sửa dòng trong banner rồi kiểm tra lại.",
@@ -69,14 +70,15 @@
       "host_key_changed": "Dừng host này. Khóa khác với khóa đã lưu.",
       "key_rejected": "Xác thực thất bại. Cách sửa bằng ssh-add nằm ở thẻ bên dưới.",
       "unreachable": "DNS, không có đường đi hoặc bị từ chối. Kiểm tra địa chỉ hoặc VPN.",
-      "timed_out": "Không có phản hồi sau {n} s. Thử lại, hoặc tăng thời gian ở Cài đặt › Quét."
+      "timed_out": "Không có phản hồi sau {n} s. Thử lại, hoặc tăng thời gian ở Cài đặt › Quét.",
+      "untested": "Tick host này để thử đăng nhập."
     },
     "fail": {
       "key_rejected": "Khóa trong cấu hình của bạn chưa được nạp vào ssh-agent. Hãy thêm khóa rồi thử lại. Các host khác vẫn tiếp tục.",
       "key_rejected_nokey": "Các khóa mà ssh đưa ra đều không được chấp nhận. Hãy kiểm tra đúng khóa đã nạp vào ssh-agent rồi thử lại. Các host khác vẫn tiếp tục.",
       "unreachable": {
         "dns": "Không phân giải được địa chỉ. Kiểm tra địa chỉ hoặc VPN.",
-        "refused": "Máy chủ từ chối kết nối. Kiểm tra địa chỉ hoặc VPN.",
+        "refused": "Không có dịch vụ nào nghe ở cổng {port}. Kiểm tra Port trong ~/.ssh/config.",
         "no_route": "Không có đường đi tới máy chủ. Kiểm tra địa chỉ hoặc VPN.",
         "other": "DNS, không có đường đi hoặc bị từ chối. Kiểm tra địa chỉ hoặc VPN."
       },

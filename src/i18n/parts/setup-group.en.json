@@ -95,7 +95,9 @@
       "container": "container {name}",
       "process": "a process, no compose project",
       "shared": ".env shared by several project folders, so it is suggested to none",
-      "by_hand": "added by hand"
+      "by_hand": "added by hand",
+      "defaultSite": "Default site",
+      "root": "{dir}"
     },
     "preview": {
       "file": "projects.json",

@@ -221,6 +221,11 @@ function urlHost(url: string): string {
   }
 }
 
+/** The catch-all server block (`server_name _` only): the screens call it the default site. */
+export function isDefaultSite(v: Pick<Rec<'vhost'>, 'names'>): boolean {
+  return v.names.length > 0 && v.names.every((n) => n === '_')
+}
+
 /** The name a site is known by: its first public `server_name`, else its folder or file. */
 export function siteName(v: Pick<Rec<'vhost'>, 'names' | 'root' | 'file'>): string {
   const names = v.names.filter((n) => n !== '_' && !n.includes('*') && n.includes('.'))
@@ -288,6 +293,8 @@ export interface Find {
   kind: FindKind
   host: string
   title: string
+  /** The catch-all server block, shown as "Default site" instead of its `_` name. */
+  defaultSite: boolean
   record: SetupRecord
   project: ProjectRef
   /** Databases: the `.env` the grouping found for this server, so step 3 can prefill it. */
@@ -329,10 +336,16 @@ export function findColumns(hosts: readonly HostRecords[], proposal: Proposal | 
     const listening = new Set(records.flatMap((r) => (r.rec === 'port' ? [r.port] : [])))
     for (const r of records) {
       const project = projectOf(proposal, host, r)
-      const base = { host, record: r, project, envFound: false, port: null }
+      const base = { host, record: r, project, envFound: false, port: null, defaultSite: false }
       if (r.rec === 'vhost') {
         const title = siteName(r)
-        out.sites.push({ ...base, key: `${host}|vhost|${r.file}|${title}`, kind: 'vhost', title })
+        out.sites.push({
+          ...base,
+          key: `${host}|vhost|${r.file}|${title}`,
+          kind: 'vhost',
+          title,
+          defaultSite: isDefaultSite(r),
+        })
       } else if (r.rec === 'compose') {
         out.boxes.push({
           ...base,

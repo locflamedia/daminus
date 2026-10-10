@@ -33,7 +33,11 @@ const row = computed(() => store.current)
 const resolved = computed(() => store.entry?.resolved ?? null)
 const login = computed(() => (row.value ? (setup.logins[row.value.alias]?.login ?? null) : null))
 const answer = computed(() => (row.value ? setup.answers[row.value.alias] : undefined))
-const chip = computed(() => (row.value ? setup.chip(row.value.alias) : 'queued'))
+// "Not tested yet" belongs to Pick hosts; here a host no run has tested shows its saved state.
+const chip = computed(() => {
+  const now = row.value ? setup.chip(row.value.alias) : 'queued'
+  return now === 'untested' ? 'queued' : now
+})
 const tested = computed(
   () => row.value !== null && (chip.value !== 'queued' || setup.queue.includes(row.value.alias)),
 )

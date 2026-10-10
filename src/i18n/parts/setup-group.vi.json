@@ -95,7 +95,9 @@
       "container": "container {name}",
       "process": "một tiến trình, không thuộc dự án compose",
       "shared": ".env dùng chung cho nhiều thư mục dự án nên không được gợi ý cho dự án nào",
-      "by_hand": "thêm thủ công"
+      "by_hand": "thêm thủ công",
+      "defaultSite": "Site mặc định",
+      "root": "{dir}"
     },
     "preview": {
       "file": "projects.json",

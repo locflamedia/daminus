@@ -43,7 +43,8 @@ const sentence = computed(() => {
         : t('setupPick.fail.key_rejected_nokey')
     case 'unreachable': {
       const cause = props.outcome?.state === 'unreachable' ? props.outcome.cause : null
-      return t(`setupPick.fail.unreachable.${netReason(cause)}`)
+      // A refused connection on a reachable address is most often a wrong Port.
+      return t(`setupPick.fail.unreachable.${netReason(cause)}`, { port: props.row.port ?? 22 })
     }
     case 'timed_out':
       return t('setupPick.fail.timed_out', { n: CONNECT_TIMEOUT_S })

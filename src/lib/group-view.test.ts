@@ -238,6 +238,10 @@ describe('leftovers', () => {
       key: 'setupGroup.loose.noSite',
       n: 1,
     })
+    expect(looseDetail(item({ detail: { code: 'root', text: '/var/www/html' } }))).toMatchObject({
+      key: 'setupGroup.loose.root',
+      params: { dir: '/var/www/html' },
+    })
     expect(looseDetail(item({ detail: { code: 'runs_from', text: '/srv/jobs' } })).params).toEqual({
       dir: '/srv/jobs',
     })

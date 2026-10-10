@@ -99,12 +99,14 @@ describe('Pick hosts rows', () => {
     expect(legacy.find('.login').text()).toContain('Slow')
   })
 
-  it('says what a host that was never tested is waiting for', async () => {
-    seed({ tick: [], answered: [] })
+  it('says a host that was never tested is not tested yet, in grey and without a chip', async () => {
+    // Another host is ticked (as after a Reload that brought new hosts), so none is ticked for it.
+    seed({ tick: ['vps-sg-2'], answered: ['vps-sg-2'] })
     const { wrapper } = await mountPick()
     const first = row(wrapper, 'vps-sg-1')
     expect(first.find('.system').text()).toBe('Waiting for login')
-    expect(first.find('.login').text()).toBe('Queued')
+    expect(first.find('.login').text()).toBe('Not tested yet')
+    expect(first.find('.login .chip').exists()).toBe(false)
   })
 
   it('words a host the run is reading, live', async () => {
@@ -315,7 +317,7 @@ describe('Failures stay inline', () => {
       [
         'vps-sg-2',
         { state: 'unreachable', cause: 'refused' },
-        'The server refused the connection.',
+        'Nothing listens on port 22. Check Port in ~/.ssh/config.',
       ],
       [
         'vps-hn-3',

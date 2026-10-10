@@ -47,6 +47,9 @@ const tip = computed(() => t(`setupPick.tip.${props.chip}`, { n: CONNECT_TIMEOUT
         <span class="word testing">{{ t('setupPick.chip.testingRow') }}</span>
       </template>
 
+      <span v-else-if="chip === 'untested'" class="word untested">{{
+        t('setupPick.chip.untested')
+      }}</span>
       <UiChip v-else-if="chip === 'not_checked'" tone="neutral" icon="circle">
         {{ t('setupPick.chip.not_checked') }}
       </UiChip>
@@ -123,6 +126,11 @@ const tip = computed(() => t(`setupPick.tip.${props.chip}`, { n: CONNECT_TIMEOUT
 
 .word.testing {
   color: var(--accent-ink);
+}
+
+.word.untested {
+  color: var(--ink-3);
+  font-weight: var(--weight-regular);
 }
 
 .word.crit {

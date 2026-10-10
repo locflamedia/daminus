@@ -12,6 +12,7 @@ import {
   projectsSave,
   projectsValidate,
 } from '@/api'
+import { isDefaultSite } from '@/lib/discover-view'
 import {
   type DraftPart,
   type DraftProject,
@@ -36,6 +37,8 @@ export interface LooseItem {
   name: string
   /** Kind-specific words for the detail line, which the screen turns into text. */
   detail: { code: string; n?: number; text?: string }
+  /** The catch-all server block, shown as "Default site" with its root. */
+  defaultSite?: boolean
 }
 
 function looseOf(u: Unassigned): LooseItem | null {
@@ -50,6 +53,12 @@ function looseOf(u: Unassigned): LooseItem | null {
   const r = u.item
   switch (r.rec) {
     case 'vhost':
+      if (isDefaultSite(r)) {
+        return {
+          ...base('vhost', r.names[0] ?? r.file, { code: 'root', text: r.root ?? r.file }),
+          defaultSite: true,
+        }
+      }
       return base('vhost', r.names[0] ?? r.root ?? r.file, { code: 'no_domain' })
     case 'compose':
       return base('compose', r.project, { code: 'no_site', n: r.services.length })

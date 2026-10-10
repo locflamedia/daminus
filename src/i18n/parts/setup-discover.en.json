@@ -109,7 +109,8 @@
       "inContainer": "in {name}",
       "process": "process {name}",
       "envFound": ".env found",
-      "stopped": "stopped"
+      "stopped": "stopped",
+      "defaultSite": "Default site"
     },
     "listening": {
       "public": "public on {host}",

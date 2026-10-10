@@ -182,7 +182,10 @@ export const useSetupStore = defineStore('setup', () => {
     if (configProblem.value && (progress === null || progress.state === 'queued')) {
       return 'not_checked'
     }
-    return chipOf(progress, logins.value[host]?.login ?? null)
+    const login = logins.value[host]?.login ?? null
+    // Not ticked and never tested: nothing waits for it, so it is not "Queued".
+    if (progress === null && !login && !ticked.value.includes(host)) return 'untested'
+    return chipOf(progress, login)
   }
 
   function isTicked(host: string): boolean {

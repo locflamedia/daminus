@@ -56,7 +56,8 @@
       "key_rejected": "Key rejected",
       "unreachable": "Unreachable",
       "timed_out": "Timed out",
-      "kept": "kept · retries on first scan"
+      "kept": "kept · retries on first scan",
+      "untested": "Not tested yet"
     },
     "tip": {
       "not_checked": "ssh refuses ~/.ssh/config, so this host is not tested yet. Fix the line in the banner, then check again.",
@@ -69,14 +70,15 @@
       "host_key_changed": "Stops this host. The key differs from the one on record.",
       "key_rejected": "Auth failed. The ssh-add fix is in the card below.",
       "unreachable": "DNS, no route or refused. Check the address or VPN.",
-      "timed_out": "No answer in {n} s. Retry, or raise it in Settings › Scan."
+      "timed_out": "No answer in {n} s. Retry, or raise it in Settings › Scan.",
+      "untested": "Tick this host to test its login."
     },
     "fail": {
       "key_rejected": "The key in your config is not loaded in ssh-agent. Add it, then retry. Your other hosts keep going.",
       "key_rejected_nokey": "The keys ssh offered were not accepted. Check that the right key is loaded in ssh-agent, then retry. Your other hosts keep going.",
       "unreachable": {
         "dns": "The address did not resolve. Check the address or VPN.",
-        "refused": "The server refused the connection. Check the address or VPN.",
+        "refused": "Nothing listens on port {port}. Check Port in ~/.ssh/config.",
         "no_route": "There is no route to the server. Check the address or VPN.",
         "other": "DNS, no route or refused. Check the address or VPN."
       },
