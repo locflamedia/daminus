@@ -276,11 +276,19 @@ const noteClass = computed(() => {
   overflow: hidden;
 }
 
-/* One line, always: a card keeps its height whatever the note says. */
+/* One line, so a card keeps its height whatever the note says; Vietnamese, whose notes run
+   longer, may take a second line before the ellipsis. */
 .tile-note .note {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tile-note .note:lang(vi) {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .tile-note .note-plain {
