@@ -461,6 +461,7 @@ fn a_bad_config_line_is_named_by_file_and_line() {
             "Can't open user config file /u/.ssh/config: Permission denied\n",
             None,
         ),
+        ("Bad owner or permissions on /u/.ssh/config\n", None),
     ];
     for (stderr, line) in cases {
         assert_eq!(
@@ -659,4 +660,44 @@ fn known_aliases_cannot_tell_when_a_host_name_applies_to_every_alias() {
     assert_eq!(KnownAliases::of(&global.list()), None);
     let defaults = Rig::new("Host web\n  HostName 10.0.0.1\n\nHost *\n  ServerAliveInterval 30\n");
     assert!(KnownAliases::of(&defaults.list()).is_some());
+}
+
+/// Before a scan: one `ssh -G` says whether ssh refuses the config; the file
+/// and the line come back with the quoted lines.
+#[tokio::test]
+async fn the_config_problem_is_found_before_a_scan_with_one_ssh_call() {
+    if std::process::Command::new("ssh")
+        .arg("-V")
+        .output()
+        .is_err()
+    {
+        return;
+    }
+    let rig = Rig::new("Host vps-a\n    HostName 203.0.113.10\n\nHost vps-b\n    Port 99999\n");
+    let config = rig.dir.path().join(".ssh/config");
+    let tools = SshTools::new()
+        .with_config(&config)
+        .with_env([("HOME", rig.dir.path().as_os_str())]);
+    let problem = config_problem_of(&tools).await.expect("a problem");
+    assert_eq!(
+        problem.error.code,
+        ErrorCode::SshConfigInvalid {
+            path: config.to_string_lossy().into_owned(),
+            line: Some(5),
+        }
+    );
+    assert_eq!(problem.excerpt.last().map(|l| l.number), Some(5));
+
+    rig.write(".ssh/config", "Host vps-a\n    HostName 203.0.113.10\n");
+    assert_eq!(config_problem_of(&tools).await, None);
+    // No host in the file: nothing to stop.
+    rig.write(".ssh/config", "# empty\n");
+    assert_eq!(config_problem_of(&tools).await, None);
+    // Only patterns, with a bad line: still refused, still found.
+    rig.write(".ssh/config", "Host *\n    Port 99999\n");
+    let problem = config_problem_of(&tools).await.expect("a problem");
+    assert!(matches!(
+        problem.error.code,
+        ErrorCode::SshConfigInvalid { line: Some(2), .. }
+    ));
 }

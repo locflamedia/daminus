@@ -12,6 +12,7 @@ import {
   type ScanScope,
   isAppError,
   onScanEvent,
+  onScanRefused,
   scanStart,
   scanStatus,
   scanStop,
@@ -105,6 +106,8 @@ export const useScanStore = defineStore('scan', () => {
       try {
         const status = await scanStatus()
         run.value = status && !ended.has(status.scan_id) ? status : null
+        // A scan runs (one the menu bar started once the line was fixed): the refusal is old.
+        if (run.value && error.value?.code.kind === 'ssh_config_invalid') error.value = null
       } catch (e) {
         fail(e)
       }
@@ -145,7 +148,15 @@ export const useScanStore = defineStore('scan', () => {
 
   /** Subscribes once, then reads the live scan and the saved report. */
   async function init() {
-    if (!unlisten) unlisten = await onScanEvent((e) => handle(e))
+    if (!unlisten) {
+      const scans = await onScanEvent((e) => handle(e))
+      // The menu bar's Scan now stopped before ssh: the window says it too.
+      const refused = await onScanRefused((e) => (error.value = e))
+      unlisten = () => {
+        scans()
+        refused()
+      }
+    }
     await Promise.all([hydrate(), reports.loadLatest()])
   }
 

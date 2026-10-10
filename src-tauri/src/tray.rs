@@ -12,9 +12,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use daminus_core::domain::datetime::Timestamp;
-use daminus_core::domain::error::AppError;
+use daminus_core::domain::error::{AppError, ErrorCode};
 use daminus_core::domain::evaluate::Report;
-use daminus_core::scan::ScanScope;
+use daminus_core::scan::{ScanScope, Started};
 use tauri::image::Image;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{TrayIcon, TrayIconBuilder};
@@ -56,6 +56,8 @@ struct State {
     report: Option<Report>,
     /// Why the last read failed, if it did.
     report_error: Option<AppError>,
+    /// Why the last scan did not start, when ssh refused the ssh config.
+    ssh_config: Option<AppError>,
     icon: Option<Icon>,
     /// Bumped on every icon change; a breathing loop stops once it differs
     /// from the value it started with.
@@ -152,6 +154,7 @@ impl<R: Runtime> Tray<R> {
                 report_error: s.report_error.as_ref(),
                 projects: projects.as_ref(),
                 scan: scan.as_ref(),
+                ssh_config: s.ssh_config.as_ref(),
                 now: Timestamp::new(time::OffsetDateTime::now_utc()),
                 offset: self.offset,
             },
@@ -243,7 +246,16 @@ fn on_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
             let app = app.clone();
             tauri::async_runtime::spawn(async move {
                 if let Some(core) = app.try_state::<AppCore>() {
-                    match core.scan_start(&ScanScope::default()) {
+                    let result = core.scan_start(&ScanScope::default()).await;
+                    note_scan_start(&app, &result);
+                    // The window says it too, with the config banner.
+                    if let Err(e) = &result
+                        && matches!(e.code, ErrorCode::SshConfigInvalid { .. })
+                        && let Err(err) = app.emit(SCAN_REFUSED_EVENT, e)
+                    {
+                        tracing::warn!(error = %err, "tray: scan-refused event not sent");
+                    }
+                    match result {
                         Ok(started) => {
                             tracing::info!(scan = %started.scan_id, joined = started.joined, "scan from menu bar")
                         }
@@ -281,6 +293,44 @@ fn on_menu<R: Runtime>(app: &AppHandle<R>, id: &str) {
                 }
             }
         }
+    }
+}
+
+/// Keeps what the last scan start said about the ssh config, from the menu
+/// bar or the window: a config ssh refuses shows in the menu until a scan
+/// starts. The caller redraws.
+pub fn note_scan_start<R: Runtime>(app: &AppHandle<R>, result: &Result<Started, AppError>) {
+    let Some(t) = app.try_state::<Arc<Tray<R>>>() else {
+        return;
+    };
+    let Ok(mut s) = t.state.lock() else {
+        return;
+    };
+    match result {
+        Err(e) if matches!(e.code, ErrorCode::SshConfigInvalid { .. }) => {
+            s.ssh_config = Some(e.clone());
+        }
+        Ok(_) => s.ssh_config = None,
+        Err(_) => {}
+    }
+}
+
+/// The window's event for a menu bar scan that did not start.
+pub const SCAN_REFUSED_EVENT: &str = "scan://refused";
+
+/// Follows the ssh config as it was just listed: a config ssh takes again
+/// clears what the menu says about it, one it refuses sets it.
+pub fn note_ssh_config<R: Runtime>(app: &AppHandle<R>, refused: Option<&AppError>) {
+    let changed = app.try_state::<Arc<Tray<R>>>().is_some_and(|t| {
+        t.state.lock().is_ok_and(|mut s| {
+            let next = refused.cloned();
+            let changed = s.ssh_config != next;
+            s.ssh_config = next;
+            changed
+        })
+    });
+    if changed {
+        refresh(app);
     }
 }
 

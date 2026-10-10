@@ -5,17 +5,19 @@
   It runs the real scan flow: Scan all and ⌘R open the scan panel, Stop and esc end the scan.
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePaletteStore } from '@/features/palette/palette-store'
 import { useShortcutsStore } from '@/features/shortcuts/shortcuts-store'
 import { errorText } from '@/lib/issue-text'
 import EmptyScreen from '@/features/empty/EmptyScreen.vue'
+import SshConfigBanner from '@/features/setup/components/SshConfigBanner.vue'
 import { useHistoryStore } from '@/stores/history'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
 import { useScanPanelStore } from '@/stores/scan-panel'
 import { useScanStore } from '@/stores/scan'
+import { useSetupStore } from '@/stores/setup'
 import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import OverviewCards from './OverviewCards.vue'
@@ -33,6 +35,7 @@ import { useOverviewStore } from '@/stores/overview'
 const { t } = useI18n()
 const scan = useScanStore()
 const reports = useReportStore()
+const setup = useSetupStore()
 const projects = useProjectsStore()
 const panel = useScanPanelStore()
 const selection = useOverviewStore()
@@ -42,10 +45,35 @@ const model = useOverview()
 /** `projects.json` was read and holds nothing: a first launch, not a failed read. */
 const showEmpty = computed(() => projects.loaded && projects.details.length === 0)
 
+/**
+ * The scan stopped before ssh because ssh refuses ~/.ssh/config. The config banner says where,
+ * with the quoted lines; the last results stay below it, as they are.
+ */
+const configRefused = computed(() => scan.error?.code.kind === 'ssh_config_invalid')
+// Read the config for its lines, also when the refusal came first (the menu bar, another screen).
+watch(
+  configRefused,
+  (now) => {
+    if (now) void setup.load()
+  },
+  { immediate: true },
+)
+/**
+ * The banner with the quoted lines, whenever ssh refuses the config: after a scan stopped, or as
+ * soon as the Overview opens on it. Without a listing to quote, the plain error says it.
+ */
+const configBanner = computed(() => setup.configProblem)
+
 const errorMessage = computed(() => {
-  const error = scan.error ?? reports.error
+  const error = (configBanner.value ? null : scan.error) ?? reports.error
   return error ? errorText(error) : ''
 })
+
+/** Check again in the config banner: read the config; once ssh takes it, the banner goes. */
+async function recheckConfig() {
+  await setup.load()
+  if (!setup.error && !setup.configProblem) scan.error = null
+}
 
 /** The saved projects are still being read (or the report is): bars of the final heights. */
 const waiting = computed(
@@ -80,7 +108,11 @@ function onKeydown(e: KeyboardEvent) {
     void scan.stop()
   }
 }
-onMounted(() => window.addEventListener('keydown', onKeydown))
+onMounted(() => {
+  window.addEventListener('keydown', onKeydown)
+  // A config ssh refuses is said here before any scan: read it once if nothing else has.
+  if (setup.listing === null && !setup.loading) void setup.load()
+})
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
@@ -95,6 +127,12 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
       :filter-counts="model.counts.value"
     />
 
+    <SshConfigBanner
+      v-if="configBanner"
+      :problem="configBanner"
+      :busy="setup.loading"
+      @recheck="recheckConfig"
+    />
     <UiBanner v-if="errorMessage" tone="crit" icon="critical" alert :title="errorMessage">
       <template #trailing>
         <UiButton size="small" @click="reload">{{ t('overviewScreen.reload') }}</UiButton>

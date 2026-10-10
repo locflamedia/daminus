@@ -3,6 +3,7 @@
 import { isTauri } from '@tauri-apps/api/core'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import type { AiStreamEvent } from './bindings/AiStreamEvent'
+import type { AppError } from './bindings/AppError'
 import type { ScanEvent } from './bindings/ScanEvent'
 import type { SetupEvent } from './bindings/SetupEvent'
 
@@ -10,6 +11,16 @@ export const SCAN_EVENT = 'scan://event'
 
 export function onScanEvent(handler: (event: ScanEvent) => void): Promise<UnlistenFn> {
   return listen<ScanEvent>(SCAN_EVENT, (e) => handler(e.payload))
+}
+
+export const SCAN_REFUSED_EVENT = 'scan://refused'
+
+/**
+ * A scan the menu bar asked for did not start (ssh refuses the ssh config): the error, so the
+ * window says what the menu says.
+ */
+export function onScanRefused(handler: (error: AppError) => void): Promise<UnlistenFn> {
+  return listen<AppError>(SCAN_REFUSED_EVENT, (e) => handler(e.payload))
 }
 
 export const SETUP_EVENT = 'setup://event'

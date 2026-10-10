@@ -102,6 +102,9 @@
     }
   },
   "tray": {
+    "sshConfig": "Could not read your SSH config",
+    "sshConfigAt": "ssh stops at line {line} of {file}",
+    "sshConfigFile": "ssh can’t read {file}",
     "crit": "{n} critical",
     "warn": "{n} warning | {n} warnings",
     "allClear": "All clear · {n} project | All clear · {n} projects",

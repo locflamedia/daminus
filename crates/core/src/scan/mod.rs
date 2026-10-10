@@ -26,7 +26,7 @@ pub use rules::{
     Covers, ExpectedDraft, MAX_NOTE_CHARS, REVIEW_DAYS, add_rule, make_rule, remove_rule,
 };
 pub use service::{
-    ConfigHosts, HOST_BUDGET, MAX_HOSTS_AT_ONCE, ScanService, ServiceOptions, Started,
+    ConfigCheck, ConfigHosts, HOST_BUDGET, MAX_HOSTS_AT_ONCE, ScanService, ServiceOptions, Started,
     build_bundles,
 };
 pub(crate) use service::{MAX_CONNECT_TIMEOUT_S, concurrency};

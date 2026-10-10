@@ -8,14 +8,18 @@ use clap::{Parser, Subcommand};
 use daminus_core::checks::bundle::{self, BundleVars, Selection};
 use daminus_core::checks::{manifest, ndjson};
 use daminus_core::domain::datetime::Timestamp;
+use daminus_core::domain::error::ErrorCode;
 use daminus_core::domain::evaluate::{Delta, Disposition, Report};
 use daminus_core::domain::host::HostAlias;
 use daminus_core::domain::snapshot::HostOutcome;
 use daminus_core::probe::HttpProbe;
 use daminus_core::scan::{
-    ScanEvent, ScanEventBody, ScanScope, ScanService, build_bundles, latest_report, resolve,
+    ConfigCheck, ScanEvent, ScanEventBody, ScanScope, ScanService, ServiceOptions, build_bundles,
+    latest_report, resolve,
 };
-use daminus_core::ssh::{SshTransport, outcome_error};
+use daminus_core::ssh::config::config_problem_of;
+
+use daminus_core::ssh::{SshTools, SshTransport, outcome_error};
 use daminus_core::store::FsStore;
 use tokio::sync::mpsc;
 
@@ -322,20 +326,46 @@ fn scan(
     };
     runtime.block_on(async move {
         let mut transport = SshTransport::new();
-        if let Some(cfg) = ssh_config {
+        if let Some(cfg) = &ssh_config {
             transport = transport.with_config(cfg);
         }
         let (tx, mut rx) = mpsc::channel(1024);
-        let service = ScanService::new(
+        // ssh reads the same file as the scan: one that it refuses stops it.
+        let mut tools = SshTools::new();
+        if let Some(cfg) = &ssh_config {
+            tools = tools.with_config(cfg);
+        }
+        let check: ConfigCheck = Arc::new(move || {
+            let tools = tools.clone();
+            Box::pin(async move { config_problem_of(&tools).await })
+        });
+        let service = ScanService::with_options(
             Arc::new(transport),
             Arc::new(HttpProbe::new()),
             store.clone(),
             tx,
+            ServiceOptions {
+                config_check: Some(check),
+                ..ServiceOptions::default()
+            },
         );
-        let started = match service.start(&scope) {
+        let started = match service.start_checked(&scope).await {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("scan: {e:?}");
+                match &e.code {
+                    ErrorCode::SshConfigInvalid {
+                        path,
+                        line: Some(line),
+                    } => {
+                        eprintln!("scan not started: ssh stops at line {line} of {path}");
+                        eprintln!("fix that line, then scan again; nothing was saved");
+                    }
+                    ErrorCode::SshConfigInvalid { path, line: None } => {
+                        eprintln!("scan not started: ssh can't read {path}");
+                        eprintln!("fix the file, then scan again; nothing was saved");
+                    }
+                    _ => eprintln!("scan: {e:?}"),
+                }
                 return ExitCode::FAILURE;
             }
         };

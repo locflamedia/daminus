@@ -62,6 +62,7 @@ fn inputs<'a>(report: Option<&'a Report>, projects: &'a ProjectsFile) -> Inputs<
         report_error: None,
         projects: Ok(projects),
         scan: None,
+        ssh_config: None,
         now: Timestamp::from_unix(AT + 600),
         offset: UtcOffset::UTC,
     }
@@ -191,6 +192,60 @@ fn a_config_error_says_what_and_where_and_never_offers_a_dead_scan() {
         vi.info,
         ["Không quét được", "projects.json dòng 14 không hợp lệ"]
     );
+}
+
+/// "Scan now" stopped because ssh refuses ~/.ssh/config: the mark does not
+/// breathe, the menu says what the window's banner says and where, and Scan
+/// now stays live to check again once the line is fixed.
+#[test]
+fn a_refused_ssh_config_says_so_with_the_banner_words_and_no_scanning_mark() {
+    let (r, p) = (report(2, 4), projects());
+    let err = AppError::from(ErrorCode::SshConfigInvalid {
+        path: "/Users/x/.ssh/config".into(),
+        line: Some(9),
+    });
+    let i = Inputs {
+        ssh_config: Some(&err),
+        ..inputs(Some(&r), &p)
+    };
+    let v = view(&i, &en());
+    assert_eq!(v.icon, TrayIcon::Mark);
+    assert_eq!(v.title, None);
+    assert_eq!(
+        v.info,
+        [
+            "Could not read your SSH config",
+            "ssh stops at line 9 of ~/.ssh/config"
+        ]
+    );
+    assert_eq!(
+        labels(&v),
+        [
+            ("Open Daminus to fix…", true),
+            ("Scan now", true),
+            ("Quit Daminus", true)
+        ]
+    );
+    let vi = view(&i, &Strings::new("vi"));
+    assert_eq!(
+        vi.info,
+        [
+            "Không đọc được cấu hình SSH của bạn",
+            "ssh dừng ở dòng 9 của ~/.ssh/config"
+        ]
+    );
+    let no_line = AppError::from(ErrorCode::SshConfigInvalid {
+        path: "/Users/x/.ssh/config".into(),
+        line: None,
+    });
+    let v = view(
+        &Inputs {
+            ssh_config: Some(&no_line),
+            ..inputs(Some(&r), &p)
+        },
+        &en(),
+    );
+    assert_eq!(v.info[1], "ssh can’t read ~/.ssh/config");
 }
 
 #[test]

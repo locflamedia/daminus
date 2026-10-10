@@ -45,7 +45,18 @@ pub async fn scan_start<R: Runtime>(
     core: State<'_, AppCore>,
     scope: Option<ScanScope>,
 ) -> Result<Started, AppError> {
-    let started = core.scan_start(&scope.unwrap_or_default())?;
+    let result = core.scan_start(&scope.unwrap_or_default()).await;
+    tray::note_scan_start(&app, &result);
+    let started = match result {
+        Ok(started) => started,
+        Err(e) => {
+            // The menu bar says the same as the window's banner.
+            if matches!(e.code, ErrorCode::SshConfigInvalid { .. }) {
+                tray::refresh(&app);
+            }
+            return Err(e);
+        }
+    };
     if !started.joined {
         tray::refresh(&app);
     }
@@ -166,8 +177,14 @@ pub async fn projects_list(core: State<'_, AppCore>) -> Result<Vec<Project>, App
 /// The hosts of `~/.ssh/config` with what ssh resolves for each, and the
 /// entries left out with their reason, file and line.
 #[tauri::command]
-pub async fn hosts_list(core: State<'_, AppCore>) -> Result<HostListing, AppError> {
-    core.hosts_list().await
+pub async fn hosts_list<R: Runtime>(
+    app: AppHandle<R>,
+    core: State<'_, AppCore>,
+) -> Result<HostListing, AppError> {
+    let listing = core.hosts_list().await?;
+    // The menu bar follows: Check again on a fixed config clears what it says.
+    tray::note_ssh_config(&app, listing.config_error.as_ref().map(|p| &p.error));
+    Ok(listing)
 }
 
 /// Whether the SSH agent holds keys, and how many.
