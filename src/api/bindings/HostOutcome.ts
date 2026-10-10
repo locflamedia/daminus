@@ -4,4 +4,4 @@ import type { NetCause } from "./NetCause";
 /**
  * How one host's part of the scan ended. Serialized with a `state` tag.
  */
-export type HostOutcome = { "state": "reached" } | { "state": "partial" } | { "state": "unreachable", cause: NetCause, } | { "state": "auth_failed" } | { "state": "host_key_unknown", fp: string, } | { "state": "host_key_changed", fp: string, } | { "state": "timeout" };
+export type HostOutcome = { "state": "reached" } | { "state": "partial" } | { "state": "unreachable", cause: NetCause, } | { "state": "auth_failed" } | { "state": "host_key_unknown", fp: string, } | { "state": "host_key_changed", fp: string, } | { "state": "timeout" } | { "state": "not_in_config" };

@@ -48,6 +48,8 @@ pub enum HostOutcome {
     },
     /// The per-host budget ran out.
     Timeout,
+    /// The alias is no longer in `~/.ssh/config`; ssh was not run.
+    NotInConfig,
 }
 
 impl HostOutcome {
@@ -65,6 +67,7 @@ impl HostOutcome {
     pub fn unknown_reason(&self) -> UnknownReason {
         match self {
             HostOutcome::Partial | HostOutcome::Timeout => UnknownReason::Timeout,
+            HostOutcome::NotInConfig => UnknownReason::Missing,
             _ => UnknownReason::Unreachable,
         }
     }

@@ -94,6 +94,7 @@ pub fn outcome_error(outcome: &HostOutcome) -> Option<ErrorCode> {
         HostOutcome::HostKeyUnknown { .. } => Some(ErrorCode::SshHostKeyUnknown),
         HostOutcome::HostKeyChanged { .. } => Some(ErrorCode::SshHostKeyChanged),
         HostOutcome::Timeout => Some(ErrorCode::Timeout),
+        HostOutcome::NotInConfig => Some(ErrorCode::SshNotInConfig),
     }
 }
 

@@ -62,13 +62,37 @@ fn rig_cap(
     settings: Settings,
     capacity: usize,
 ) -> Rig {
+    rig_opts(
+        transport,
+        probe,
+        projects,
+        settings,
+        capacity,
+        ServiceOptions::default(),
+    )
+}
+
+fn rig_opts(
+    transport: FakeTransport,
+    probe: FakeProbe,
+    projects: ProjectsFile,
+    settings: Settings,
+    capacity: usize,
+    options: ServiceOptions,
+) -> Rig {
     let dir = TempDir::new().unwrap();
     let store = FsStore::new(dir.path());
     store.save_projects(&projects, None).unwrap();
     store.save_settings(&settings, None).unwrap();
     let (tx, rx) = mpsc::channel(capacity);
     let transport = Arc::new(transport);
-    let service = ScanService::new(transport.clone(), Arc::new(probe), store.clone(), tx);
+    let service = ScanService::with_options(
+        transport.clone(),
+        Arc::new(probe),
+        store.clone(),
+        tx,
+        options,
+    );
     Rig {
         _dir: dir,
         store,
@@ -422,6 +446,46 @@ async fn everything_failing_at_network_level_is_local_network_down() {
     };
     assert_eq!(error.code, ErrorCode::LocalNetworkDown);
     assert!(r.store.snapshot_seqs().unwrap().is_empty());
+}
+
+/// The config defines only `b`: `a` is not run (its alias would only fail as a
+/// DNS name), it is saved as not in the config, and the scan is not "offline".
+#[tokio::test(start_paused = true)]
+async fn a_host_gone_from_the_ssh_config_is_not_run_and_not_offline() {
+    use crate::ssh::config::{ConfigHost, HostList, KnownAliases};
+    let list = HostList {
+        config_found: true,
+        hosts: vec![ConfigHost {
+            alias: HostAlias::parse("b").unwrap(),
+            file: "config".into(),
+            line: 1,
+        }],
+        skipped: Vec::new(),
+        empty: None,
+    };
+    let known = KnownAliases::of(&list).unwrap();
+    let options = ServiceOptions {
+        config_hosts: Some(Arc::new(move || Some(known.clone()))),
+        ..ServiceOptions::default()
+    };
+    let mut r = rig_opts(
+        FakeTransport::new()
+            .host("a", FakeHost::fail(Failure::Unreachable(NetCause::Dns)))
+            .host("b", FakeHost::fail(Failure::Unreachable(NetCause::NoRoute))),
+        FakeProbe::new().error("https://shop.example", ProbeError::Dns),
+        projects(&["a", "b"], &["https://shop.example"]),
+        Settings::default(),
+        4096,
+        options,
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    assert_eq!(r.transport.runs(), 1);
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::NotInConfig));
 }
 
 #[tokio::test(start_paused = true)]

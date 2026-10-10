@@ -34,6 +34,7 @@ use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::snapshot::{HostOutcome, HostTiming, NetCause, Snapshot};
 use crate::probe::{ProbeChecks, UrlProbe};
+use crate::ssh::config::KnownAliases;
 use crate::ssh::{RunEnd, RunRequest, RunSignal, Transport, outcome_error, run_outcome};
 use crate::store::FsStore;
 
@@ -45,16 +46,33 @@ pub const MAX_HOSTS_AT_ONCE: usize = 8;
 /// Longest connect timeout honoured, in seconds.
 pub(crate) const MAX_CONNECT_TIMEOUT_S: u32 = 120;
 
+/// The aliases `~/.ssh/config` defines, read once per scan; `None` when the
+/// file cannot tell (then every host runs, as before).
+pub type ConfigHosts = Arc<dyn Fn() -> Option<KnownAliases> + Send + Sync>;
+
 /// Knobs that are not user settings. Tests shorten the budget.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ServiceOptions {
     pub host_budget: Duration,
+    /// When set, a host whose alias is not in the config is not run: it ends
+    /// as `NotInConfig` instead of a DNS failure on its alias.
+    pub config_hosts: Option<ConfigHosts>,
+}
+
+impl std::fmt::Debug for ServiceOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServiceOptions")
+            .field("host_budget", &self.host_budget)
+            .field("config_hosts", &self.config_hosts.is_some())
+            .finish()
+    }
 }
 
 impl Default for ServiceOptions {
     fn default() -> Self {
         Self {
             host_budget: HOST_BUDGET,
+            config_hosts: None,
         }
     }
 }
@@ -341,7 +359,17 @@ impl Job {
                 .clamp(1, MAX_CONNECT_TIMEOUT_S),
         ));
         let mut hosts = JoinSet::new();
+        let known = self
+            .shared
+            .options
+            .config_hosts
+            .as_ref()
+            .and_then(|read| read());
         for host in &self.targets.hosts {
+            if known.as_ref().is_some_and(|k| !k.contains(host.as_str())) {
+                hosts.spawn(not_in_config(Arc::clone(&self.emitter), host.clone()));
+                continue;
+            }
             let task = HostTask {
                 shared: Arc::clone(&self.shared),
                 emitter: Arc::clone(&self.emitter),
@@ -601,6 +629,34 @@ impl HostTask {
         };
         self.emitter.emit(body).await;
     }
+}
+
+/// A host the config no longer defines: no ssh is run, so its alias is not
+/// looked up as a DNS name, and the scan says why instead of "unreachable".
+async fn not_in_config(emitter: Arc<Emitter>, host: HostAlias) -> Option<HostResult> {
+    let host_ref = HostRef::Alias(host.clone());
+    emitter
+        .emit(ScanEventBody::HostStarted {
+            host: host_ref.clone(),
+        })
+        .await;
+    tracing::info!(host = %host, "host not in the ssh config; not run");
+    let outcome = HostOutcome::NotInConfig;
+    emitter
+        .emit(ScanEventBody::HostFinished {
+            host: host_ref,
+            outcome: outcome.clone(),
+            ms: 0,
+            facts: 0,
+            dropped: 0,
+        })
+        .await;
+    Some(HostResult {
+        host,
+        outcome,
+        output: HostOutput::default(),
+        ms: 0,
+    })
 }
 
 /// Every host failed with DNS/no route and every URL failed at the network

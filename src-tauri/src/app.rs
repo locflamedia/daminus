@@ -22,6 +22,7 @@ use daminus_core::domain::settings::{
     AiSettings, AppearanceSettings, DataSettings, GeneralSettings, ScanSettings, Settings,
 };
 use daminus_core::probe::UrlProbe;
+use daminus_core::scan::{ConfigHosts, ServiceOptions};
 use daminus_core::scan::{
     ExpectedDraft, HistoryView, ScanEvent, ScanFact, ScanRun, ScanScope, ScanService, Started,
     add_rule, excluded_hosts, history_facts, history_view, latest_report, remove_rule, report_at,
@@ -32,6 +33,7 @@ use daminus_core::setup::{
     UrlCheck, check_url,
 };
 use daminus_core::ssh::config::HostListing;
+use daminus_core::ssh::config::{ConfigSource, KnownAliases, list_hosts};
 use daminus_core::ssh::hostkey::HostKeyInfo;
 use daminus_core::ssh::{SshTools, Transport};
 use daminus_core::store::FsStore;
@@ -79,11 +81,22 @@ impl AppCore {
     ) -> (Self, AppEvents) {
         let (tx, rx) = mpsc::channel(EVENT_BUFFER);
         let (setup_tx, setup_rx) = mpsc::channel(EVENT_BUFFER);
-        let service = ScanService::new(
+        // Each scan reads the ssh config's aliases once, so a host that is no
+        // longer in it is not run and reads "Not in ~/.ssh/config".
+        let config_tools = tools.clone();
+        let config_hosts: ConfigHosts = Arc::new(move || {
+            let source = ConfigSource::for_tools(&config_tools)?;
+            KnownAliases::of(&list_hosts(&source).ok()?)
+        });
+        let service = ScanService::with_options(
             Arc::clone(&transport),
             Arc::clone(&probe),
             store.clone(),
             tx,
+            ServiceOptions {
+                config_hosts: Some(config_hosts),
+                ..ServiceOptions::default()
+            },
         );
         let (ai_tx, ai_rx) = mpsc::channel(EVENT_BUFFER);
         let setup = SetupService::new(transport, tools.clone(), store.clone(), setup_tx);

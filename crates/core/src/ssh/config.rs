@@ -42,6 +42,72 @@ pub enum SkipReason {
     InvalidAlias,
 }
 
+/// The aliases a config defines, to tell a host it no longer knows from one
+/// that does not answer: the named hosts, and the patterns that could match
+/// an alias (`Host vps-*` with a `HostName %h.example.com`). `Host *` alone
+/// only sets defaults and names no host.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct KnownAliases {
+    names: std::collections::HashSet<String>,
+    patterns: Vec<String>,
+}
+
+impl KnownAliases {
+    /// From a listing. `None` when it cannot tell: a `Match` block may apply
+    /// to any alias. A missing config file defines none.
+    pub fn of(list: &HostList) -> Option<Self> {
+        if list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
+            return None;
+        }
+        let mut known = Self::default();
+        known
+            .names
+            .extend(list.hosts.iter().map(|h| h.alias.as_str().to_owned()));
+        for s in &list.skipped {
+            match s.reason {
+                SkipReason::Wildcard if s.pattern != "*" && !s.pattern.starts_with('!') => {
+                    known.patterns.push(s.pattern.clone());
+                }
+                SkipReason::Wildcard | SkipReason::Match => {}
+                SkipReason::NoHostName | SkipReason::InvalidAlias => {
+                    known.names.insert(s.pattern.clone());
+                }
+            }
+        }
+        Some(known)
+    }
+
+    pub fn contains(&self, alias: &str) -> bool {
+        self.names.contains(alias) || self.patterns.iter().any(|p| glob(p, alias))
+    }
+}
+
+/// ssh's `*` and `?` patterns.
+fn glob(pattern: &str, text: &str) -> bool {
+    let (p, t): (Vec<char>, Vec<char>) = (pattern.chars().collect(), text.chars().collect());
+    let (mut pi, mut ti, mut star, mut mark) = (0, 0, None, 0);
+    while ti < t.len() {
+        if pi < p.len() && (p[pi] == '?' || p[pi] == t[ti]) {
+            pi += 1;
+            ti += 1;
+        } else if pi < p.len() && p[pi] == '*' {
+            star = Some(pi);
+            mark = ti;
+            pi += 1;
+        } else if let Some(s) = star {
+            pi = s + 1;
+            mark += 1;
+            ti = mark;
+        } else {
+            return false;
+        }
+    }
+    while pi < p.len() && p[pi] == '*' {
+        pi += 1;
+    }
+    pi == p.len()
+}
+
 /// A host the user can pick.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]

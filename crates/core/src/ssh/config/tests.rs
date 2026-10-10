@@ -579,3 +579,40 @@ async fn a_good_config_has_no_config_error() {
     assert!(listing.entries[0].resolved.is_some());
     assert_eq!(listing.config_error, None);
 }
+
+#[test]
+fn known_aliases_name_hosts_and_patterns_but_not_the_catch_all() {
+    let host = |a: &str| ConfigHost {
+        alias: HostAlias::parse(a).unwrap(),
+        file: "c".into(),
+        line: 1,
+    };
+    let skip = |p: &str, reason| SkippedHost {
+        pattern: p.into(),
+        reason,
+        file: "c".into(),
+        line: 2,
+    };
+    let list = HostList {
+        config_found: true,
+        hosts: vec![host("apollo-test")],
+        skipped: vec![
+            skip("*", SkipReason::Wildcard),
+            skip("vps-?.*", SkipReason::Wildcard),
+            skip("bare", SkipReason::NoHostName),
+        ],
+        empty: None,
+    };
+    let known = KnownAliases::of(&list).unwrap();
+    assert!(known.contains("apollo-test"));
+    assert!(known.contains("bare"));
+    assert!(known.contains("vps-1.sg"));
+    assert!(!known.contains("apollo-traffic"));
+    assert!(!known.contains("vps-12"));
+
+    let with_match = HostList {
+        skipped: vec![skip("all", SkipReason::Match)],
+        ..list
+    };
+    assert_eq!(KnownAliases::of(&with_match), None);
+}
