@@ -89,6 +89,16 @@ describe('layoutServers', () => {
     expect(view.groups[0]?.roles.map((r) => r.role)).toEqual(['fe', 'be', 'db'])
   })
 
+  it('labels each role once on a node, however many parts share it', () => {
+    const view = layoutServers([
+      node('be', 'ok', 'a'),
+      node('be', 'crit', 'a'),
+      node('worker', 'ok', 'a'),
+    ])
+    expect(view.groups[0]?.roles.map((r) => r.role)).toEqual(['be', 'worker'])
+    expect(view.groups[0]?.state).toBe('crit')
+  })
+
   it('starts a new node where the server changes back', () => {
     const view = layoutServers(
       [node('fe', 'ok', 'a'), node('be', 'ok', 'b'), node('db', 'ok', 'a')],

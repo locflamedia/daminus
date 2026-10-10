@@ -98,7 +98,8 @@ export const SERVER_NODES_MAX = 2
 
 /**
  * The Overview card's form: components that follow each other on the same server share one
- * node ("FE BE DB vps-hn-3"), and a node appears again only where the server changes. Nodes
+ * node ("FE BE DB vps-hn-3"), each role labelled once however many parts share it, and a node
+ * appears again only where the server changes. Nodes
  * keep discovery order, front to back; past `max` the rest fold into "+N" (a list shows every
  * server, so it passes `Infinity`).
  */
@@ -112,7 +113,7 @@ export function layoutServers(
     const last = all.at(-1)
     const role = { id: c.id, label: c.label, role: roleOf(c) }
     if (last && last.host === host) {
-      last.roles.push(role)
+      if (!last.roles.some((r) => r.role === role.role)) last.roles.push(role)
       if (SEVERITY[c.state] > SEVERITY[last.state]) last.state = c.state
     } else {
       all.push({ host, roles: [role], state: c.state })
