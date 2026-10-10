@@ -3,6 +3,7 @@ import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, ref } from 'vue'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import { copyText } from '@/api'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n } from '@/i18n'
@@ -170,17 +171,198 @@ describe('AddHostSheet', () => {
       if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1 }
       return null
     })
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div />' } },
+        { path: '/setup', component: { template: '<div />' } },
+        { path: '/setup/discover', component: { template: '<div />' } },
+      ],
+    })
     const wrapper = mount(AddHostSheet, {
       props: {
         modelValue: true,
         'onUpdate:modelValue': (v: boolean) => wrapper.setProps({ modelValue: v }),
       },
       attachTo: document.body,
-      global: { plugins: [i18n] },
+      global: { plugins: [i18n, router] },
     })
     mounted.push(wrapper)
     return wrapper
   }
+  let router: ReturnType<typeof createRouter>
+
+  const dialog = () => document.body.querySelector('[role="dialog"]')
+  const footerButton = (label: string) =>
+    [...document.body.querySelectorAll<HTMLButtonElement>('[role="dialog"] footer button')].find(
+      (b) => b.textContent?.includes(label),
+    )
+  /** The config holds `aliases` (line 9, 14, …) in ~/.ssh/config. */
+  function configWith(aliases: string[], skipped: unknown[] = []) {
+    const hosts = aliases.map((alias, i) => ({
+      alias,
+      file: '/Users/someone/.ssh/config',
+      line: 9 + 5 * i,
+    }))
+    return {
+      list: { config_found: true, hosts, skipped },
+      entries: hosts.map((host) => ({ host, resolved: null })),
+    }
+  }
+  async function fillValidBlock() {
+    const inputs = [...(dialog()?.querySelectorAll<HTMLInputElement>('input') ?? [])]
+    const values = ['apollo-2', '103.75.186.31', 'root', '24700', '~/.ssh/id_rsa']
+    for (const [i, v] of values.entries()) {
+      const input = inputs[i]
+      if (!input) continue
+      input.value = v
+      input.dispatchEvent(new Event('input'))
+      await flushPromises()
+    }
+  }
+  async function typeAlias(alias: string) {
+    const input = dialog()?.querySelector<HTMLInputElement>('input')
+    if (!input) throw new Error('no alias field')
+    input.value = alias
+    input.dispatchEvent(new Event('input'))
+    await flushPromises()
+  }
+
+  it('says where the typed host was found, and Import replaces Check again', async () => {
+    let added = false
+    mountSheet(() => configWith(added ? ['vps-a', 'apollo-2'] : ['vps-a']))
+    await flushPromises()
+    await typeAlias('apollo-2')
+    expect(dialog()?.querySelector('.result')).toBeNull()
+
+    added = true
+    footerButton('Check again')?.click()
+    await flushPromises()
+    const result = dialog()?.querySelector('.result')
+    expect(result?.classList.contains('found')).toBe(true)
+    expect(result?.textContent).toContain('Found apollo-2 in ~/.ssh/config, line 14')
+    expect(footerButton('Check again')).toBeUndefined()
+    const importButton = footerButton('Import apollo-2')
+    expect(importButton).toBeDefined()
+    importButton?.click()
+    await flushPromises()
+    expect(useSetupStore().ticked).toEqual(['apollo-2'])
+    expect(router.currentRoute.value.path).toBe('/setup')
+  })
+
+  it('says the typed host is not in the config yet, and Copy block copies and says so', async () => {
+    mountSheet(() => configWith(['vps-a']))
+    await flushPromises()
+    await fillValidBlock()
+    footerButton('Check again')?.click()
+    await flushPromises()
+    const result = dialog()?.querySelector('.result')
+    expect(result?.classList.contains('missing')).toBe(true)
+    expect(result?.textContent).toContain(
+      'apollo-2 is not in ~/.ssh/config yet. Paste the block at the end, save, then check again.',
+    )
+    const copyButton = result?.querySelector('button')
+    expect(copyButton?.textContent).toContain('Copy block')
+    copyButton?.click()
+    await flushPromises()
+    expect(vi.mocked(copyText)).toHaveBeenCalledWith(expect.stringContaining('Host apollo-2'))
+    expect(result?.querySelector('button')?.textContent).toContain('Copied')
+  })
+
+  it('offers no Copy block while the form cannot make a block', async () => {
+    mountSheet(() => configWith(['vps-a']))
+    await flushPromises()
+    await typeAlias('apollo 2')
+    footerButton('Check again')?.click()
+    await flushPromises()
+    const result = dialog()?.querySelector('.result.missing')
+    expect(result).not.toBeNull()
+    expect(result?.querySelector('button')).toBeNull()
+  })
+
+  it('says a typed host that is in the file but left out is left out, not missing', async () => {
+    mountSheet(() =>
+      configWith(
+        ['vps-a'],
+        [
+          {
+            pattern: 'apollo-2',
+            reason: 'no_host_name',
+            file: '/Users/someone/.ssh/config',
+            line: 9,
+          },
+        ],
+      ),
+    )
+    await flushPromises()
+    await typeAlias('apollo-2')
+    footerButton('Check again')?.click()
+    await flushPromises()
+    const result = dialog()?.querySelector('.result')
+    expect(result?.classList.contains('left-out')).toBe(true)
+    expect(result?.textContent).toContain(
+      'apollo-2 is in ~/.ssh/config, line 9, but left out: no HostName.',
+    )
+    expect(footerButton('Import')).toBeUndefined()
+  })
+
+  it('follows the config when it is read again from elsewhere, and drops a stale answer', async () => {
+    let added = false
+    mountSheet(() => configWith(added ? ['apollo-2'] : []))
+    await flushPromises()
+    await typeAlias('apollo-2')
+    footerButton('Check again')?.click()
+    await flushPromises()
+    expect(dialog()?.querySelector('.result.missing')).not.toBeNull()
+    added = true
+    await useSetupStore().reload()
+    await flushPromises()
+    expect(dialog()?.querySelector('.result.found')).not.toBeNull()
+    await typeAlias('apollo-3')
+    expect(dialog()?.querySelector('.result')).toBeNull()
+  })
+
+  it('offers no Import after a failed read, nor on a later setup step', async () => {
+    let fail = false
+    mountSheet(() => {
+      if (fail) throw { code: { kind: 'internal' }, retryable: false }
+      return configWith(['apollo-2'])
+    })
+    await flushPromises()
+    await typeAlias('apollo-2')
+    fail = true
+    footerButton('Check again')?.click()
+    await flushPromises()
+    expect(footerButton('Import')).toBeUndefined()
+    expect(dialog()?.querySelector('.result')).toBeNull()
+
+    fail = false
+    await router.push('/setup/discover')
+    footerButton('Check again')?.click()
+    await flushPromises()
+    expect(dialog()?.querySelector('.result.found')).not.toBeNull()
+    expect(footerButton('Import')).toBeUndefined()
+  })
+
+  it('reads the config while Check again runs', async () => {
+    let finish: (v: unknown) => void = () => {}
+    mountSheet(() => configWith([]))
+    mockCommands((cmd) => {
+      if (cmd === 'hosts_list') return new Promise((r) => (finish = r))
+      if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1 }
+      return null
+    })
+    await flushPromises()
+    await typeAlias('apollo-2')
+    footerButton('Check again')?.click()
+    await flushPromises()
+    expect(dialog()?.querySelector('.result.reading')?.textContent).toContain(
+      'Reading ~/.ssh/config…',
+    )
+    finish(configWith([]))
+    await flushPromises()
+    expect(dialog()?.querySelector('.result.missing')).not.toBeNull()
+  })
 
   it('says Daminus never writes ~/.ssh/config and holds the same form', async () => {
     const wrapper = mountSheet()
