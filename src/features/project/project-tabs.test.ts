@@ -118,6 +118,13 @@ describe('Containers tab', () => {
     expect(w.text()).not.toContain('ExportOrders')
   })
 
+  it('says when the troubled service started as a clock time, as docker inspect does', async () => {
+    const w = await mountTab(ProjectContainersTab, 'results', 'tiemtra')
+    const exit = w.find('.code').text()
+    expect(exit).toMatch(/Started\s+.*\d{1,2}:\d{2}/)
+    expect(exit).not.toMatch(/ago/)
+  })
+
   it('offers the permission steps when Docker needs permission', async () => {
     const w = await mountTab(ProjectContainersTab, 'tab-docker-perm', 'tiemtra')
     expect(w.text()).toContain('Daminus can’t use Docker on vps-sg-2')

@@ -180,15 +180,40 @@ fn basics(s: u32, cores: u32, load: f64, mem_free: f64, disk_pct: u32) -> Vec<Ch
             .with_data(
                 json!({ "cores": cores, "load1": load + jitter + 0.3, "load15": load * 0.7 }),
             ),
-        CheckFact::new("sys.mem", "").with_value(mem_free - jitter, "%"),
+        CheckFact::new("sys.mem", "")
+            .with_value(mem_free - jitter, "%")
+            .with_data(json!({ "total": gb(f64::from(cores) * 2.0) })),
         CheckFact::new("sys.swap", "").with_value(3.0, "%"),
         CheckFact::new("sys.oom", "").with_value(0.0, "count"),
-        CheckFact::new("disk.fs", "/").with_data(json!({ "pct": disk_pct, "ipct": 12 })),
+        CheckFact::new("disk.fs", "/").with_data(json!({
+            "pct": disk_pct,
+            "ipct": 12,
+            "size": DISK_SIZE,
+            "used": disk_used(disk_pct),
+            "avail": DISK_SIZE - disk_used(disk_pct),
+            "fs": "ext4",
+        })),
         CheckFact::new("sec.miner", "")
             .with_value(0.0, "count")
             .with_data(json!({ "seen": 64, "total": 64 })),
         CheckFact::new("sec.preload", "").with_value(0.0, "count"),
     ]
+}
+
+/// Every server's root disk: 95 GB (binary, as the app prints sizes), as the board draws vps-sg-2.
+const DISK_SIZE: f64 = 95.0 * GIB;
+const GIB: f64 = 1024.0 * 1024.0 * 1024.0;
+
+/// Bytes used at `pct`, to 0.1 GB (87% reads "82.6 of 95 GB · 12.4 GB free").
+fn disk_used(pct: u32) -> f64 {
+    (DISK_SIZE * f64::from(pct) / 100.0 / (GIB / 10.0)).floor() * (GIB / 10.0)
+}
+
+/// A container's CPU in scan `s`: it moves from scan to scan like a real one, and scan #12
+/// reads `now` (the board's value).
+fn cpu(now: f64, s: u32) -> f64 {
+    const WAVE: [f64; 12] = [0.6, 0.9, 0.7, 1.2, 1.0, 0.8, 1.3, 1.1, 0.7, 0.9, 1.2, 1.0];
+    (now * WAVE[(s as usize - 1) % 12] * 10.0).round() / 10.0
 }
 
 fn mb(x: u32) -> f64 {
@@ -240,18 +265,18 @@ fn scan(s: u32) -> Snapshot {
             "restarts": if s >= 11 { 1 } else { 0 }, "mem_pct": 61,
             "services": [
                 {"name": "tiemtra-api-api-1", "svc": "api", "state": "running", "restarts": 0,
-                 "mem": mb(380 + s * 3), "limit": mb(512), "cpu": 3.2, "oom": false, "exit": 0,
+                 "mem": mb(380 + s * 3), "limit": mb(512), "cpu": cpu(3.2, s), "oom": false, "exit": 0,
                  "started": "2026-09-20T09:12:03.412Z", "image": "tiemtra-api:1.5.0"},
                 {"name": "tiemtra-api-worker-1", "svc": "worker", "state": "running",
                  "restarts": if s >= 11 { 1 } else { 0 },
-                 "mem": mb(120 + (s % 4) * 130), "limit": mb(512), "cpu": 0.8,
+                 "mem": mb(120 + (s % 4) * 130), "limit": mb(512), "cpu": cpu(0.8, s),
                  "oom": s >= 11, "exit": if s >= 11 { 137 } else { 0 },
                  "started": "2026-09-26T06:19:51.007Z", "image": "tiemtra-api:1.5.0"},
                 {"name": "tiemtra-api-db-1", "svc": "db", "state": "running", "restarts": 0,
-                 "mem": mb(1200), "limit": mb(2048), "cpu": 1.1, "oom": false, "exit": 0,
+                 "mem": mb(1200), "limit": mb(2048), "cpu": cpu(1.1, s), "oom": false, "exit": 0,
                  "started": "2026-09-20T09:12:01.002Z", "image": "postgres:16.4"},
                 {"name": "tiemtra-api-redis-1", "svc": "redis", "state": "running", "restarts": 0,
-                 "mem": mb(38), "limit": mb(256), "cpu": 0.2, "oom": false, "exit": 0,
+                 "mem": mb(38), "limit": mb(256), "cpu": cpu(0.2, s), "oom": false, "exit": 0,
                  "started": "2026-09-20T09:12:01.402Z", "image": "redis:7.2"},
             ],
         })),

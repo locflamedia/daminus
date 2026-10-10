@@ -1,8 +1,8 @@
 {
   "serverScreen": {
     "identity": {
-      "cores": "{n} core | {n} cores",
-      "memory": "{size} RAM",
+      "cores": "{n} vCPU",
+      "memory": "{size}",
       "hostTime": "{time}"
     },
     "baseline": {

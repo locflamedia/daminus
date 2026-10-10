@@ -72,6 +72,21 @@ describe('Server page', () => {
     expect(wrapper.findAll('.kpi')[2]?.find('.delta').text()).toContain('3 pts')
   })
 
+  it('names the machine and its disk in bytes as the board does', async () => {
+    freshClock()
+    const { wrapper } = await mountServer('vps-sg-2')
+    expect(wrapper.text()).toContain('4 vCPU · 8 GB')
+    expect(wrapper.text()).toContain('82.6 of 95 GB · 12.4 GB free')
+    expect(wrapper.findAll('.kpi')[2]?.find('.delta').text()).toMatch(/3 pts · \+2\.\d GB/)
+  })
+
+  it('keeps the always-info sizes out of Findings', async () => {
+    const { wrapper } = await mountServer('vps-sg-2')
+    const findings = wrapper.findComponent({ name: 'ServerFindingsCard' })
+    expect(findings.text()).not.toContain('db.size')
+    expect(findings.text()).not.toContain('disk.path')
+  })
+
   it('draws the disk trend with the forecast on the newest scan', async () => {
     const { wrapper } = await mountServer('vps-sg-2')
     expect(wrapper.find('[aria-roledescription="chart"]').exists()).toBe(true)
