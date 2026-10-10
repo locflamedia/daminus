@@ -349,7 +349,7 @@ describe('AddHostSheet', () => {
     mountSheet(() => configWith([]))
     mockCommands((cmd) => {
       if (cmd === 'hosts_list') return new Promise((r) => (finish = r))
-      if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1, termius_installed: false }
+      if (cmd === 'ssh_environment') return { agent: 'keys', keys: 1 }
       return null
     })
     await flushPromises()
