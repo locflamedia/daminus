@@ -53,10 +53,10 @@ pub struct KnownAliases {
 }
 
 impl KnownAliases {
-    /// From a listing. `None` when it cannot tell: no config file was found,
-    /// or a `Match` block may apply to any alias.
+    /// From a listing. `None` when it cannot tell: a `Match` block may apply
+    /// to any alias. A missing config file defines none.
     pub fn of(list: &HostList) -> Option<Self> {
-        if !list.config_found || list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
+        if list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
             return None;
         }
         let mut known = Self::default();

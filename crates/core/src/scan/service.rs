@@ -661,18 +661,24 @@ fn not_in_config(
 /// Every host failed with DNS/no route and every URL failed at the network
 /// level. One failing target says nothing about this Mac (a mistyped
 /// HostName, a VPN that is down), so at least two targets must have failed;
-/// that host or URL is then saved with its own outcome instead.
+/// that host or URL is then saved with its own outcome instead. An alias gone
+/// from the config also failed on DNS, so it does not clear the Mac, but it
+/// is not counted: a deleted config would otherwise read as "offline".
 fn local_network_down(results: &[HostResult], local: Option<&LocalResult>, urls: usize) -> bool {
-    let hosts_down = results.iter().all(|r| {
+    let network = |o: &HostOutcome| {
         matches!(
-            r.outcome,
+            o,
             HostOutcome::Unreachable {
                 cause: NetCause::Dns | NetCause::NoRoute
-            } | HostOutcome::NotInConfig
+            }
         )
-    });
+    };
+    let hosts_down = results
+        .iter()
+        .all(|r| network(&r.outcome) || r.outcome == HostOutcome::NotInConfig);
     let urls_down = local.is_none_or(|l| l.all_network);
-    hosts_down && urls_down && results.len() + urls >= 2
+    let failed = results.iter().filter(|r| network(&r.outcome)).count() + urls;
+    hosts_down && urls_down && failed >= 2
 }
 
 /// How a host's part ended (see [`run_outcome`]).

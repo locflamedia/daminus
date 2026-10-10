@@ -618,7 +618,7 @@ fn known_aliases_name_hosts_and_patterns_but_not_the_catch_all() {
 }
 
 #[test]
-fn known_aliases_match_case_like_ssh_and_cannot_tell_without_a_config() {
+fn known_aliases_match_case_like_ssh_and_a_missing_config_defines_none() {
     let list = HostList {
         config_found: true,
         hosts: vec![ConfigHost {
@@ -643,5 +643,6 @@ fn known_aliases_match_case_like_ssh_and_cannot_tell_without_a_config() {
         skipped: Vec::new(),
         empty: None,
     };
-    assert_eq!(KnownAliases::of(&missing), None);
+    let none = KnownAliases::of(&missing).unwrap();
+    assert!(!none.contains("web"));
 }
