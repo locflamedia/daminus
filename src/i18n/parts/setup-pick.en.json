@@ -56,7 +56,8 @@
       "key_rejected": "Key rejected",
       "unreachable": "Unreachable",
       "timed_out": "Timed out",
-      "kept": "kept · retries on first scan"
+      "kept": "kept · retries on first scan",
+      "untested": "Not tested yet"
     },
     "tip": {
       "not_checked": "ssh refuses ~/.ssh/config, so this host is not tested yet. Fix the line in the banner, then check again.",

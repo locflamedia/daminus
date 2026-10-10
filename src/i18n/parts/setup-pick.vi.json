@@ -56,7 +56,8 @@
       "key_rejected": "Khóa bị từ chối",
       "unreachable": "Không tới được",
       "timed_out": "Hết thời gian",
-      "kept": "giữ lại · thử lại ở lần quét đầu"
+      "kept": "giữ lại · thử lại ở lần quét đầu",
+      "untested": "Chưa thử"
     },
     "tip": {
       "not_checked": "ssh không đọc được ~/.ssh/config nên host này chưa được kiểm tra. Sửa dòng trong banner rồi kiểm tra lại.",

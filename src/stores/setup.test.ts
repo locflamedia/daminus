@@ -498,7 +498,7 @@ describe('starting over', () => {
     await backend.finishRun()
     setup.reset()
     expect(setup.ticked).toEqual([])
-    expect(setup.chip('vps-a')).toBe('queued')
+    expect(setup.chip('vps-a')).toBe('untested')
     expect(setup.result).toBeNull()
   })
 })

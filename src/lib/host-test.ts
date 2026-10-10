@@ -9,6 +9,7 @@ import type { DockerAccess, HostOutcome, LoginReport, LoginResult, PathState } f
  */
 export type TestChip =
   | 'not_checked'
+  | 'untested'
   | 'queued'
   | 'connecting'
   | 'agent_wait'
