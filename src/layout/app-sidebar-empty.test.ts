@@ -99,6 +99,16 @@ describe('AppSidebar with no project', () => {
     expect(wrapper.text()).toContain('kho-hang')
   })
 
+  it('keeps one Servers group and no issue count when scans outlived projects.json', async () => {
+    useProjectsStore().loaded = true
+    useReportStore().latest = shellReport()
+    know(useSetupStore(), { agent: 'keys', keys: 2, termius_installed: false })
+    const wrapper = await mountSidebar()
+    expect(wrapper.findAll('.group').map((g) => g.text())).toEqual(['Projects 0', 'Servers 0'])
+    expect(wrapper.find('.item.server').exists()).toBe(false)
+    expect(wrapper.find('.item .count').exists()).toBe(false)
+  })
+
   it('does not take a failed read of projects.json for a first launch', async () => {
     // `loaded` stays false when the file could not be read.
     const wrapper = await mountSidebar()

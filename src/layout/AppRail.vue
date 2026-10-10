@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import brandMark from '../../assets/brand/app-mark-flat-64.png'
 import { isUnreachable, issueCount } from '@/lib/rollups'
+import { useEmptyStore } from '@/features/empty/empty-store'
 import { useProjectsStore } from '@/stores/projects'
 import { useScanStore } from '@/stores/scan'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -16,6 +17,8 @@ import ProjectTile from './ProjectTile.vue'
 const { t } = useI18n()
 const projects = useProjectsStore()
 const scan = useScanStore()
+// Scans can outlive projects.json: with no project, nothing from an old scan is drawn.
+const empty = useEmptyStore()
 const aiName = useAiProviderName()
 const aiMark = useAiModelMark()
 
@@ -108,7 +111,7 @@ const overviewTip = computed(() =>
         @pointerleave="leave"
       >
         <UiIcon name="grid" />
-        <b v-if="badgeText(projects.issues)" class="badge accent">{{
+        <b v-if="!empty.active && badgeText(projects.issues)" class="badge accent">{{
           badgeText(projects.issues)
         }}</b>
       </RouterLink>
@@ -126,7 +129,7 @@ const overviewTip = computed(() =>
       <!-- Projects and servers scroll on their own, so the AI mark and the Settings gear stay in
            view in a short window. -->
       <div class="mid">
-        <template v-if="projects.projects.length">
+        <template v-if="!empty.active && projects.projects.length">
           <span class="line" />
           <RouterLink
             v-for="p in projects.projects"
@@ -148,7 +151,7 @@ const overviewTip = computed(() =>
           </RouterLink>
         </template>
 
-        <template v-if="projects.servers.length">
+        <template v-if="!empty.active && projects.servers.length">
           <span class="line" />
           <RouterLink
             v-for="s in projects.servers"
