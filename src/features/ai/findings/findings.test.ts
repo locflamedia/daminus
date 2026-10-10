@@ -174,6 +174,13 @@ describe('Findings page', () => {
     expect(rows[0]?.text()).toContain('1')
   })
 
+  it('has no see-payload link: the sent text is not kept, and nothing here may re-run a review', async () => {
+    answer([finding('c2', 1)])
+    const { view } = await page()
+    expect(view.text()).not.toContain('see payload')
+    expect(view.find('.sub button').exists()).toBe(false)
+  })
+
   it('draws the note on what the AI saw and the Mark as expected button', async () => {
     answer([finding('c2', 1, 'A PHP file can run.')])
     const { view } = await page()
