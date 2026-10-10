@@ -7,7 +7,6 @@ import {
   type DraftPart,
   type DraftProject,
   isAbsPath,
-  isIncomplete,
   newKey,
   partName,
   roleForName,
@@ -182,9 +181,14 @@ export function partState(part: DraftPart, records: readonly SetupRecord[]): Par
   return null
 }
 
-/** A part with nothing typed in it yet: left out of the save, like a half-filled database. */
+/**
+ * A part with nothing typed in it yet: left out of the save. A database with only its .env or
+ * its container is kept (setup saves it so), and its size waits for a name.
+ */
 export function isBlank(part: DraftPart): boolean {
-  if (part.kind === 'db') return isIncomplete(part)
+  if (part.kind === 'db') {
+    return part.database.trim() === '' && part.envFile.trim() === '' && !part.container
+  }
   return partName(part).trim() === ''
 }
 

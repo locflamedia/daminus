@@ -190,6 +190,13 @@ describe('blank parts and paths', () => {
     expect(isBlank(newPart('compose', 'h'))).toBe(true)
   })
 
+  it('keeps a database part that has only a .env or a container, as setup saved it', () => {
+    const db = newPart('database', 'h')
+    expect(isBlank(db)).toBe(true)
+    expect(isBlank({ ...db, envFile: '/srv/api/.env' } as DraftPart)).toBe(false)
+    expect(isBlank({ ...db, container: 'blog-db-1' } as DraftPart)).toBe(false)
+  })
+
   it('flags a typed path that is not absolute, for folders and for .env files', () => {
     expect(badPath({ ...newPart('folder', 'h'), kind: 'path', path: 'var/www' } as DraftPart)).toBe(
       true,
