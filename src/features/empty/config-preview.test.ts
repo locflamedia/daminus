@@ -25,6 +25,7 @@ describe('ConfigPreview', () => {
       global: { plugins: [i18n] },
     })
     const style = wrapper.find('.preview').attributes('style') ?? ''
-    expect(style).toContain('--alias: 11ch')
+    // 11 characters of Geist Mono at 13 px, the same value for the header and every row.
+    expect(style).toContain('--alias: 86px')
   })
 })

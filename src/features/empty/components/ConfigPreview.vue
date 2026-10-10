@@ -64,12 +64,16 @@ const chip = computed(() =>
     : { tone: 'info' as const, busy: true, label: t('empty.preview.reading') },
 )
 
+/** One character of an alias: Geist Mono at 13 px advances 0.6 em. */
+const ALIAS_CHAR_PX = 7.8
+
 /**
- * The alias column is as wide as the longest alias (the font is monospaced), up to half the
- * row; HostName gives way first when the panel is short, so an alias is cut only when needed.
+ * The alias column is as wide as the longest alias, up to half the row; HostName gives way
+ * first when the panel is short, so an alias is cut only when needed. In px, not `ch`: the
+ * header row is set smaller than the rows, and every row must get the same column.
  */
 const aliasWidth = computed(() => ({
-  '--alias': `${Math.max(0, ...props.rows.map((r) => r.alias.length))}ch`,
+  '--alias': `${Math.ceil(Math.max(0, ...props.rows.map((r) => r.alias.length)) * ALIAS_CHAR_PX)}px`,
 }))
 
 function skipText(s: PreviewSkip): string {
@@ -151,8 +155,8 @@ function skipText(s: PreviewSkip): string {
 
 <style scoped>
 .preview {
-  /* The longest alias, in ch; set from the rows. */
-  --alias: 0ch;
+  /* The longest alias, in px; set from the rows. */
+  --alias: 0px;
 
   --card-gap: var(--space-3);
 }
