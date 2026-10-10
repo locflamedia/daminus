@@ -90,14 +90,27 @@ const SETTINGS_CODES = [
   'provider_model_not_found',
   'claude_code_not_acknowledged',
 ]
-// A refusal from the provider names it and the short reason with what to do ("Anthropic didn't
-// answer: rate limited. Try again in a minute."); any other error keeps its own sentence.
+// Where the fault is picks the lead. A refusal from the provider names it ("Anthropic didn't
+// answer: rate limited. Try again in a minute."); a cause on this Mac or in the setup does not
+// blame the provider ("Could not ask Claude Code: …"); any other error keeps its own sentence.
+const LOCAL_CODES = [
+  'claude_cli_not_found',
+  'claude_cli_not_logged_in',
+  'claude_code_not_acknowledged',
+  'provider_not_configured',
+  'provider_key_missing',
+]
 const failure = computed(() => {
   const error = props.turn.error
   if (!error) return ''
   const reason = `aiAsk.failure.${error.code.kind}`
   return te(reason)
-    ? t('aiAsk.didNotAnswer', { provider: provider.value, reason: t(reason) })
+    ? LOCAL_CODES.includes(error.code.kind)
+      ? t('aiAsk.couldNotAsk', {
+          provider: useAiPayloadStore().providerName || t('aiAsk.theAiMid'),
+          reason: t(reason),
+        })
+      : t('aiAsk.didNotAnswer', { provider: provider.value, reason: t(reason) })
     : errorText(error)
 })
 const router = useRouter()

@@ -201,6 +201,26 @@ describe('Ask drawer', () => {
     )
   })
 
+  it('does not blame the provider for a cause on this Mac or in the setup', async () => {
+    const view = await open()
+    await sendFromSheet()
+    useAiPayloadStore().providerName = 'Claude Code'
+    await emit(0, { kind: 'error', error: { kind: 'claude_cli_not_found' } })
+    expect(view.find('[role="alert"] .why').text()).toBe(
+      'Could not ask Claude Code: the claude command is not on this Mac. Install Claude Code, then try again.',
+    )
+  })
+
+  it('says "the AI" when no provider is chosen, and names none as at fault', async () => {
+    const view = await open()
+    await sendFromSheet()
+    useAiPayloadStore().providerName = ''
+    await emit(0, { kind: 'error', error: { kind: 'provider_not_configured' } })
+    expect(view.find('[role="alert"] .why').text()).toBe(
+      'Could not ask the AI: no provider is chosen yet. Choose one in Settings › AI providers.',
+    )
+  })
+
   it('names the provider and the scan it reads while the answer is awaited', async () => {
     const view = await open()
     useAiPayloadStore().providerName = 'Anthropic'
