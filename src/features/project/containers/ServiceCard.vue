@@ -104,9 +104,19 @@ const memBad = computed(() => (props.service.memPct ?? 0) >= MEMORY_HINT_PCT)
         <span v-else class="muted small">{{ t('projectContainers.cell.noLimit') }}</span>
       </div>
       <div class="cell">
-        <span class="label">{{ t('projectContainers.cell.restarts') }}</span>
+        <span class="label">
+          {{
+            service.port === null
+              ? t('projectContainers.cell.restarts')
+              : t('projectContainers.cell.restartsPort')
+          }}
+        </span>
         <b class="value" :class="{ warn: service.restarts > 0 }">
           {{ service.restarts }}<span v-if="service.restarts > 0" aria-hidden="true"> ▲</span>
+          <span v-if="service.port !== null" class="port">
+            · :{{ service.port
+            }}<template v-if="service.portsMore > 0">&nbsp;+{{ service.portsMore }}</template>
+          </span>
         </b>
       </div>
     </div>
@@ -114,6 +124,11 @@ const memBad = computed(() => (props.service.memPct ?? 0) >= MEMORY_HINT_PCT)
 </template>
 
 <style scoped>
+.port {
+  color: var(--ink-2);
+  font-weight: var(--weight-regular);
+}
+
 .dot {
   display: inline-block;
   width: 6px;

@@ -2,16 +2,18 @@
 # (DAMINUS_COMPOSE), by the label com.docker.compose.project. `docker
 # inspect` always runs with a --format naming the fields it reads (name,
 # service label, state, restarts, memory limit, OOM flag, exit code, start
-# time, restart policy, image), so the container environment (Config.Env)
-# is never printed. One-off containers (`compose run`) are left out, and a
-# container that exited 0 with restart policy "no" counts as done, not down.
+# time, exit time, published ports, restart policy, image), so the container
+# environment (Config.Env) is never printed. One-off containers (`compose
+# run`) are left out, and a container that exited 0 with restart policy "no"
+# counts as done, not down.
 
 [ -n "${DAMINUS_COMPOSE-}" ] || exit 0
 
 docker_ok
 state=$?
 
-fmt='{{.Id}}'"$TAB"'{{.Name}}'"$TAB"'{{index .Config.Labels "com.docker.compose.service"}}'"$TAB"'{{index .Config.Labels "com.docker.compose.oneoff"}}'"$TAB"'{{.State.Status}}'"$TAB"'{{.RestartCount}}'"$TAB"'{{.HostConfig.Memory}}'"$TAB"'{{.State.OOMKilled}}'"$TAB"'{{.State.ExitCode}}'"$TAB"'{{.State.StartedAt}}'"$TAB"'{{.HostConfig.RestartPolicy.Name}}'"$TAB"'{{.Config.Image}}'
+# shellcheck disable=SC2016 # $p and $b are Go template variables, not shell
+fmt='{{.Id}}'"$TAB"'{{.Name}}'"$TAB"'{{index .Config.Labels "com.docker.compose.service"}}'"$TAB"'{{index .Config.Labels "com.docker.compose.oneoff"}}'"$TAB"'{{.State.Status}}'"$TAB"'{{.RestartCount}}'"$TAB"'{{.HostConfig.Memory}}'"$TAB"'{{.State.OOMKilled}}'"$TAB"'{{.State.ExitCode}}'"$TAB"'{{.State.StartedAt}}'"$TAB"'{{.State.FinishedAt}}'"$TAB"'{{range $p, $b := .NetworkSettings.Ports}}{{range $b}}{{.HostIp}}:{{.HostPort}}={{$p}} {{end}}{{end}}'"$TAB"'{{.HostConfig.RestartPolicy.Name}}'"$TAB"'{{.Config.Image}}'
 
 set -f
 IFS=$NL
@@ -67,6 +69,35 @@ for project in $DAMINUS_COMPOSE; do
 			return "\"" s "\""
 		}
 		function num(s) { return (s ~ /^-?[0-9]+(\.[0-9]+)?$/) ? s : 0 }
+		# Docker writes the zero time for a container that has never exited.
+		function stamp(s) { return (s ~ /^0001-01-01/) ? "" : s }
+		# The published host ports of one container, each once and in order, from
+		# the "HOSTIP:HOSTPORT=CONTAINERPORT/proto " pairs the format prints. A
+		# binding with no host port is not published, and 0.0.0.0 and [::] are
+		# the same port twice.
+		function host_ports(s,   i, m, k, hp, part, seen, out) {
+			m = split(s, part, " ")
+			out = ""
+			for (i = 1; i <= m; i++) {
+				if (part[i] !~ /=/) continue
+				hp = part[i]; sub(/=.*/, "", hp)
+				k = hp; sub(/.*:/, "", k)
+				if (k !~ /^[0-9]+$/) continue
+				if (k in seen) continue
+				seen[k] = 1
+				out = out (out == "" ? "" : " ") k
+			}
+			return out
+		}
+		function first_port(s,   p) {
+			p = host_ports(s)
+			sub(/ .*/, "", p)
+			return p
+		}
+		function more_ports(s,   p, drop) {
+			p = host_ports(s)
+			return (p == "") ? 0 : split(p, drop, " ") - 1
+		}
 		function bytes(s,   n, u, m) {
 			sub(/^ +/, "", s); sub(/ .*/, "", s)
 			n = s; sub(/[A-Za-z]+$/, "", n)
@@ -89,13 +120,15 @@ for project in $DAMINUS_COMPOSE; do
 			pct[$2] = $5; sub(/%$/, "", pct[$2])
 			next
 		}
-		$1 == "I" && NF == 13 {
+		$1 == "I" && NF == 15 {
 			if ($5 == "True" || $5 == "true") next
 			n++
 			id[n] = $2; name[n] = $3; sub(/^\//, "", name[n])
 			svc[n] = $4; st[n] = $6; rs[n] = num($7); lim[n] = num($8)
 			oom[n] = ($9 == "true") ? "true" : "false"; code[n] = num($10)
-			started[n] = $11; policy[n] = $12; image[n] = $13
+			started[n] = $11; finished[n] = stamp($12)
+			port[n] = first_port($13); extra[n] = more_ports($13)
+			policy[n] = $14; image[n] = $15
 		}
 		END {
 			if (n == 0) exit
@@ -106,7 +139,7 @@ for project in $DAMINUS_COMPOSE; do
 				rsum += rs[i]
 				p = num(pct[id[i]]) + 0
 				if (mem < p) mem = p
-				list = list (list == "" ? "" : ",") sprintf("{\"name\":%s,\"svc\":%s,\"state\":%s,\"restarts\":%d,\"mem\":%.0f,\"limit\":%.0f,\"cpu\":%s,\"oom\":%s,\"exit\":%d,\"started\":%s,\"image\":%s}", jstr(name[i]), jstr(svc[i]), jstr(st[i]), rs[i], used[id[i]] + 0, lim[i], num(cpu[id[i]]), oom[i], code[i], jstr(started[i]), jstr(image[i]))
+				list = list (list == "" ? "" : ",") sprintf("{\"name\":%s,\"svc\":%s,\"state\":%s,\"restarts\":%d,\"mem\":%.0f,\"limit\":%.0f,\"cpu\":%s,\"oom\":%s,\"exit\":%d,\"started\":%s,\"exited\":%s,\"port\":%s,\"ports_more\":%d,\"image\":%s}", jstr(name[i]), jstr(svc[i]), jstr(st[i]), rs[i], used[id[i]] + 0, lim[i], num(cpu[id[i]]), oom[i], code[i], jstr(started[i]), jstr(finished[i]), jstr(port[i]), extra[i], jstr(image[i]))
 			}
 			printf "{\"containers\":%d,\"running\":%d,\"not_running\":%d,\"restarts\":%d,\"mem_pct\":%s,\"services\":[%s]}\n", n, run, down, rsum, mem, list
 		}')

@@ -1,4 +1,4 @@
 {"_":"begin","v":1,"bundle":"5f8ecdbf3bf3f3e7"}
-{"check":"disk.path","target":"/home/daminus/app","value":4190208,"unit":"bytes","data":{"top":[["public",2109440],["src",2060288],["storage",4096]],"other":16384,"files":[["public/uploads/banner.bin",2097152]],"partial":false}}
+{"check":"disk.path","target":"/home/daminus/app","value":4190208,"unit":"bytes","data":{"top":[["public",2109440],["src",2060288],["storage",4096]],"other":16384,"files":[["public/uploads/banner.bin",2097152,1759000000]],"partial":false}}
 {"_":"step","group":"disk","ms":149}
 {"_":"end"}

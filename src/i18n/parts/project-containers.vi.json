@@ -33,6 +33,7 @@
       "memoryOnly": "Bộ nhớ",
       "noLimit": "không giới hạn",
       "restarts": "Khởi động lại",
+      "restartsPort": "Khởi động lại · cổng",
       "instances": "Tiến trình",
       "since": "Bắt đầu"
     },
@@ -45,6 +46,7 @@
       "no": "false",
       "code": "ExitCode",
       "started": "Bắt đầu",
+      "exited": "Thoát",
       "image": "image",
       "restarts": "khởi động lại",
       "seeWhy": "Xem lý do, trên máy chủ",

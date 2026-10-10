@@ -444,15 +444,18 @@
           "files": [
             [
               "storage/logs/laravel-2026-09-25.log",
-              671088640.0
+              671088640.0,
+              1790402400
             ],
             [
               "public/uploads/2026/07/promo-video.mov",
-              421527552.0
+              421527552.0,
+              1784006400
             ],
             [
               "public/uploads/2026/09/banner-4k.mp4",
-              100663296.0
+              100663296.0,
+              1788912000
             ]
           ],
           "other": 429496730.0,
@@ -569,11 +572,14 @@
             {
               "cpu": 3.2,
               "exit": 0,
+              "exited": "",
               "image": "tiemtra-api:1.5.0",
               "limit": 536870912.0,
               "mem": 414187520.0,
               "name": "tiemtra-api-api-1",
               "oom": false,
+              "port": "8000",
+              "ports_more": 1,
               "restarts": 0,
               "started": "2026-09-20T09:12:03.412Z",
               "state": "running",
@@ -582,11 +588,14 @@
             {
               "cpu": 0.8,
               "exit": 0,
+              "exited": "",
               "image": "tiemtra-api:1.5.0",
               "limit": 536870912.0,
               "mem": 262144000.0,
               "name": "tiemtra-api-worker-1",
               "oom": false,
+              "port": "",
+              "ports_more": 0,
               "restarts": 0,
               "started": "2026-09-26T06:19:51.007Z",
               "state": "running",
@@ -595,11 +604,14 @@
             {
               "cpu": 1.1,
               "exit": 0,
+              "exited": "",
               "image": "postgres:16.4",
               "limit": 2147483648.0,
               "mem": 1258291200.0,
               "name": "tiemtra-api-db-1",
               "oom": false,
+              "port": "5432",
+              "ports_more": 0,
               "restarts": 0,
               "started": "2026-09-20T09:12:01.002Z",
               "state": "running",
@@ -608,11 +620,14 @@
             {
               "cpu": 0.2,
               "exit": 0,
+              "exited": "",
               "image": "redis:7.2",
               "limit": 268435456.0,
               "mem": 39845888.0,
               "name": "tiemtra-api-redis-1",
               "oom": false,
+              "port": "",
+              "ports_more": 0,
               "restarts": 0,
               "started": "2026-09-20T09:12:01.402Z",
               "state": "running",
@@ -695,7 +710,8 @@
           "files": [
             [
               "storage/app/backups/db-2026-09-01.sql.gz",
-              81788928.0
+              81788928.0,
+              1788307200
             ]
           ],
           "other": 322122547.0,

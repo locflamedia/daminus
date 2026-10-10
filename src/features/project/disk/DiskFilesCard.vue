@@ -30,6 +30,7 @@ const skipped = computed(() => DEFAULT_SKIP_PATHS.join(', '))
           :title="f.finding ? t('projectDisk.files.finding') : undefined"
         />
         <span class="name">{{ f.name }}</span>
+        <span v-if="f.changedAt !== null" class="age">{{ fmt.when(f.changedAt * 1000) }}</span>
         <b class="size">{{ fmt.measure(f.bytes, 'bytes').text }}</b>
       </li>
     </ul>
@@ -49,7 +50,7 @@ const skipped = computed(() => DEFAULT_SKIP_PATHS.join(', '))
 
 .row {
   display: grid;
-  grid-template-columns: 20px minmax(0, 1fr) auto;
+  grid-template-columns: 20px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--space-3);
   min-height: 36px;
@@ -74,6 +75,12 @@ const skipped = computed(() => DEFAULT_SKIP_PATHS.join(', '))
   overflow: hidden;
   font-family: var(--font-mono);
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.age {
+  color: var(--ink-3);
+  font-size: var(--text-11);
   white-space: nowrap;
 }
 
