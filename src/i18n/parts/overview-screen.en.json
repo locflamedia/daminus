@@ -115,6 +115,7 @@
       "title": "Changes since #{seq}",
       "titleScanning": "Changes in #{seq} · this scan still running",
       "titleOld": "Changes in #{seq}, {ago}",
+      "titleFirst": "Changes in #{seq}",
       "history": "History",
       "empty": "Nothing changed since #{seq}.",
       "noBaseline": "There is no earlier scan to compare with yet.",
