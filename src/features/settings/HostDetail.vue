@@ -26,6 +26,9 @@ const store = useHostsSettingsStore()
 const setup = useSetupStore()
 const settings = useSettingsStore()
 
+/** The rows `ssh -G` fills; they read Not read while it gives no answer. */
+const UNREAD_FIELDS = ['HostName', 'User', 'Port', 'IdentityFile', 'ProxyJump'] as const
+
 const row = computed(() => store.current)
 const resolved = computed(() => store.entry?.resolved ?? null)
 const login = computed(() => (row.value ? (setup.logins[row.value.alias]?.login ?? null) : null))
@@ -119,29 +122,41 @@ const testLabel = computed(() => {
     </div>
 
     <dl class="fields">
-      <div class="fld">
-        <dt>HostName</dt>
-        <dd class="mono">{{ resolved?.hostname ?? row.alias }}</dd>
-      </div>
-      <div class="fld">
-        <dt>User</dt>
-        <dd class="mono">{{ resolved?.user ?? '—' }}</dd>
-      </div>
-      <div class="fld">
-        <dt>Port</dt>
-        <dd class="mono">{{ resolved?.port ?? 22 }}</dd>
-      </div>
-      <div class="fld">
-        <dt>IdentityFile</dt>
-        <dd class="mono">
-          {{ resolved?.identity_files[0] ?? '—'
-          }}<template v-if="agentText"> · {{ agentText }}</template>
-        </dd>
-      </div>
-      <div class="fld">
-        <dt>ProxyJump</dt>
-        <dd class="mono">{{ resolved?.proxy_jump ?? '—' }}</dd>
-      </div>
+      <!-- ssh gave no answer for this host (a config it refuses): never show defaults. -->
+      <template v-if="resolved">
+        <div class="fld">
+          <dt>HostName</dt>
+          <dd class="mono">{{ resolved.hostname }}</dd>
+        </div>
+        <div class="fld">
+          <dt>User</dt>
+          <dd class="mono">{{ resolved.user ?? '—' }}</dd>
+        </div>
+        <div class="fld">
+          <dt>Port</dt>
+          <dd class="mono">{{ resolved.port }}</dd>
+        </div>
+        <div class="fld">
+          <dt>IdentityFile</dt>
+          <dd class="mono">
+            {{ resolved.identity_files[0] ?? '—'
+            }}<template v-if="agentText"> · {{ agentText }}</template>
+          </dd>
+        </div>
+        <div class="fld">
+          <dt>ProxyJump</dt>
+          <dd class="mono">{{ resolved.proxy_jump ?? '—' }}</dd>
+        </div>
+      </template>
+      <template v-else>
+        <div v-for="name in UNREAD_FIELDS" :key="name" class="fld">
+          <dt>{{ name }}</dt>
+          <dd class="not-read">
+            {{ t('settingsHosts.detail.notRead')
+            }}<template v-if="name === 'IdentityFile' && agentText"> · {{ agentText }}</template>
+          </dd>
+        </div>
+      </template>
       <div class="fld">
         <dt>{{ t('settingsHosts.detail.from') }}</dt>
         <dd>
@@ -197,6 +212,10 @@ const testLabel = computed(() => {
 </template>
 
 <style scoped>
+.not-read {
+  color: var(--ink-4);
+}
+
 .card {
   display: flex;
   flex-direction: column;

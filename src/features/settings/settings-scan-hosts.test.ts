@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { resetSettingsMock, settingsAnswer } from '@/api/dev-mock-settings'
 import { SetupMock } from '@/api/dev-mock-setup'
+import type { HostListing } from '@/api'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { i18n, setI18nLocale } from '@/i18n'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
@@ -16,13 +17,23 @@ const calls: { cmd: string; args: Record<string, unknown> }[] = []
 
 /** Set to make `hosts_list` say ssh refused the config. */
 let configError: unknown = null
+/** Set to make `hosts_list` give no `ssh -G` answer for any host. */
+let unresolved = false
 
 function install() {
   const setup = new SetupMock('setup', 1000)
   mockCommands((cmd, args) => {
     calls.push({ cmd, args })
-    if (cmd === 'hosts_list' && configError) {
-      return { ...(setup.handle(cmd, args) as object), config_error: configError }
+    if (cmd === 'agent_status' && unresolved) return { present: true, has_keys: true, keys: 1 }
+    if (cmd === 'hosts_list' && (configError || unresolved)) {
+      const listing = setup.handle(cmd, args) as HostListing
+      return {
+        ...listing,
+        ...(configError ? { config_error: configError } : {}),
+        entries: unresolved
+          ? listing.entries.map((e) => ({ ...e, resolved: null }))
+          : listing.entries,
+      }
     }
     return (
       settingsAnswer(cmd, args) ??
@@ -50,6 +61,7 @@ async function mountView(view: typeof SettingsScan | typeof SettingsHosts) {
 beforeEach(() => {
   resetSettingsMock()
   configError = null
+  unresolved = false
   calls.length = 0
   localStorage.clear()
   setI18nLocale('en')
@@ -179,6 +191,30 @@ describe('Settings › Hosts', () => {
     expect(alert.text()).toContain('ssh stops at line 6 of /u/.ssh/config')
     expect(alert.text()).toContain('Port 99999')
     expect(wrapper.text()).toContain('vps-sg-2')
+  })
+
+  it('says Not read in the connection rows when ssh could not resolve the host', async () => {
+    configError = {
+      error: {
+        code: { kind: 'ssh_config_invalid', path: '/u/.ssh/config', line: 6 },
+        retryable: false,
+      },
+      excerpt: [],
+    }
+    unresolved = true
+    const wrapper = await mountView(SettingsHosts)
+    const rows = wrapper.findAll('.fields dd')
+    // HostName, User, Port, IdentityFile, ProxyJump: never the defaults (alias, port 22).
+    expect(rows.slice(0, 5).map((r) => r.text().split(' · ')[0])).toEqual(Array(5).fill('Not read'))
+    expect(rows.slice(0, 5).every((r) => r.classes('not-read'))).toBe(true)
+    // Source comes from Daminus's own read of the file and stays.
+    expect(rows[5]?.text()).toMatch(/config, line \d+/)
+    // What Daminus knows itself stays beside Not read: the agent's keys.
+    expect(rows[3]?.text()).toMatch(/^Not read · /)
+    // The list does not show the alias as if it were the address either.
+    const targets = wrapper.findAll('.target').map((t) => t.text())
+    expect(targets.length).toBeGreaterThan(0)
+    expect(targets.every((t) => t === 'Not read')).toBe(true)
   })
 
   it('says why an entry is left out when the list is opened', async () => {

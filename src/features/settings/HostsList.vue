@@ -38,7 +38,10 @@ function reached(at: string | null, failed: boolean): string {
           <i class="dot" :class="row.included ? row.state : 'off'" aria-hidden="true" />
           <span class="who">
             <b class="mono alias">{{ row.alias }}</b>
-            <span class="mono target">
+            <span v-if="row.target === null" class="target not-read">{{
+              t('settingsHosts.detail.notRead')
+            }}</span>
+            <span v-else class="mono target">
               {{ row.target
               }}{{ row.via ? ` ${t('settingsHosts.list.via', { host: row.via })}` : '' }}
             </span>
@@ -164,6 +167,10 @@ function reached(at: string | null, failed: boolean): string {
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.target.not-read {
+  color: var(--ink-4);
 }
 
 .projects {

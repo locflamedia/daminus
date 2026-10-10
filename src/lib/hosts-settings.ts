@@ -19,7 +19,8 @@ export type HostState = 'reached' | 'failed' | 'unknown'
 export interface HostsRow {
   alias: string
   /** `user@address`, as the list prints it. */
-  target: string
+  /** `user@hostname` as ssh resolves it; `null` while ssh gives no answer for the host. */
+  target: string | null
   /** The jump host, when the connection goes through one. */
   via: string | null
   /** Names of the projects that have a part on this host. */
@@ -50,7 +51,7 @@ export function hostsRows(
     const names = (server?.used_by ?? []).map((id) => projects.find((p) => p.id === id)?.name ?? id)
     return {
       alias,
-      target: `${user}${resolved?.hostname ?? alias}`,
+      target: resolved ? `${user}${resolved.hostname}` : null,
       via: resolved?.proxy_jump ?? null,
       projects: names,
       state: stateOf(server?.outcome),
