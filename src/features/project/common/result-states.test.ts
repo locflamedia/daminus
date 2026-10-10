@@ -26,7 +26,11 @@ async function mountTab(tab: Tab, variant: string, id = 'tiemtra') {
   const mock = new ResultsMock(variant as ResultsVariant, bundle)
   const starts: unknown[] = []
   mockCommands((cmd, args) => {
-    if (cmd === 'scan_start') starts.push(args.scope)
+    // Only the scope is checked: the mock's own scan would keep timers running past the test.
+    if (cmd === 'scan_start') {
+      starts.push(args.scope)
+      return { scan_id: 'test' }
+    }
     return mock.handle(cmd, args) ?? null
   })
   const pinia = createPinia()
