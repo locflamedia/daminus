@@ -58,6 +58,7 @@
       "kept": "giữ lại · thử lại ở lần quét đầu"
     },
     "tip": {
+      "not_checked": "ssh không đọc được ~/.ssh/config nên host này chưa được kiểm tra. Sửa dòng trong banner rồi kiểm tra lại.",
       "queued": "Chờ một lượt trống (Số host cùng lúc).",
       "connecting": "Bắt tay kết nối, tối đa {n} s theo thời gian chờ kết nối.",
       "agent_wait": "SSH agent đang chờ bạn duyệt. Không tính vào thời gian chờ.",

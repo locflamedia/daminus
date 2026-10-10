@@ -238,6 +238,8 @@ export const useSetupStore = defineStore('setup', () => {
       }
     } else {
       ticked.value = ticked.value.filter((h) => h !== host)
+      // Still waiting for its test (a run in progress, or a config ssh refuses): not tested.
+      queue.value = queue.value.filter((h) => h !== host)
     }
   }
 

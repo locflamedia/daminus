@@ -437,6 +437,10 @@ fn a_bad_config_line_is_named_by_file_and_line() {
             Some(7),
         ),
         (
+            "/u/.ssh/config line 2: Deprecated option \"useroaming\"\n/u/.ssh/config line 9: Bad port '0'.\n/u/.ssh/config: terminating, 1 bad configuration options\n",
+            Some(9),
+        ),
+        (
             "/u/.ssh/config: terminating, 1 bad configuration options\n",
             None,
         ),
@@ -464,6 +468,9 @@ fn other_ssh_messages_are_not_config_problems() {
         "Pseudo-terminal will not be allocated because stdin is not a terminal.\n",
         "ssh: Could not resolve hostname vps-a: nodename nor servname provided\n",
         "Warning: Permanently added '[203.0.113.10]:22' (ED25519) to the list of known hosts.\n",
+        // A warning ssh goes on after is not what stopped it.
+        "/u/.ssh/config line 5: Deprecated option \"useroaming\"\nssh: hostname contains invalid characters\n",
+        "/etc/ssh/ssh_config line 51: Unsupported option \"gssapiauthentication\"\n",
     ] {
         assert_eq!(ssh_config_problem(stderr), None, "{stderr}");
     }

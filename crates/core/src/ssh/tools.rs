@@ -214,6 +214,27 @@ async fn read_capped(reader: &mut (impl tokio::io::AsyncRead + Unpin), max: usiz
     buf
 }
 
+/// How long stderr is still read once the program has exited: a background
+/// process it started (a `Match exec` helper) may hold the pipe open for good.
+const STDERR_GRACE: Duration = Duration::from_millis(200);
+
+/// Reads what `stderr` has into `buf` (at most [`STDERR_KEPT`]); false at its end.
+async fn read_stderr_chunk(
+    stderr: &mut tokio::process::ChildStderr,
+    chunk: &mut [u8],
+    buf: &mut Vec<u8>,
+) -> bool {
+    match stderr.read(chunk).await {
+        Ok(0) | Err(_) => false,
+        Ok(n) => {
+            if buf.len() < STDERR_KEPT {
+                buf.extend_from_slice(&chunk[..n.min(STDERR_KEPT - buf.len())]);
+            }
+            true
+        }
+    }
+}
+
 async fn run_captured(
     mut cmd: Command,
     stdin: &[u8],
@@ -230,20 +251,40 @@ async fn run_captured(
     let mut errors = child.stderr.take();
     let data = stdin.to_vec();
     let run = async {
-        // A program that ignores its input closes the pipe; not an error.
-        let write = async {
-            let _ = input.write_all(&data).await;
-            drop(input);
+        let main = async {
+            // A program that ignores its input closes the pipe; not an error.
+            let write = async {
+                let _ = input.write_all(&data).await;
+                drop(input);
+            };
+            let ((), buf) = tokio::join!(write, read_capped(&mut output, MAX_CAPTURE));
+            let status = child.wait().await.ok();
+            (buf, status)
         };
-        let read = read_capped(&mut output, MAX_CAPTURE);
-        let read_err = async {
-            match errors.as_mut() {
-                Some(e) => read_capped(e, STDERR_KEPT).await,
-                None => Vec::new(),
+        tokio::pin!(main);
+        let mut err = Vec::new();
+        let mut chunk = [0u8; 4096];
+        // Stderr is read while the program runs, so a chatty one never blocks
+        // on a full pipe; its end is not waited for.
+        let (buf, status) = loop {
+            let Some(stderr) = errors.as_mut() else {
+                break (&mut main).await;
+            };
+            tokio::select! {
+                done = &mut main => break done,
+                more = read_stderr_chunk(stderr, &mut chunk, &mut err) => {
+                    if !more {
+                        errors = None;
+                    }
+                }
             }
         };
-        let ((), buf, err) = tokio::join!(write, read, read_err);
-        let status = child.wait().await.ok();
+        if let Some(stderr) = errors.as_mut() {
+            let _ = tokio::time::timeout(STDERR_GRACE, async {
+                while read_stderr_chunk(stderr, &mut chunk, &mut err).await {}
+            })
+            .await;
+        }
         (buf, err, status)
     };
     // Dropped while the program has not been reaped (a timeout, or the
@@ -306,6 +347,47 @@ mod tests {
         assert_eq!(got.stdout, "hello\n");
         assert_eq!(got.code, Some(3));
         assert!(!got.ok());
+    }
+
+    /// A `Match exec` helper can leave a background process holding ssh's
+    /// stderr after ssh itself has exited; the capture must not wait for it.
+    #[tokio::test]
+    async fn stderr_kept_by_a_background_process_does_not_hold_the_capture() {
+        let tools = SshTools::new();
+        let started = std::time::Instant::now();
+        let (got, stderr) = tools
+            .capture_with_stderr(
+                sh(
+                    &tools,
+                    "echo 'cfg line 3: Bad port' >&2; (sleep 5 </dev/null >/dev/null &); exit 255",
+                ),
+                b"",
+                Duration::from_secs(10),
+            )
+            .await
+            .unwrap();
+        assert!(
+            started.elapsed() < Duration::from_secs(3),
+            "{:?}",
+            started.elapsed()
+        );
+        assert_eq!(got.code, Some(255));
+        assert_eq!(stderr, "cfg line 3: Bad port\n");
+    }
+
+    #[tokio::test]
+    async fn stderr_is_capped() {
+        let tools = SshTools::new();
+        let (got, stderr) = tools
+            .capture_with_stderr(
+                sh(&tools, "head -c 20000 /dev/zero | tr '\\0' x >&2; echo out"),
+                b"",
+                Duration::from_secs(10),
+            )
+            .await
+            .unwrap();
+        assert_eq!(got.stdout, "out\n");
+        assert_eq!(stderr.len(), STDERR_KEPT);
     }
 
     #[tokio::test]

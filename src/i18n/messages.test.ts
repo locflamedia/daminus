@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { AppError } from '@/api'
 import { checkManifest } from '@/lib/check-manifest'
+import type { TestChip } from '@/lib/host-test'
 import { DEFAULT_LOCALE, LOCALES, localeFromTag } from './index'
 import { messages as bundled, withParts } from './messages'
 
@@ -88,6 +89,28 @@ describe('locale files', () => {
     for (const check of checkManifest.checks) {
       for (const locale of LOCALES) {
         expect(messages[locale].get(`issue.${check.id}`), `${locale}:${check.id}`).toBeTruthy()
+      }
+    }
+  })
+
+  it('word every login chip, with its tooltip, in both languages', () => {
+    // A Record over the type: a new chip cannot reach the screen without its words.
+    const chips: Record<TestChip, true> = {
+      not_checked: true,
+      queued: true,
+      connecting: true,
+      agent_wait: true,
+      testing: true,
+      reached: true,
+      host_key_unknown: true,
+      host_key_changed: true,
+      key_rejected: true,
+      unreachable: true,
+      timed_out: true,
+    }
+    for (const locale of LOCALES) {
+      for (const chip of Object.keys(chips)) {
+        expect(messages[locale].get(`setupPick.tip.${chip}`), `${locale}:tip.${chip}`).toBeTruthy()
       }
     }
   })

@@ -58,6 +58,7 @@
       "kept": "kept · retries on first scan"
     },
     "tip": {
+      "not_checked": "ssh refuses ~/.ssh/config, so this host is not tested yet. Fix the line in the banner, then check again.",
       "queued": "Waits for a free slot (Hosts at once).",
       "connecting": "Handshake, up to the {n} s connect timeout.",
       "agent_wait": "The SSH agent asks you to approve. Not counted in the timeout.",

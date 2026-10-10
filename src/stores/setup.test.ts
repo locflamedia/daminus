@@ -241,6 +241,20 @@ describe('a config ssh refuses', () => {
     expect(backend.starts).toEqual([{ step: 'test', hosts: ['vps-a', 'vps-b'], paths: [] }])
     expect(setup.chip('vps-a')).toBe('queued')
   })
+
+  it('does not test a host that was unticked while it waited', async () => {
+    let fixed = false
+    mockCommands((cmd, args) =>
+      cmd === 'hosts_list' && !fixed ? brokenListing() : backend.handler(cmd, args),
+    )
+    const setup = await ready()
+    setup.tickAll(true)
+    setup.tick('vps-b', false)
+    fixed = true
+    await setup.reload()
+    await settle()
+    expect(backend.starts).toEqual([{ step: 'test', hosts: ['vps-a'], paths: [] }])
+  })
 })
 
 describe('the login test', () => {

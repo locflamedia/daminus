@@ -577,7 +577,10 @@ async fn resolve_checked(
 /// and `Can't open user config file <file>: ...` for a file it cannot read.
 pub fn ssh_config_problem(stderr: &str) -> Option<ErrorCode> {
     const CANT_OPEN: &str = "Can't open user config file ";
-    let mut found: Option<(String, Option<u32>)> = None;
+    // Lines ssh named before giving up; a warning it went on after (a
+    // deprecated option) is among them, so only the file that stopped it, and
+    // its last named line, count.
+    let mut named: Vec<(String, u32)> = Vec::new();
     for raw in stderr.lines() {
         let line = raw.trim_end();
         if let Some((path, _)) = line
@@ -589,17 +592,18 @@ pub fn ssh_config_problem(stderr: &str) -> Option<ErrorCode> {
                 line: None,
             });
         }
-        if let Some((path, number)) = bad_line(line) {
+        if let Some((path, _)) = line.split_once(": terminating, ") {
+            let line = named.iter().rev().find(|(p, _)| p == path).map(|(_, n)| *n);
             return Some(ErrorCode::SshConfigInvalid {
-                path,
-                line: Some(number),
+                path: path.to_owned(),
+                line,
             });
         }
-        if let Some((path, _)) = line.split_once(": terminating, ") {
-            found.get_or_insert((path.to_owned(), None));
+        if let Some(found) = bad_line(line) {
+            named.push(found);
         }
     }
-    found.map(|(path, line)| ErrorCode::SshConfigInvalid { path, line })
+    None
 }
 
 /// `<file> line <n>: ...` or `<file>: line <n>: ...`.
