@@ -34,6 +34,7 @@
       }
     },
     "detail": {
+      "notRead": "Chưa đọc được",
       "reachedAt": "Kết nối được {time}",
       "reachedIn": "Kết nối được · {time}",
       "from": "Nguồn",
