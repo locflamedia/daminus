@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { AppError } from '@/api'
+import type { AppError, HostOutcome } from '@/api'
 import { checkManifest } from '@/lib/check-manifest'
 import type { TestChip } from '@/lib/host-test'
 import { DEFAULT_LOCALE, LOCALES, localeFromTag } from './index'
@@ -116,6 +116,25 @@ describe('locale files', () => {
     }
   })
 
+  it('word every way a host scan can end', () => {
+    // A Record over the generated type, so a new outcome cannot reach the scan sheet unworded.
+    const states: Record<HostOutcome['state'], true> = {
+      reached: true,
+      partial: true,
+      unreachable: true,
+      auth_failed: true,
+      host_key_unknown: true,
+      host_key_changed: true,
+      timeout: true,
+      not_in_config: true,
+    }
+    for (const locale of LOCALES) {
+      for (const state of Object.keys(states)) {
+        expect(messages[locale].get(`scanHost.${state}`), `${locale}:${state}`).toBeTruthy()
+      }
+    }
+  })
+
   it('word every error code the core can send', () => {
     // A Record over the generated type: the build fails when the core gains a code that is
     // missing here, so a new code cannot reach the UI without a sentence in both languages.
@@ -124,6 +143,7 @@ describe('locale files', () => {
       ssh_host_key_unknown: true,
       ssh_host_key_changed: true,
       ssh_unreachable: true,
+      ssh_not_in_config: true,
       timeout: true,
       scan_in_progress: true,
       nothing_to_scan: true,

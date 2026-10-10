@@ -93,7 +93,7 @@ describe('where the host key screen opens from', () => {
       },
       global: { plugins: [i18n], stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     })
-    expect(wrapper.text()).toContain('host key unknown')
+    expect(wrapper.text()).toContain('Host key unknown')
     expect(buttonNamed('Retry')).toBeUndefined()
     await buttonNamed('Review host key')?.trigger('click')
     expect(useHostKeyStore().alias).toBe('db-main')

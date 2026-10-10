@@ -42,6 +42,51 @@ pub enum SkipReason {
     InvalidAlias,
 }
 
+/// The aliases a config defines, to tell a host it no longer knows from one
+/// that does not answer: the named hosts, and the patterns that could match
+/// an alias (`Host vps-*` with a `HostName %h.example.com`). `Host *` alone
+/// only sets defaults and names no host.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct KnownAliases {
+    names: std::collections::HashSet<String>,
+    patterns: Vec<String>,
+}
+
+impl KnownAliases {
+    /// From a listing. `None` when it cannot tell: a `Match` block may apply
+    /// to any alias, or a `HostName` applies to every alias. A missing config
+    /// file defines none.
+    pub fn of(list: &HostList) -> Option<Self> {
+        if list.host_name_for_all || list.skipped.iter().any(|s| s.reason == SkipReason::Match) {
+            return None;
+        }
+        let mut known = Self::default();
+        known.names.extend(
+            list.hosts
+                .iter()
+                .map(|h| h.alias.as_str().to_ascii_lowercase()),
+        );
+        for s in &list.skipped {
+            match s.reason {
+                SkipReason::Wildcard if s.pattern != "*" && !s.pattern.starts_with('!') => {
+                    known.patterns.push(s.pattern.clone());
+                }
+                SkipReason::Wildcard | SkipReason::Match => {}
+                SkipReason::NoHostName | SkipReason::InvalidAlias => {
+                    known.names.insert(s.pattern.to_ascii_lowercase());
+                }
+            }
+        }
+        Some(known)
+    }
+
+    /// Whether a `Host` line names the alias; like ssh, case does not matter.
+    pub fn contains(&self, alias: &str) -> bool {
+        self.names.contains(&alias.to_ascii_lowercase())
+            || self.patterns.iter().any(|p| glob_match(p, alias, true))
+    }
+}
+
 /// A host the user can pick.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[cfg_attr(feature = "ts", derive(ts_rs::TS), ts(export))]
@@ -78,6 +123,11 @@ pub enum EmptyReason {
 pub struct HostList {
     /// The config file exists.
     pub config_found: bool,
+    /// A `HostName` applies to any alias (one set before any block, or under
+    /// `Host *`): every alias resolves through it, so none is "not in" it.
+    #[serde(skip)]
+    #[cfg_attr(feature = "ts", ts(skip))]
+    pub host_name_for_all: bool,
     pub hosts: Vec<ConfigHost>,
     pub skipped: Vec<SkippedHost>,
     /// Set when `hosts` is empty: the setup screen's empty state.
@@ -358,8 +408,13 @@ impl Parser<'_> {
                 });
             }
         }
+        let host_name_for_all = self.global_host_name
+            || self.blocks.iter().any(|b| {
+                b.kind == BlockKind::Host && b.host_name && b.patterns.iter().any(|p| p == "*")
+            });
         HostList {
             config_found: found,
+            host_name_for_all,
             hosts,
             skipped,
             empty: None,

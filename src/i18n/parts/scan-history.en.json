@@ -32,7 +32,7 @@
       "oldest": "Oldest open",
       "oldestValue": "{n} scan | {n} scans",
       "none": "none",
-      "unreachable": "{host} has been unreachable since #{since}, so its checks are missing from the last bar. | {host} has been unreachable since #{since}, so its checks are missing from the last {n} bars."
+      "unreachable": "{host} could not be scanned since #{since}, so its checks are missing from the last bar. | {host} could not be scanned since #{since}, so its checks are missing from the last {n} bars."
     },
     "list": {
       "title": "Scans",

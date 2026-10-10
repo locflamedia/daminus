@@ -145,6 +145,7 @@
       "disk": "Ổ đĩa {host} chạm {pct}%",
       "review": "Xem lại quy tắc · {subject}",
       "quiet": "{host} mất kết nối",
+      "cause": "{host} · {cause}",
       "tls": "TLS {host} hết hạn",
       "inApprox": "khoảng {n} ngày nữa",
       "inDays": "{n} ngày nữa",

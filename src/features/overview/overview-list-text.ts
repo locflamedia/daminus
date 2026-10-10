@@ -63,7 +63,10 @@ function textOf(change: Change): string {
     case 'online':
       return t('overviewScreen.changes.online', { host: owner })
     case 'offline':
-      return t('overviewScreen.changes.offline', { host: owner })
+      // Only the network reads "not answering"; any other cause is named.
+      return change.cause && change.cause !== 'unreachable'
+        ? row(t(`outcome.${change.cause}`))
+        : t('overviewScreen.changes.offline', { host: owner })
   }
 }
 
@@ -109,7 +112,9 @@ function upcomingText(row: Upcoming): string {
     case 'review':
       return t('overviewScreen.coming.review', { subject: row.subject })
     case 'quiet':
-      return t('overviewScreen.coming.quiet', { host: row.subject })
+      return row.cause && row.cause !== 'unreachable'
+        ? t('overviewScreen.coming.cause', { host: row.subject, cause: t(`outcome.${row.cause}`) })
+        : t('overviewScreen.coming.quiet', { host: row.subject })
     case 'tls':
       return t('overviewScreen.coming.tls', { host: row.subject })
   }

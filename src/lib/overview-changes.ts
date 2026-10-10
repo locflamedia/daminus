@@ -3,6 +3,7 @@
 // level) plus the things a person wants to know that the grade does not say: a size that grew,
 // an image that moved to another tag, a certificate that was renewed, a host that came back or
 // went quiet. Rows are facts; the screen words them.
+import { outcomeKey, type OutcomeKey } from '@/lib/outcome-label'
 import type { Item, Level, MainIssue, Report, Severity } from '@/api'
 import type { JsonValue } from '@/api/bindings/serde_json/JsonValue'
 import { GROWTH_SHARE } from './presentation-hints'
@@ -38,6 +39,8 @@ export interface Change {
   to?: string
   days?: number
   level?: Level
+  /** For a host that stopped being scanned: why. */
+  cause?: OutcomeKey
 }
 
 /** How many rows the list shows; the rest is counted. */
@@ -249,6 +252,7 @@ function hostChanges(report: Report, baseline: Report): Change[] {
         owner: s.host,
         check: '',
         target: '',
+        ...(now ? { cause: outcomeKey(s.outcome) } : {}),
       },
     ]
   })

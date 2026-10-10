@@ -34,6 +34,7 @@ use crate::domain::project::ProjectsFile;
 use crate::domain::settings::Settings;
 use crate::domain::snapshot::{HostOutcome, HostTiming, NetCause, Snapshot};
 use crate::probe::{ProbeChecks, UrlProbe};
+use crate::ssh::config::KnownAliases;
 use crate::ssh::{RunEnd, RunRequest, RunSignal, Transport, outcome_error, run_outcome};
 use crate::store::FsStore;
 
@@ -45,16 +46,33 @@ pub const MAX_HOSTS_AT_ONCE: usize = 8;
 /// Longest connect timeout honoured, in seconds.
 pub(crate) const MAX_CONNECT_TIMEOUT_S: u32 = 120;
 
+/// The aliases `~/.ssh/config` defines, read once per scan; `None` when the
+/// file cannot tell (then every host runs, as before).
+pub type ConfigHosts = Arc<dyn Fn() -> Option<KnownAliases> + Send + Sync>;
+
 /// Knobs that are not user settings. Tests shorten the budget.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ServiceOptions {
     pub host_budget: Duration,
+    /// When set, a host whose alias is not in the config and fails as a DNS
+    /// name ends as `NotInConfig` instead of unreachable.
+    pub config_hosts: Option<ConfigHosts>,
+}
+
+impl std::fmt::Debug for ServiceOptions {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ServiceOptions")
+            .field("host_budget", &self.host_budget)
+            .field("config_hosts", &self.config_hosts.is_some())
+            .finish()
+    }
 }
 
 impl Default for ServiceOptions {
     fn default() -> Self {
         Self {
             host_budget: HOST_BUDGET,
+            config_hosts: None,
         }
     }
 }
@@ -341,12 +359,24 @@ impl Job {
                 .clamp(1, MAX_CONNECT_TIMEOUT_S),
         ));
         let mut hosts = JoinSet::new();
+        // Read off the runtime: the config and its includes are files.
+        let known = match self.shared.options.config_hosts.clone() {
+            Some(read) => match tokio::task::spawn_blocking(move || read()).await {
+                Ok(known) => known.map(Arc::new),
+                Err(e) => {
+                    tracing::warn!(error = %e, "reading the ssh config's aliases failed");
+                    None
+                }
+            },
+            None => None,
+        };
         for host in &self.targets.hosts {
             let task = HostTask {
                 shared: Arc::clone(&self.shared),
                 emitter: Arc::clone(&self.emitter),
                 cancel: self.cancel.clone(),
                 bundle: Arc::clone(&self.bundle),
+                known: known.clone(),
                 req: RunRequest {
                     host: host.clone(),
                     script: self
@@ -504,6 +534,8 @@ struct HostTask {
     emitter: Arc<Emitter>,
     cancel: CancellationToken,
     bundle: Arc<Bundle>,
+    /// The aliases the ssh config defines, when it could be read.
+    known: Option<Arc<KnownAliases>>,
     req: RunRequest,
 }
 
@@ -557,7 +589,11 @@ impl HostTask {
         }
         let output = parser.finish();
         let end = end.unwrap_or_default();
-        let outcome = decide(&output, &end, timed_out);
+        let outcome = not_in_config(
+            decide(&output, &end, timed_out),
+            self.known.as_deref(),
+            &self.req.host,
+        );
         let ms = millis(t0);
         tracing::info!(
             exit = ?end.exit,
@@ -603,21 +639,50 @@ impl HostTask {
     }
 }
 
+/// An alias the config no longer defines is looked up as a DNS name, and
+/// fails there: say it is not in the config rather than unreachable. ssh ran
+/// either way, so a host it reached without a `Host` line keeps its outcome.
+fn not_in_config(
+    outcome: HostOutcome,
+    known: Option<&KnownAliases>,
+    host: &HostAlias,
+) -> HostOutcome {
+    let dns = matches!(
+        outcome,
+        HostOutcome::Unreachable {
+            cause: NetCause::Dns
+        }
+    );
+    // A DNS name or an address names the server itself, not a config entry.
+    let named = host.as_str().contains('.') || host.as_str().parse::<std::net::IpAddr>().is_ok();
+    if dns && !named && known.is_some_and(|k| !k.contains(host.as_str())) {
+        HostOutcome::NotInConfig
+    } else {
+        outcome
+    }
+}
+
 /// Every host failed with DNS/no route and every URL failed at the network
 /// level. One failing target says nothing about this Mac (a mistyped
 /// HostName, a VPN that is down), so at least two targets must have failed;
-/// that host or URL is then saved with its own outcome instead.
+/// that host or URL is then saved with its own outcome instead. An alias gone
+/// from the config also failed on DNS, so it does not clear the Mac, but it
+/// is not counted: a deleted config would otherwise read as "offline".
 fn local_network_down(results: &[HostResult], local: Option<&LocalResult>, urls: usize) -> bool {
-    let hosts_down = results.iter().all(|r| {
+    let network = |o: &HostOutcome| {
         matches!(
-            r.outcome,
+            o,
             HostOutcome::Unreachable {
                 cause: NetCause::Dns | NetCause::NoRoute
             }
         )
-    });
+    };
+    let hosts_down = results
+        .iter()
+        .all(|r| network(&r.outcome) || r.outcome == HostOutcome::NotInConfig);
     let urls_down = local.is_none_or(|l| l.all_network);
-    hosts_down && urls_down && results.len() + urls >= 2
+    let failed = results.iter().filter(|r| network(&r.outcome)).count() + urls;
+    hosts_down && urls_down && failed >= 2
 }
 
 /// How a host's part ended (see [`run_outcome`]).

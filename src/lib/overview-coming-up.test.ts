@@ -85,7 +85,9 @@ describe('ruleReviews', () => {
 
 describe('quietHosts', () => {
   it('lists a host that did not answer, with the days since it did', () => {
-    expect(quietHosts(latest, NOW)).toMatchObject([{ subject: 'legacy-shop', days: 7 }])
+    expect(quietHosts(latest, NOW)).toMatchObject([
+      { subject: 'legacy-shop', days: 7, cause: 'unreachable' },
+    ])
   })
 })
 

@@ -48,6 +48,9 @@ pub enum HostOutcome {
     },
     /// The per-host budget ran out.
     Timeout,
+    /// The alias is no longer in `~/.ssh/config`, and ssh failed to look it up
+    /// as a DNS name.
+    NotInConfig,
 }
 
 impl HostOutcome {

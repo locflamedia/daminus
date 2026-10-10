@@ -163,6 +163,7 @@ impl SetupService {
             Some(source) => list_hosts(&source),
             None => Ok(HostList {
                 config_found: false,
+                host_name_for_all: false,
                 hosts: Vec::new(),
                 skipped: Vec::new(),
                 empty: Some(crate::ssh::config::EmptyReason::NoConfig),

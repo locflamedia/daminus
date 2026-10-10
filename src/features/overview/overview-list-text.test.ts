@@ -93,6 +93,16 @@ describe('changeRow', () => {
       'db-main không phản hồi',
     )
   })
+
+  it('names why a host stopped being scanned when the network was fine', () => {
+    const gone = { ...base, kind: 'offline' as const, tone: 'warn' as const, owner: 'db-main' }
+    expect(changeRow({ ...gone, cause: 'key_refused' }).text).toBe('db-main · Key refused')
+    expect(changeRow({ ...gone, cause: 'unreachable' }).text).toBe('db-main is not answering')
+    setI18nLocale('vi')
+    expect(changeRow({ ...gone, cause: 'not_in_config' }).text).toBe(
+      'db-main · Không có trong ~/.ssh/config',
+    )
+  })
 })
 
 describe('upcomingRow', () => {
@@ -103,6 +113,15 @@ describe('upcomingRow', () => {
     subject: 'vps-sg-2',
     days: 9,
     ...partial,
+  })
+
+  it('names why a quiet host could not be scanned', () => {
+    expect(
+      upcomingRow(row({ kind: 'quiet', tone: 'neutral', cause: 'host_key_changed' })).text,
+    ).toBe('vps-sg-2 · Host key changed')
+    expect(upcomingRow(row({ kind: 'quiet', tone: 'neutral', cause: 'unreachable' })).text).toBe(
+      'vps-sg-2 unreachable',
+    )
   })
 
   it('words each kind and its distance', () => {

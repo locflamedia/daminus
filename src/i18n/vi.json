@@ -242,7 +242,8 @@
     "auth_failed": "khoá bị từ chối",
     "host_key_unknown": "chưa biết khoá máy chủ",
     "host_key_changed": "khoá máy chủ đã đổi",
-    "timeout": "hết thời gian"
+    "timeout": "hết thời gian",
+    "not_in_config": "không có trong ~/.ssh/config"
   },
   "severity": {
     "crit": "Nghiêm trọng",
@@ -326,6 +327,7 @@
     "ssh_host_key_unknown": "Máy chủ này chưa có trong known_hosts. Kiểm tra dấu vân tay, rồi kết nối một lần từ Terminal để tin cậy.",
     "ssh_host_key_changed": "Khoá máy chủ đã đổi. Đừng tiếp tục khi chưa biết lý do.",
     "ssh_unreachable": "Không kết nối được máy chủ qua SSH. Kiểm tra địa chỉ và mạng của bạn.",
+    "ssh_not_in_config": "Host này không còn trong ~/.ssh/config. Thêm lại hoặc sửa project.",
     "timeout": "Máy chủ không trả lời kịp.",
     "scan_in_progress": "Đang có một lần quét chạy.",
     "nothing_to_scan": "Chưa có gì để quét. Hãy thêm máy chủ hoặc dự án trước.",
@@ -502,5 +504,13 @@
     "empty": {
       "title": "Chưa có gì ở đây"
     }
+  },
+  "outcome": {
+    "key_refused": "Khoá bị từ chối",
+    "host_key_changed": "Khoá máy chủ đã đổi",
+    "host_key_unknown": "Chưa biết khoá máy chủ",
+    "unreachable": "Mất kết nối",
+    "timed_out": "Hết thời gian",
+    "not_in_config": "Không có trong ~/.ssh/config"
   }
 }

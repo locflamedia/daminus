@@ -132,6 +132,7 @@ fn outcome_label(outcome: &HostOutcome) -> String {
         HostOutcome::HostKeyUnknown { .. } => "host key unknown".to_owned(),
         HostOutcome::HostKeyChanged { .. } => "host key changed".to_owned(),
         HostOutcome::Timeout => "timeout".to_owned(),
+        HostOutcome::NotInConfig => "not in ssh config".to_owned(),
     }
 }
 

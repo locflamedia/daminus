@@ -62,13 +62,37 @@ fn rig_cap(
     settings: Settings,
     capacity: usize,
 ) -> Rig {
+    rig_opts(
+        transport,
+        probe,
+        projects,
+        settings,
+        capacity,
+        ServiceOptions::default(),
+    )
+}
+
+fn rig_opts(
+    transport: FakeTransport,
+    probe: FakeProbe,
+    projects: ProjectsFile,
+    settings: Settings,
+    capacity: usize,
+    options: ServiceOptions,
+) -> Rig {
     let dir = TempDir::new().unwrap();
     let store = FsStore::new(dir.path());
     store.save_projects(&projects, None).unwrap();
     store.save_settings(&settings, None).unwrap();
     let (tx, rx) = mpsc::channel(capacity);
     let transport = Arc::new(transport);
-    let service = ScanService::new(transport.clone(), Arc::new(probe), store.clone(), tx);
+    let service = ScanService::with_options(
+        transport.clone(),
+        Arc::new(probe),
+        store.clone(),
+        tx,
+        options,
+    );
     Rig {
         _dir: dir,
         store,
@@ -422,6 +446,192 @@ async fn everything_failing_at_network_level_is_local_network_down() {
     };
     assert_eq!(error.code, ErrorCode::LocalNetworkDown);
     assert!(r.store.snapshot_seqs().unwrap().is_empty());
+}
+
+/// A service whose ssh config defines only `b`.
+fn rig_knowing_b(transport: FakeTransport, probe: FakeProbe, aliases: &[&str]) -> Rig {
+    rig_knowing(transport, probe, aliases, &[], true)
+}
+
+/// A service whose ssh config defines only `b` (`found`), or that has no config file.
+fn rig_knowing(
+    transport: FakeTransport,
+    probe: FakeProbe,
+    aliases: &[&str],
+    urls: &[&str],
+    found: bool,
+) -> Rig {
+    use crate::ssh::config::{ConfigHost, HostList, KnownAliases};
+    let hosts = if found {
+        vec![ConfigHost {
+            alias: HostAlias::parse("b").unwrap(),
+            file: "config".into(),
+            line: 1,
+        }]
+    } else {
+        Vec::new()
+    };
+    let list = HostList {
+        config_found: found,
+        host_name_for_all: false,
+        hosts,
+        skipped: Vec::new(),
+        empty: None,
+    };
+    let known = KnownAliases::of(&list).unwrap();
+    let options = ServiceOptions {
+        config_hosts: Some(Arc::new(move || Some(known.clone()))),
+        ..ServiceOptions::default()
+    };
+    rig_opts(
+        transport,
+        probe,
+        projects(aliases, urls),
+        Settings::default(),
+        4096,
+        options,
+    )
+}
+
+/// `a` is not in the config and its alias failed as a DNS name: it is saved as
+/// not in the config, not as unreachable.
+#[tokio::test(start_paused = true)]
+async fn a_host_gone_from_the_ssh_config_reads_not_in_config() {
+    let mut r = rig_knowing_b(
+        FakeTransport::new()
+            .host("a", FakeHost::fail(Failure::Unreachable(NetCause::Dns)))
+            .host("b", healthy()),
+        FakeProbe::new(),
+        &["a", "b"],
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    assert_eq!(r.transport.runs(), 2);
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::NotInConfig));
+}
+
+/// ssh reaches hosts the config does not name (a DNS name, `Host *`, the
+/// system config): such a host is still run, and whatever ssh says stands.
+#[tokio::test(start_paused = true)]
+async fn a_host_outside_the_ssh_config_is_still_run() {
+    let mut r = rig_knowing_b(
+        FakeTransport::new()
+            .host("a", healthy())
+            .host("c", FakeHost::fail(Failure::Unreachable(NetCause::NoRoute)))
+            .host("b", healthy()),
+        FakeProbe::new(),
+        &["a", "b", "c"],
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    assert_eq!(r.transport.runs(), 3);
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::Reached));
+    assert_eq!(
+        snap.hosts.get(&alias("c")),
+        Some(&HostOutcome::Unreachable {
+            cause: NetCause::NoRoute
+        })
+    );
+}
+
+/// An alias gone from the config failed on DNS like everything else: with the
+/// Mac offline the scan is still "local network down".
+#[tokio::test(start_paused = true)]
+async fn a_host_gone_from_the_config_does_not_hide_an_offline_mac() {
+    let mut r = rig_knowing(
+        FakeTransport::new()
+            .host("a", FakeHost::fail(Failure::Unreachable(NetCause::Dns)))
+            .host("b", FakeHost::fail(Failure::Unreachable(NetCause::Dns))),
+        FakeProbe::new().error("https://shop.example", ProbeError::Dns),
+        &["a", "b"],
+        &["https://shop.example"],
+        true,
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Failed { error }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    assert_eq!(error.code, ErrorCode::LocalNetworkDown);
+}
+
+/// `~/.ssh/config` was deleted: every alias fails as a DNS name. That says the
+/// config is gone, not that this Mac is offline.
+#[tokio::test(start_paused = true)]
+async fn with_no_ssh_config_the_hosts_read_not_in_config_not_offline() {
+    let mut r = rig_knowing(
+        FakeTransport::new()
+            .host("a", FakeHost::fail(Failure::Unreachable(NetCause::Dns)))
+            .host("b", FakeHost::fail(Failure::Unreachable(NetCause::Dns))),
+        FakeProbe::new(),
+        &["a", "b"],
+        &[],
+        false,
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::NotInConfig));
+    assert_eq!(snap.hosts.get(&alias("b")), Some(&HostOutcome::NotInConfig));
+}
+
+/// An alias that is itself a DNS name (or an address) names the server, not a
+/// config entry: when its lookup fails, it stays a DNS failure.
+#[tokio::test(start_paused = true)]
+async fn a_dns_name_outside_the_config_stays_a_dns_failure() {
+    let mut r = rig_knowing_b(
+        FakeTransport::new()
+            .host(
+                "db.example.com",
+                FakeHost::fail(Failure::Unreachable(NetCause::Dns)),
+            )
+            .host("b", healthy()),
+        FakeProbe::new(),
+        &["db.example.com", "b"],
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(
+        snap.hosts.get(&alias("db.example.com")),
+        Some(&HostOutcome::Unreachable {
+            cause: NetCause::Dns
+        })
+    );
+}
+
+/// One alias gone from the config and one URL failing on DNS is one network
+/// failure, not two: the scan is saved.
+#[tokio::test(start_paused = true)]
+async fn a_gone_alias_and_one_failing_url_do_not_read_as_offline() {
+    let mut r = rig_knowing(
+        FakeTransport::new().host("a", FakeHost::fail(Failure::Unreachable(NetCause::Dns))),
+        FakeProbe::new().error("https://shop.example", ProbeError::Dns),
+        &["a"],
+        &["https://shop.example"],
+        true,
+    );
+    r.service.start(&ScanScope::default()).unwrap();
+    let events = drain(&mut r.rx).await;
+    let Some(ScanEventBody::Done { snapshot_seq }) = events.last().map(|e| &e.body) else {
+        panic!("{:?}", events.last());
+    };
+    let snap = r.store.load_snapshot(*snapshot_seq).unwrap();
+    assert_eq!(snap.hosts.get(&alias("a")), Some(&HostOutcome::NotInConfig));
 }
 
 #[tokio::test(start_paused = true)]

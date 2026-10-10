@@ -5,6 +5,7 @@
   The names and rings stay; load and memory live on the server's own page.
 -->
 <script setup lang="ts">
+import { outcomeKey } from '@/lib/outcome-label'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ServerCell } from '@/lib/overview-servers'
@@ -31,7 +32,7 @@ interface Row {
 function textOf(cell: ServerCell, state: ServerScan): string {
   if (state === 'reading') return t('overviewScreen.servers.reading')
   if (state === 'queued') return t('scanChip.queued')
-  if (cell.state === 'unreachable') return t('overviewScreen.servers.unreachable')
+  if (cell.state === 'unreachable') return t(`outcome.${outcomeKey(cell.outcome)}`)
   if (cell.state === 'not-scanned') return t('overviewScreen.servers.notScanned')
   return cell.disk === null ? '—' : `${cell.disk}%`
 }

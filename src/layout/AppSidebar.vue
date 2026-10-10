@@ -10,6 +10,7 @@ import SidebarGhosts from '@/features/empty/components/SidebarGhosts.vue'
 import SidebarPlainSsh from '@/features/empty/components/SidebarPlainSsh.vue'
 import { useEmptyStore } from '@/features/empty/empty-store'
 import { usePaletteStore } from '@/features/palette/palette-store'
+import { outcomeKey, outcomeTone } from '@/lib/outcome-label'
 import { diskTone, isUnreachable, issueCount } from '@/lib/rollups'
 import { staleDays } from '@/lib/staleness'
 import { useProjectsStore } from '@/stores/projects'
@@ -66,6 +67,8 @@ const serverRows = computed(() =>
     return {
       host: s.host,
       unreachable,
+      cause: unreachable ? outcomeKey(s.outcome) : null,
+      causeTone: outcomeTone(s.outcome),
       pct,
       tone: pct === null || oldDays.value !== null ? '' : diskTone(pct),
       reading: reading.value.has(s.host),
@@ -160,6 +163,7 @@ const serverRows = computed(() =>
           :to="{ name: 'server', params: { host: s.host } }"
           class="item server"
           :class="{ off: s.unreachable }"
+          :title="s.cause ? `${s.host} · ${t(`outcome.${s.cause}`)}` : undefined"
           active-class="on"
         >
           <DiskRing
@@ -169,7 +173,12 @@ const serverRows = computed(() =>
             :neutral="oldDays !== null"
           />
           <span class="mono name">{{ s.host }}</span>
-          <span v-if="s.unreachable" class="count strong">{{ t('nav.unreachable') }}</span>
+          <span
+            v-if="s.cause"
+            class="count strong cause"
+            :class="s.causeTone === 'quiet' ? '' : s.causeTone"
+            >{{ t(`outcome.${s.cause}`) }}</span
+          >
           <span v-else-if="s.pct !== null" class="count strong" :class="s.tone">
             {{ Math.round(s.pct) }}%
           </span>
@@ -341,8 +350,18 @@ const serverRows = computed(() =>
   color: var(--ink);
 }
 
+/* A cause label gives way first: the host keeps at least 8 characters, the label ellipsizes. */
 .server .name {
+  min-width: 8ch;
   font-size: var(--text-12);
+}
+
+.count.cause {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 100;
 }
 
 .server.off {

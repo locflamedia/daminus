@@ -5,6 +5,7 @@
   runs a server being read has a turning ring and says what is happening in words.
 -->
 <script setup lang="ts">
+import { outcomeKey } from '@/lib/outcome-label'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
@@ -46,8 +47,10 @@ const mem = computed(() =>
 const detail = computed(() => {
   if (props.scan === 'reading') return t('overviewScreen.servers.readingDisk')
   if (props.scan === 'queued') return t('overviewScreen.servers.waitSlot')
-  if (props.cell.state === 'unreachable' && keys.has(props.cell.outcome)) {
-    return t(`scanHost.${props.cell.outcome?.state}`)
+  // A network failure keeps how long the host has been silent; any other cause is named.
+  const cause = outcomeKey(props.cell.outcome)
+  if (props.cell.state === 'unreachable' && cause !== 'unreachable') {
+    return t(`outcome.${cause}`)
   }
   if (props.cell.state === 'unreachable') {
     return props.cell.silentDays === null

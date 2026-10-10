@@ -2,6 +2,7 @@
 // fills along a straight line (the time axis is the clock, see forecast.ts), expected rules
 // whose review date is near, certificates that expire and hosts that have gone quiet. Rows are
 // facts; the screen words them.
+import { outcomeKey, type OutcomeKey } from '@/lib/outcome-label'
 import type { ExpectedRule, Report, ScanFact } from '@/api'
 import type { JsonValue } from '@/api/bindings/serde_json/JsonValue'
 import { daysUntil, type TimedValue } from './forecast'
@@ -25,6 +26,8 @@ export interface Upcoming {
   subject: string
   /** Days ahead (or, for a quiet host, days gone by); `null` when it is not known. */
   days: number | null
+  /** For a quiet host: why it could not be scanned. */
+  cause?: OutcomeKey
 }
 
 /** The most rows the list shows. */
@@ -106,6 +109,7 @@ export function quietHosts(report: Report, now: number): Upcoming[] {
         tone: 'neutral' as const,
         subject: s.host,
         days: Number.isNaN(age) ? null : Math.max(0, age),
+        cause: outcomeKey(s.outcome),
       },
     ]
   })

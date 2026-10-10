@@ -9,7 +9,7 @@
     "stopped": "Đã dừng",
     "close": "Đóng bảng",
     "progress": "{done}/{total} máy chủ xong",
-    "unreachable": "{n} mất kết nối",
+    "unreachable": "{n} không quét được",
     "left": "còn khoảng {time}",
     "hostsLabel": "Máy chủ trong lần quét này",
     "noProject": "chưa thuộc dự án",

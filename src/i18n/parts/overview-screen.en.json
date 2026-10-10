@@ -145,6 +145,7 @@
       "disk": "{host} disk reaches {pct}%",
       "review": "Expected rule review · {subject}",
       "quiet": "{host} unreachable",
+      "cause": "{host} · {cause}",
       "tls": "{host} TLS expires",
       "inApprox": "in ≈ {n} day | in ≈ {n} days",
       "inDays": "in {n} day | in {n} days",

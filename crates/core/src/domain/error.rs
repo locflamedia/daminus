@@ -14,6 +14,8 @@ pub enum ErrorCode {
     SshHostKeyUnknown,
     SshHostKeyChanged,
     SshUnreachable,
+    /// The host's alias is no longer in `~/.ssh/config`, so ssh could not find it.
+    SshNotInConfig,
     Timeout,
     ScanInProgress,
     /// The scan scope names no host and no URL (unknown project or host, or
