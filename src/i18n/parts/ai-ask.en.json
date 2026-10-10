@@ -25,6 +25,7 @@
     "unmatched": "Not matched to a result of this scan",
     "stop": "Stop",
     "tryAgain": "Try again",
+    "providers": "AI providers",
     "askAgain": "Ask again",
     "stopped": "Stopped. Nothing more was received.",
     "failed": "No answer",
@@ -50,7 +51,15 @@
       "claude_cli_not_found": "the claude command is not on this Mac. Install Claude Code, then try again.",
       "claude_cli_not_logged_in": "not signed in. Sign in with the claude command in Terminal, then try again.",
       "claude_cli_quota": "your plan’s usage limit is reached. Try again later.",
-      "timeout": "no answer in time. Try again."
+      "timeout": "no answer in time. Try again.",
+      "provider_not_configured": "no provider is chosen yet. Choose one in Settings › AI providers.",
+      "provider_key_missing": "it has no API key yet. Add one in Settings › AI providers.",
+      "claude_code_not_acknowledged": "Claude Code is off until you allow it in Settings › AI providers.",
+      "provider_model_not_found": "it has no model by that name. Pick another in Settings › AI providers.",
+      "provider_billing": "the account is out of credit.",
+      "payload_too_large": "the question was too large for the model. Ask about one project.",
+      "overloaded": "it is busy right now. Try again in a minute.",
+      "content_policy": "it declined to answer this request."
     }
   }
 }

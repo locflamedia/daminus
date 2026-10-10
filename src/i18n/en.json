@@ -348,8 +348,16 @@
     "provider_auth": "The AI provider rejected the key. Check it in Settings.",
     "provider_rate_limit": "The AI provider is limiting requests. Try again in a minute.",
     "provider_unavailable": "The AI provider is not reachable right now.",
+    "provider_not_configured": "AI is not set up yet. Choose a provider in Settings › AI providers.",
+    "provider_key_missing": "{provider} has no API key yet. Add it in Settings › AI providers.",
+    "provider_model_not_found": "{provider} has no model {model}. Pick another in Settings › AI providers.",
+    "provider_billing": "{provider} refused the request: the account is out of credit.",
+    "payload_too_large": "This scan is too large for {model}. Ask about one project, or pick a model with a larger context.",
+    "overloaded": "{provider} is busy right now. Try again in a minute.",
+    "content_policy": "{provider} declined to answer this request.",
     "schema_invalid": "The AI answer was not in the expected format.",
     "claude_cli_not_found": "Daminus can’t find the Claude Code command on this Mac.",
+    "claude_code_not_acknowledged": "Claude Code is off until you allow it in Settings › AI providers.",
     "claude_cli_not_logged_in": "Claude Code is not signed in. Sign in with the claude command in Terminal.",
     "claude_cli_quota": "Your Claude plan has reached its usage limit. Try again later.",
     "cancelled": "Stopped.",
@@ -363,6 +371,7 @@
       "title": "Review before sending to {provider}",
       "preview": "Preview",
       "providerFallback": "the provider",
+      "modelFallback": "the model",
       "included": "Included",
       "rules": "Masking rules applied",
       "size": "Size",
@@ -421,7 +430,10 @@
           "lead": "Decodes base64",
           "rest": "the real text is hidden; decode it first and read it"
         },
-        "remove": { "lead": "Runs rm", "rest": "deletes files; check the path" },
+        "remove": {
+          "lead": "Runs rm",
+          "rest": "deletes files; check the path"
+        },
         "destructive": {
           "lead": "Overwrites a disk or a whole folder",
           "rest": "can write to a device or change owners and permissions across a tree; check the target"

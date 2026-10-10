@@ -415,6 +415,105 @@ async fn provider_errors_are_not_retried() -> Test {
 }
 
 #[tokio::test]
+async fn a_busy_provider_is_tried_again_and_the_answer_is_kept() -> Test {
+    let p = payload()?;
+    let seen = Arc::new(Mutex::new(0));
+    // Busy twice, then it answers: the caller sees only the answer.
+    let client = Sequence {
+        replies: Mutex::new(vec![
+            FakeReply::Fail(ErrorCode::Overloaded),
+            FakeReply::Fail(ErrorCode::ProviderRateLimit),
+            FakeReply::Deltas(vec![GOOD.into()]),
+        ]),
+        seen: Arc::clone(&seen),
+    };
+    let a = analyze(
+        &client,
+        &TARGET,
+        &p,
+        &p.hash,
+        &CancellationToken::new(),
+        |_| {},
+    )
+    .await?;
+    assert_eq!(a.summary, "Fix uploads first.");
+    assert_eq!(
+        *seen.lock().map_err(|_| "lock")?,
+        3,
+        "two retries, then it answered"
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn retrying_gives_up_after_the_limit_and_keeps_the_last_error() -> Test {
+    let p = payload()?;
+    let client = FakeAiClient::new(FakeReply::Fail(ErrorCode::ProviderRateLimit));
+    let e = run(&client, &p).await.err().ok_or("accepted")?;
+    assert_eq!(e.code, ErrorCode::ProviderRateLimit);
+    assert_eq!(
+        client.requests().len(),
+        usize::try_from(retry::MAX_RETRIES).unwrap_or(0) + 1,
+        "the first try and no more than MAX_RETRIES after it"
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn a_failure_the_user_must_fix_is_never_tried_again() -> Test {
+    let p = payload()?;
+    for code in [
+        ErrorCode::ProviderBilling,
+        ErrorCode::ProviderKeyMissing,
+        ErrorCode::ProviderModelNotFound,
+        ErrorCode::PayloadTooLarge,
+        ErrorCode::ContentPolicy,
+        ErrorCode::ProviderNotConfigured,
+    ] {
+        let client = FakeAiClient::new(FakeReply::Fail(code.clone()));
+        let e = run(&client, &p).await.err().ok_or("accepted")?;
+        assert_eq!(e.code, code, "{code:?}");
+        assert_eq!(client.requests().len(), 1, "{code:?} was asked again");
+    }
+    Ok(())
+}
+
+#[tokio::test]
+async fn once_text_has_been_shown_the_request_is_not_sent_again() -> Test {
+    let p = payload()?;
+    let seen = Arc::new(Mutex::new(0));
+    // A whole summary reaches the caller, then the provider breaks. Sending
+    // again would repeat what has been shown, so the error is kept instead.
+    let client = Sequence {
+        replies: Mutex::new(vec![
+            FakeReply::FailAfter(vec![GOOD.into()], ErrorCode::Overloaded),
+            FakeReply::Deltas(vec![GOOD.into()]),
+        ]),
+        seen: Arc::clone(&seen),
+    };
+    let mut shown = String::new();
+    let e = analyze(
+        &client,
+        &TARGET,
+        &p,
+        &p.hash,
+        &CancellationToken::new(),
+        |piece| shown.push_str(piece),
+    )
+    .await
+    .err()
+    .ok_or("accepted")?;
+    assert_eq!(e.code, ErrorCode::Overloaded);
+    assert_eq!(
+        *seen.lock().map_err(|_| "lock")?,
+        1,
+        "the answer was not repeated"
+    );
+    assert!(!shown.is_empty(), "the caller had already been given text");
+    Ok(())
+}
+
+#[tokio::test]
 async fn summary_arrives_in_pieces_before_the_reply_ends() -> Test {
     let p = payload()?;
     let pieces = [

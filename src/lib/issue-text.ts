@@ -44,7 +44,17 @@ export function errorText(error: AppError, locale: Locale = currentLocale()): st
     case 'io':
       return t('error.io', { path: code.path }, { locale })
     default:
-      return t(`error.${code.kind}`, {}, { locale })
+      // The provider errors name the provider and the model; both come from
+      // `params`, and a message that names neither simply ignores them.
+      return t(
+        `error.${code.kind}`,
+        {
+          provider:
+            stringParam(error.params?.provider) || t('ai.payload.providerFallback', {}, { locale }),
+          model: stringParam(error.params?.model) || t('ai.payload.modelFallback', {}, { locale }),
+        },
+        { locale },
+      )
   }
 }
 

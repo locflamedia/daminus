@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use tokio_util::sync::CancellationToken;
 
 use super::payload::Payload;
+use super::retry;
 use super::send_log::log_send;
 use super::summary_stream::SummaryExtractor;
 use super::{AiClient, AiEvent, AiUsage};
@@ -254,8 +255,12 @@ async fn read_reply(
 /// The payload is hashed first; if it no longer matches `previewed_hash`
 /// nothing is sent. `on_summary_delta` gets the summary text as it streams. A
 /// reply that is not valid JSON is asked for once more; after that the error is
-/// returned. A reply that breaks a size limit is not asked for again. When
-/// `cancel` fires the error is `Cancelled` and nothing is logged.
+/// returned. A reply that breaks a size limit is not asked for again. A
+/// provider that was busy, throttling or briefly broken is tried again up to
+/// [`retry::MAX_RETRIES`] times, waiting as [`retry::backoff`] says, but only
+/// while nothing has been shown yet: once text has streamed, sending again
+/// would repeat it. When `cancel` fires the error is `Cancelled` and nothing
+/// is logged.
 pub async fn analyze(
     client: &dyn AiClient,
     target: &SendTarget<'_>,
@@ -269,6 +274,7 @@ pub async fn analyze(
     // what the first one had not shown.
     let mut shown = String::new();
     let mut retried = false;
+    let mut attempts = 0u32;
     loop {
         let mut produced = String::new();
         let mut on_piece = |piece: &str| {
@@ -293,6 +299,21 @@ pub async fn analyze(
         match outcome {
             Err(e) if is_malformed(&e) && !retried && !cancel.is_cancelled() => {
                 retried = true;
+            }
+            // Nothing has reached the caller yet, so the same request can go
+            // again without the reader seeing the first attempt twice.
+            Err(e)
+                if retry::worth_retrying(&e)
+                    && attempts < retry::MAX_RETRIES
+                    && shown.is_empty()
+                    && !cancel.is_cancelled() =>
+            {
+                attempts += 1;
+                let wait = retry::backoff(attempts, retry::retry_after(&e), retry::jitter());
+                tokio::select! {
+                    () = cancel.cancelled() => return Err(ErrorCode::Cancelled.into()),
+                    () = tokio::time::sleep(wait) => {}
+                }
             }
             other => return other,
         }

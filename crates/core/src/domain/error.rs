@@ -57,8 +57,24 @@ pub enum ErrorCode {
     ProviderAuth,
     ProviderRateLimit,
     ProviderUnavailable,
+    /// No AI provider has been chosen yet.
+    ProviderNotConfigured,
+    /// The chosen provider needs an API key and has none.
+    ProviderKeyMissing,
+    /// The provider does not have the model asked for (404, or the CLI says so).
+    ProviderModelNotFound,
+    /// The account behind the key has no credit left (402).
+    ProviderBilling,
+    /// The request is larger than the model takes (413, or a context overflow).
+    PayloadTooLarge,
+    /// The provider is overloaded right now (529); trying again may work.
+    Overloaded,
+    /// The provider's safety filter refused this request.
+    ContentPolicy,
     /// The `claude` command is not installed, or not on the login shell's PATH.
     ClaudeCliNotFound,
+    /// Claude Code is installed, but the user has not allowed Daminus to use it.
+    ClaudeCodeNotAcknowledged,
     /// `claude` is installed but has no signed-in account.
     ClaudeCliNotLoggedIn,
     /// The Claude subscription behind `claude` has no allowance left until it resets.
@@ -84,6 +100,7 @@ impl ErrorCode {
                 | ErrorCode::Io { .. }
                 | ErrorCode::ProviderRateLimit
                 | ErrorCode::ProviderUnavailable
+                | ErrorCode::Overloaded
         )
     }
 }
