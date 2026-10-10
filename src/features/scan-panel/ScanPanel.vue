@@ -9,6 +9,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { outcomeKey } from '@/lib/outcome-label'
 import { useHistoryStore } from '@/stores/history'
 import { useProjectsStore } from '@/stores/projects'
 import { useReportStore } from '@/stores/report'
@@ -39,7 +40,12 @@ const reports = useReportStore()
 
 const running = computed(() => scan.scanning)
 const hosts = computed<PanelHost[]>(() =>
-  panelHosts(panel.run, projects.details, reports.latest?.disabled_groups ?? []),
+  panelHosts(
+    panel.run,
+    projects.details,
+    reports.latest?.disabled_groups ?? [],
+    reports.latest?.seq ?? null,
+  ),
 )
 
 // --- the clock ---------------------------------------------------------------------------
@@ -80,8 +86,14 @@ const chip = computed<{ tone: ChipTone; label: string }>(() => {
   if (panel.end === 'cancelled') return { tone: 'neutral', label: t('scanPanel.stopped') }
   return { tone: panel.failedHosts.length > 0 ? 'warn' : 'ok', label: t('scanPanel.done') }
 })
+/** The scan being read is the one after the last saved; it is compared with that one. */
+const lastSeq = computed(() => reports.latest?.seq ?? null)
 const title = computed(() => {
-  if (running.value) return t('scanPanel.title')
+  if (running.value) {
+    return lastSeq.value === null
+      ? t('scanPanel.title')
+      : t('scanPanel.titleSeq', { n: lastSeq.value + 1 })
+  }
   return panel.end === 'cancelled' ? t('scanPanel.titleStopped') : t('scanPanel.titleDone')
 })
 
@@ -105,11 +117,14 @@ const SEGMENT_CLASS: Record<SegmentState, string> = {
 const found = computed(() => foundSoFar(hosts.value))
 
 function foundText(h: PanelHost): string {
-  if (h.segment === 'failed') return t(`scanHost.${h.detail}`)
-  const read = t('scanPanel.foundRead', { n: h.facts }, h.facts)
-  return h.projects.length > 0
-    ? t('scanPanel.foundLine', { projects: h.projects.join(' · '), read })
-    : read
+  const state =
+    h.segment === 'failed'
+      ? t(`outcome.${outcomeKey(h.outcome)}`)
+      : h.segment === 'reading'
+        ? t('scanPanel.foundScanning')
+        : t('scanPanel.foundDone')
+  const projects = h.projects.length > 0 ? h.projects.join(' · ') : t('scanPanel.noProject')
+  return t('scanPanel.foundLine', { projects, state })
 }
 
 // --- keyboard ----------------------------------------------------------------------------
@@ -135,9 +150,6 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 
 <template>
   <div class="layer">
-    <Transition name="scrim">
-      <div v-if="panel.open" class="scrim" aria-hidden="true" @click="panel.close()" />
-    </Transition>
     <UiDrawer
       class="drawer"
       variant="card"
@@ -186,6 +198,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
           :key="h.host"
           :host="h"
           :can-retry="!running"
+          :compare-with="lastSeq"
           :style="{ '--d': `${i * 70}ms` }"
           @retry="panel.start({ projects: [], hosts: [$event] })"
         />
@@ -231,39 +244,13 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown, true))
 </template>
 
 <style scoped>
-/* A layer over the window that lets everything through except the panel and its scrim. */
+/* A layer over the window that lets everything through except the panel: no scrim, the page
+   behind stays usable (Board ↔ app rules, #62). */
 .layer {
   position: fixed;
   inset: 0;
   z-index: 34;
   pointer-events: none;
-}
-
-.scrim {
-  position: absolute;
-  inset: 0 0 0 var(--sidebar-w);
-  background: color-mix(in srgb, var(--page-sheet) 62%, transparent);
-  backdrop-filter: blur(2px);
-  pointer-events: auto;
-}
-
-/* The scrim starts where the main column does: after the sidebar or the rail. */
-body:has(.window[data-column='medium']) .scrim {
-  inset-inline-start: var(--sidebar-w-medium);
-}
-
-body:has(.window[data-column='rail']) .scrim {
-  inset-inline-start: var(--rail-w);
-}
-
-.scrim-enter-active,
-.scrim-leave-active {
-  transition: opacity var(--dur-drawer) var(--ease-drawer);
-}
-
-.scrim-enter-from,
-.scrim-leave-to {
-  opacity: 0;
 }
 
 .drawer {

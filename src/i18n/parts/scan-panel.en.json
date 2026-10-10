@@ -23,21 +23,24 @@
       "disk": "Disk",
       "containers": "Containers",
       "databases": "Databases",
-      "security": "Security"
+      "security": "Security",
+      "compare": "Compare with #{n}"
     },
     "found": "Found so far",
-    "foundRead": "{n} check read | {n} checks read",
     "trust": "Read-only commands. Nothing is installed or changed.",
     "stop": "Stop scan",
     "background": "Keep in background",
     "finish": "Close",
-    "foundLine": "{projects}: {read}",
+    "foundLine": "{projects}: {state}",
     "mark": {
       "done": "Done",
       "running": "Reading",
       "waiting": "Waiting",
       "failed": "Failed",
       "reading": "Reading"
-    }
+    },
+    "titleSeq": "Scan #{n}",
+    "foundDone": "done",
+    "foundScanning": "scanning…"
   }
 }

@@ -35,7 +35,9 @@ export function lineEntries(run: ScanRun | null, off: readonly CheckGroup[]): Li
     if (!p || chipOf(p) !== 'reading' || p.state === 'agent_wait') return []
     if (host === LOCAL_HOST) return [{ host: '', group: 'uptime' as const }]
     const running = stepsOf(p, off).find((s) => s.state === 'running')
-    return [{ host, group: running?.id ?? 'connect' }]
+    // No compare step here (no last scan is passed), so the running step is a group or connect.
+    const group = !running || running.id === 'compare' ? 'connect' : running.id
+    return [{ host, group }]
   })
 }
 

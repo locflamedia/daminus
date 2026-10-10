@@ -23,21 +23,24 @@
       "disk": "Ổ đĩa",
       "containers": "Container",
       "databases": "CSDL",
-      "security": "Bảo mật"
+      "security": "Bảo mật",
+      "compare": "So với #{n}"
     },
     "found": "Đã đọc được",
-    "foundRead": "đọc {n} kiểm tra",
     "trust": "Chỉ chạy lệnh chỉ-đọc. Không cài đặt hay thay đổi gì.",
     "stop": "Dừng quét",
     "background": "Chạy nền",
     "finish": "Đóng",
-    "foundLine": "{projects}: {read}",
+    "foundLine": "{projects}: {state}",
     "mark": {
       "done": "Xong",
       "running": "Đang đọc",
       "waiting": "Đang chờ",
       "failed": "Lỗi",
       "reading": "Đang đọc"
-    }
+    },
+    "titleSeq": "Lần quét #{n}",
+    "foundDone": "xong",
+    "foundScanning": "đang quét…"
   }
 }

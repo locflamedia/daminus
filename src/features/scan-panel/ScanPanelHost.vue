@@ -17,6 +17,8 @@ const props = defineProps<{
   host: PanelHost
   /** A retry only starts once the scan has ended. */
   canRetry: boolean
+  /** The last saved scan, which the compare step names. */
+  compareWith?: number | null
 }>()
 
 const emit = defineEmits<{ retry: [host: string] }>()
@@ -95,7 +97,9 @@ function stepState(s: { state: string }): MarkState {
       >
         <ScanPanelMark :state="stepState(step)" :label="t(`scanPanel.mark.${stepState(step)}`)" />
         <span class="title" :class="{ now: step.state === 'running' }">{{
-          t(`scanPanel.step.${step.id}`)
+          step.id === 'compare'
+            ? t('scanPanel.step.compare', { n: props.compareWith ?? 0 })
+            : t(`scanPanel.step.${step.id}`)
         }}</span>
         <span v-if="step.state === 'running'" class="note mono">
           {{ step.agentWait ? t('scanHost.agent_wait') : t('scanChip.reading') }}

@@ -16,8 +16,9 @@ export const GROUP_ORDER: readonly CheckGroup[] = [
 export type StepState = 'done' | 'running' | 'waiting'
 
 export interface PanelStep {
-  /** `connect` is the SSH connection; the rest are check groups. */
-  id: 'connect' | CheckGroup
+  /** `connect` is the SSH connection, `compare` the comparison with the last scan; the rest are
+   * check groups. */
+  id: 'connect' | CheckGroup | 'compare'
   state: StepState
   /** The step is waiting for the person's SSH agent. */
   agentWait: boolean
@@ -47,6 +48,7 @@ function segmentOf(chip: ChipState): SegmentState {
 export function stepsOf(
   progress: { state: string; step?: CheckGroup | null } | undefined,
   off: readonly CheckGroup[],
+  compareWith: number | null = null,
 ): PanelStep[] {
   const groups = GROUP_ORDER.filter((g) => !off.includes(g))
   const reading = progress?.state === 'running' || progress?.state === 'finished'
@@ -67,7 +69,14 @@ export function stepsOf(
           ? 'running'
           : 'waiting',
   }))
-  return [connect, ...rest]
+  if (compareWith === null) return [connect, ...rest]
+  // Last: what this host read, against the last saved scan, once every group is in.
+  const compare: PanelStep = {
+    id: 'compare',
+    agentWait: false,
+    state: reading && last === groups.length - 1 ? 'running' : 'waiting',
+  }
+  return [connect, ...rest, compare]
 }
 
 /**
@@ -78,10 +87,11 @@ export function panelHosts(
   run: ScanRun | null,
   projects: readonly Project[],
   off: readonly CheckGroup[],
+  compareWith: number | null = null,
 ): PanelHost[] {
   const rows = scanHosts(run).map((h) => {
     const p = run?.hosts[h.host]
-    const steps = p && chipOf(p) === 'reading' ? stepsOf(p, off) : []
+    const steps = p && chipOf(p) === 'reading' ? stepsOf(p, off, compareWith) : []
     return {
       ...h,
       projects: projects
@@ -107,9 +117,12 @@ export function estimateLeftMs(history: HistoryView | null, elapsedMs: number): 
   return left > 0 ? left : null
 }
 
-/** The line of "Found so far": what each finished host read, worst outcome last. */
+/**
+ * The lines of "Found so far": every host that finished or is being read, with how it stands
+ * (done, scanning, or why it failed). What each read means against the last scan waits for v0.2.
+ */
 export function foundSoFar(hosts: readonly PanelHost[]): PanelHost[] {
-  return hosts.filter((h) => h.chip === 'done' || h.chip === 'failed')
+  return hosts.filter((h) => h.chip === 'done' || h.chip === 'failed' || h.chip === 'reading')
 }
 
 /** How far a host has got, 0 to 1: the connection and each group that is done, of all steps. */
