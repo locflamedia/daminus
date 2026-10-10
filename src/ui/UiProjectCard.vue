@@ -299,7 +299,8 @@ function onCardClick(event: MouseEvent) {
 .names {
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  /* The name keeps 10 characters before the state chip may take its room. */
+  min-width: min(10ch, 100%);
   line-height: 1.3;
 }
 

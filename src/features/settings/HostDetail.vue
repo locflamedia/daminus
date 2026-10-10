@@ -8,7 +8,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatClock } from '@/lib/format'
 import { shortDistro } from '@/lib/host-test'
-import { formatSeconds, shortFingerprint } from '@/lib/hosts-settings'
+import { failedChip, formatSeconds, shortFingerprint } from '@/lib/hosts-settings'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useSettingsStore } from '@/stores/settings'
 import { useSetupStore } from '@/stores/setup'
@@ -75,9 +75,9 @@ const headChip = computed<{ tone: ChipTone; text: string; busy: boolean } | null
       busy: false,
     }
   }
-  return r.state === 'failed'
-    ? { tone: 'crit', text: t('setupPick.chip.unreachable'), busy: false }
-    : null
+  if (r.state !== 'failed') return null
+  const failed = failedChip(r.outcome)
+  return { tone: TONES[failed] ?? 'crit', text: t(`setupPick.chip.${failed}`), busy: false }
 })
 
 const system = computed(() => {

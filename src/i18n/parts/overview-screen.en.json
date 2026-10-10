@@ -32,6 +32,7 @@
       "retry": "Retry",
       "fixLogin": "Fix login",
       "editProject": "Edit project",
+      "notInConfig": "Not in config",
       "where": "{domain} · {where}",
       "thisScanWaiting": "this scan · waiting",
       "thisScanUpdating": "this scan · partial, updating",

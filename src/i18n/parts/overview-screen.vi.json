@@ -32,6 +32,7 @@
       "retry": "Thử lại",
       "fixLogin": "Sửa đăng nhập",
       "editProject": "Sửa project",
+      "notInConfig": "Không có trong config",
       "where": "{domain} · {where}",
       "thisScanWaiting": "lần quét này · đang chờ",
       "thisScanUpdating": "lần quét này · một phần, đang cập nhật",

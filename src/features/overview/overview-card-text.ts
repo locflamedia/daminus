@@ -100,7 +100,11 @@ function stateOf(data: ProjectCardData, ctx: CardContext): [ProjectCardState, st
   if (data.state === 'crit') return ['crit', t('overview.crit', { n: data.crit })]
   if (data.state === 'warn') return ['warn', t('overview.warn', { n: data.warn }, data.warn)]
   if (data.state === 'unreachable') {
-    return ['unreachable', t(`outcome.${outcomeKey(data.unreachableOutcome)}`)]
+    // The card's chip is narrow: "not in config" drops the path, which the row below spells out.
+    const cause = outcomeKey(data.unreachableOutcome)
+    const label =
+      cause === 'not_in_config' ? t('overviewScreen.card.notInConfig') : t(`outcome.${cause}`)
+    return ['unreachable', label]
   }
   if (partlyRead(data)) return ['partial', t('overviewScreen.card.partial')]
   return ['ok', t('severity.ok')]
@@ -221,7 +225,8 @@ function statusOf(data: ProjectCardData, ctx: CardContext): ProjectCardStatus {
         cause === 'unreachable'
           ? t('overviewScreen.status.silent', { host })
           : t(`overviewScreen.status.cause.${cause}`, { host }),
-      meta: t('overviewScreen.status.silentMeta'),
+      // A host that never answered has no earlier results to show.
+      meta: data.unreachableAnswered ? t('overviewScreen.status.silentMeta') : undefined,
     }
   }
   return okStatus(data)

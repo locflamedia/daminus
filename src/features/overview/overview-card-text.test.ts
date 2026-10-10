@@ -153,6 +153,7 @@ describe('status row', () => {
           state: 'unreachable' as const,
           unreachableHosts: ['db-main'],
           unreachableOutcome: outcome,
+          unreachableAnswered: true,
         },
         context(),
       )
@@ -193,7 +194,7 @@ describe('status row', () => {
         ],
         [
           { state: 'not_in_config' },
-          'Not in ~/.ssh/config',
+          'Not in config',
           'warn',
           'db-main is no longer in ~/.ssh/config.',
           'edit',
@@ -208,12 +209,30 @@ describe('status row', () => {
       }
     })
 
+    it('drops "showing what it said last time" for a host that never answered', () => {
+      const never = cardView(
+        {
+          ...data('booking'),
+          state: 'unreachable' as const,
+          unreachableHosts: ['db-main'],
+          unreachableOutcome: { state: 'not_in_config' },
+          unreachableAnswered: false,
+        },
+        context(),
+      )
+      expect(never.status.meta).toBeUndefined()
+      expect(down({ state: 'auth_failed' }).status.meta).toBe(
+        'Showing what it said the last time it answered',
+      )
+    })
+
     it('says it in Vietnamese', () => {
       setI18nLocale('vi')
       const card = down({ state: 'auth_failed' })
       expect(card.status.title).toBe('db-main từ chối khoá của bạn.')
       expect(card.actionLabel).toBe('Sửa đăng nhập')
       expect(down({ state: 'not_in_config' }).actionLabel).toBe('Sửa project')
+      expect(down({ state: 'not_in_config' }).stateLabel).toBe('Không có trong config')
       expect(down({ state: 'unreachable', cause: 'no_route' }).status.title).toBe(
         'db-main không trả lời.',
       )

@@ -71,12 +71,7 @@ export function useHostFix() {
   }
 
   /** Runs the fix; a retry belongs to the caller's scan, so it does nothing here. */
-  function run(
-    fix: HostFix,
-    host: string,
-    outcome: HostOutcome | null,
-    project?: string,
-  ) {
+  function run(fix: HostFix, host: string, outcome: HostOutcome | null, project?: string) {
     if (fix === 'login') {
       hosts.select(host)
       void router.push({ name: 'settings', params: { section: 'hosts' } })
