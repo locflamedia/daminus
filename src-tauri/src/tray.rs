@@ -165,8 +165,9 @@ impl<R: Runtime> Tray<R> {
             tracing::warn!(error = %e, "tray: menu not set");
         }
         let _ = self.icon.set_tooltip(Some(v.tooltip()));
-        // Plain text beside the mark; macOS draws it in the bar's colour.
-        let _ = self.icon.set_title(v.title.as_deref());
+        // Plain text beside the mark; macOS draws it in the bar's colour. An
+        // empty title, not none, is what clears the previous count.
+        let _ = self.icon.set_title(Some(v.title_text()));
         if s.icon == Some(v.icon) {
             return;
         }
