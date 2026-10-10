@@ -82,17 +82,24 @@ describe('drafts', () => {
     expect(db && isIncomplete(db)).toBe(true)
   })
 
-  it('leave an incomplete database part out of the saved project and count it', () => {
+  it('keep a database part the user added before its name is known, and count it', () => {
     const d = draftFromProposed(proposed, null)
     const first = draftToProject(d)
-    expect(first.leftOut).toBe(1)
-    expect(first.project.components).toHaveLength(2)
+    expect(first.incomplete).toBe(1)
+    expect(first.project.components).toHaveLength(3)
+    expect(first.project.components[2]).toEqual({
+      role: 'db',
+      host: first.project.components[2]?.host,
+      kind: 'db',
+      engine: 'mysql',
+      env_file: '/var/www/kho-hang/.env',
+    })
     expect(first.project.color).toBeUndefined()
 
     const db = d.parts[2]
     if (db?.kind === 'db') db.database = ' booking_prod '
     const second = draftToProject(d)
-    expect(second.leftOut).toBe(0)
+    expect(second.incomplete).toBe(0)
     expect(second.project.components[2]).toMatchObject({
       kind: 'db',
       database: 'booking_prod',
@@ -100,14 +107,17 @@ describe('drafts', () => {
     })
   })
 
-  it('leave a database part out while no .env is chosen', () => {
+  it('keep a database part with no .env chosen yet, without an env_file', () => {
     const d = draftFromProposed({ ...proposed, env_files: [] }, null)
     const db = d.parts[2]
     if (db?.kind === 'db') {
       db.database = 'x'
       db.envFile = ''
     }
-    expect(draftToProject(d).leftOut).toBe(1)
+    const out = draftToProject(d)
+    expect(out.incomplete).toBe(1)
+    expect(out.project.components[2]).not.toHaveProperty('env_file')
+    expect(out.project.components[2]).toMatchObject({ kind: 'db', database: 'x' })
   })
 
   it('round trip a saved project and keep its colour', () => {
@@ -143,7 +153,8 @@ describe('the projects.json preview', () => {
     const other = { ...draftFromProposed(proposed, null), id: 'tiemtra' }
     const text = previewLines([one, other]).join('\n')
     expect(text).toContain('"id": "kho-hang"')
-    expect(text).toContain('{ "id": "tiemtra", … 2 parts }')
+    expect(text).toContain('{ "id": "tiemtra", … 3 parts }')
+    expect(text).not.toContain('undefined')
     expect(text).not.toMatch(/password|secret/i)
     expect(JSON.parse(previewLines([]).join('\n'))).toEqual({ version: 1, projects: [] })
   })

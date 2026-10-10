@@ -102,11 +102,11 @@ pub struct ProposedProject {
 impl ProposedProject {
     /// The project as `projects.json` holds it. A database component needs
     /// the database name, which only the user knows: with `database` it is
-    /// filled in for every database component, without it they are left out.
-    /// Returns how many were left out.
+    /// filled in for every database component; without it they are kept with
+    /// no name, and their size is read once a name and an `.env` are set.
+    /// Returns how many database components still lack a name or an `.env`.
     pub fn to_project(&self, database: Option<&str>) -> (Project, usize) {
         let mut components = Vec::new();
-        let mut left_out = 0;
         for c in &self.components {
             let kind = match &c.kind {
                 ProposedKind::Path { path } => ComponentKind::Path { path: path.clone() },
@@ -121,17 +121,11 @@ impl ProposedProject {
                     engine,
                     env_file,
                     container,
-                } => match database {
-                    Some(name) => ComponentKind::Db {
-                        engine: *engine,
-                        database: name.to_owned(),
-                        env_file: env_file.clone(),
-                        container: container.clone(),
-                    },
-                    None => {
-                        left_out += 1;
-                        continue;
-                    }
+                } => ComponentKind::Db {
+                    engine: *engine,
+                    database: database.map(str::to_owned),
+                    env_file: (!env_file.is_empty()).then(|| env_file.clone()),
+                    container: container.clone(),
                 },
             };
             components.push(Component {
@@ -148,7 +142,18 @@ impl ProposedProject {
             components,
             overrides: Vec::new(),
         };
-        (project, left_out)
+        let incomplete = project
+            .components
+            .iter()
+            .filter(|c| {
+                matches!(
+                    &c.kind,
+                    ComponentKind::Db { database, env_file, .. }
+                        if database.is_none() || env_file.is_none()
+                )
+            })
+            .count();
+        (project, incomplete)
     }
 }
 

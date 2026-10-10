@@ -158,8 +158,8 @@ function fromComponent(c: Component): DraftPart {
         ...base,
         kind: 'db',
         engine: c.engine,
-        database: c.database,
-        envFile: c.env_file,
+        database: c.database ?? '',
+        envFile: c.env_file ?? '',
         container: c.container ?? null,
       }
   }
@@ -204,8 +204,7 @@ export function isIncomplete(part: DraftPart): boolean {
   return part.kind === 'db' && (part.database.trim() === '' || part.envFile.trim() === '')
 }
 
-function toComponent(part: DraftPart): Component | null {
-  if (isIncomplete(part)) return null
+function toComponent(part: DraftPart): Component {
   const base = { role: part.role, host: part.host }
   switch (part.kind) {
     case 'path':
@@ -219,27 +218,27 @@ function toComponent(part: DraftPart): Component | null {
         app: part.app,
         ...(part.pm2Home ? { pm2_home: part.pm2Home } : {}),
       }
-    case 'db':
+    case 'db': {
+      // A database the user added is kept even before its name or .env is known;
+      // its size is read once both are set.
+      const database = part.database.trim()
+      const envFile = part.envFile.trim()
       return {
         ...base,
         kind: 'db',
         engine: part.engine,
-        database: part.database.trim(),
-        env_file: part.envFile.trim(),
+        ...(database ? { database } : {}),
+        ...(envFile ? { env_file: envFile } : {}),
         ...(part.container ? { container: part.container } : {}),
       }
+    }
   }
 }
 
-/** The project as `projects.json` holds it, and how many database parts were left out. */
-export function draftToProject(d: DraftProject): { project: Project; leftOut: number } {
-  const components: Component[] = []
-  let leftOut = 0
-  for (const part of d.parts) {
-    const c = toComponent(part)
-    if (c) components.push(c)
-    else leftOut += 1
-  }
+/** The project as `projects.json` holds it, and how many database parts lack a name or .env. */
+export function draftToProject(d: DraftProject): { project: Project; incomplete: number } {
+  const components = d.parts.map(toComponent)
+  const incomplete = d.parts.filter(isIncomplete).length
   const project: Project = {
     id: d.id.trim(),
     name: d.name,
@@ -247,7 +246,7 @@ export function draftToProject(d: DraftProject): { project: Project; leftOut: nu
     components,
     ...(d.color ? { color: d.color } : {}),
   }
-  return { project, leftOut }
+  return { project, incomplete }
 }
 
 /** Every distinct host the drafts use, in first-use order (the servers of the footer count). */
@@ -313,7 +312,10 @@ function componentLine(c: Component): string {
       return `${head}, "project": ${JSON.stringify(c.project)}`
     case 'pm2':
       return `${head}, "app": ${JSON.stringify(c.app)}`
-    case 'db':
-      return `${head}, "engine": "${c.engine}", "database": ${JSON.stringify(c.database)}, "env_file": ${JSON.stringify(c.env_file)}`
+    case 'db': {
+      const name = c.database ? `, "database": ${JSON.stringify(c.database)}` : ''
+      const env = c.env_file ? `, "env_file": ${JSON.stringify(c.env_file)}` : ''
+      return `${head}, "engine": "${c.engine}"${name}${env}`
+    }
   }
 }

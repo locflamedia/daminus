@@ -212,10 +212,10 @@ describe('what the core says', () => {
     expect(drafts.replaces(tiemtra)).toBe(false)
   })
 
-  it('checks only the parts that can be saved', async () => {
+  it('checks every part, the database still waiting for its name included', async () => {
     const { drafts } = stores()
     await drafts.validate()
-    expect(validated.at(-1)?.[0]?.components).toHaveLength(1)
+    expect(validated.at(-1)?.[0]?.components).toHaveLength(2)
   })
 
   it('knows when an error stops the save', async () => {
@@ -227,14 +227,14 @@ describe('what the core says', () => {
 })
 
 describe('saving', () => {
-  it('writes the projects and the ticked hosts, with the incomplete database left out', async () => {
+  it('writes the projects and the ticked hosts, keeping the database still waiting for its name', async () => {
     const { setup, drafts } = stores()
     setup.ticked = ['vps-hn-3', 'vps-sg-1']
     const result = await drafts.save()
     expect(result?.status).toBe('saved')
     expect(saved).toHaveLength(1)
     expect(saved[0]?.hosts).toEqual(['vps-hn-3', 'vps-sg-1'])
-    expect(saved[0]?.projects[0]?.components).toHaveLength(1)
+    expect(saved[0]?.projects[0]?.components).toHaveLength(2)
     expect(saved[0]?.projects[0]?.color).toBe(PROJECT_COLORS.blue)
   })
 

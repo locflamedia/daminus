@@ -178,10 +178,11 @@ impl BundleVars {
                     };
                     push(&mut pm2, line);
                 }
+                // A database without a name or an `.env` yet has nothing to read.
                 ComponentKind::Db {
                     engine,
-                    database,
-                    env_file,
+                    database: Some(database),
+                    env_file: Some(env_file),
                     container,
                 } => {
                     let engine = match engine {
@@ -194,6 +195,7 @@ impl BundleVars {
                         format!("{engine}\t{database}\t{env_file}\t{container}"),
                     );
                 }
+                ComponentKind::Db { .. } => {}
             }
         }
         self.set(PATHS_VAR, paths.join("\n"))?;

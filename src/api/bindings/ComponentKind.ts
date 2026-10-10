@@ -10,4 +10,4 @@ import type { DbEngine } from "./DbEngine";
  * or break out of an argument: names must match `[A-Za-z0-9][A-Za-z0-9._-]*`
  * and paths must be absolute with no control characters.
  */
-export type ComponentKind = { "kind": "path", path: string, } | { "kind": "compose", project: string, } | { "kind": "pm2", app: string, pm2_home?: string | null, } | { "kind": "db", engine: DbEngine, database: string, env_file: string, container?: string | null, };
+export type ComponentKind = { "kind": "path", path: string, } | { "kind": "compose", project: string, } | { "kind": "pm2", app: string, pm2_home?: string | null, } | { "kind": "db", engine: DbEngine, database?: string | null, env_file?: string | null, container?: string | null, };
