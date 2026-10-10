@@ -39,6 +39,23 @@ const press = (el: Element, key: string, init: KeyboardEventInit = {}) => {
 }
 
 describe('UiSheet', () => {
+  it('keeps the title on one line and gives the context what is left', () => {
+    const file = join(__dirname, 'UiSheet.vue')
+    const { descriptor } = parse(readFileSync(file, 'utf8'), { filename: file })
+    const css = descriptor.styles
+      .map(
+        (s) =>
+          compileStyle({ source: s.content, filename: file, id: 'data-v-t', scoped: true }).code,
+      )
+      .join('\n')
+    const rule = (sel: string) =>
+      css.match(new RegExp(`\\.${sel}\\[data-v-t\\]\\s*\\{([^}]*)\\}`))?.[1] ?? ''
+    expect(rule('title')).toMatch(/white-space:\s*nowrap/)
+    expect(rule('title')).toMatch(/flex:\s*none/)
+    expect(rule('context')).toMatch(/flex:\s*1 1 auto/)
+    expect(rule('context')).toMatch(/min-width:\s*0/)
+  })
+
   it('pins a form sheet 64 px from the top, so it only grows down', async () => {
     make({ pinned: true })
     await nextTick()

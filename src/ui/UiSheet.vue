@@ -203,16 +203,23 @@ const hasFooter = computed(() => !!slots['footer-start'] || !!slots['footer-end'
   padding: 0 var(--space-5);
 }
 
+/* The title is one line, whatever the context beside it says; the context takes what is left
+   and wraps there. */
 .title {
+  flex: none;
   margin: 0;
   font-size: var(--text-15);
   font-weight: var(--weight-medium);
   letter-spacing: var(--track-15);
+  white-space: nowrap;
 }
 
 .context {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--ink-3);
   font-size: var(--text-12);
+  line-height: 1.4;
 }
 
 .close {
