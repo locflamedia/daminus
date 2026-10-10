@@ -31,15 +31,22 @@ export function isActive(entry: AiProviderEntry, view: AiProvidersView): boolean
   return !isClaudeCode(entry) || view.claude_code_ack
 }
 
-/** The dot colour and the one line under the name, by the board's rules. */
-export function tileStatus(entry: AiProviderEntry, view: AiProvidersView): [Dot, TileStatus] {
+/**
+ * The dot colour and the one line under the name, by the board's rules. A key whose last test
+ * failed (`rejected`) is saved, not connected: the tile must not say the opposite of that test.
+ */
+export function tileStatus(
+  entry: AiProviderEntry,
+  view: AiProvidersView,
+  rejected = false,
+): [Dot, TileStatus] {
   const active = isActive(entry, view)
   if (isClaudeCode(entry)) {
     return active && isReady(entry, view) ? ['ok', 'connected'] : ['off', 'cli']
   }
   if (entry.profile.needs_key) {
     if (!entry.key_set) return ['off', needsBaseUrl(entry) ? 'baseUrlKey' : 'addKey']
-    return active ? ['ok', 'connected'] : ['accent', 'keySaved']
+    return active && !rejected ? ['ok', 'connected'] : ['accent', 'keySaved']
   }
   return active ? ['ok', 'local'] : ['off', 'noKey']
 }
