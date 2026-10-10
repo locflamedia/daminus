@@ -375,6 +375,9 @@ async fn cancelling_returns_cancelled_and_logs_nothing() -> Test {
     let p = payload()?;
     let lines = Arc::new(Lines::default());
     let _guard = tracing::subscriber::set_default(Capture(Arc::clone(&lines)));
+    // A callsite first hit while no subscriber was set (another test thread) caches "never";
+    // without a rebuild its events would skip this capture now and then.
+    tracing::callsite::rebuild_interest_cache();
     let client = fake(&[GOOD]);
     let cancel = CancellationToken::new();
     cancel.cancel();
@@ -485,6 +488,9 @@ async fn canaries_reach_neither_the_request_nor_the_log() -> Test {
     let p = payload_of(&r)?;
     let lines = Arc::new(Lines::default());
     let _guard = tracing::subscriber::set_default(Capture(Arc::clone(&lines)));
+    // A callsite first hit while no subscriber was set (another test thread) caches "never";
+    // without a rebuild its events would skip this capture now and then.
+    tracing::callsite::rebuild_interest_cache();
     // The reply echoes a canary; it must not reach the log either.
     let client = fake(&["{\"summary\":\"CANARY_REPLY\",\"findings\":[]}"]);
     run(&client, &p).await?;
