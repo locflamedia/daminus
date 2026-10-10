@@ -47,6 +47,7 @@ async function checkAgain() {
     :title="t('empty.addHost.title')"
     :context="t('empty.addHost.context')"
     width="560px"
+    pinned
     @close="open = false"
   >
     <div class="body">

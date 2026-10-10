@@ -1,7 +1,10 @@
 // @vitest-environment happy-dom
 import { mount, type VueWrapper } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { h, nextTick, ref } from 'vue'
+import { compileStyle, parse } from 'vue/compiler-sfc'
 import { i18n } from '@/i18n'
 import UiSelect from './UiSelect.vue'
 import UiSheet from './UiSheet.vue'
@@ -36,6 +39,27 @@ const press = (el: Element, key: string, init: KeyboardEventInit = {}) => {
 }
 
 describe('UiSheet', () => {
+  it('pins a form sheet 64 px from the top, so it only grows down', async () => {
+    make({ pinned: true })
+    await nextTick()
+    expect(wrapper!.get('.layer').classes()).toContain('pinned')
+    make()
+    await nextTick()
+    expect(wrapper!.get('.layer').classes()).not.toContain('pinned')
+
+    const file = join(__dirname, 'UiSheet.vue')
+    const { descriptor } = parse(readFileSync(file, 'utf8'), { filename: file })
+    const css = descriptor.styles
+      .map(
+        (s) =>
+          compileStyle({ source: s.content, filename: file, id: 'data-v-t', scoped: true }).code,
+      )
+      .join('\n')
+    const rule = css.match(/\.layer\.pinned\[data-v-t\]\s*\{([^}]*)\}/)?.[1] ?? ''
+    expect(rule).toMatch(/align-items:\s*flex-start/)
+    expect(rule).toMatch(/padding-top:\s*64px/)
+  })
+
   it('is a modal dialog named by its title, with the context beside it', async () => {
     make()
     await nextTick()
