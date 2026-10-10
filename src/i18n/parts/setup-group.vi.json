@@ -57,7 +57,7 @@
       "nameHelp": "Daminus không bao giờ đọc .env của bạn nên không biết tên này. Hãy gõ giá trị của DB_DATABASE.",
       "nameSet": "Đã có tên",
       "saveAllowedLead": "Vẫn lưu được.",
-      "saveAllowedBody": "{project} được lưu cùng thành phần database này; dung lượng hiện Chưa thiết lập cho đến khi có tên."
+      "saveAllowedBody": "{project} được lưu cùng thành phần database này; dung lượng hiện “Chưa có” cho đến khi có tên."
     },
     "replaces": {
       "chip": "Đã lưu trước đó · Lưu sẽ thay thế",
@@ -113,8 +113,8 @@
       "roles": "Front end và back end đã đặt ở nơi có cả hai.",
       "rolesMissing": "{n} dự án chưa có thành phần front end hay back end. | {n} dự án chưa có thành phần front end hay back end.",
       "databases": "Mọi database đều báo được dung lượng.",
-      "dbNoEnv": "{n} database chưa có .env. Không bắt buộc; dung lượng hiện Chưa thiết lập. | {n} database chưa có .env. Không bắt buộc; dung lượng hiện Chưa thiết lập.",
-      "dbNoName": "{n} database chưa có tên. Không bắt buộc; dung lượng hiện Chưa thiết lập. | {n} database chưa có tên. Không bắt buộc; dung lượng hiện Chưa thiết lập."
+      "dbNoEnv": "{n} database chưa có .env. Không bắt buộc; dung lượng hiện “Chưa có”. | {n} database chưa có .env. Không bắt buộc; dung lượng hiện “Chưa có”.",
+      "dbNoName": "{n} database chưa có tên. Không bắt buộc; dung lượng hiện “Chưa có”. | {n} database chưa có tên. Không bắt buộc; dung lượng hiện “Chưa có”."
     },
     "foot": {
       "projects": "{n} dự án | {n} dự án",
