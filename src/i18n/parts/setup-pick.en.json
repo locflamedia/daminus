@@ -76,7 +76,7 @@
       "key_rejected_nokey": "The keys ssh offered were not accepted. Check that the right key is loaded in ssh-agent, then retry. Your other hosts keep going.",
       "unreachable": {
         "dns": "The address did not resolve. Check the address or VPN.",
-        "refused": "The server refused the connection. Check the address or VPN.",
+        "refused": "Nothing listens on port {port}. Check Port in ~/.ssh/config.",
         "no_route": "There is no route to the server. Check the address or VPN.",
         "other": "DNS, no route or refused. Check the address or VPN."
       },

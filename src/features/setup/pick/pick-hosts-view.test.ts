@@ -315,7 +315,7 @@ describe('Failures stay inline', () => {
       [
         'vps-sg-2',
         { state: 'unreachable', cause: 'refused' },
-        'The server refused the connection.',
+        'Nothing listens on port 22. Check Port in ~/.ssh/config.',
       ],
       [
         'vps-hn-3',
