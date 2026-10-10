@@ -182,7 +182,7 @@ const testLabel = computed(() => {
       </span>
     </div>
 
-    <HostPermissions :login="login" />
+    <HostPermissions :login="login" :config-user="resolved?.user ?? null" />
     <HostConnectTime :host="row.alias" />
 
     <div class="include">

@@ -12,11 +12,15 @@ import { permissionKey } from '@/lib/host-rows'
 import { type PermissionRow, permissionRows } from '@/lib/host-test'
 import type { IconName } from '@/ui/icon-paths'
 
-const props = defineProps<{ login: LoginResult | null }>()
+const props = defineProps<{
+  login: LoginResult | null
+  /** The `User` ssh resolves for the host, named before a login test has run. */
+  configUser?: string | null
+}>()
 
 const { t } = useI18n()
 
-const user = computed(() => props.login?.login?.user ?? '')
+const user = computed(() => props.login?.login?.user ?? props.configUser ?? '')
 const rows = computed(() => (props.login ? permissionRows(props.login) : []))
 
 function icon(row: PermissionRow): IconName {

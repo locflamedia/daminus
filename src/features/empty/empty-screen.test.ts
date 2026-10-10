@@ -223,7 +223,7 @@ describe('the help screen', () => {
     const { wrapper } = await mountScreen()
     const button = () => wrapper.get('.import')
     expect(button().attributes('aria-disabled')).toBe('true')
-    expect(button().text()).toContain('Import 0 hosts')
+    expect(button().text()).toContain('Import hosts')
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }))
     expect(useSetupStore().addHostOpen).toBe(false)
   })

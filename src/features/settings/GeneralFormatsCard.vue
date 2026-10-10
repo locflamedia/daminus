@@ -11,8 +11,9 @@ const settings = useSettingsStore()
 /** The sample the board uses: 1,240.5 MB, Sep 26 2026, 13:42, two hours earlier. */
 const SAMPLE = new Date(2026, 8, 26, 13, 42)
 
+// The app writes dates day first ("26 Sep 2026"), as Settings › General shows them.
 const usDate = (date: Date) =>
-  new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(date)
+  new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date)
 
 const rows = computed(() => {
   const locale = settings.language

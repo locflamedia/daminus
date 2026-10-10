@@ -8,7 +8,6 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { Segment } from '@/lib/host-rows'
 import UiButton from '@/ui/UiButton.vue'
-import UiKbd from '@/ui/UiKbd.vue'
 import UiSearchField from '@/ui/UiSearchField.vue'
 import UiSeg from '@/ui/UiSeg.vue'
 
@@ -47,8 +46,8 @@ defineExpose({ focusSearch: () => search.value?.focus() })
       {{ t('setupPick.filter.selectReady') }}
     </UiButton>
     <UiButton icon="plus" @click="emit('addHost')">{{ t('setupPick.filter.addHost') }}</UiButton>
-    <UiButton icon="refresh" :busy="busy" @click="emit('reload')">
-      {{ t('setupPick.filter.reload') }}<UiKbd>⇧⌘R</UiKbd>
+    <UiButton icon="refresh" :busy="busy" shortcut="⇧⌘R" @click="emit('reload')">
+      {{ t('setupPick.filter.reload') }}
     </UiButton>
   </div>
 </template>

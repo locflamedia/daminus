@@ -118,6 +118,8 @@ watch(
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Tall enough for stacked Vietnamese marks (Ổ), which line-height 1 would cut. */
+  line-height: 1.4;
 }
 
 /* The large chip of a card head: 24 tall, 10 of padding, 6 between the dot and the word. */

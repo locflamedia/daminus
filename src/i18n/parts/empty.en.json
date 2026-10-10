@@ -136,7 +136,7 @@
         "no_host_name": "no HostName",
         "invalid_alias": "unusable alias"
       },
-      "importHosts": "Import {n} host | Import {n} hosts",
+      "importHosts": "Import hosts | Import {n} host | Import {n} hosts",
       "importOff": "Check again once the config has a host and the agent has a key."
     },
     "hostBlock": {

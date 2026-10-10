@@ -177,15 +177,15 @@ if (providers.view === null) void providers.load()
         <p v-if="shown.length === 0" class="note">{{ t('aiFindings.nothingToShow') }}</p>
         <div class="foot">
           <div v-if="footer.passed > 0" class="frow">
-            <UiIcon name="check" :size="14" />
+            <UiIcon name="check" :size="14" class="ok" />
             <span>{{ t('aiFindings.passed', { n: footer.passed }, footer.passed) }}</span>
           </div>
           <div v-if="footer.expected > 0" class="frow">
-            <UiIcon name="check" :size="14" />
+            <UiIcon name="eye" :size="14" />
             <span>{{ t('aiFindings.expectedCount', { n: footer.expected }) }}</span>
           </div>
           <div v-for="host in footer.unreachable" :key="host" class="frow">
-            <UiIcon name="warn" :size="14" />
+            <UiIcon name="close" :size="14" class="crit" />
             <span>{{ t('aiFindings.notScanned', { host }) }}</span>
             <span class="note">{{ t('aiFindings.unreachableWord') }}</span>
           </div>
@@ -340,6 +340,15 @@ if (providers.view === null) void providers.load()
 
 .listcard > .ct {
   padding: 4px 4px 6px;
+}
+
+/* As the board: passed in ok ink, a host not scanned in crit ink, expected in grey. */
+.frow .icon.ok {
+  color: var(--ok-ink);
+}
+
+.frow .icon.crit {
+  color: var(--crit-ink);
 }
 
 .foot {

@@ -136,7 +136,7 @@
         "no_host_name": "thiếu HostName",
         "invalid_alias": "bí danh không dùng được"
       },
-      "importHosts": "Nhập {n} host | Nhập {n} host",
+      "importHosts": "Nhập host | Nhập {n} host | Nhập {n} host",
       "importOff": "Hãy kiểm tra lại khi cấu hình đã có host và agent đã có khoá."
     },
     "hostBlock": {
