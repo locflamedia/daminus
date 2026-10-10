@@ -17,6 +17,7 @@ const m = useDatabaseModel(toRef(props, 'id'))
 
 <template>
   <ProjectTabShell
+    :project-id="id"
     :loading="m.loading.value"
     :status="m.state.value.status"
     :unreachable="m.state.value.unreachable"

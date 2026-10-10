@@ -6,7 +6,8 @@
   screen readers and the hover title, so the heights are never the only signal. Given a card
   per scan the chart takes keyboard focus (see `UiColumnStage`): the card opens on the focused
   column, its number turns ink and the same words are announced. Columns rise from their base,
-  40 ms apart, the first time the chart appears.
+  40 ms apart, the first time the chart appears. While a scan runs, `live` adds a hatched
+  column at the end with its label ("#13 · running"), from board 30.
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
@@ -35,8 +36,10 @@ const props = withDefaults(
     legend?: readonly LegendItem[]
     label: string
     once?: string
+    /** The label of the scan running now, drawn as a hatched column after the saved ones. */
+    live?: string | null
   }>(),
-  { compared: () => [], legend: () => [], once: undefined },
+  { compared: () => [], legend: () => [], once: undefined, live: null },
 )
 
 const hovered = defineModel<number | null>('hovered', { default: null })
@@ -55,7 +58,8 @@ const anchors = computed(() =>
   columns.value.map((segments, i) => {
     const stack =
       segments.reduce((sum, s) => sum + s.height, 0) + GAP * Math.max(0, segments.length - 1)
-    return { x: ((i + 0.5) / props.scans.length) * 100, y: ((WELL - stack) / (WELL + LABEL)) * 100 }
+    const count = props.scans.length + (props.live ? 1 : 0)
+    return { x: ((i + 0.5) / count) * 100, y: ((WELL - stack) / (WELL + LABEL)) * 100 }
   }),
 )
 const TONE = {
@@ -97,6 +101,10 @@ const TONE = {
               aria-hidden="true"
             />
             <span class="num" :class="{ now: at === i }" aria-hidden="true">{{ scan.label }}</span>
+          </li>
+          <li v-if="live" class="column live">
+            <i class="segment hatch" aria-hidden="true" />
+            <span class="num">{{ live }}</span>
           </li>
         </ul>
       </template>
@@ -149,6 +157,24 @@ const TONE = {
 
 .faded .segment {
   opacity: 0.55;
+}
+
+.hatch {
+  height: 100%;
+  background: repeating-linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--accent) 25%, transparent) 0 4px,
+    color-mix(in srgb, var(--accent) 8%, transparent) 4px 8px
+  );
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.live .num {
+  right: auto;
+  left: 50%;
+  color: var(--accent-ink);
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 .num {

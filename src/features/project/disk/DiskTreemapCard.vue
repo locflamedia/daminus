@@ -6,6 +6,7 @@ import type { DiskPathView, DiskTileModel } from '@/lib/project-disk'
 import UiBanner from '@/ui/UiBanner.vue'
 import UiTreemap from '@/ui/UiTreemap.vue'
 import ProjectCard from '../common/ProjectCard.vue'
+import { useResultsAged } from '../common/results-aged'
 
 const props = defineProps<{
   id: string
@@ -18,10 +19,13 @@ const props = defineProps<{
 const { t } = useI18n()
 const fmt = useFormat()
 const paths = computed(() => props.views.map((v) => v.path).join(' + '))
+const aged = useResultsAged()
+// Over a day old the sizes stay; the change and the outline of the folder that grew go.
 const tiles = computed(() =>
   props.tiles.map((m) => ({
     ...m.tile,
     label: m.tile.other ? t('projectDisk.tiles.other') : m.tile.label,
+    ...(aged.value ? { delta: undefined, grow: false } : {}),
   })),
 )
 </script>

@@ -8,6 +8,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { useResultsAged } from '@/features/project/common/results-aged'
 import type { Usage, UsageRow } from '@/lib/server-usage'
 import UiIcon from '@/ui/UiIcon.vue'
 
@@ -31,6 +32,7 @@ interface RowView {
   amber: boolean
 }
 
+const aged = useResultsAged()
 const rows = computed<RowView[]>(() =>
   props.usage.rows.map((row) => ({
     row,
@@ -42,8 +44,13 @@ const rows = computed<RowView[]>(() =>
         })
       : null,
     size: fmt.measure(row.bytes, 'bytes').text,
-    delta: row.delta === null ? '' : row.delta === 0 ? '0' : fmt.delta(row.delta, 'bytes').text,
-    grew: row.delta !== null && row.delta > 0,
+    delta:
+      row.delta === null || aged.value
+        ? ''
+        : row.delta === 0
+          ? '0'
+          : fmt.delta(row.delta, 'bytes').text,
+    grew: !aged.value && row.delta !== null && row.delta > 0,
     amber: row.log !== null || row.kind === 'log',
   })),
 )

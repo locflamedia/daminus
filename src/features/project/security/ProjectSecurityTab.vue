@@ -11,12 +11,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { errorText } from '@/lib/issue-text'
 import { shouldPlay } from '@/lib/motion'
 import { useReportStore } from '@/stores/report'
 import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
-import UiEmptyState from '@/ui/UiEmptyState.vue'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
 import SecurityChecksCard from './SecurityChecksCard.vue'
 import SecurityDoFirst from './SecurityDoFirst.vue'
@@ -26,6 +24,11 @@ import SecurityLimits from './SecurityLimits.vue'
 import SecurityTimeline from './SecurityTimeline.vue'
 import { useProjectSecurity } from './use-project-security'
 import { useFormat } from '@/composables/use-format'
+import ResultErrorState from '../common/ResultErrorState.vue'
+import ResultFirstScan from '../common/ResultFirstScan.vue'
+import ResultNotes from '../common/ResultNotes.vue'
+import { provideResultsAged } from '../common/results-aged'
+import { useResultScan } from '../common/use-result-scan'
 
 const props = defineProps<{ id: string }>()
 
@@ -34,7 +37,9 @@ const fmt = useFormat()
 const reports = useReportStore()
 const view = useProjectSecurity(computed(() => props.id))
 
-const error = computed(() => (reports.error ? errorText(reports.error) : ''))
+const run = useResultScan(() => ({ project: props.id }))
+const aged = computed(() => view.oldDays.value !== null)
+provideResultsAged(aged)
 const key = computed(() => `${props.id}:${view.seq.value}`)
 // The results arrive with motion once per scan, not on every visit or re-render.
 const play = computed(() => shouldPlay(`sec-${key.value}`))
@@ -53,7 +58,11 @@ const clean = computed(
     view.rows.value.every((r) => r.state === 'ok' || r.state === 'expected'),
 )
 
-const hosts = computed(() => view.unreachable.value.join(', '))
+/** The oldest scan a row of a host that did not answer is shown from. */
+const unreachableSince = computed(() => {
+  const seqs = view.rows.value.map((r) => r.staleSince).filter((n): n is number => n !== null)
+  return seqs.length > 0 ? Math.min(...seqs) : null
+})
 
 /** "first seen scan #10 · 2 days", "new this scan" or nothing when the age is not known. */
 function since(f: Parameters<typeof view.firstSeen>[0]): string {
@@ -86,54 +95,45 @@ function since(f: Parameters<typeof view.firstSeen>[0]): string {
       </div>
     </div>
 
-    <UiEmptyState
+    <ResultErrorState
       v-else-if="view.screen.value === 'error'"
-      icon="warn"
-      :title="t('projectSecurity.state.errorTitle')"
-      :text="error"
-    >
-      <UiButton @click="view.retry()">{{ t('projectSecurity.state.retry') }}</UiButton>
-    </UiEmptyState>
+      :error="reports.error"
+      @retry="view.retry()"
+    />
 
-    <UiEmptyState
+    <ResultFirstScan
       v-else-if="view.screen.value === 'empty'"
-      icon="shield"
-      :title="t('projectSecurity.state.emptyTitle')"
-      :text="t('projectSecurity.state.emptyText')"
+      :name="run.name.value"
+      :busy="run.busy.value"
+      @scan="run.scanThis()"
     />
 
     <template v-else>
-      <UiBanner
-        v-if="view.oldDays.value !== null"
-        tone="warn"
-        icon="clock"
-        :title="
-          t('projectSecurity.state.staleTitle', { n: view.oldDays.value }, view.oldDays.value)
-        "
-        :text="t('projectSecurity.state.staleText', { seq: view.seq.value ?? 0 })"
-      />
-      <UiBanner
-        v-if="view.unreachable.value.length > 0"
-        tone="crit"
-        icon="unreachable"
-        :title="t('projectSecurity.state.unreachableTitle', { hosts, seq: view.seq.value ?? 0 })"
-        :text="t('projectSecurity.state.unreachableText')"
+      <ResultNotes
+        :scanning-host="run.scanningHost.value"
+        :unreachable="view.unreachable.value"
+        :unreachable-since="unreachableSince"
+        :old-days="view.oldDays.value"
+        :seq="view.seq.value"
+        :busy="run.busy.value"
+        @scan="run.scanThis()"
+        @retry="(hosts) => run.retry(hosts)"
       />
       <UiBanner
         v-if="view.allOff.value"
         tone="neutral"
         icon="settings"
-        :title="t('projectSecurity.state.allOffTitle')"
-        :text="t('projectSecurity.state.allOffText')"
+        :title="t('projectShared.off.title', { group: t('projectShared.group.security') })"
+        :text="t('projectShared.off.text')"
       >
         <template #trailing>
           <UiButton size="small" :to="{ name: 'settings', params: { section: 'scan' } }">{{
-            t('projectSecurity.state.openSettings')
+            t('projectShared.off.open')
           }}</UiButton>
         </template>
       </UiBanner>
 
-      <div :key="key" class="layout">
+      <div :key="key" class="layout" :class="{ 'results-aged': aged }">
         <div class="col">
           <SecurityDoFirst v-if="view.first.value" :step="view.first.value" />
           <SecurityFindingCard

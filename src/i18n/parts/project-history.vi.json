@@ -1,11 +1,7 @@
 {
   "projectHistory": {
     "state": {
-      "loading": "Đang đọc các lần quét đã lưu",
-      "emptyTitle": "Chưa có lần quét nào",
-      "emptyText": "Lịch sử đầy dần khi bạn quét. Bấm Quét tất cả để lưu lần đầu.",
-      "errorTitle": "Không đọc được các lần quét đã lưu",
-      "retry": "Thử lại"
+      "loading": "Đang đọc các lần quét đã lưu"
     },
     "range": {
       "label": "Khoảng thời gian",

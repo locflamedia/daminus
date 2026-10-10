@@ -13,7 +13,6 @@ import { useRoute } from 'vue-router'
 import { useFormat } from '@/composables/use-format'
 import { useHostKeyReview } from '@/features/host-key/use-host-key-review'
 import { useNow } from '@/composables/use-now'
-import { errorText } from '@/lib/issue-text'
 import { coresOf, itemOf } from '@/lib/server-facts'
 import { dataOf, num } from '@/lib/project-facts'
 import { staleDays } from '@/lib/staleness'
@@ -32,8 +31,13 @@ import ServerHeader from './ServerHeader.vue'
 import ServerKpiCard from './ServerKpiCard.vue'
 import ServerSkeleton from './ServerSkeleton.vue'
 import ServerUsageCard from './ServerUsageCard.vue'
-import { kpiView } from './server-text'
+import { type KpiView, kpiView } from './server-text'
 import { useServerData } from './use-server-data'
+import ResultErrorState from '@/features/project/common/ResultErrorState.vue'
+import ResultFirstScan from '@/features/project/common/ResultFirstScan.vue'
+import ResultNotes from '@/features/project/common/ResultNotes.vue'
+import { provideResultsAged } from '@/features/project/common/results-aged'
+import { useResultScan } from '@/features/project/common/use-result-scan'
 
 const { t } = useI18n()
 const keys = useHostKeyReview()
@@ -56,6 +60,9 @@ const seq = computed(() => data.report.value?.seq ?? null)
 const scope = computed(() => `${host.value}:${seq.value ?? 'none'}`)
 
 const oldDays = computed(() => staleDays(data.report.value?.scanned_at, clock.value))
+const aged = computed(() => oldDays.value !== null)
+provideResultsAged(aged)
+const run = useResultScan(() => ({ host: host.value }))
 
 // "4 cores · 7.8 GB RAM · scan #12, 2.1 s": only what the checks read about the machine.
 const meta = computed(() => {
@@ -79,25 +86,28 @@ const meta = computed(() => {
   return parts.join(' · ')
 })
 
-const kpis = computed(() => data.kpis.value.map((k) => kpiView(k, settings.language)))
+// Over a day old the numbers stay, without their change or a severity colour.
+const kpis = computed(() =>
+  data.kpis.value.map((k): KpiView => {
+    const view = kpiView(k, settings.language)
+    if (!aged.value) return view
+    return {
+      ...view,
+      change: '',
+      glyph: '',
+      glyphWords: '',
+      spark: { ...view.spark, tone: 'stale' },
+    }
+  }),
+)
 const kpiLabel = (name: string) => t('serverScreen.kpi.trend', { name })
 
-const reason = computed(() => {
-  const outcome = data.failed.value
-  return outcome ? t(`scanHost.${outcome.state}`) : ''
-})
 const lastReached = computed(() => {
   const r = data.rollup.value
   return r?.last_reached_seq != null && r.last_reached_at
     ? { seq: r.last_reached_seq, when: fmt.when(r.last_reached_at) }
     : null
 })
-const unreachableText = computed(() =>
-  lastReached.value
-    ? t('serverScreen.state.unreachableText', { cause: reason.value, ...lastReached.value })
-    : t('serverScreen.state.neverReached', { cause: reason.value }),
-)
-
 function runScan() {
   if (known.value && !scan.scanning) void scan.start({ projects: [], hosts: [host.value] })
 }
@@ -109,8 +119,6 @@ function onKeydown(e: KeyboardEvent) {
 }
 onMounted(() => window.addEventListener('keydown', onKeydown))
 onBeforeUnmount(() => window.removeEventListener('keydown', onKeydown))
-
-const errorMessage = computed(() => (failure.value ? errorText(failure.value) : ''))
 </script>
 
 <template>
@@ -128,54 +136,65 @@ const errorMessage = computed(() => (failure.value ? errorText(failure.value) : 
 
     <ServerSkeleton v-if="loading" :host="host" />
 
-    <UiBanner
-      v-else-if="failure"
-      tone="crit"
-      icon="critical"
-      alert
-      :title="t('serverScreen.state.loadFailed')"
-      :text="errorMessage"
-    >
-      <template #trailing>
-        <UiButton size="small" @click="reports.loadLatest()">{{
-          t('serverScreen.state.retry')
-        }}</UiButton>
-      </template>
-    </UiBanner>
+    <ResultErrorState v-else-if="failure" :error="failure" @retry="reports.loadLatest()" />
 
     <UiEmptyState
       v-else-if="!known"
       icon="server"
-      :title="t('serverScreen.state.missing', { host })"
-      :text="t('serverScreen.state.missingText')"
+      :title="t('projectShared.notFound.title')"
+      :text="t('projectShared.notFound.text', { host })"
     >
-      <UiButton to="/">{{ t('serverScreen.state.back') }}</UiButton>
+      <UiButton to="/">{{ t('projectShared.notFound.back') }}</UiButton>
     </UiEmptyState>
 
+    <ResultFirstScan
+      v-else-if="seq === null"
+      :name="host"
+      :busy="run.busy.value"
+      @scan="run.scanThis()"
+    />
+
     <template v-else>
+      <ResultNotes
+        :scanning-host="run.scanningHost.value"
+        :unreachable="[]"
+        :unreachable-since="null"
+        :old-days="null"
+        :seq="seq"
+        :busy="run.busy.value"
+      />
       <UiBanner
         v-if="data.state.value === 'unreachable'"
         tone="crit"
         icon="unreachable"
-        :title="t('serverScreen.state.unreachable', { host })"
-        :text="unreachableText"
-      >
-        <template v-if="keys.has(data.failed.value)" #trailing>
-          <UiButton size="small" icon="shield" @click="keys.review(host, data.failed.value)">
-            {{ t('hostKey.review') }}
-          </UiButton>
-        </template>
-      </UiBanner>
-      <UiBanner
-        v-else-if="seq === null"
-        tone="warn"
-        icon="clock"
-        :title="t('serverScreen.state.noScan')"
-        :text="t('serverScreen.state.noScanText')"
+        :title="
+          lastReached
+            ? t('projectShared.unreachable.title', { hosts: host, seq: lastReached.seq })
+            : t('projectShared.unreachable.noneTitle', { hosts: host, seq })
+        "
+        :text="
+          lastReached
+            ? t('projectShared.unreachable.kept', { seq: lastReached.seq })
+            : t('projectShared.unreachable.none')
+        "
       >
         <template #trailing>
-          <UiButton size="small" :disabled="scan.scanning" @click="runScan">
-            {{ t('serverScreen.scan') }}
+          <UiButton
+            v-if="keys.has(data.failed.value)"
+            size="small"
+            icon="shield"
+            @click="keys.review(host, data.failed.value)"
+          >
+            {{ t('hostKey.review') }}
+          </UiButton>
+          <UiButton
+            v-else
+            size="small"
+            icon="refresh"
+            :disabled="run.busy.value"
+            @click="run.retry([host])"
+          >
+            {{ t('projectShared.unreachable.retry', { hosts: host }) }}
           </UiButton>
         </template>
       </UiBanner>
@@ -192,58 +211,68 @@ const errorMessage = computed(() => (failure.value ? errorText(failure.value) : 
           </UiButton>
         </template>
       </UiBanner>
-      <UiBanner
-        v-else-if="oldDays !== null"
-        tone="warn"
-        icon="clock"
-        :title="t('serverScreen.state.stale', { n: oldDays }, oldDays)"
-        :text="t('serverScreen.state.staleText')"
+      <ResultNotes
+        v-else
+        :scanning-host="null"
+        :unreachable="[]"
+        :unreachable-since="null"
+        :old-days="oldDays"
+        :seq="seq"
+        :busy="run.busy.value"
+        @scan="run.scanThis()"
       />
 
-      <div class="kpis">
-        <ServerKpiCard
-          v-for="(view, i) in kpis"
-          :key="`${scope}:${view.id}`"
-          :view="view"
-          :index="i"
-          :scope="scope"
-          :spark-label="kpiLabel(view.label)"
-        />
-      </div>
+      <div class="body" :class="{ 'results-aged': aged }">
+        <div class="kpis">
+          <ServerKpiCard
+            v-for="(view, i) in kpis"
+            :key="`${scope}:${view.id}`"
+            :view="view"
+            :index="i"
+            :scope="scope"
+            :spark-label="kpiLabel(view.label)"
+          />
+        </div>
 
-      <div class="pair">
-        <ServerDiskCard
-          :chart="data.diskChart.value"
-          :mount="data.kpis.value[2]?.mount ?? null"
-          :scope="scope"
-        />
-        <ServerUsageCard
-          :usage="data.usage.value"
-          :baseline="data.baselineSeq.value"
-          :scope="scope"
-        />
-      </div>
+        <div class="pair">
+          <ServerDiskCard
+            :chart="data.diskChart.value"
+            :mount="data.kpis.value[2]?.mount ?? null"
+            :scope="scope"
+          />
+          <ServerUsageCard
+            :usage="data.usage.value"
+            :baseline="data.baselineSeq.value"
+            :scope="scope"
+          />
+        </div>
 
-      <div class="pair">
-        <ServerContainersCard
-          :host="host"
-          :containers="data.containers.value"
-          :color-of="projects.color"
-          :scope="scope"
-        />
-        <ServerFindingsCard
-          :host="host"
-          :findings="data.findings.value.rows"
-          :tally="data.findings.value.tally"
-          :security="data.security.value"
-          :scope="scope"
-        />
+        <div class="pair">
+          <ServerContainersCard
+            :host="host"
+            :containers="data.containers.value"
+            :color-of="projects.color"
+            :scope="scope"
+          />
+          <ServerFindingsCard
+            :host="host"
+            :findings="data.findings.value.rows"
+            :tally="data.findings.value.tally"
+            :security="data.security.value"
+            :scope="scope"
+          />
+        </div>
       </div>
     </template>
   </div>
 </template>
 
 <style scoped>
+/* A wrapper for the aged colours only: its cards stay items of the page's column. */
+.body {
+  display: contents;
+}
+
 .server {
   display: flex;
   flex-direction: column;

@@ -1,18 +1,7 @@
 {
   "projectSecurity": {
     "state": {
-      "loading": "Reading the security checks",
-      "emptyTitle": "No security results yet",
-      "emptyText": "Press Scan all and Daminus will run the nine checks for this project.",
-      "errorTitle": "Couldn't read the latest results",
-      "retry": "Try again",
-      "staleTitle": "These results are {n} day old | These results are {n} days old",
-      "staleText": "Scan #{seq} is the last one saved. Nothing here was checked since.",
-      "unreachableTitle": "{hosts} did not answer scan #{seq}",
-      "unreachableText": "Results from that host are the last ones Daminus read; the rows say since which scan.",
-      "allOffTitle": "Security checks are off in Settings",
-      "allOffText": "The groups behind these nine checks are switched off, so nothing was run.",
-      "openSettings": "Open Settings"
+      "loading": "Reading the security checks"
     },
     "sev": {
       "crit": "CRIT",

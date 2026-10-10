@@ -1,18 +1,27 @@
 {
   "projectShared": {
     "group": {
+      "system": "Kiểm tra hệ thống",
       "disk": "Kiểm tra ổ đĩa",
       "containers": "Kiểm tra container",
       "databases": "Kiểm tra cơ sở dữ liệu",
-      "uptime": "Kiểm tra URL"
+      "uptime": "Kiểm tra URL",
+      "security": "Kiểm tra bảo mật"
     },
     "waiting": {
       "title": "Chưa có kết quả",
-      "text": "Hãy quét để đọc dự án này. Số liệu sẽ hiện ở đây khi quét xong."
+      "text": "Tab này có dữ liệu sau lần quét đầu tiên của {name}.",
+      "scan": "Quét {name}"
     },
     "error": {
-      "title": "Không đọc được kết quả",
-      "text": "Không tải được lần quét gần nhất từ máy này.",
+      "title": "Không tải được tab này",
+      "text": "Không đọc được lần quét đã lưu. Trên máy chủ không có gì thay đổi.",
+      "textWhy": "Không đọc được lần quét đã lưu ({reason}). Trên máy chủ không có gì thay đổi.",
+      "reason": {
+        "store_busy": "kho dữ liệu đang bận",
+        "io": "không đọc được tệp",
+        "config_from_newer_version": "lưu bởi bản Daminus mới hơn"
+      },
       "retry": "Thử lại"
     },
     "off": {
@@ -21,21 +30,34 @@
       "open": "Mở Cài đặt › Quét"
     },
     "unreachable": {
-      "title": "{hosts} không trả lời",
-      "text": "Lần quét #{seq} không kết nối được, nên chưa có gì để hiển thị.",
-      "kept": "Các phần chạy trên đó sẽ trống cho đến khi một lần quét kết nối lại được."
+      "title": "{hosts} chưa được kiểm lại từ #{seq}",
+      "noneTitle": "{hosts} không trả lời lần quét #{seq}",
+      "kept": "Lần quét này không tới được máy; các giá trị dưới đây là từ #{seq} và giữ nguyên màu.",
+      "none": "Lần quét này không tới được máy, nên chưa có gì để hiện.",
+      "retry": "Thử lại {hosts}"
     },
     "stale": {
       "title": "Chưa kiểm lại từ #{seq}",
       "text": "Đây là những gì lần quét #{seq} thấy. Lần quét sau kết nối được máy chủ sẽ cập nhật."
     },
     "old": {
-      "title": "Kết quả đã cũ {n} ngày",
-      "text": "Quét lại để xem tình hình hiện tại."
+      "title": "Từ lần quét #{seq} · {n} ngày trước | Từ lần quét #{seq} · {n} ngày trước",
+      "text": "Giá trị vẫn giữ; phần thay đổi và màu mức độ được ẩn cho tới lần quét mới.",
+      "scan": "Quét ngay"
     },
     "delta": {
       "since": "so với #{seq}",
       "same": "không đổi"
-    }
+    },
+    "scanning": {
+      "title": "Đang quét {host}…",
+      "text": "Giá trị cũ giữ nguyên chỗ; giá trị nào đổi sẽ chuyển mờ khi có kết quả."
+    },
+    "notFound": {
+      "title": "Không tìm thấy máy chủ",
+      "text": "{host} không còn trong các project hay ~/.ssh/config của bạn.",
+      "back": "Về Tổng quan"
+    },
+    "running": "#{seq} · đang chạy"
   }
 }

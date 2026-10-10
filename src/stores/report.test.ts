@@ -1,9 +1,17 @@
 // @vitest-environment happy-dom
 import { createPinia, setActivePinia } from 'pinia'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { clearMocks, mockCommands } from '@/api/testing'
 import { report } from '@/testing/report-fixture'
 import { useReportStore } from './report'
+
+const fades = vi.hoisted(() => ({ count: 0 }))
+vi.mock('@/lib/cross-fade', () => ({
+  crossFade: (update: () => void) => {
+    fades.count += 1
+    update()
+  },
+}))
 
 let answer: () => unknown
 
@@ -18,6 +26,19 @@ beforeEach(() => {
 afterEach(() => clearMocks())
 
 describe('useReportStore', () => {
+  it('cross-fades a newer scan into place, never the first read or the same scan again', async () => {
+    fades.count = 0
+    const store = useReportStore()
+    answer = () => report({ seq: 11 })
+    await store.loadLatest()
+    await store.loadLatest()
+    expect(fades.count).toBe(0)
+    answer = () => report({ seq: 12 })
+    await store.loadLatest()
+    expect(fades.count).toBe(1)
+    expect(store.latest?.seq).toBe(12)
+  })
+
   it('loads the latest report and caches it by scan number', async () => {
     answer = () => report({ seq: 12 })
     const store = useReportStore()

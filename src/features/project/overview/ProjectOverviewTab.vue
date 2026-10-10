@@ -68,11 +68,12 @@ const host = computed(() => {
 
 <template>
   <ProjectTabShell
+    :project-id="id"
     :loading="m.loading.value"
     :status="status"
-    :unreachable="[]"
+    :unreachable="state.unreachable"
     :stale-since="state.staleSince"
-    group="uptime"
+    group="system"
     :empty-title="t('projectOverview.parts.none')"
     :empty-text="t('projectOverview.wiring.none')"
   >

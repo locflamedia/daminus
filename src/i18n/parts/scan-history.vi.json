@@ -69,10 +69,6 @@
       "title": "Chưa có lần quét nào",
       "text": "Quét một lần, rồi mọi lần quét sau đó được giữ ở đây để bạn xem điều gì đã đổi.",
       "scan": "Quét tất cả"
-    },
-    "failed": {
-      "title": "Không đọc được lịch sử quét",
-      "retry": "Thử lại"
     }
   }
 }

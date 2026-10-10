@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { useResultsAged } from '../common/results-aged'
 import type { DbSection } from './use-database-model'
 import MysqlNote from './MysqlNote.vue'
 import ProjectCard from '../common/ProjectCard.vue'
@@ -19,8 +20,13 @@ const meta = computed(() => {
     { seq },
   )
 })
+const aged = useResultsAged()
 const deltaText = (d: number | null) =>
-  d === null ? '' : d === 0 ? t('projectDatabase.largest.same') : fmt.delta(d, 'bytes').text
+  d === null || aged.value
+    ? ''
+    : d === 0
+      ? t('projectDatabase.largest.same')
+      : fmt.delta(d, 'bytes').text
 </script>
 
 <template>
@@ -36,7 +42,7 @@ const deltaText = (d: number | null) =>
         <div class="bar">
           <i
             class="fill m-grow"
-            :class="{ hot: r.name === section.grower }"
+            :class="{ hot: !aged && r.name === section.grower }"
             :style="{ width: `${Math.max(2, r.share * 100)}%`, '--d': `${i * 60}ms` }"
           />
         </div>

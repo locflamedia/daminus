@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useFormat } from '@/composables/use-format'
+import { useResultsAged } from '../common/results-aged'
 import type { SeriesPoint } from '@/lib/project-series'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
 import ProjectCard from '../common/ProjectCard.vue'
@@ -18,9 +19,10 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const fmt = useFormat()
+const aged = useResultsAged()
 const values = computed(() => props.series.map((p) => p.value))
 const meta = computed(() =>
-  props.change === null
+  props.change === null || aged.value
     ? ''
     : t('projectDisk.growth.meta', {
         n: props.series.length,
@@ -50,7 +52,7 @@ const sentence = computed(() => {
   <ProjectCard icon="trend" :title="t('projectDisk.growth.title')" :meta="meta" :gap="8">
     <UiSkeleton v-if="loading" height="110px" radius="12px" tone="soft" />
     <ProjectCurve v-else :values="values" tone="amber" :label="label" :once="`disk-growth-${id}`" />
-    <span class="note">{{ sentence }}</span>
+    <span v-if="!aged" class="note">{{ sentence }}</span>
   </ProjectCard>
 </template>
 

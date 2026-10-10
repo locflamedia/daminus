@@ -7,16 +7,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { errorText } from '@/lib/issue-text'
 import { formatDate } from '@/lib/format'
 import { useReportStore } from '@/stores/report'
 import { useScanStore } from '@/stores/scan'
 import { useSettingsStore } from '@/stores/settings'
-import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiEmptyState from '@/ui/UiEmptyState.vue'
 import UiSeg from '@/ui/UiSeg.vue'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
+import ResultErrorState from '@/features/project/common/ResultErrorState.vue'
 import HistoryChartCard from './HistoryChartCard.vue'
 import HistoryCompareCard from './HistoryCompareCard.vue'
 import HistoryListCard from './HistoryListCard.vue'
@@ -81,20 +80,7 @@ const scope = computed(() => String(reports.latest?.seq ?? 'none'))
       <UiSkeleton height="260px" radius="16px" tone="soft" />
     </div>
 
-    <UiBanner
-      v-else-if="failed"
-      tone="crit"
-      icon="critical"
-      alert
-      :title="t('historyScreen.failed.title')"
-      :text="errorText(failed)"
-    >
-      <template #trailing>
-        <UiButton size="small" @click="data.reload()">{{
-          t('historyScreen.failed.retry')
-        }}</UiButton>
-      </template>
-    </UiBanner>
+    <ResultErrorState v-else-if="failed" :error="failed" @retry="data.reload()" />
 
     <UiEmptyState
       v-else-if="empty"
@@ -114,6 +100,7 @@ const scope = computed(() => String(reports.latest?.seq ?? 'none'))
           :filter="data.filter.value"
           :compared="data.selection.value"
           :scope="scope"
+          :running="scan.run?.next_seq ?? null"
         />
         <HistoryTallyCard
           :tally="data.sums.value"

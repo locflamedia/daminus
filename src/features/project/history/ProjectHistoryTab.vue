@@ -9,15 +9,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { errorText } from '@/lib/issue-text'
 import { useHistoryStore } from '@/stores/history'
-import UiButton from '@/ui/UiButton.vue'
-import UiEmptyState from '@/ui/UiEmptyState.vue'
 import UiSkeleton from '@/ui/UiSkeleton.vue'
 import HistoryChanges from './HistoryChanges.vue'
 import HistoryMultiples from './HistoryMultiples.vue'
 import HistoryRangeBar from './HistoryRangeBar.vue'
 import HistoryStrip from './HistoryStrip.vue'
+import ResultErrorState from '../common/ResultErrorState.vue'
+import ResultFirstScan from '../common/ResultFirstScan.vue'
+import ResultNotes from '../common/ResultNotes.vue'
+import { useResultScan } from '../common/use-result-scan'
 import { useProjectHistory } from './use-project-history'
 
 const props = defineProps<{ id: string }>()
@@ -26,7 +27,7 @@ const { t } = useI18n()
 const history = useHistoryStore()
 const view = useProjectHistory(computed(() => props.id))
 
-const error = computed(() => (history.error ? errorText(history.error) : ''))
+const run = useResultScan(() => ({ project: props.id }))
 </script>
 
 <template>
@@ -41,23 +42,28 @@ const error = computed(() => (history.error ? errorText(history.error) : ''))
       </div>
     </div>
 
-    <UiEmptyState
+    <ResultErrorState
       v-else-if="view.screen.value === 'error'"
-      icon="warn"
-      :title="t('projectHistory.state.errorTitle')"
-      :text="error"
-    >
-      <UiButton @click="view.retry()">{{ t('projectHistory.state.retry') }}</UiButton>
-    </UiEmptyState>
+      :error="history.error"
+      @retry="view.retry()"
+    />
 
-    <UiEmptyState
+    <ResultFirstScan
       v-else-if="view.screen.value === 'empty'"
-      icon="clock"
-      :title="t('projectHistory.state.emptyTitle')"
-      :text="t('projectHistory.state.emptyText')"
+      :name="run.name.value"
+      :busy="run.busy.value"
+      @scan="run.scanThis()"
     />
 
     <template v-else>
+      <ResultNotes
+        :scanning-host="run.scanningHost.value"
+        :unreachable="[]"
+        :unreachable-since="null"
+        :old-days="null"
+        :seq="null"
+        :busy="run.busy.value"
+      />
       <HistoryRangeBar
         v-model:range="view.range.value"
         :scans="view.scans.value"
