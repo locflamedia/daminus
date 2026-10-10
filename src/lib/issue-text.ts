@@ -54,6 +54,12 @@ export function checkName(id: string, locale: Locale = currentLocale()): string 
   return i18n.global.te(key, locale) ? i18n.global.t(key, {}, { locale }) : id
 }
 
+/** What a check looks for, in one sentence ("PHP files inside upload … folders."); '' when none. */
+export function checkDescription(id: string, locale: Locale = currentLocale()): string {
+  const key = `checks.${id}.desc`
+  return i18n.global.te(key, locale) ? i18n.global.t(key, {}, { locale }) : ''
+}
+
 /**
  * The one issue a card or row leads with, as a sentence: `MainIssue.key.check` picks the
  * template, `target`, `value` and `unit` fill it. An unknown check gets a plain fallback.

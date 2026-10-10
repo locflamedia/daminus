@@ -23,10 +23,11 @@ const NOT_KEYS: readonly RegExp[] = [
 ]
 
 /**
- * Variable keys whose variable is not one child of the node. `checks.${id}.name` takes a
- * dotted check id (`sys.load`) and is guarded by a `te()` lookup that falls back to the id.
+ * Variable keys whose variable is not one child of the node. `checks.${id}.name` and
+ * `checks.${id}.desc` take a dotted check id (`sys.load`) and are guarded by a `te()` lookup
+ * that falls back to the id (name) or to nothing (desc).
  */
-const DYNAMIC_ALLOWED: readonly string[] = ['checks.${}.name']
+const DYNAMIC_ALLOWED: readonly string[] = ['checks.${}.name', 'checks.${}.desc']
 
 /** A helper that prefixes its own group (the gallery's `k('empty.title')`), so the literal is relative. */
 const RELATIVE_HELPER = /\bk\(\s*$/

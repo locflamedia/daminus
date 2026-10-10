@@ -108,14 +108,21 @@ describe('resolving findings', () => {
   })
 })
 
-async function page() {
+const blank = { template: '<div />' }
+
+async function page(latest = base) {
   const router = createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/', component: { template: '<div />' } }],
+    routes: [
+      { path: '/', component: blank },
+      { path: '/project/:id/:tab?', name: 'project', component: blank },
+      { path: '/server/:host', name: 'server', component: blank },
+    ],
   })
   await router.push('/')
-  useReportStore().latest = base
-  return mount(AiFindingsView, { global: { plugins: [i18n, router] } })
+  useReportStore().latest = latest
+  const view = mount(AiFindingsView, { global: { plugins: [i18n, router] } })
+  return { view, router }
 }
 
 function answer(findings: AskedFinding[]) {
@@ -127,7 +134,7 @@ function answer(findings: AskedFinding[]) {
 describe('Findings page', () => {
   it('shows the AI’s order with the checks’ severity, and the summary as text', async () => {
     answer([finding('c3', 2, 'Fills up soon.'), finding('c2', 1, 'A PHP file can run.')])
-    const view = await page()
+    const { view } = await page()
     const rows = view.findAll('[role="option"]')
     expect(rows).toHaveLength(2)
     expect(rows[0]?.text()).toContain('Critical')
@@ -140,7 +147,7 @@ describe('Findings page', () => {
 
   it('filters to critical only', async () => {
     answer([finding('c3', 2), finding('c2', 1)])
-    const view = await page()
+    const { view } = await page()
     await view
       .findAll('button')
       .find((b) => b.text().startsWith('Critical'))
@@ -149,7 +156,7 @@ describe('Findings page', () => {
   })
 
   it('falls back to the checks’ list, unranked, when there is no answer', async () => {
-    const view = await page()
+    const { view } = await page()
     expect(view.text()).not.toContain('No AI review yet')
     expect(view.text()).toContain('From the checks, not ranked')
     expect(view.text()).toContain('AI providers')
@@ -160,14 +167,14 @@ describe('Findings page', () => {
 
   it('draws the note on what the AI saw and the Mark as expected button', async () => {
     answer([finding('c2', 1, 'A PHP file can run.')])
-    const view = await page()
+    const { view } = await page()
     expect(view.text()).toContain('The AI saw the file name, size and time.')
     expect(view.findAll('button').some((b) => b.text() === 'Mark as expected')).toBe(true)
   })
 
   it('opens the Ask panel for a follow-up', async () => {
     answer([finding('c2', 1)])
-    const view = await page()
+    const { view } = await page()
     await view
       .findAll('button')
       .find((b) => b.text() === 'Ask a follow-up')
@@ -183,7 +190,38 @@ describe('Findings page', () => {
       status: 'error',
       error: { code: { kind: 'provider_unavailable' }, retryable: false },
     })
-    const view = await page()
+    const { view } = await page()
     expect(view.find('[role="alert"]').text()).toContain('not reachable')
+  })
+
+  it('before any review, shows what the check found and two ways on', async () => {
+    const php = item({
+      host: 'vps-a',
+      check: 'sec.upload_php',
+      target: '/a/x.php',
+      level: { level: 'crit' },
+      owner: { kind: 'project', id: 'kho-hang' },
+      data: { size: 3174, mtime: 1_790_740_440 },
+    })
+    php.group = 'security'
+    const { view, router } = await page(report({ items: [php] }))
+    const detail = view.get('article')
+    expect(detail.text()).toContain(
+      'From the check: sec.upload_php — PHP files inside upload or public storage folders.',
+    )
+    expect(detail.get('.evidence').text()).toMatch(/^\/a\/x\.php · 3\.1 KB · /)
+    const button = (label: string) => detail.findAll('button').find((b) => b.text() === label)
+    expect(button('Ask the AI about this')).toBeDefined()
+    await button('Open in Security')?.trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.fullPath).toBe('/project/kho-hang/security')
+  })
+
+  it('offers Open in Security only for a result of the security group', async () => {
+    // The base report's upload result is filed under the disk group.
+    const { view } = await page()
+    const detail = view.get('article')
+    expect(detail.text()).toContain('From the check: sec.upload_php')
+    expect(detail.findAll('button').some((b) => b.text() === 'Open in Security')).toBe(false)
   })
 })

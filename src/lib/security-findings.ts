@@ -107,7 +107,8 @@ export function folderOf(item: Item, roots: readonly Root[]): string {
   return cut > 0 ? target.slice(0, cut) : target.slice(0, Math.max(0, target.lastIndexOf('/')))
 }
 
-function fileOf(item: Item): FileEvidence {
+/** The path, size, time and owner a file check recorded for one result. */
+export function fileOf(item: Item): FileEvidence {
   const data = dataOf(item)
   return {
     path: item.key.target,
