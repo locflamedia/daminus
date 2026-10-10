@@ -106,6 +106,14 @@ On macOS 15, right-click › Open no longer gets around Gatekeeper for apps like
 
 Because of the ad hoc signature, every new version looks like a new app to macOS. After an update it asks again before Daminus can read the AI key from your Keychain. Choose Always Allow, or enter the key again in Settings › AI providers.
 
+### The Claude Code provider and the file-access prompt
+
+The Claude Code provider is not a copy of Claude inside Daminus. It runs the `claude` command line tool you already have signed in, as a child process, and passes your question to it.
+
+Because it is a child of Daminus, macOS credits anything it reads to Daminus. So the first time you use this provider, macOS may ask whether Daminus can read files in a folder such as Documents. That prompt is about the `claude` tool, not about Daminus going through your files.
+
+You can click Don't Allow and the answer still works. Daminus gives the tool an empty temporary folder to work in, sends your question on its standard input and reads the reply from its standard output, so none of your files are part of the exchange.
+
 ## Limits
 
 - A server an attacker controls can answer anything, because every check runs on the server. "No problems found" is a hint, not proof.
