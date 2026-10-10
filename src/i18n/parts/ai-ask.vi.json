@@ -44,6 +44,8 @@
     "theAi": "AI",
     "readingScan": "{provider} đang đọc lần quét #{seq}…",
     "didNotAnswer": "{provider} không trả lời: {reason}",
+    "couldNotAsk": "Không hỏi được {provider}: {reason}",
+    "theAiMid": "AI",
     "failure": {
       "provider_rate_limit": "bị giới hạn số yêu cầu. Thử lại sau một phút.",
       "provider_auth": "khoá bị từ chối. Kiểm tra lại ở Cài đặt › Nhà cung cấp AI.",
@@ -54,7 +56,7 @@
       "timeout": "không trả lời kịp. Thử lại.",
       "provider_not_configured": "chưa chọn nhà cung cấp. Chọn một nhà cung cấp trong Cài đặt › Nhà cung cấp AI.",
       "provider_key_missing": "chưa có API key. Thêm key trong Cài đặt › Nhà cung cấp AI.",
-      "claude_code_not_acknowledged": "Claude Code đang tắt cho tới khi bạn cho phép trong Cài đặt › Nhà cung cấp AI.",
+      "claude_code_not_acknowledged": "đang tắt cho tới khi bạn cho phép trong Cài đặt › Nhà cung cấp AI.",
       "provider_model_not_found": "không có model tên đó. Chọn model khác trong Cài đặt › Nhà cung cấp AI.",
       "provider_billing": "tài khoản đã hết tiền.",
       "payload_too_large": "câu hỏi quá lớn với model. Hãy hỏi về một project.",
