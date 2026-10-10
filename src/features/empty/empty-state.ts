@@ -108,6 +108,8 @@ export interface HelpView {
   done: { key: boolean; agent: boolean; block: boolean }
   /** How many steps are drawn, numbered from 1 in the order above. */
   stepCount: number
+  /** Drawn steps not done yet: what the subtitle counts. */
+  stepsLeft: number
   /** Import turns live once the config has a usable host and the agent has a key. */
   canImport: boolean
 }
@@ -117,7 +119,8 @@ export function helpView(input: EmptyInput, shown: HelpShown): HelpView {
   const agent: AgentState = input.agent ?? 'keys'
   const block = shown.config ? (shown.headline === 'noUsableHosts' ? 'add' : 'describe') : null
   const steps = { key: shown.agent, agent: shown.agent, block } as const
-  const agentDone = input.agent === 'keys'
+  // An agent that was not asked is not blamed, as for Import.
+  const agentDone = agent === 'keys'
   const configDone = config === 'ok'
   const canImport = configDone && agent === 'keys'
   let headline = shown.headline
@@ -135,6 +138,10 @@ export function helpView(input: EmptyInput, shown: HelpShown): HelpView {
     steps,
     done: { key: agentDone, agent: agentDone, block: configDone },
     stepCount: (steps.key ? 1 : 0) + (steps.agent ? 1 : 0) + (steps.block ? 1 : 0),
+    stepsLeft:
+      (steps.key && !agentDone ? 1 : 0) +
+      (steps.agent && !agentDone ? 1 : 0) +
+      (steps.block && !configDone ? 1 : 0),
     canImport,
   }
 }
