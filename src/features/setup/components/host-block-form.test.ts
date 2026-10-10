@@ -160,7 +160,9 @@ describe('HostBlockForm', () => {
 
 describe('AddHostSheet', () => {
   function mountSheet(listing?: () => unknown) {
+    calls.length = 0
     mockCommands((cmd) => {
+      calls.push(cmd)
       if (cmd === 'hosts_list')
         return (
           listing?.() ?? {
@@ -191,6 +193,7 @@ describe('AddHostSheet', () => {
     return wrapper
   }
   let router: ReturnType<typeof createRouter>
+  const calls: string[] = []
 
   const dialog = () => document.body.querySelector('[role="dialog"]')
   const footerButton = (label: string) =>
@@ -317,9 +320,19 @@ describe('AddHostSheet', () => {
     const result = dialog()?.querySelector('.result')
     expect(result?.classList.contains('left-out')).toBe(true)
     expect(result?.textContent).toContain(
-      'apollo-2 is in ~/.ssh/config, line 9, but left out: no HostName.',
+      'apollo-2 is in ~/.ssh/config, line 9, but left out: no HostName. Fix that block, save, then check again.',
     )
     expect(footerButton('Import')).toBeUndefined()
+    // No Copy block: the block is there already. Reveal in Finder and Check again instead.
+    const buttons = [...(result?.querySelectorAll('button') ?? [])]
+    expect(buttons.map((b) => b.textContent?.trim())).toEqual(['Reveal in Finder', 'Check again'])
+    const reads = calls.filter((c) => c === 'hosts_list').length
+    buttons[0]?.click()
+    await flushPromises()
+    expect(calls).toContain('reveal_ssh_dir')
+    buttons[1]?.click()
+    await flushPromises()
+    expect(calls.filter((c) => c === 'hosts_list').length).toBe(reads + 1)
   })
 
   it('follows the config when it is read again from elsewhere, and drops a stale answer', async () => {

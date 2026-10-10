@@ -4,20 +4,22 @@
   pastes it there and presses Check again, which reads the config again. When ssh then refuses
   the config (a bad line in the pasted block), the sheet says which file and line, so the answer
   to Check again is never silent. Under the form, one result line answers Check again for the
-  alias typed (board 01b panel 10): reading, found (the primary becomes Import <alias>), in the
-  file but left out (with the reason), or not there yet (with Copy block); it follows the
-  listing, so a new answer replaces the last one. Opened and closed by the
-  setup store's `addHostOpen` (bind it with v-model).
+  alias typed (board 01b panel 10): reading; found (the primary becomes Import <alias>); in the
+  file but left out (with the reason, Reveal in Finder and Check again); or not there yet (with
+  Copy block). It follows the listing, so a new answer replaces the last one. Opened and closed
+  by the setup store's `addHostOpen` (bind it with v-model).
 -->
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import type { SkipReason } from '@/api'
+import { revealSshDir, type SkipReason } from '@/api'
 import { buildHostBlock, emptyFields, type HostBlockFields } from '@/lib/host-block'
 import { errorText, homeTilde } from '@/lib/issue-text'
+import { revealSshFailure } from '@/lib/reveal-ssh'
 import { useCopy } from '@/lib/use-copy'
 import { useSetupStore } from '@/stores/setup'
+import { useToastStore } from '@/stores/toasts'
 import UiBanner from '@/ui/UiBanner.vue'
 import UiButton from '@/ui/UiButton.vue'
 import UiIcon from '@/ui/UiIcon.vue'
@@ -135,6 +137,16 @@ function importHost(host: string) {
   if (route.path !== '/setup') void router.push('/setup')
 }
 
+const toasts = useToastStore()
+
+async function reveal() {
+  try {
+    await revealSshDir()
+  } catch (e) {
+    toasts.push({ tone: 'crit', title: t(`empty.hostBlock.reveal.${revealSshFailure(e)}`) })
+  }
+}
+
 function copyBlock() {
   if (block.value.valid) void copy(block.value.text)
 }
@@ -184,6 +196,12 @@ function copyBlock() {
               reason: t(`empty.help.leftOut.${result.reason}`),
             })
           }}
+        </span>
+        <span class="actions">
+          <UiButton variant="secondary" @click="reveal">{{ t('setupPick.error.reveal') }}</UiButton>
+          <UiButton variant="secondary" icon="refresh" :busy="checking" @click="checkAgain">
+            {{ t('setupPick.error.checkAgain') }}
+          </UiButton>
         </span>
       </div>
       <div v-else-if="result?.kind === 'missing'" class="result missing" role="status">
@@ -251,6 +269,11 @@ function copyBlock() {
 .result .line {
   display: flex;
   align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.result .actions {
+  display: flex;
   gap: var(--space-2);
 }
 
