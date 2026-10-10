@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { Project, Report, ScanRun } from '@/api'
+import type { HostOutcome, Project, Report, ScanRun } from '@/api'
 import { setI18nLocale } from '@/i18n'
 import { buildProjectCards, type ProjectCardData } from '@/lib/overview-cards'
 import { cardScan } from '@/lib/overview-scan'
@@ -140,8 +140,103 @@ describe('status row', () => {
       unreachableHosts: ['db-main'],
     }
     const card = cardView(quiet, context())
-    expect(card.status).toMatchObject({ tone: 'neutral', title: 'db-main is not answering' })
+    expect(card.status).toMatchObject({ tone: 'neutral', title: 'db-main is not answering.' })
     expect(card).toMatchObject({ actionLabel: 'Retry', action: 'retry', retryHosts: ['db-main'] })
+    expect(card.stateLabel).toBe('Unreachable')
+  })
+
+  describe('a host that could not be scanned for another reason', () => {
+    const down = (outcome: HostOutcome) =>
+      cardView(
+        {
+          ...data('booking'),
+          state: 'unreachable' as const,
+          unreachableHosts: ['db-main'],
+          unreachableOutcome: outcome,
+          unreachableAnswered: true,
+        },
+        context(),
+      )
+
+    it('names the cause, tints the row, and offers the one step that can fix it', () => {
+      const cases: Array<[HostOutcome, string, string, string, string, string]> = [
+        [
+          { state: 'timeout' },
+          'Timed out',
+          'neutral',
+          'db-main took too long to answer.',
+          'retry',
+          'Retry',
+        ],
+        [
+          { state: 'auth_failed' },
+          'Key refused',
+          'crit',
+          'db-main refused your key.',
+          'login',
+          'Fix login',
+        ],
+        [
+          { state: 'host_key_changed', fp: 'ED25519 SHA256:x' },
+          'Host key changed',
+          'crit',
+          'db-main has a different host key. Do not continue until you know why.',
+          'host-key',
+          'Review host key',
+        ],
+        [
+          { state: 'host_key_unknown', fp: 'ED25519 SHA256:x' },
+          'Host key unknown',
+          'warn',
+          'db-main needs its host key trusted first.',
+          'host-key',
+          'Review host key',
+        ],
+        [
+          { state: 'not_in_config' },
+          'Not in config',
+          'warn',
+          'db-main is no longer in ~/.ssh/config.',
+          'edit',
+          'Edit project',
+        ],
+      ]
+      for (const [outcome, label, tone, title, action, actionLabel] of cases) {
+        const card = down(outcome)
+        expect(card.stateLabel, outcome.state).toBe(label)
+        expect(card.status, outcome.state).toMatchObject({ tone, title })
+        expect(card, outcome.state).toMatchObject({ action, actionLabel, outcome })
+      }
+    })
+
+    it('drops "showing what it said last time" for a host that never answered', () => {
+      const never = cardView(
+        {
+          ...data('booking'),
+          state: 'unreachable' as const,
+          unreachableHosts: ['db-main'],
+          unreachableOutcome: { state: 'not_in_config' },
+          unreachableAnswered: false,
+        },
+        context(),
+      )
+      expect(never.status.meta).toBeUndefined()
+      expect(down({ state: 'auth_failed' }).status.meta).toBe(
+        'Showing what it said the last time it answered',
+      )
+    })
+
+    it('says it in Vietnamese', () => {
+      setI18nLocale('vi')
+      const card = down({ state: 'auth_failed' })
+      expect(card.status.title).toBe('db-main từ chối khoá của bạn.')
+      expect(card.actionLabel).toBe('Sửa đăng nhập')
+      expect(down({ state: 'not_in_config' }).actionLabel).toBe('Sửa project')
+      expect(down({ state: 'not_in_config' }).stateLabel).toBe('Không có trong config')
+      expect(down({ state: 'unreachable', cause: 'no_route' }).status.title).toBe(
+        'db-main không trả lời.',
+      )
+    })
   })
 
   it('writes old results as "ago" with the scan, and offers no action', () => {

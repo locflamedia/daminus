@@ -21,7 +21,7 @@
     "key": {
       "label": "Khoá API",
       "placeholder": "Dán khoá API, ví dụ {hint}…",
-      "placeholderGeneric": "Dán khóa vào đây…",
+      "placeholderGeneric": "Dán khoá vào đây…",
       "hint": "Chỉ gửi một lần vào Keychain. Daminus không bao giờ hiện lại khoá.",
       "inKeychain": "trong Keychain",
       "replace": "Thay",

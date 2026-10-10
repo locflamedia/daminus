@@ -298,8 +298,12 @@ function onCardClick(event: MouseEvent) {
 
 .names {
   display: flex;
+  /* Takes what the chip leaves, never less than 10 of the name's characters (`ch` at the
+     name's size): only then does the chip give way. */
+  flex: 1 1 0;
   flex-direction: column;
-  min-width: 0;
+  min-width: min(10ch, 100%);
+  font-size: var(--text-15);
   line-height: 1.3;
 }
 
@@ -320,7 +324,9 @@ function onCardClick(event: MouseEvent) {
   white-space: nowrap;
 }
 
-.state {
+.head .state {
+  min-width: 0;
+  flex-shrink: 1;
   margin-left: auto;
 }
 

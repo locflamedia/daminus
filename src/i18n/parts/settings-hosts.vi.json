@@ -32,14 +32,14 @@
       "from": "Nguồn",
       "fromLine": "{file}, dòng {line}",
       "agentNone": "ssh-agent chưa chạy",
-      "agentEmpty": "ssh-agent chưa có khóa",
-      "agentKeys": "ssh-agent giữ {n} khóa | ssh-agent giữ {n} khóa",
-      "hostKey": "Khóa máy chủ",
+      "agentEmpty": "ssh-agent chưa có khoá",
+      "agentKeys": "ssh-agent giữ {n} khoá | ssh-agent giữ {n} khoá",
+      "hostKey": "Khoá máy chủ",
       "keyNote": {
-        "known": "Đã ghi trong known_hosts. Khóa đổi thì lần quét máy chủ này dừng lại.",
+        "known": "Đã ghi trong known_hosts. Khoá đổi thì lần quét máy chủ này dừng lại.",
         "unknown": "Chưa được tin cậy. Lần quét hoặc kiểm tra đầu tiên sẽ hỏi trước.",
-        "changed": "Khóa đã đổi. Máy chủ này sẽ không được quét cho đến khi bạn xem lại.",
-        "none": "Không đọc được khóa nếu không đăng nhập."
+        "changed": "Khoá đã đổi. Máy chủ này sẽ không được quét cho đến khi bạn xem lại.",
+        "none": "Không đọc được khoá nếu không đăng nhập."
       },
       "canRead": "{user} đọc được gì",
       "canReadNobody": "Tài khoản SSH đọc được gì",

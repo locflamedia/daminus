@@ -551,7 +551,7 @@ describe('Language', () => {
     seed()
     const { wrapper } = await mountPick()
     expect(wrapper.find('h2').text()).toBe('Daminus nên theo dõi những máy chủ nào?')
-    expect(row(wrapper, 'staging').find('.login').text()).toContain('Khóa bị từ chối')
+    expect(row(wrapper, 'staging').find('.login').text()).toContain('Khoá bị từ chối')
     expect(wrapper.find('.btn-primary').text()).toContain('Khám phá 5 host')
     expect(row(wrapper, 'vps-sg-1').find('.login').text()).toContain('0,38 s')
     useSettingsStore().language = 'en'

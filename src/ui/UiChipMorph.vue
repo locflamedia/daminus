@@ -58,13 +58,13 @@ watch(
     <span ref="sizer" class="sizer" aria-hidden="true">
       <span v-if="dot && !busy" class="lead" :class="{ 'm-halo': pulse && tone === 'crit' }" />
       <UiSpinner v-if="busy" :size="12" />
-      <UiIcon v-else-if="icon" :name="icon" :size="12" />{{ label }}
+      <UiIcon v-else-if="icon" :name="icon" :size="12" /><span class="word">{{ label }}</span>
     </span>
     <Transition name="face">
       <span :key="`${label}|${icon ?? ''}|${busy}|${dot}`" class="face">
         <span v-if="dot && !busy" class="lead" :class="{ 'm-halo': pulse && tone === 'crit' }" />
         <UiSpinner v-if="busy" :size="12" />
-        <UiIcon v-else-if="icon" :name="icon" :size="12" />{{ label }}
+        <UiIcon v-else-if="icon" :name="icon" :size="12" /><span class="word">{{ label }}</span>
       </span>
     </Transition>
   </span>
@@ -106,6 +106,18 @@ watch(
   left: 0;
   visibility: hidden;
   pointer-events: none;
+}
+
+/* A chip squeezed by its row (the card head) cuts the word, not the dot. */
+.face {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.word {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* The large chip of a card head: 24 tall, 10 of padding, 6 between the dot and the word. */

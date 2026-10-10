@@ -32,10 +32,10 @@
       "ai": "Trả lời của AI và câu hỏi tiếp theo của bạn",
       "notes": "Ghi chú “đã dự kiến”",
       "secrets": "Mật khẩu và giá trị trong .env",
-      "keys": "Khóa SSH và passphrase",
+      "keys": "Khoá SSH và passphrase",
       "contents": "Nội dung tệp",
       "bodies": "Nội dung phản hồi của các URL bị lộ",
-      "keychain": "Khóa AI nằm trong Keychain của macOS dưới tên “Daminus”, không nằm trong tệp này."
+      "keychain": "Khoá AI nằm trong Keychain của macOS dưới tên “Daminus”, không nằm trong tệp này."
     },
     "size": {
       "title": "Dung lượng theo số lần quét",
@@ -68,12 +68,12 @@
     },
     "start": {
       "title": "Bắt đầu lại",
-      "body": "Xóa các lần quét, trả lời của AI và ghi chú khỏi máy Mac này. Máy chủ, cấu hình ssh và khóa trong Keychain không bị đụng tới.",
+      "body": "Xóa các lần quét, trả lời của AI và ghi chú khỏi máy Mac này. Máy chủ, cấu hình ssh và khoá trong Keychain không bị đụng tới.",
       "hold": "Giữ để xóa lịch sử",
       "action": "Xóa lịch sử",
       "holdHint": "Giữ 1,5 giây. Thả sớm là hủy.",
       "confirmTitle": "Xóa lịch sử?",
-      "confirmBody": "Các lần quét, trả lời của AI và ghi chú “đã dự kiến” sẽ bị xóa khỏi máy Mac này. Máy chủ, cấu hình ssh và khóa trong Keychain không bị đụng tới.",
+      "confirmBody": "Các lần quét, trả lời của AI và ghi chú “đã dự kiến” sẽ bị xóa khỏi máy Mac này. Máy chủ, cấu hình ssh và khoá trong Keychain không bị đụng tới.",
       "deleted": "Không có gì để xóa | Đã xóa 1 lần quét | Đã xóa {count} lần quét",
       "reset": "Đặt lại cả cài đặt…",
       "resetTitle": "Đặt lại mọi cài đặt?",

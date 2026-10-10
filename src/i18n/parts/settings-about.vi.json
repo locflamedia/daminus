@@ -10,8 +10,8 @@
     "diagnostics": {
       "title": "Chẩn đoán",
       "agent": "SSH agent",
-      "agentKeys": "Đang chạy · {n} khóa | Đang chạy · 1 khóa | Đang chạy · {n} khóa",
-      "agentEmpty": "Đang chạy · chưa có khóa",
+      "agentKeys": "Đang chạy · {n} khoá | Đang chạy · 1 khoá | Đang chạy · {n} khoá",
+      "agentEmpty": "Đang chạy · chưa có khoá",
       "agentNone": "Không chạy",
       "agentUnknown": "Không hỏi được",
       "copy": "Sao chép chẩn đoán",

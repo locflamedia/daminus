@@ -10,6 +10,7 @@ import type {
   SkipReason,
 } from '@/api'
 import { fingerprintParts } from '@/lib/host-key'
+import { chipOfOutcome, type TestChip } from '@/lib/host-test'
 import { SLOW_MS } from '@/lib/host-rows'
 import type { Locale } from '@/i18n'
 import { median } from '@/lib/project-series'
@@ -29,11 +30,18 @@ export interface HostsRow {
   included: boolean
   /** When a scan last reached it; `null` when none did. */
   lastReached: string | null
+  /** How the latest scan ended for it; `null` when no scan included it. */
+  outcome: HostOutcome | null
 }
 
 function stateOf(outcome: HostOutcome | null | undefined): HostState {
   if (!outcome) return 'unknown'
   return outcome.state === 'reached' || outcome.state === 'partial' ? 'reached' : 'failed'
+}
+
+/** The chip of a host whose latest scan failed: its cause, as the login test would say it. */
+export function failedChip(outcome: HostOutcome | null | undefined): TestChip {
+  return outcome ? chipOfOutcome(outcome, null) : 'unreachable'
 }
 
 /** One row per listed host, in the order of the ssh config. */
@@ -57,6 +65,7 @@ export function hostsRows(
       state: stateOf(server?.outcome),
       included: !excluded.includes(alias),
       lastReached: server?.last_reached_at ?? null,
+      outcome: server?.outcome ?? null,
     }
   })
 }

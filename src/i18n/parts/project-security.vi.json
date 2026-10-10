@@ -22,10 +22,10 @@
         "url_http": "Làm việc này trước: tìm vì sao site không trả lời"
       },
       "next": {
-        "sec_miner": "Sau đó tìm xem cái gì đã khởi chạy nó và đổi mật khẩu, khóa mà máy này đang giữ.",
+        "sec_miner": "Sau đó tìm xem cái gì đã khởi chạy nó và đổi mật khẩu, khoá mà máy này đang giữ.",
         "sec_preload": "Sau đó gỡ thư viện bạn không thêm và khởi động lại các dịch vụ.",
         "sec_upload_php": "Sau đó chép {file} ra khỏi máy chủ.",
-        "url_exposed": "Sau đó đổi mọi khóa được liệt kê.",
+        "url_exposed": "Sau đó đổi mọi khoá được liệt kê.",
         "url_tls": "Sau đó nạp lại web server và kiểm tra lại site.",
         "url_http": "Sau đó xem web server và log của ứng dụng trên máy."
       },
@@ -33,7 +33,7 @@
         "sec_miner": "dừng tiến trình đào coin và đổi thông tin đăng nhập",
         "sec_preload": "kiểm tra ld.so.preload",
         "sec_upload_php": "xóa các file PHP đã tải lên",
-        "url_exposed": "sửa root của nginx và đổi khóa",
+        "url_exposed": "sửa root của nginx và đổi khoá",
         "url_tls": "gia hạn chứng chỉ",
         "url_http": "tìm vì sao site không trả lời"
       }
@@ -88,7 +88,7 @@
       "uploadHint": "uploads chỉ nên chứa ảnh",
       "get": "GET",
       "served": "ai cũng tải được",
-      "keysMatched": "khóa khớp",
+      "keysMatched": "khoá khớp",
       "namesOnly": "chỉ tên, không lưu giá trị nào",
       "moreKeys": "+{n} nữa",
       "gitRef": "ref",
@@ -119,25 +119,25 @@
       "sec_tmp_exec": "File thực thi trong thư mục tạm là nơi kẻ tấn công hay để công cụ. Script build hoặc deploy cũng có thể để lại vài file.",
       "sec_ports": "Bất kỳ ai trên internet cũng có thể thử vào cổng này. Database nên chỉ nghe trên chính máy chủ hoặc mạng riêng.",
       "sec_recent_change": "Bình thường nếu bạn vừa deploy trong vài ngày qua. Đáng xem nếu bạn không deploy.",
-      "url_exposed": "Ai hỏi cũng nhận được file này. Chỉ tên khóa được giữ làm bằng chứng; Daminus không bao giờ lưu giá trị.",
+      "url_exposed": "Ai hỏi cũng nhận được file này. Chỉ tên khoá được giữ làm bằng chứng; Daminus không bao giờ lưu giá trị.",
       "url_tls": "Trình duyệt hiện cảnh báo cho mọi khách, và một số client từ chối kết nối.",
       "url_http": "Khách thấy lỗi hoặc phải chờ quá lâu."
     },
     "do": {
-      "sec_miner": "Tìm xem cái gì khởi chạy nó, dừng và gỡ nó, rồi đổi mật khẩu và khóa mà máy chủ đang giữ.",
+      "sec_miner": "Tìm xem cái gì khởi chạy nó, dừng và gỡ nó, rồi đổi mật khẩu và khoá mà máy chủ đang giữ.",
       "sec_preload": "Mở /etc/ld.so.preload và xem từng thư viện được liệt kê. Nếu bạn không thêm chúng, hãy coi máy chủ đã bị xâm nhập.",
       "sec_upload_php": "Chưa xóa vội. Chép nó ra khỏi máy chủ để xem xét, rồi xem log truy cập quanh {when}.",
       "sec_tmp_exec": "Kiểm tra từng file là gì và của ai. Gỡ những file bạn không để ở đó.",
       "sec_ports": "Gắn dịch vụ vào 127.0.0.1 hoặc địa chỉ riêng, hoặc đóng cổng trong tường lửa.",
       "sec_recent_change": "So với lần deploy gần nhất. Xem các file mới nhất trước.",
-      "url_exposed": "Trỏ root của nginx vào public/, không phải thư mục dự án. Rồi đổi mọi khóa được liệt kê, vì ai cũng có thể đã đọc chúng.",
+      "url_exposed": "Trỏ root của nginx vào public/, không phải thư mục dự án. Rồi đổi mọi khoá được liệt kê, vì ai cũng có thể đã đọc chúng.",
       "url_tls": "Gia hạn chứng chỉ và nạp lại web server.",
       "url_http": "Mở site, rồi xem web server và log của ứng dụng trên máy."
     },
     "exposed": {
       "noMarkLine": "Phát hiện này không có Đánh dấu là chấp nhận",
       "whyNoMarkLead": "Vì sao không có Đánh dấu là chấp nhận.",
-      "whyNoMark": "Không có lý do an toàn nào để phát file .env hay .git ra internet, và luật không phân biệt được khóa mới."
+      "whyNoMark": "Không có lý do an toàn nào để phát file .env hay .git ra internet, và luật không phân biệt được khoá mới."
     },
     "cut": {
       "showing": "Đang hiện",
