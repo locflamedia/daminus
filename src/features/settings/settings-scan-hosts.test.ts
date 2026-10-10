@@ -10,6 +10,7 @@ import { i18n, setI18nLocale } from '@/i18n'
 import { useHostsSettingsStore } from '@/stores/hosts-settings'
 import { useScanSettingsStore } from '@/stores/scan-settings'
 import { useSettingsStore } from '@/stores/settings'
+import HostDetail from './HostDetail.vue'
 import SettingsHosts from './SettingsHosts.vue'
 import SettingsScan from './SettingsScan.vue'
 
@@ -152,6 +153,12 @@ describe('Settings › Hosts', () => {
     expect(text).toContain('Left out (')
     expect(text).toContain('Include in scans')
     expect(text).toContain('HostName')
+  })
+
+  it('shows the saved state of a host that this session has not tested, never "Not tested yet"', async () => {
+    const wrapper = await mountView(SettingsHosts)
+    const head = wrapper.findComponent(HostDetail).find('.head')
+    expect(head.text()).not.toContain('Not tested yet')
   })
 
   it('leaves a host out of scans and puts it back', async () => {

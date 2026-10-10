@@ -99,6 +99,14 @@ describe('layoutServers', () => {
     expect(view.groups[0]?.state).toBe('crit')
   })
 
+  it('keeps parts of no known role apart by their own names', () => {
+    const view = layoutServers([
+      { id: 'a', label: 'Redis', state: 'ok', host: 'h' },
+      { id: 'b', label: 'Queue', state: 'ok', host: 'h' },
+    ])
+    expect(view.groups[0]?.roles.map((r) => r.label)).toEqual(['Redis', 'Queue'])
+  })
+
   it('starts a new node where the server changes back', () => {
     const view = layoutServers(
       [node('fe', 'ok', 'a'), node('be', 'ok', 'b'), node('db', 'ok', 'a')],

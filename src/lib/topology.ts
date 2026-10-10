@@ -113,7 +113,10 @@ export function layoutServers(
     const last = all.at(-1)
     const role = { id: c.id, label: c.label, role: roleOf(c) }
     if (last && last.host === host) {
-      if (!last.roles.some((r) => r.role === role.role)) last.roles.push(role)
+      // A known role is labelled once; parts of no known role keep their own names.
+      const same = (r: { role: string; label: string }) =>
+        r.role === role.role && (role.role !== 'other' || r.label === role.label)
+      if (!last.roles.some(same)) last.roles.push(role)
       if (SEVERITY[c.state] > SEVERITY[last.state]) last.state = c.state
     } else {
       all.push({ host, roles: [role], state: c.state })
