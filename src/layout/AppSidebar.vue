@@ -209,11 +209,11 @@ const serverRows = computed(() =>
   height: var(--lights-row);
 }
 
-:global(:root[data-fullscreen='true']) .lights {
+:root[data-fullscreen='true'] .lights {
   display: none;
 }
 
-:global(:root[data-fullscreen='true']) .sidebar {
+:root[data-fullscreen='true'] .sidebar {
   padding-top: var(--side-top-fullscreen);
 }
 

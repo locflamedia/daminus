@@ -154,11 +154,11 @@ const RING = 2 * Math.PI * 14
   height: var(--lights-row);
 }
 
-:global(:root[data-fullscreen='true']) .lights {
+:root[data-fullscreen='true'] .lights {
   display: none;
 }
 
-:global(:root[data-fullscreen='true']) .sidebar {
+:root[data-fullscreen='true'] .sidebar {
   padding-top: var(--side-top-fullscreen);
 }
 
