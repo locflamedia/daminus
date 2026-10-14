@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/locflamedia/daminus/stargazers"><img src="https://img.shields.io/github/stars/locflamedia/daminus?style=flat&logo=github" alt="GitHub stars"></a>
-  <a href="https://github.com/locflamedia/daminus/releases"><img src="https://img.shields.io/github/v/release/locflamedia/daminus?include_prereleases&label=Release" alt="Latest release"></a>
+  <a href="https://github.com/locflamedia/daminus/releases"><img src="https://img.shields.io/github/v/release/locflamedia/daminus?label=Release" alt="Latest release"></a>
   <a href="https://github.com/locflamedia/daminus/releases"><img src="https://img.shields.io/github/downloads/locflamedia/daminus/total?label=Downloads" alt="Downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/Platform-macOS-000000?logo=apple&logoColor=white" alt="Platform: macOS">
@@ -23,7 +23,7 @@
 Daminus is a Mac app that checks the servers behind your web projects over plain SSH. It installs nothing on them and only reads. Results are grouped by project (frontend, backend, database, worker) instead of by machine.
 
 > [!NOTE]
-> Daminus is close to v0.1.0. Builds are published as pre-releases (`v0.1.0-rc.N`) on the [Releases](https://github.com/locflamedia/daminus/releases) page, starting with the first tag. It has had little testing on real servers so far, so expect rough edges, and please report them.
+> Daminus v0.1.0 is out. It has had little testing on real servers so far, so expect rough edges, and please report them.
 
 ## Why
 
@@ -84,8 +84,8 @@ I run a few VPSes for a few web projects. Most monitoring tools want an agent on
 
 Needs macOS 13 or later. Download the `.dmg` for your Mac and drag Daminus to Applications:
 
-- [Apple Silicon (M1 and later)](https://github.com/locflamedia/daminus/releases/download/v0.1.0-rc.1/Daminus_0.1.0-rc.1_aarch64.dmg)
-- [Intel](https://github.com/locflamedia/daminus/releases/download/v0.1.0-rc.1/Daminus_0.1.0-rc.1_x64.dmg)
+- [Apple Silicon (M1 and later)](https://github.com/locflamedia/daminus/releases/download/v0.1.0/Daminus_0.1.0_aarch64.dmg)
+- [Intel](https://github.com/locflamedia/daminus/releases/download/v0.1.0/Daminus_0.1.0_x64.dmg)
 
 Every build, including older ones, is on the [Releases](https://github.com/locflamedia/daminus/releases) page. There is no Homebrew cask yet: the builds are not notarized, so the `.dmg` is the only way to install for now.
 
