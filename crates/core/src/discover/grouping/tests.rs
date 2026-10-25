@@ -807,3 +807,84 @@ fn a_block_without_a_public_name_stays_with_its_compose_project() {
     assert_eq!(p.projects[0].id, "api");
     assert!(p.unassigned.is_empty());
 }
+
+/// An agency host: client sites each have their own folder, and some are also
+/// reachable on a shared platform domain (`*.platform.vn`) pointing at that
+/// same folder. The platform domain must not glue unrelated clients together.
+fn platform_domain_host() -> HostDiscovery {
+    let site = |names: &[&str], root: &str| {
+        vhost(names, Some(&format!("{root}/public")), None, true, true)
+    };
+    found(|d| {
+        d.vhosts.push(site(
+            &["console.acme.platform.vn"],
+            "/home/forge/console.acme.vn",
+        ));
+        d.vhosts
+            .push(site(&["console.acme.vn"], "/home/forge/console.acme.vn"));
+        d.vhosts.push(site(
+            &["console.beta.platform.vn"],
+            "/home/forge/console.beta.platform.vn",
+        ));
+        d.vhosts.push(site(
+            &["console.shop.platform.vn"],
+            "/home/forge/console.shopb.ph",
+        ));
+        d.vhosts
+            .push(site(&["shop.platform.vn"], "/home/forge/shopb.ph"));
+        d.vhosts
+            .push(site(&["console.shopb.ph"], "/home/forge/console.shopb.ph"));
+        d.vhosts.push(site(&["shopb.ph"], "/home/forge/shopb.ph"));
+        d.vhosts
+            .push(site(&["client-c.com"], "/home/forge/client-c.com"));
+        d.vhosts.push(site(
+            &["console.client-c.com"],
+            "/home/forge/console.client-c.com",
+        ));
+    })
+}
+
+#[test]
+fn a_platform_domain_does_not_join_sites_that_live_in_other_folders() {
+    let p = group(&[(alias("vps-12"), platform_domain_host())]);
+    let urls: Vec<Vec<&str>> = p
+        .projects
+        .iter()
+        .map(|p| {
+            let mut u: Vec<&str> = p.urls.iter().map(String::as_str).collect();
+            u.sort_unstable();
+            u
+        })
+        .collect();
+    // Acme keeps both of its names, Shop B keeps its alias Shop, and the
+    // platform-only site stands alone.
+    assert!(
+        urls.contains(&vec![
+            "https://console.acme.platform.vn",
+            "https://console.acme.vn"
+        ]),
+        "{urls:#?}"
+    );
+    assert!(
+        urls.contains(&vec![
+            "https://console.shop.platform.vn",
+            "https://console.shopb.ph",
+            "https://shop.platform.vn",
+            "https://shopb.ph"
+        ]),
+        "{urls:#?}"
+    );
+    assert!(
+        urls.contains(&vec!["https://console.beta.platform.vn"]),
+        "{urls:#?}"
+    );
+    // A client's own domain still joins its `console.` site.
+    assert!(
+        urls.contains(&vec![
+            "https://client-c.com",
+            "https://console.client-c.com"
+        ]),
+        "{urls:#?}"
+    );
+    assert_eq!(p.projects.len(), 4, "{urls:#?}");
+}

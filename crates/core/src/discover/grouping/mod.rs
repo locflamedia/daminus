@@ -8,7 +8,12 @@
 //! The evidence, strongest first:
 //! - **a domain**: nginx server blocks whose `server_name`s share a registered
 //!   domain (`shop-x.com`, `api.shop-x.com`; by the Public Suffix List, so
-//!   `beru.io.vn` and `robertnguyen.io.vn` are two) belong together, on any host;
+//!   `beru.io.vn` and `robertnguyen.io.vn` are two) belong together, on any host.
+//!   When a block's folder is named after a domain and none of the block's
+//!   names is on it (`console.acme.platform.vn` served from
+//!   `/home/forge/console.acme.vn`), the name is an alias on someone else's
+//!   domain, such as an agency's platform domain, and the folder's domain is
+//!   used instead, so the shared platform domain never glues clients together;
 //! - **a folder**: a web root, a compose working folder and a pm2 folder that
 //!   are the same folder or one inside the other (after taking `public`,
 //!   `dist`, `current`… off) belong together, on one host. Folders every site
@@ -204,6 +209,9 @@ struct Node<'a> {
     dirs: Vec<String>,
     /// Registered domains of its public names.
     domains: BTreeSet<String>,
+    /// Registered domains it is linked by: `domains`, unless its folder is
+    /// named after a domain none of its names is on.
+    link_domains: BTreeSet<String>,
 }
 
 #[derive(Default)]
@@ -246,11 +254,13 @@ impl<'a> Grouper<'a> {
                     .filter(|n| is_public_domain(n))
                     .map(|n| apex(n))
                     .collect();
+                let link_domains = Self::link_domains(v, &domains);
                 nodes.push(Node {
                     host: h,
                     what: What::Vhost(v),
                     dirs,
                     domains,
+                    link_domains,
                 });
             }
             for c in &found.compose {
@@ -259,6 +269,7 @@ impl<'a> Grouper<'a> {
                     what: What::Compose(c),
                     dirs: c.dir.iter().filter_map(|d| project_dir(d)).collect(),
                     domains: BTreeSet::new(),
+                    link_domains: BTreeSet::new(),
                 });
             }
             for a in &found.pm2 {
@@ -267,6 +278,7 @@ impl<'a> Grouper<'a> {
                     what: What::Pm2(a),
                     dirs: a.cwd.iter().filter_map(|d| project_dir(d)).collect(),
                     domains: BTreeSet::new(),
+                    link_domains: BTreeSet::new(),
                 });
             }
             for e in &found.envs {
@@ -280,6 +292,23 @@ impl<'a> Grouper<'a> {
             nodes,
             envs,
             parent,
+        }
+    }
+
+    /// The domains a server block is linked by. Its names' domains, unless its
+    /// folder is named after a public domain that none of its names is on: the
+    /// block is then an alias on a domain that is not its owner's.
+    fn link_domains(v: &Vhost, domains: &BTreeSet<String>) -> BTreeSet<String> {
+        let home = v
+            .root
+            .as_deref()
+            .and_then(project_dir)
+            .map(|d| base_name(&d).to_owned())
+            .filter(|b| is_public_domain(b))
+            .map(|b| apex(&b));
+        match home {
+            Some(home) if !domains.contains(&home) => BTreeSet::from([home]),
+            _ => domains.clone(),
         }
     }
 
@@ -314,7 +343,11 @@ impl<'a> Grouper<'a> {
                 let same_host = a.host == b.host;
                 let by_dir =
                     same_host && a.dirs.iter().any(|x| b.dirs.iter().any(|y| related(x, y)));
-                let by_domain = a.domains.intersection(&b.domains).next().is_some();
+                let by_domain = a
+                    .link_domains
+                    .intersection(&b.link_domains)
+                    .next()
+                    .is_some();
                 let by_port = same_host
                     && match (a.what, b.what) {
                         (What::Vhost(v), What::Compose(c)) | (What::Compose(c), What::Vhost(v)) => {
