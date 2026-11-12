@@ -34,8 +34,8 @@ importers:
         specifier: ^26.6.4
         version: 26.6.4
       '@vitejs/plugin-vue':
-        specifier: ^6.0.9
-        version: 6.0.9(vite@8.3.3(@types/node@26.6.4))(vue@3.5.43(typescript@6.0.3))
+        specifier: ^6.0.10
+        version: 6.0.10(vite@8.3.3(@types/node@26.6.4))(vue@3.5.43(typescript@6.0.3))
       '@vue/eslint-config-typescript':
         specifier: ^14.9.0
         version: 14.9.0(eslint-plugin-vue@10.11.1(@typescript-eslint/parser@8.70.1(eslint@10.12.0)(typescript@6.0.3))(eslint@10.12.0)(vue-eslint-parser@10.4.1(eslint@10.12.0)))(eslint@10.12.0)(typescript@6.0.3)
@@ -474,12 +474,12 @@ packages:
     resolution: {integrity: sha512-Vwj9lUIW5Xq3wQ9w6gv3R86g1hMK8f2zNOdGTAgeXUMMXFK78G9ruCjjqutHMNJc0+CH7LYRnHeUB9IT8wFmcw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@vitejs/plugin-vue@6.0.9':
-    resolution: {integrity: sha512-rD/MORlhaZMlXWW0rEn4FB4wMinWC0z/D7Ye160S5+Rs1mC8ZDAdcDp4SjKfUhG5t8q1ktcPVw4xuTkPRlzrSA==}
+  '@vitejs/plugin-vue@6.0.10':
+    resolution: {integrity: sha512-b80aUQh3n+qEzzZm5oQp3rT2QImeCx58K6eFl/RkJ3d65KW0kTuv5lNsLRVAjbW9YRUpo/wzmvzMgV34bTAItA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
-      vue: ^3.2.25
+      vue: ^3.2.25 || ^3.6.0-rc.10
 
   '@vitest/mocker@5.0.2':
     resolution: {integrity: sha512-Z5FS00Q1SJHkB35xATsmWGdQ5WA1/0MV3CDjqyv7GavHv1OfOj145MNfHOlHk7QLes21dKFDHr8EO2zvL+9WGA==}
@@ -1190,7 +1190,6 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
     engines: {node: '>=0.10.0'}
@@ -1813,7 +1812,7 @@ snapshots:
       '@typescript-eslint/types': 8.70.1
       eslint-visitor-keys: 5.0.1
 
-  '@vitejs/plugin-vue@6.0.9(vite@8.3.3(@types/node@26.6.4))(vue@3.5.43(typescript@6.0.3))':
+  '@vitejs/plugin-vue@6.0.10(vite@8.3.3(@types/node@26.6.4))(vue@3.5.43(typescript@6.0.3))':
     dependencies:
       '@rolldown/pluginutils': 1.0.1
       vite: 8.3.3(@types/node@26.6.4)
@@ -2517,7 +2516,6 @@ snapshots:
       shebang-regex: 3.0.0
 
   shebang-regex@3.0.0: {}
-
 
   source-map-js@1.2.2: {}
 
